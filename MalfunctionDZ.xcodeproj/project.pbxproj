@@ -7,18 +7,74 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		FB367C502F510E6000FBAD05 /* MalfunctionDZApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367C4F2F510E6000FBAD05 /* MalfunctionDZApp.swift */; };
-		FB367C522F510E6000FBAD05 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367C512F510E6000FBAD05 /* ContentView.swift */; };
+		FB063CE42F52191600227638 /* GroundSchoolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE32F52191600227638 /* GroundSchoolView.swift */; };
+		FB063CE62F521A7400227638 /* Aircraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE52F521A7400227638 /* Aircraft.swift */; };
+		FB063CE82F521A8800227638 /* Loft.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE72F521A8800227638 /* Loft.swift */; };
+		FB063CEE2F521B1A00227638 /* AircraftDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CED2F521B1A00227638 /* AircraftDetailViewModel.swift */; };
+		FB063CF12F521B3A00227638 /* AircraftViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF02F521B3A00227638 /* AircraftViewModel.swift */; };
+		FB063CF32F521B4B00227638 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF22F521B4B00227638 /* HomeViewModel.swift */; };
+		FB063CF52F521B5100227638 /* LoftViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF42F521B5100227638 /* LoftViewModel.swift */; };
+		FB063CF82F52304F00227638 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF72F521B7300227638 /* LoginView.swift */; };
+		FB063CF92F52305500227638 /* AircraftDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEC2F521AFF00227638 /* AircraftDetailView.swift */; };
+		FB063CFA2F52305900227638 /* AircraftListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEF2F521B2900227638 /* AircraftListView.swift */; };
+		FB063CFB2F52305C00227638 /* LoftRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEA2F521AD900227638 /* LoftRootView.swift */; };
+		FB063D002F52ACE600227638 /* Quiz.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CFF2F52ACE600227638 /* Quiz.swift */; };
+		FB063D022F52AD1E00227638 /* QuizViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D012F52AD1E00227638 /* QuizViewModel.swift */; };
+		FB063D052F52AD7F00227638 /* QuizAttemptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D042F52AD7F00227638 /* QuizAttemptView.swift */; };
+		FB063D072F52ADD000227638 /* QuizResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D062F52ADD000227638 /* QuizResultView.swift */; };
+		FB063D0E2F52C9CE00227638 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0D2F52C9CE00227638 /* ProfileView.swift */; };
+		FB063D102F52D10B00227638 /* LessonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0F2F52D10B00227638 /* LessonDetailView.swift */; };
+		FB063D122F52D4EC00227638 /* QuizLaunchCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D112F52D4EC00227638 /* QuizLaunchCard.swift */; };
+		FB063D142F534F9E00227638 /* ModuleSignoffBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D132F534F9E00227638 /* ModuleSignoffBlock.swift */; };
+		FB063D162F53F69A00227638 /* FlightLoad.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D152F53F69A00227638 /* FlightLoad.swift */; };
+		FB063D182F53F6CF00227638 /* PaxViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D172F53F6CF00227638 /* PaxViewModel.swift */; };
+		FB063D1A2F53F92300227638 /* PaxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D192F53F92300227638 /* PaxView.swift */; };
+		FB063D1C2F54AB7600227638 /* RoleHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1B2F54AB7600227638 /* RoleHelpers.swift */; };
+		FB063D1E2F54AB9B00227638 /* AviationRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1D2F54AB9B00227638 /* AviationRootView.swift */; };
 		FB367C542F510E6100FBAD05 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
 		FB367C572F510E6100FBAD05 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */; };
+		FB367DCC2F52007600FBAD05 /* MalfunctionDZApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */; };
+		FB367DCF2F5201DB00FBAD05 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCE2F5201DB00FBAD05 /* HomeView.swift */; };
+		FB367DD12F52032300FBAD05 /* Foundation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD02F52032300FBAD05 /* Foundation.swift */; };
+		FB367DD52F52169D00FBAD05 /* LMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD42F52169D00FBAD05 /* LMS.swift */; };
+		FBD783602F5217F800F5EBCD /* GroundSchoolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */; };
+		FBFAB35A2F54FF3E0046027A /* PilotCurrencyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		FB063CE32F52191600227638 /* GroundSchoolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroundSchoolView.swift; sourceTree = "<group>"; };
+		FB063CE52F521A7400227638 /* Aircraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Aircraft.swift; sourceTree = "<group>"; };
+		FB063CE72F521A8800227638 /* Loft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Loft.swift; sourceTree = "<group>"; };
+		FB063CEA2F521AD900227638 /* LoftRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoftRootView.swift; sourceTree = "<group>"; };
+		FB063CEC2F521AFF00227638 /* AircraftDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AircraftDetailView.swift; sourceTree = "<group>"; };
+		FB063CED2F521B1A00227638 /* AircraftDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AircraftDetailViewModel.swift; sourceTree = "<group>"; };
+		FB063CEF2F521B2900227638 /* AircraftListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AircraftListView.swift; sourceTree = "<group>"; };
+		FB063CF02F521B3A00227638 /* AircraftViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AircraftViewModel.swift; sourceTree = "<group>"; };
+		FB063CF22F521B4B00227638 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
+		FB063CF42F521B5100227638 /* LoftViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoftViewModel.swift; sourceTree = "<group>"; };
+		FB063CF72F521B7300227638 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		FB063CFF2F52ACE600227638 /* Quiz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Quiz.swift; sourceTree = "<group>"; };
+		FB063D012F52AD1E00227638 /* QuizViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizViewModel.swift; sourceTree = "<group>"; };
+		FB063D042F52AD7F00227638 /* QuizAttemptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizAttemptView.swift; sourceTree = "<group>"; };
+		FB063D062F52ADD000227638 /* QuizResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizResultView.swift; sourceTree = "<group>"; };
+		FB063D0D2F52C9CE00227638 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		FB063D0F2F52D10B00227638 /* LessonDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonDetailView.swift; sourceTree = "<group>"; };
+		FB063D112F52D4EC00227638 /* QuizLaunchCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizLaunchCard.swift; sourceTree = "<group>"; };
+		FB063D132F534F9E00227638 /* ModuleSignoffBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleSignoffBlock.swift; sourceTree = "<group>"; };
+		FB063D152F53F69A00227638 /* FlightLoad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightLoad.swift; sourceTree = "<group>"; };
+		FB063D172F53F6CF00227638 /* PaxViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaxViewModel.swift; sourceTree = "<group>"; };
+		FB063D192F53F92300227638 /* PaxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaxView.swift; sourceTree = "<group>"; };
+		FB063D1B2F54AB7600227638 /* RoleHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoleHelpers.swift; sourceTree = "<group>"; };
+		FB063D1D2F54AB9B00227638 /* AviationRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AviationRootView.swift; sourceTree = "<group>"; };
 		FB367C4C2F510E6000FBAD05 /* MalfunctionDZ.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MalfunctionDZ.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		FB367C4F2F510E6000FBAD05 /* MalfunctionDZApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MalfunctionDZApp.swift; sourceTree = "<group>"; };
-		FB367C512F510E6000FBAD05 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		FB367C532F510E6100FBAD05 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MalfunctionDZApp.swift; sourceTree = "<group>"; };
+		FB367DCE2F5201DB00FBAD05 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		FB367DD02F52032300FBAD05 /* Foundation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Foundation.swift; path = ../App/Foundation.swift; sourceTree = "<group>"; };
+		FB367DD42F52169D00FBAD05 /* LMS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMS.swift; sourceTree = "<group>"; };
+		FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroundSchoolViewModel.swift; sourceTree = "<group>"; };
+		FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotCurrencyCard.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +88,61 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		FB063CE22F5218F900227638 /* GroundSchool */ = {
+			isa = PBXGroup;
+			children = (
+				FB063CE32F52191600227638 /* GroundSchoolView.swift */,
+				FB063D0F2F52D10B00227638 /* LessonDetailView.swift */,
+				FB063D112F52D4EC00227638 /* QuizLaunchCard.swift */,
+				FB063D132F534F9E00227638 /* ModuleSignoffBlock.swift */,
+			);
+			path = GroundSchool;
+			sourceTree = "<group>";
+		};
+		FB063CE92F521A9D00227638 /* Loft */ = {
+			isa = PBXGroup;
+			children = (
+				FB063CEA2F521AD900227638 /* LoftRootView.swift */,
+			);
+			path = Loft;
+			sourceTree = "<group>";
+		};
+		FB063CEB2F521AF600227638 /* Aircraft */ = {
+			isa = PBXGroup;
+			children = (
+				FB063CEC2F521AFF00227638 /* AircraftDetailView.swift */,
+				FB063CEF2F521B2900227638 /* AircraftListView.swift */,
+				FB063D192F53F92300227638 /* PaxView.swift */,
+				FB063D1D2F54AB9B00227638 /* AviationRootView.swift */,
+			);
+			path = Aircraft;
+			sourceTree = "<group>";
+		};
+		FB063CF62F521B6C00227638 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				FB063CF72F521B7300227638 /* LoginView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		FB063CFC2F5231DE00227638 /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				FB063D0D2F52C9CE00227638 /* ProfileView.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		FB063D032F52AD6B00227638 /* Quiz */ = {
+			isa = PBXGroup;
+			children = (
+				FB063D042F52AD7F00227638 /* QuizAttemptView.swift */,
+				FB063D062F52ADD000227638 /* QuizResultView.swift */,
+			);
+			path = Quiz;
+			sourceTree = "<group>";
+		};
 		FB367C432F510E6000FBAD05 = {
 			isa = PBXGroup;
 			children = (
@@ -51,8 +162,11 @@
 		FB367C4E2F510E6000FBAD05 /* MalfunctionDZ */ = {
 			isa = PBXGroup;
 			children = (
-				FB367C4F2F510E6000FBAD05 /* MalfunctionDZApp.swift */,
-				FB367C512F510E6000FBAD05 /* ContentView.swift */,
+				FB367DC52F51FECB00FBAD05 /* App */,
+				FB367DC32F51FD3A00FBAD05 /* Models */,
+				FB367DD32F52037A00FBAD05 /* ViewModels */,
+				FB367DC62F51FED600FBAD05 /* Services */,
+				FB367DC42F51FD4800FBAD05 /* Views */,
 				FB367C532F510E6100FBAD05 /* Assets.xcassets */,
 				FB367C552F510E6100FBAD05 /* Preview Content */,
 			);
@@ -65,6 +179,72 @@
 				FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		FB367DC32F51FD3A00FBAD05 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				FB063CE52F521A7400227638 /* Aircraft.swift */,
+				FB063CE72F521A8800227638 /* Loft.swift */,
+				FB367DD42F52169D00FBAD05 /* LMS.swift */,
+				FB063CFF2F52ACE600227638 /* Quiz.swift */,
+				FB063D152F53F69A00227638 /* FlightLoad.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		FB367DC42F51FD4800FBAD05 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				FB063D032F52AD6B00227638 /* Quiz */,
+				FB063CFC2F5231DE00227638 /* Profile */,
+				FB063CF62F521B6C00227638 /* Auth */,
+				FB063CEB2F521AF600227638 /* Aircraft */,
+				FB063CE92F521A9D00227638 /* Loft */,
+				FB063CE22F5218F900227638 /* GroundSchool */,
+				FB367DCD2F5201C600FBAD05 /* Home */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		FB367DC52F51FECB00FBAD05 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		FB367DC62F51FED600FBAD05 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				FB367DD02F52032300FBAD05 /* Foundation.swift */,
+				FB063D1B2F54AB7600227638 /* RoleHelpers.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		FB367DCD2F5201C600FBAD05 /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				FB367DCE2F5201DB00FBAD05 /* HomeView.swift */,
+				FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		FB367DD32F52037A00FBAD05 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				FB063CED2F521B1A00227638 /* AircraftDetailViewModel.swift */,
+				FB063CF02F521B3A00227638 /* AircraftViewModel.swift */,
+				FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */,
+				FB063CF22F521B4B00227638 /* HomeViewModel.swift */,
+				FB063CF42F521B5100227638 /* LoftViewModel.swift */,
+				FB063D012F52AD1E00227638 /* QuizViewModel.swift */,
+				FB063D172F53F6CF00227638 /* PaxViewModel.swift */,
+			);
+			path = ViewModels;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -99,6 +279,7 @@
 				TargetAttributes = {
 					FB367C4B2F510E6000FBAD05 = {
 						CreatedOnToolsVersion = 15.4;
+						LastSwiftMigration = 1540;
 					};
 				};
 			};
@@ -137,8 +318,36 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FB367C522F510E6000FBAD05 /* ContentView.swift in Sources */,
-				FB367C502F510E6000FBAD05 /* MalfunctionDZApp.swift in Sources */,
+				FB063D142F534F9E00227638 /* ModuleSignoffBlock.swift in Sources */,
+				FBFAB35A2F54FF3E0046027A /* PilotCurrencyCard.swift in Sources */,
+				FB063CF52F521B5100227638 /* LoftViewModel.swift in Sources */,
+				FB063CFB2F52305C00227638 /* LoftRootView.swift in Sources */,
+				FB367DD12F52032300FBAD05 /* Foundation.swift in Sources */,
+				FB063D102F52D10B00227638 /* LessonDetailView.swift in Sources */,
+				FB063CEE2F521B1A00227638 /* AircraftDetailViewModel.swift in Sources */,
+				FB063D182F53F6CF00227638 /* PaxViewModel.swift in Sources */,
+				FB063CF92F52305500227638 /* AircraftDetailView.swift in Sources */,
+				FB063CE62F521A7400227638 /* Aircraft.swift in Sources */,
+				FB063CFA2F52305900227638 /* AircraftListView.swift in Sources */,
+				FB063CE82F521A8800227638 /* Loft.swift in Sources */,
+				FB063D022F52AD1E00227638 /* QuizViewModel.swift in Sources */,
+				FB063D072F52ADD000227638 /* QuizResultView.swift in Sources */,
+				FB063D162F53F69A00227638 /* FlightLoad.swift in Sources */,
+				FB063D002F52ACE600227638 /* Quiz.swift in Sources */,
+				FB367DD52F52169D00FBAD05 /* LMS.swift in Sources */,
+				FB063D122F52D4EC00227638 /* QuizLaunchCard.swift in Sources */,
+				FB063D052F52AD7F00227638 /* QuizAttemptView.swift in Sources */,
+				FB063D1A2F53F92300227638 /* PaxView.swift in Sources */,
+				FBD783602F5217F800F5EBCD /* GroundSchoolViewModel.swift in Sources */,
+				FB063D1E2F54AB9B00227638 /* AviationRootView.swift in Sources */,
+				FB367DCC2F52007600FBAD05 /* MalfunctionDZApp.swift in Sources */,
+				FB063D1C2F54AB7600227638 /* RoleHelpers.swift in Sources */,
+				FB063CF12F521B3A00227638 /* AircraftViewModel.swift in Sources */,
+				FB063CF32F521B4B00227638 /* HomeViewModel.swift in Sources */,
+				FB063CF82F52304F00227638 /* LoginView.swift in Sources */,
+				FB367DCF2F5201DB00FBAD05 /* HomeView.swift in Sources */,
+				FB063D0E2F52C9CE00227638 /* ProfileView.swift in Sources */,
+				FB063CE42F52191600227638 /* GroundSchoolView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -269,9 +478,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
+				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -287,6 +498,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.malfunctiondz.app.MalfunctionDZ;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -297,9 +509,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
+				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

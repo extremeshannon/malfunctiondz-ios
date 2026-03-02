@@ -1,0 +1,395 @@
+// File: ASC/Views/GroundSchool/LessonDetailView.swift
+// Purpose: Displays lesson content with YouTube video embedding, scroll-to-bottom
+//          gate for mark complete, and previous/next lesson navigation.
+import SwiftUI
+import WebKit
+
+// MARK: - Models
+
+struct LessonDetail: Codable {
+    let id: Int
+    let title: String
+    let lessonType: String
+    let contentUrl: String?
+    let content: String?
+    let durationMin: Int?
+    let required: Bool
+    let courseId: Int
+    let completed: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, content, required, completed
+        case lessonType  = "lesson_type"
+        case contentUrl  = "content_url"
+        case durationMin = "duration_min"
+        case courseId    = "course_id"
+    }
+}
+
+struct LessonDetailResponse: Codable {
+    let ok: Bool
+    let lesson: LessonDetail?
+}
+
+// MARK: - YouTube Player
+
+struct YouTubePlayerView: UIViewRepresentable {
+    let videoId: String
+    var onVideoFinished: (() -> Void)? = nil
+
+    func makeUIView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        config.allowsInlineMediaPlayback = false
+        config.mediaTypesRequiringUserActionForPlayback = []
+        let webView = WKWebView(frame: .zero, configuration: config)
+        webView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+        webView.scrollView.isScrollEnabled = false
+        webView.backgroundColor = .black
+        webView.isOpaque = false
+        webView.navigationDelegate = context.coordinator
+        return webView
+    }
+
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        let html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+        <style>
+          * { margin:0; padding:0; box-sizing:border-box; background:#000; }
+          body { background:#000; }
+          .video-container { position:relative; width:100%; padding-bottom:56.25%; }
+          iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:0; }
+        </style>
+        </head>
+        <body>
+        <div class="video-container">
+          <iframe src="https://www.youtube.com/embed/\(videoId)?playsinline=0&rel=0&enablejsapi=1"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+            allowfullscreen>
+          </iframe>
+        </div>
+        </body>
+        </html>
+        """
+        webView.loadHTMLString(html, baseURL: URL(string: "https://www.youtube.com"))
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(onVideoFinished: onVideoFinished) }
+
+    class Coordinator: NSObject, WKNavigationDelegate {
+        var onVideoFinished: (() -> Void)?
+        init(onVideoFinished: (() -> Void)?) { self.onVideoFinished = onVideoFinished }
+    }
+}
+
+// MARK: - Helpers
+
+func extractYouTubeId(from text: String) -> String? {
+    // Patterns: youtu.be/ID, youtube.com/watch?v=ID, youtube.com/embed/ID
+    let patterns = [
+        "youtu\\.be/([a-zA-Z0-9_-]{11})",
+        "youtube\\.com/watch\\?v=([a-zA-Z0-9_-]{11})",
+        "youtube\\.com/embed/([a-zA-Z0-9_-]{11})",
+    ]
+    for pattern in patterns {
+        if let regex = try? NSRegularExpression(pattern: pattern),
+           let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+           let range = Range(match.range(at: 1), in: text) {
+            return String(text[range])
+        }
+    }
+    return nil
+}
+
+// MARK: - ViewModel
+
+@MainActor
+class LessonDetailViewModel: ObservableObject {
+    @Published var lesson: LessonDetail?
+    @Published var isLoading = false
+    @Published var isMarkingComplete = false
+    @Published var completed = false
+    @Published var hasScrolledToBottom = false
+    @Published var videoFinished = false
+    @Published var error: String?
+
+    let lessonId: Int
+
+    init(lessonId: Int) { self.lessonId = lessonId }
+
+    var canComplete: Bool {
+        if completed { return false }
+        guard let lesson = lesson else { return false }
+        let youtubeId = extractYouTubeId(from: lesson.content ?? "")
+        if youtubeId != nil {
+            return videoFinished
+        }
+        return hasScrolledToBottom
+    }
+
+    func load() async {
+        isLoading = true
+        defer { isLoading = false }
+        guard let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)/api/lms/lesson.php?id=\(lessonId)") else { return }
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        do {
+            let (data, _) = try await URLSession.shared.data(for: req)
+            let resp = try JSONDecoder().decode(LessonDetailResponse.self, from: data)
+            if let l = resp.lesson {
+                lesson = l
+                completed = l.completed
+                if l.completed { hasScrolledToBottom = true; videoFinished = true }
+            }
+        } catch { self.error = error.localizedDescription }
+    }
+
+    func markComplete(courseId: Int) async {
+        guard !completed else { return }
+        isMarkingComplete = true
+        defer { isMarkingComplete = false }
+        guard let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)/api/lms/lesson.php?id=\(lessonId)") else { return }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        do {
+            let (_, _) = try await URLSession.shared.data(for: req)
+            completed = true
+        } catch { self.error = error.localizedDescription }
+    }
+}
+
+// MARK: - View
+
+struct LessonDetailView: View {
+    let lessonId: Int
+    let lessonTitle: String
+    var allLessons: [LMSLesson] = []
+    var courseId: Int = 0
+
+    @StateObject private var vm: LessonDetailViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    init(lessonId: Int, lessonTitle: String, allLessons: [LMSLesson] = [], courseId: Int = 0) {
+        self.lessonId    = lessonId
+        self.lessonTitle = lessonTitle
+        self.allLessons  = allLessons
+        self.courseId    = courseId
+        _vm = StateObject(wrappedValue: LessonDetailViewModel(lessonId: lessonId))
+    }
+
+    private var currentIndex: Int? { allLessons.firstIndex(where: { $0.id == lessonId }) }
+    private var prevLesson: LMSLesson? {
+        guard let idx = currentIndex, idx > 0 else { return nil }
+        return allLessons[idx - 1]
+    }
+    private var nextLesson: LMSLesson? {
+        guard let idx = currentIndex, idx < allLessons.count - 1 else { return nil }
+        return allLessons[idx + 1]
+    }
+
+    var body: some View {
+        ZStack {
+            Color.mdzBackground.ignoresSafeArea()
+            VStack(spacing: 0) {
+
+                // ── Top bar ──────────────────────────────────
+                HStack(spacing: 12) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.mdzAmber)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(vm.lesson?.title ?? lessonTitle)
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.mdzText)
+                            .lineLimit(1)
+                        if let idx = currentIndex {
+                            Text("Lesson \(idx + 1) of \(allLessons.count)")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.mdzMuted)
+                        }
+                    }
+                    Spacer()
+                    if vm.completed {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill").foregroundColor(.mdzGreen)
+                            Text("Done").font(.system(size: 12, weight: .semibold)).foregroundColor(.mdzGreen)
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .background(Color.mdzNavyMid)
+
+                if vm.isLoading {
+                    Spacer()
+                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzAmber))
+                    Spacer()
+                } else if let lesson = vm.lesson {
+                    let youtubeId = extractYouTubeId(from: lesson.content ?? "")
+
+                    ScrollView(showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: 20) {
+
+                            Text(lesson.title)
+                                .font(.system(size: 22, weight: .black))
+                                .foregroundColor(.mdzText)
+
+                            // ── YouTube embed ─────────────────
+                            if let ytId = youtubeId {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    YouTubePlayerView(videoId: ytId) {
+                                        vm.videoFinished = true
+                                    }
+                                    .frame(height: 220)
+                                    .cornerRadius(10)
+                                    .clipped()
+
+                                    // Open in YouTube + hint
+                                    if let ytUrl = URL(string: "https://youtu.be/\(ytId)") {
+                                        Link(destination: ytUrl) {
+                                            HStack(spacing: 6) {
+                                                Image(systemName: "arrow.up.right.square")
+                                                    .font(.system(size: 12))
+                                                Text("Open in YouTube")
+                                                    .font(.system(size: 12, weight: .medium))
+                                            }
+                                            .foregroundColor(.mdzMuted)
+                                        }
+                                    }
+
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "info.circle").font(.system(size: 12))
+                                        Text("Tap fullscreen for best view. Rotate for landscape.")
+                                            .font(.system(size: 12))
+                                    }
+                                    .foregroundColor(.mdzMuted)
+
+                                    Button {
+                                        vm.videoFinished = true
+                                    } label: {
+                                        HStack(spacing: 6) {
+                                            Image(systemName: vm.videoFinished ? "checkmark.circle.fill" : "eye.fill")
+                                            Text(vm.videoFinished ? "Video watched" : "I've watched the video")
+                                                .font(.system(size: 13, weight: .semibold))
+                                        }
+                                        .foregroundColor(vm.videoFinished ? .mdzGreen : .mdzAmber)
+                                    }
+                                    .disabled(vm.videoFinished)
+                                }
+                            }
+
+                            // ── Text content (strip HTML comments) ───
+                            let cleanText = lesson.content?
+                                .replacingOccurrences(of: "<!--.*?-->", with: "", options: .regularExpression)
+                                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+                            if !cleanText.isEmpty && youtubeId == nil {
+                                Text(cleanText)
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.mdzText.opacity(0.9))
+                                    .lineSpacing(6)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+
+                            // ── Bottom sentinel ───────────────
+                            Color.clear
+                                .frame(height: 1)
+                                .onAppear { vm.hasScrolledToBottom = true }
+                        }
+                        .padding(20)
+                        .padding(.bottom, 120)
+                    }
+
+                    // ── Bottom bar ────────────────────────────
+                    VStack(spacing: 0) {
+                        Divider().background(Color.mdzBorder)
+                        VStack(spacing: 10) {
+
+                            Button {
+                                Task { await vm.markComplete(courseId: courseId) }
+                            } label: {
+                                HStack(spacing: 8) {
+                                    if vm.isMarkingComplete {
+                                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white)).scaleEffect(0.8)
+                                    } else {
+                                        Image(systemName: vm.completed ? "checkmark.circle.fill" : "checkmark.circle")
+                                    }
+                                    Text(completeButtonLabel(lesson: lesson, youtubeId: youtubeId))
+                                        .font(.system(size: 15, weight: .bold))
+                                }
+                                .foregroundColor(vm.canComplete || vm.completed ? .white : .mdzMuted)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 48)
+                                .background(
+                                    vm.completed ? Color.mdzGreen :
+                                    vm.canComplete ? Color.mdzAmber :
+                                    Color.mdzBorder.opacity(0.5)
+                                )
+                                .cornerRadius(10)
+                            }
+                            .disabled(!vm.canComplete && !vm.completed || vm.isMarkingComplete)
+
+                            // Prev / Next
+                            if !allLessons.isEmpty {
+                                HStack(spacing: 12) {
+                                    navButton(lesson: prevLesson, label: "Previous", icon: "chevron.left", isLeft: true)
+                                    navButton(lesson: nextLesson, label: "Next", icon: "chevron.right", isLeft: false)
+                                }
+                            }
+                        }
+                        .padding(16)
+                        .background(Color.mdzNavyMid)
+                    }
+                }
+            }
+        }
+        .navigationBarHidden(true)
+        .task { await vm.load() }
+        .alert("Error", isPresented: Binding(
+            get: { vm.error != nil },
+            set: { if !$0 { vm.error = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: { Text(vm.error ?? "") }
+    }
+
+    private func completeButtonLabel(lesson: LessonDetail, youtubeId: String?) -> String {
+        if vm.completed   { return "Completed" }
+        if vm.canComplete { return "Mark as Complete" }
+        if youtubeId != nil { return "Watch video to complete" }
+        return "Scroll to the end to complete"
+    }
+
+    @ViewBuilder
+    private func navButton(lesson: LMSLesson?, label: String, icon: String, isLeft: Bool) -> some View {
+        if let lesson = lesson {
+            NavigationLink(destination: LessonDetailView(
+                lessonId: lesson.id,
+                lessonTitle: lesson.title,
+                allLessons: allLessons,
+                courseId: courseId
+            )) {
+                HStack(spacing: 6) {
+                    if isLeft { Image(systemName: icon).font(.system(size: 12)) }
+                    Text(label).font(.system(size: 13, weight: .semibold))
+                    if !isLeft { Image(systemName: icon).font(.system(size: 12)) }
+                }
+                .foregroundColor(.mdzAmber)
+                .frame(maxWidth: .infinity)
+                .frame(height: 40)
+                .background(Color.mdzCard)
+                .cornerRadius(8)
+                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.mdzBorder, lineWidth: 1))
+            }
+        } else {
+            Color.clear.frame(maxWidth: .infinity, maxHeight: 40)
+        }
+    }
+}
