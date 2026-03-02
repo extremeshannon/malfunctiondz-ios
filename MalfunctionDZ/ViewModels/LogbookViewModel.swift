@@ -28,20 +28,27 @@ class LogbookViewModel: ObservableObject {
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
         do {
-            let (data, _) = try await URLSession.shared.data(for: req)
+            let (data, response) = try await URLSession.shared.data(for: req)
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+            // 404 or empty endpoint: treat as empty logbook (backend may not be implemented yet)
+            if statusCode == 404 {
+                entries = []
+                otherTrainingNotes = ""
+                return
+            }
             let decoded = try? JSONDecoder().decode(SkydiverLogbookResponse.self, from: data)
             if let resp = decoded, resp.ok {
                 entries = resp.entries ?? []
                 otherTrainingNotes = resp.otherTrainingNotes ?? ""
             } else {
-                // Backend may not exist yet; treat as empty
                 entries = []
                 otherTrainingNotes = ""
             }
         } catch {
-            self.error = error.localizedDescription
+            // Network or other error: show empty logbook so UI still works
             entries = []
             otherTrainingNotes = ""
+            self.error = error.localizedDescription
         }
     }
 }
