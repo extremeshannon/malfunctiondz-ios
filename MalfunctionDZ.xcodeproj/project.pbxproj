@@ -355,6 +355,7 @@
 				FB063D1A2F53F92300227638 /* PaxView.swift in Sources */,
 				FBD783602F5217F800F5EBCD /* GroundSchoolViewModel.swift in Sources */,
 				FB063D1E2F54AB9B00227638 /* AviationRootView.swift in Sources */,
+				FB367DD62F55000000FBAD05 /* AppDelegate.swift in Sources */,
 				FB367DCC2F52007600FBAD05 /* MalfunctionDZApp.swift in Sources */,
 				FB063D1C2F54AB7600227638 /* RoleHelpers.swift in Sources */,
 				FB063CF12F521B3A00227638 /* AircraftViewModel.swift in Sources */,
