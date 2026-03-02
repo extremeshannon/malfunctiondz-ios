@@ -40,6 +40,14 @@ extension User {
         hasAnyRole(["ops"]) || isAdminLevel
     }
 
+    var isManifestRole: Bool {
+        hasAnyRole(["manifest"]) || isAdminLevel
+    }
+
+    var isChiefPilotRole: Bool {
+        hasAnyRole(["chief_pilot", "chief pilot"]) || isAdminLevel
+    }
+
     // MARK: - Tab access
     var canAccessAviation: Bool {
         hasAnyRole(["admin", "master", "godmode", "pilot", "ops"])
@@ -57,6 +65,10 @@ extension User {
                     "pilot"])
         || ["student", "lms_student", "instructor", "lms_instructor", "pilot"]
             .contains(role?.lowercased() ?? "")
+    }
+
+    var canAccessManifest: Bool {
+        hasAnyRole(["admin", "master", "godmode", "manifest", "chief_pilot", "chief pilot", "ops"])
     }
 
     // MARK: - Feature-level access within tabs
@@ -88,12 +100,14 @@ extension User {
 
     // MARK: - Display label
     var roleDisplayLabel: String {
-        if isAdminLevel     { return "Admin" }
-        if isPilotRole      { return "Pilot" }
-        if isInstructorRole { return "Instructor" }
-        if isStudentRole    { return "Student" }
-        if isLoftRole       { return "Loft" }
-        if isOpsRole        { return "Ops" }
+        if isAdminLevel      { return "Admin" }
+        if isPilotRole       { return "Pilot" }
+        if isInstructorRole  { return "Instructor" }
+        if isStudentRole     { return "Student" }
+        if isLoftRole        { return "Loft" }
+        if isOpsRole         { return "Ops" }
+        if isManifestRole    { return "Manifest" }
+        if isChiefPilotRole  { return "Chief Pilot" }
         return role?.capitalized ?? "Member"
     }
 }
