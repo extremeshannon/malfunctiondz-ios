@@ -178,20 +178,20 @@ struct LogbookGridRow: View {
     var body: some View {
         VStack(spacing: 4) {
             HStack(spacing: 0) {
-                ForEach(Array(labels.enumerated()), id: \.offset) { i in
-                    Text(labels[i].uppercased())
+                ForEach(Array(labels.enumerated()), id: \.offset) { item in
+                    Text(item.element.uppercased())
                         .font(.system(size: 9, weight: .black))
                         .foregroundColor(.mdzMuted)
                         .tracking(0.5)
-                    if i < 3 { Spacer(minLength: 4) }
+                    if item.offset < 3 { Spacer(minLength: 4) }
                 }
             }
             HStack(spacing: 0) {
-                ForEach(Array(values.enumerated()), id: \.offset) { i in
-                    Text(values[i].isEmpty ? " " : values[i])
+                ForEach(Array(values.enumerated()), id: \.offset) { item in
+                    Text(item.element.isEmpty ? " " : item.element)
                         .font(.system(size: 13))
                         .foregroundColor(.mdzText)
-                    if i < 3 { Spacer(minLength: 4) }
+                    if item.offset < 3 { Spacer(minLength: 4) }
                 }
             }
             .padding(.vertical, 6)

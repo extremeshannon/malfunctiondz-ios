@@ -317,6 +317,8 @@ struct CourseDetailView: View {
             if let first = course.modules.first(where: { !$0.isComplete }) {
                 expandedModules.insert(first.id)
             }
+            // Refresh course data when returning to course detail (e.g. from a lesson)
+            Task { await vm.load() }
         }
     }
 }
@@ -400,7 +402,6 @@ struct ModuleSection: View {
                                         allLessons: module.lessons,
                                         courseId: courseId
                                     )
-                                    .onDisappear { Task { await vm.load() } }
                                 ) {
                                     LessonRow(lesson: lesson, courseId: courseId, vm: vm)
                                 }

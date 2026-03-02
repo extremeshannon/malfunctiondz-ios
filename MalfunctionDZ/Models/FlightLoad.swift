@@ -23,15 +23,6 @@ struct StringDouble: Codable {
 struct FlightLoad: Codable, Identifiable {
     let id: Int
     let flightId: Int
-    
-    enum CodingKeys: String, CodingKey {
-        case id, altitude, notes
-        case flightId   = "flight_id"
-        case loadNumber = "load_number"
-        case paxCount   = "pax_count"
-        case hobbsTime  = "hobbs_time"
-        case tachTime   = "tach_time"
-        case fuelAdded  = "fuel_added"
     let loadNumber: Int
     let paxCount: Int
     let altitude: Int?
@@ -40,6 +31,15 @@ struct FlightLoad: Codable, Identifiable {
     let fuelAdded: StringDouble?
     let oilAdded: StringDouble?
     let notes: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, altitude, notes
+        case flightId   = "flight_id"
+        case loadNumber = "load_number"
+        case paxCount   = "pax_count"
+        case hobbsTime  = "hobbs_time"
+        case tachTime   = "tach_time"
+        case fuelAdded  = "fuel_added"
         case oilAdded   = "oil_added"
     }
 }
