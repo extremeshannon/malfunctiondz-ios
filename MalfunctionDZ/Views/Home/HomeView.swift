@@ -52,6 +52,13 @@ struct HomeView: View {
                             .padding(.horizontal, hPad)
                             .padding(.bottom, 16)
 
+                        // ── Students awaiting check-offs (instructors) ──
+                        if isInstructor, let pending = vm.instructorData?.pendingSignoffs, pending > 0 {
+                            studentsAwaitingCard(pending: pending)
+                                .padding(.horizontal, hPad)
+                                .padding(.bottom, 16)
+                        }
+
                         // ── Pilot currency card ───────────────────────
                         if isPilot {
                             PilotCurrencyCard()
@@ -167,7 +174,10 @@ struct HomeView: View {
                 tabSelect.selected = 1
             }
         } else if isInstructor {
-            InstructorQuickWidget(data: vm.instructorData)
+            InstructorQuickWidget(
+                data: vm.instructorData,
+                onTapGroundSchool: (vm.instructorData?.pendingSignoffs ?? 0) > 0 ? { tabSelect.selected = 3 } : nil
+            )
         } else if isStudent {
             StudentProgressWidget(data: vm.studentData) {
                 tabSelect.selected = 3

@@ -179,8 +179,11 @@ class HomeViewModel: ObservableObject {
         let isPilot      = all.contains("pilot")
         let isInstructor = all.contains(where: { ["instructor","lms_instructor"].contains($0) })
         let isStudent    = all.contains(where: { ["student","lms_student"].contains($0) })
+        let isManifest   = all.contains("manifest")
+        let isChiefPilot = all.contains(where: { ["chief_pilot", "chief pilot"].contains($0) })
 
-        if isAdmin || isPilot { await loadMetar() }
+        // Weather for skydivers, students, Ops, manifest, chief pilot, instructors
+        if isAdmin || isPilot || isInstructor || isStudent || isManifest || isChiefPilot { await loadMetar() }
 
         if isAdmin {
             await withTaskGroup(of: Void.self) {
