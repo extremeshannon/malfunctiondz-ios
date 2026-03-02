@@ -247,6 +247,7 @@
 				FB063CED2F521B1A00227638 /* AircraftDetailViewModel.swift */,
 				FB063CF02F521B3A00227638 /* AircraftViewModel.swift */,
 				FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */,
+				FB063D232F54BB020227638 /* LogbookViewModel.swift */,
 				FB063CF22F521B4B00227638 /* HomeViewModel.swift */,
 				FB063CF42F521B5100227638 /* LoftViewModel.swift */,
 				FB063D012F52AD1E00227638 /* QuizViewModel.swift */,
@@ -327,6 +328,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				FB063D142F534F9E00227638 /* ModuleSignoffBlock.swift in Sources */,
+				FB063D202F54BB010227638 /* SkydiverLogbook.swift in Sources */,
+				FB063D212F54BB020227638 /* LogbookViewModel.swift in Sources */,
+				FB063D222F54BB030227638 /* LogbookView.swift in Sources */,
 				FBFAB35A2F54FF3E0046027A /* PilotCurrencyCard.swift in Sources */,
 				FB063CF52F521B5100227638 /* LoftViewModel.swift in Sources */,
 				FB063CFB2F52305C00227638 /* LoftRootView.swift in Sources */,
