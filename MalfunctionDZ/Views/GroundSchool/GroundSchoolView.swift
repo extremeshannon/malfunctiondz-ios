@@ -261,6 +261,59 @@ struct CourseDetailView: View {
                         }
                     }
 
+                    // Quizzes for this course
+                    if !(course.quizzes ?? []).isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("ASSESSMENTS")
+                                .font(.system(size: 10, weight: .black))
+                                .foregroundColor(.mdzMuted)
+                                .tracking(2)
+
+                            ForEach(course.quizzes ?? []) { quiz in
+                                QuizLaunchCard(
+                                    quizId: quiz.id,
+                                    title: quiz.title,
+                                    passPercentage: quiz.passPercentage,
+                                    questionCount: quiz.questionCount,
+                                    isUnlocked: quiz.isUnlocked,
+                                    lockReason: quiz.lockReason,
+                                    maxAttempts: quiz.maxAttempts,
+                                    attemptCount: quiz.attemptCount,
+                                    attemptsRemaining: quiz.attemptsRemaining,
+                                    lastAttempt: quiz.lastAttempt.map {
+                                        QuizLastAttempt(id: 0, score: $0.score, passed: $0.passed, date: $0.date)
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    // Logbook (skydiver logbook for this course)
+                    NavigationLink(destination: LogbookView(courseId: course.id, courseTitle: course.title)) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "book.closed.fill")
+                                .font(.system(size: 18))
+                                .foregroundColor(.mdzAmber)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Logbook")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundColor(.mdzText)
+                                Text("Jump entries & sign-offs")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.mdzMuted)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.mdzMuted)
+                        }
+                        .padding(14)
+                        .background(Color.mdzCard)
+                        .cornerRadius(12)
+                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+
                     // Modules
                     ForEach(course.modules) { module in
                         ModuleSection(
