@@ -258,6 +258,45 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - Students awaiting check-offs (instructor dashboard)
+    private func studentsAwaitingCard(pending: Int) -> some View {
+        Button {
+            tabSelect.selected = 3
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.mdzAmber.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "pencil.and.signature")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.mdzAmber)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("STUDENTS AWAITING CHECK-OFFS")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(.mdzAmber)
+                        .tracking(1.2)
+                    Text("\(pending) student\(pending == 1 ? "" : "s") awaiting sign-off")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.mdzText)
+                    Text("Tap to open Ground School")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.mdzMuted)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.mdzMuted)
+            }
+            .padding(16)
+            .background(Color.mdzCard)
+            .cornerRadius(14)
+            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzAmber.opacity(0.4), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Role helpers
     private var allRoles: [String] {
         ((auth.currentUser?.roles ?? []) + [auth.currentUser?.role ?? ""]).map { $0.lowercased() }
@@ -575,31 +614,42 @@ struct StudentProgressWidget: View {
 // MARK: - Instructor Quick Widget
 struct InstructorQuickWidget: View {
     let data: InstructorDashData?
+    var onTapGroundSchool: (() -> Void)? = nil
     @Environment(\.horizontalSizeClass) private var hSizeClass
     private var isWide: Bool { hSizeClass == .regular }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 6) {
-                Image(systemName: "person.2.fill")
-                    .font(.system(size: 11, weight: .black)).foregroundColor(.mdzGreen)
-                Text("INSTRUCTOR OVERVIEW")
-                    .font(.system(size: 11, weight: .black)).foregroundColor(.mdzGreen).tracking(1.5)
-            }
-            if let d = data {
-                HStack(spacing: 0) {
-                    PilotStatCell(label: "STUDENTS",  value: "\(d.activeStudents)").frame(maxWidth: .infinity)
-                    Divider().background(Color.mdzBorder)
-                    PilotStatCell(label: "SIGN-OFFS", value: "\(d.pendingSignoffs)").frame(maxWidth: .infinity)
+        Button(action: { onTapGroundSchool?() }) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 6) {
+                    Image(systemName: "person.2.fill")
+                        .font(.system(size: 11, weight: .black)).foregroundColor(.mdzGreen)
+                    Text("INSTRUCTOR OVERVIEW")
+                        .font(.system(size: 11, weight: .black)).foregroundColor(.mdzGreen).tracking(1.5)
+                    if (data?.pendingSignoffs ?? 0) > 0 {
+                        Spacer()
+                        Text("Tap to view")
+                            .font(.system(size: 10, weight: .semibold)).foregroundColor(.mdzAmber)
+                    }
                 }
-                .frame(height: isWide ? 72 : 56)
-            } else {
-                Text("Loading…").font(.system(size: 13)).foregroundColor(.mdzMuted)
+                if let d = data {
+                    HStack(spacing: 0) {
+                        PilotStatCell(label: "STUDENTS",  value: "\(d.activeStudents)").frame(maxWidth: .infinity)
+                        Divider().background(Color.mdzBorder)
+                        PilotStatCell(label: "SIGN-OFFS", value: "\(d.pendingSignoffs)").frame(maxWidth: .infinity)
+                    }
+                    .frame(height: isWide ? 72 : 56)
+                } else {
+                    Text("Loading…").font(.system(size: 13)).foregroundColor(.mdzMuted)
+                }
             }
+            .padding(isWide ? 20 : 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.mdzCard).cornerRadius(14)
+            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
         }
-        .padding(isWide ? 20 : 14)
-        .background(Color.mdzCard).cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .buttonStyle(.plain)
+        .disabled(onTapGroundSchool == nil)
     }
 }
 
