@@ -39,7 +39,7 @@ struct YouTubePlayerView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
-        config.allowsInlineMediaPlayback = false
+        config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
@@ -51,35 +51,22 @@ struct YouTubePlayerView: UIViewRepresentable {
     }
 
     func updateUIView(_ webView: WKWebView, context: Context) {
-        let html = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-        <style>
-          * { margin:0; padding:0; box-sizing:border-box; background:#000; }
-          body { background:#000; }
-          .video-container { position:relative; width:100%; padding-bottom:56.25%; }
-          iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:0; }
-        </style>
-        </head>
-        <body>
-        <div class="video-container">
-          <iframe src="https://www.youtube.com/embed/\(videoId)?playsinline=0&rel=0&enablejsapi=1"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-            allowfullscreen>
-          </iframe>
-        </div>
-        </body>
-        </html>
-        """
-        webView.loadHTMLString(html, baseURL: URL(string: "https://www.youtube.com"))
+        guard context.coordinator.lastLoadedVideoId != videoId else { return }
+        context.coordinator.lastLoadedVideoId = videoId
+        // Load the embed URL directly so the WebView's origin is YouTube — avoids
+        // error 152-4 ("video unavailable") caused by loadHTMLString referrer/baseURL issues.
+        let embedURLString = "https://www.youtube-nocookie.com/embed/\(videoId)?playsinline=1&rel=0"
+        guard let url = URL(string: embedURLString) else { return }
+        var request = URLRequest(url: url)
+        request.setValue("https://www.youtube.com", forHTTPHeaderField: "Referer")
+        webView.load(request)
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(onVideoFinished: onVideoFinished) }
 
     class Coordinator: NSObject, WKNavigationDelegate {
         var onVideoFinished: (() -> Void)?
+        var lastLoadedVideoId: String?
         init(onVideoFinished: (() -> Void)?) { self.onVideoFinished = onVideoFinished }
     }
 }

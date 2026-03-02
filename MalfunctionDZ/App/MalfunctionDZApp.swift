@@ -40,13 +40,14 @@ struct MDZRootView: View {
     @EnvironmentObject private var tabSelect: TabSelection
 
     var body: some View {
-        if hSizeClass == .regular {
-            // iPad — sidebar + detail
-            MDZSplitView()
-        } else {
-            // iPhone — bottom tab bar
-            MDZTabView()
+        Group {
+            if hSizeClass == .regular {
+                MDZSplitView()
+            } else {
+                MDZTabView()
+            }
         }
+        .task { await config.loadConfig() }
     }
 }
 
