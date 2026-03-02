@@ -390,7 +390,7 @@ struct LessonDetailView: View {
         }
         .navigationBarHidden(true)
         .task { await vm.load() }
-        .sheet(item: $safariVideoURL) { item in
+        .sheet(item: $safariVideoURL, onDismiss: { safariVideoURL = nil }) { item in
             SafariVideoView(url: item.url)
         }
         .alert("Error", isPresented: Binding(
