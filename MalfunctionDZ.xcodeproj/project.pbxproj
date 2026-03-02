@@ -26,6 +26,9 @@
 		FB063D102F52D10B00227638 /* LessonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0F2F52D10B00227638 /* LessonDetailView.swift */; };
 		FB063D122F52D4EC00227638 /* QuizLaunchCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D112F52D4EC00227638 /* QuizLaunchCard.swift */; };
 		FB063D142F534F9E00227638 /* ModuleSignoffBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D132F534F9E00227638 /* ModuleSignoffBlock.swift */; };
+		FB063D202F54BB010227638 /* SkydiverLogbook.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */; };
+		FB063D212F54BB020227638 /* LogbookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D232F54BB020227638 /* LogbookViewModel.swift */; };
+		FB063D222F54BB030227638 /* LogbookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D242F54BB030227638 /* LogbookView.swift */; };
 		FB063D162F53F69A00227638 /* FlightLoad.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D152F53F69A00227638 /* FlightLoad.swift */; };
 		FB063D182F53F6CF00227638 /* PaxViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D172F53F6CF00227638 /* PaxViewModel.swift */; };
 		FB063D1A2F53F92300227638 /* PaxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D192F53F92300227638 /* PaxView.swift */; };
@@ -61,6 +64,9 @@
 		FB063D0F2F52D10B00227638 /* LessonDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonDetailView.swift; sourceTree = "<group>"; };
 		FB063D112F52D4EC00227638 /* QuizLaunchCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizLaunchCard.swift; sourceTree = "<group>"; };
 		FB063D132F534F9E00227638 /* ModuleSignoffBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleSignoffBlock.swift; sourceTree = "<group>"; };
+		FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkydiverLogbook.swift; sourceTree = "<group>"; };
+		FB063D232F54BB020227638 /* LogbookViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogbookViewModel.swift; sourceTree = "<group>"; };
+		FB063D242F54BB030227638 /* LogbookView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogbookView.swift; sourceTree = "<group>"; };
 		FB063D152F53F69A00227638 /* FlightLoad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightLoad.swift; sourceTree = "<group>"; };
 		FB063D172F53F6CF00227638 /* PaxViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaxViewModel.swift; sourceTree = "<group>"; };
 		FB063D192F53F92300227638 /* PaxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaxView.swift; sourceTree = "<group>"; };
@@ -93,6 +99,7 @@
 			children = (
 				FB063CE32F52191600227638 /* GroundSchoolView.swift */,
 				FB063D0F2F52D10B00227638 /* LessonDetailView.swift */,
+				FB063D242F54BB030227638 /* LogbookView.swift */,
 				FB063D112F52D4EC00227638 /* QuizLaunchCard.swift */,
 				FB063D132F534F9E00227638 /* ModuleSignoffBlock.swift */,
 			);
@@ -189,6 +196,7 @@
 				FB367DD42F52169D00FBAD05 /* LMS.swift */,
 				FB063CFF2F52ACE600227638 /* Quiz.swift */,
 				FB063D152F53F69A00227638 /* FlightLoad.swift */,
+				FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
