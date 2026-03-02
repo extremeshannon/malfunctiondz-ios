@@ -3,6 +3,7 @@
 //          gate for mark complete, and previous/next lesson navigation.
 import SwiftUI
 import WebKit
+import SafariServices
 
 // MARK: - Models
 
@@ -69,6 +70,25 @@ struct YouTubePlayerView: UIViewRepresentable {
         var lastLoadedVideoId: String?
         init(onVideoFinished: (() -> Void)?) { self.onVideoFinished = onVideoFinished }
     }
+}
+
+// MARK: - Safari full-screen player (reliable playback; avoids 152-4 in WebView)
+struct IdentifiableURL: Identifiable {
+    let id = UUID()
+    let url: URL
+}
+
+struct SafariVideoView: UIViewControllerRepresentable {
+    let url: URL
+
+    func makeUIViewController(context: Context) -> SFSafariViewController {
+        let config = SFSafariViewController.Configuration()
+        config.entersReaderIfAvailable = false
+        config.barCollapsingEnabled = true
+        return SFSafariViewController(url: url, configuration: config)
+    }
+
+    func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
 }
 
 // MARK: - Helpers
@@ -160,6 +180,7 @@ struct LessonDetailView: View {
 
     @StateObject private var vm: LessonDetailViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var safariVideoURL: IdentifiableURL?
 
     init(lessonId: Int, lessonTitle: String, allLessons: [LMSLesson] = [], courseId: Int = 0) {
         self.lessonId    = lessonId
