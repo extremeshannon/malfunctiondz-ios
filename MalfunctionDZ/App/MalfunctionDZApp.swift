@@ -1,10 +1,12 @@
 // File: ASC/App/MalfunctionDZApp.swift
 // iPad: Uses NavigationSplitView sidebar+detail on regular width,
 //       falls back to TabView on compact (iPhone) automatically.
+//       Supports all devices (iPhone + iPad); operations can be run from iPad.
 import SwiftUI
 
 @main
 struct MalfunctionDZApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var auth      = AuthManager.shared
     @StateObject private var config    = AppConfig()
     @StateObject private var tabSelect = TabSelection.shared

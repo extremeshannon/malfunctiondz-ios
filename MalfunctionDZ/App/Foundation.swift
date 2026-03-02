@@ -329,6 +329,7 @@ actor APIClient {
             sessionID = token
             print("✅ SESSION ID SET: \(sessionID.prefix(20))")
             await refreshCurrentUser()
+            PushRegistration.shared.requestPermissionAndRegister()
         } catch {
             errorMessage = "Network error: \(error.localizedDescription)"
         }
@@ -365,6 +366,7 @@ actor APIClient {
             currentUser = u
             isAuthenticated = true
             await autoEnroll(token: token)
+            PushRegistration.shared.requestPermissionAndRegister()
         } else {
             print("❌ REFRESH FAILED: logging out")
             logout()
