@@ -252,6 +252,36 @@ struct LessonDetailView: View {
                             // ── YouTube embed ─────────────────
                             if let ytId = youtubeId {
                                 VStack(alignment: .leading, spacing: 8) {
+                                    // Primary: play in Safari (always works; avoids 152-4 in WebView)
+                                    Button {
+                                        if let url = URL(string: "https://www.youtube.com/watch?v=\(ytId)") {
+                                            safariVideoURL = IdentifiableURL(url: url)
+                                        }
+                                    } label: {
+                                        HStack(spacing: 10) {
+                                            Image(systemName: "play.rectangle.fill")
+                                                .font(.system(size: 24))
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text("Play video")
+                                                    .font(.system(size: 16, weight: .bold))
+                                                    .foregroundColor(.mdzText)
+                                                Text("Opens in Safari for reliable playback")
+                                                    .font(.system(size: 11))
+                                                    .foregroundColor(.mdzMuted)
+                                            }
+                                            Spacer()
+                                            Image(systemName: "arrow.up.right")
+                                                .font(.system(size: 14, weight: .semibold))
+                                                .foregroundColor(.mdzAmber)
+                                        }
+                                        .padding(14)
+                                        .background(Color.mdzCard)
+                                        .cornerRadius(12)
+                                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                                    }
+                                    .buttonStyle(.plain)
+
+                                    // In-app embed (may show "video unavailable" on some devices)
                                     YouTubePlayerView(videoId: ytId) {
                                         vm.videoFinished = true
                                     }
@@ -259,13 +289,13 @@ struct LessonDetailView: View {
                                     .cornerRadius(10)
                                     .clipped()
 
-                                    // Open in YouTube + hint
+                                    // Open in YouTube app
                                     if let ytUrl = URL(string: "https://youtu.be/\(ytId)") {
                                         Link(destination: ytUrl) {
                                             HStack(spacing: 6) {
                                                 Image(systemName: "arrow.up.right.square")
                                                     .font(.system(size: 12))
-                                                Text("Open in YouTube")
+                                                Text("Open in YouTube app")
                                                     .font(.system(size: 12, weight: .medium))
                                             }
                                             .foregroundColor(.mdzMuted)
@@ -360,6 +390,9 @@ struct LessonDetailView: View {
         }
         .navigationBarHidden(true)
         .task { await vm.load() }
+        .sheet(item: $safariVideoURL) { item in
+            SafariVideoView(url: item.url)
+        }
         .alert("Error", isPresented: Binding(
             get: { vm.error != nil },
             set: { if !$0 { vm.error = nil } }
