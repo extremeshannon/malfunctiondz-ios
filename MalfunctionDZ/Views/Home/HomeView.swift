@@ -257,11 +257,16 @@ struct HomeView: View {
     private var isInstructor: Bool { allRoles.contains(where: { ["instructor","lms_instructor"].contains($0) }) }
     private var isStudent:    Bool { allRoles.contains(where: { ["student","lms_student"].contains($0) }) }
 
-    private var showMetar:        Bool { isAdmin || isPilot }
+    // Weather for skydivers, students, Ops, manifest, chief pilot, instructors (and admin/pilot)
+    private var showMetar:        Bool {
+        isAdmin || isPilot || isInstructor || isStudent || isOps
+        || (auth.currentUser?.isManifestRole == true)
+        || (auth.currentUser?.isChiefPilotRole == true)
+    }
     private var showAviation:     Bool { auth.currentUser?.canAccessAviation    == true }
     private var showLoft:         Bool { auth.currentUser?.canAccessLoft        == true }
     private var showGroundSchool: Bool { auth.currentUser?.canAccessGroundSchool == true }
-    private var showManifest:     Bool { isAdmin }
+    private var showManifest:     Bool { auth.currentUser?.canAccessManifest == true }
 
     // MARK: - Helpers
     private var greeting: String {

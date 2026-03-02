@@ -188,6 +188,8 @@ struct User: Codable, Identifiable {
         if isPilot { return "Pilot" }
         if isRigger { return "Rigger" }
         if isInspector { return "Inspector" }
+        if allRoles.contains("manifest") { return "Manifest" }
+        if allRoles.contains(where: { ["chief_pilot", "chief pilot"].contains($0) }) { return "Chief Pilot" }
         return role?.capitalized ?? "Member"
     }
 }
