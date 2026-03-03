@@ -26,15 +26,15 @@
 		FB063D102F52D10B00227638 /* LessonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0F2F52D10B00227638 /* LessonDetailView.swift */; };
 		FB063D122F52D4EC00227638 /* QuizLaunchCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D112F52D4EC00227638 /* QuizLaunchCard.swift */; };
 		FB063D142F534F9E00227638 /* ModuleSignoffBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D132F534F9E00227638 /* ModuleSignoffBlock.swift */; };
-		FB063D202F54BB010227638 /* SkydiverLogbook.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */; };
-		FB063D212F54BB020227638 /* LogbookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D232F54BB020227638 /* LogbookViewModel.swift */; };
-		FB063D222F54BB030227638 /* LogbookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D242F54BB030227638 /* LogbookView.swift */; };
-		FB063D262F54BB040227638 /* LogbookRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D252F54BB040227638 /* LogbookRootView.swift */; };
 		FB063D162F53F69A00227638 /* FlightLoad.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D152F53F69A00227638 /* FlightLoad.swift */; };
 		FB063D182F53F6CF00227638 /* PaxViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D172F53F6CF00227638 /* PaxViewModel.swift */; };
 		FB063D1A2F53F92300227638 /* PaxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D192F53F92300227638 /* PaxView.swift */; };
 		FB063D1C2F54AB7600227638 /* RoleHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1B2F54AB7600227638 /* RoleHelpers.swift */; };
 		FB063D1E2F54AB9B00227638 /* AviationRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1D2F54AB9B00227638 /* AviationRootView.swift */; };
+		FB063D202F54BB010227638 /* SkydiverLogbook.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */; };
+		FB063D212F54BB020227638 /* LogbookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D232F54BB020227638 /* LogbookViewModel.swift */; };
+		FB063D222F54BB030227638 /* LogbookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D242F54BB030227638 /* LogbookView.swift */; };
+		FB063D262F54BB040227638 /* LogbookRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D252F54BB040227638 /* LogbookRootView.swift */; };
 		FB367C542F510E6100FBAD05 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
 		FB367C572F510E6100FBAD05 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */; };
 		FB367DCC2F52007600FBAD05 /* MalfunctionDZApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */; };
@@ -65,15 +65,15 @@
 		FB063D0F2F52D10B00227638 /* LessonDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonDetailView.swift; sourceTree = "<group>"; };
 		FB063D112F52D4EC00227638 /* QuizLaunchCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizLaunchCard.swift; sourceTree = "<group>"; };
 		FB063D132F534F9E00227638 /* ModuleSignoffBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleSignoffBlock.swift; sourceTree = "<group>"; };
-		FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkydiverLogbook.swift; sourceTree = "<group>"; };
-		FB063D232F54BB020227638 /* LogbookViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogbookViewModel.swift; sourceTree = "<group>"; };
-		FB063D242F54BB030227638 /* LogbookView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogbookView.swift; sourceTree = "<group>"; };
-		FB063D252F54BB040227638 /* LogbookRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogbookRootView.swift; sourceTree = "<group>"; };
 		FB063D152F53F69A00227638 /* FlightLoad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightLoad.swift; sourceTree = "<group>"; };
 		FB063D172F53F6CF00227638 /* PaxViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaxViewModel.swift; sourceTree = "<group>"; };
 		FB063D192F53F92300227638 /* PaxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaxView.swift; sourceTree = "<group>"; };
 		FB063D1B2F54AB7600227638 /* RoleHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoleHelpers.swift; sourceTree = "<group>"; };
 		FB063D1D2F54AB9B00227638 /* AviationRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AviationRootView.swift; sourceTree = "<group>"; };
+		FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkydiverLogbook.swift; sourceTree = "<group>"; };
+		FB063D232F54BB020227638 /* LogbookViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogbookViewModel.swift; sourceTree = "<group>"; };
+		FB063D242F54BB030227638 /* LogbookView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogbookView.swift; sourceTree = "<group>"; };
+		FB063D252F54BB040227638 /* LogbookRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogbookRootView.swift; sourceTree = "<group>"; };
 		FB367C4C2F510E6000FBAD05 /* MalfunctionDZ.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MalfunctionDZ.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FB367C532F510E6100FBAD05 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -152,6 +152,14 @@
 			path = Quiz;
 			sourceTree = "<group>";
 		};
+		FB063D272F54BB050227638 /* Logbook */ = {
+			isa = PBXGroup;
+			children = (
+				FB063D252F54BB040227638 /* LogbookRootView.swift */,
+			);
+			path = Logbook;
+			sourceTree = "<group>";
+		};
 		FB367C432F510E6000FBAD05 = {
 			isa = PBXGroup;
 			children = (
@@ -201,14 +209,6 @@
 				FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */,
 			);
 			path = Models;
-			sourceTree = "<group>";
-		};
-		FB063D272F54BB050227638 /* Logbook */ = {
-			isa = PBXGroup;
-			children = (
-				FB063D252F54BB040227638 /* LogbookRootView.swift */,
-			);
-			path = Logbook;
 			sourceTree = "<group>";
 		};
 		FB367DC42F51FD4800FBAD05 /* Views */ = {
@@ -504,7 +504,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
@@ -537,7 +537,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;

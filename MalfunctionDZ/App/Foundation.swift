@@ -4,6 +4,7 @@
 
 import SwiftUI
 import Security
+import UserNotifications
 
 // MARK: - Server URL
 let kServerURL = "https://malfunctiondz.com"
@@ -378,6 +379,36 @@ actor APIClient {
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        _ = try? await URLSession.shared.data(for: req)
+    }
+}
+
+// MARK: - Push registration (sends token to backend)
+
+@MainActor
+final class PushRegistration: ObservableObject {
+    static let shared = PushRegistration()
+
+    func requestPermissionAndRegister() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+            guard granted else { return }
+            DispatchQueue.main.async {
+                UIApplication.shared.registerForRemoteNotifications()
+            }
+        }
+    }
+
+    func sendTokenToBackend(_ deviceToken: String) async {
+        guard let token = KeychainHelper.readToken(), !token.isEmpty else { return }
+        guard let url = URL(string: "\(kServerURL)/api/push/register.php") else { return }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try? JSONEncoder().encode([
+            "device_token": deviceToken,
+            "platform": "ios"
+        ])
         _ = try? await URLSession.shared.data(for: req)
     }
 }
