@@ -6,6 +6,7 @@ struct QuizAttemptView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showQuestionList = false
     @State private var showSubmitConfirm = false
+    @State private var enlargedQuizImageURL: URL?
 
     init(quizId: Int) {
         _vm = StateObject(wrappedValue: QuizViewModel(quizId: quizId))
@@ -82,6 +83,14 @@ struct QuizAttemptView: View {
         )) {
             Button("OK", role: .cancel) {}
         } message: { Text(vm.error ?? "") }
+        .fullScreenCover(isPresented: Binding(
+            get: { enlargedQuizImageURL != nil },
+            set: { if !$0 { enlargedQuizImageURL = nil } }
+        )) {
+            if let url = enlargedQuizImageURL {
+                EnlargeableImageSheet(imageURL: url, onDismiss: { enlargedQuizImageURL = nil })
+            }
+        }
     }
 
     // MARK: - Top Bar
@@ -134,6 +143,33 @@ struct QuizAttemptView: View {
     private func questionCard(question: QuizQuestion) -> some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 16) {
+
+                // Question image (tap to enlarge)
+                if let path = question.imagePath, !path.isEmpty,
+                   let url = URL(string: path.hasPrefix("http") ? path : "\(kServerURL)\(path.hasPrefix("/") ? "" : "/")\(path)") {
+                    Button {
+                        enlargedQuizImageURL = url
+                    } label: {
+                        ZStack(alignment: .bottomTrailing) {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .success(let img): img.resizable().scaledToFit()
+                                case .failure: Image(systemName: "photo").font(.largeTitle).foregroundColor(.mdzMuted)
+                                default: ProgressView().tint(.mdzAmber)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: 200)
+                            .clipped()
+                            .cornerRadius(10)
+                            Text("Tap to enlarge")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.mdzMuted)
+                                .padding(6)
+                        }
+                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                }
 
                 // Question header
                 HStack(alignment: .top) {

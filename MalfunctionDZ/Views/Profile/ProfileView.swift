@@ -86,7 +86,15 @@ struct ProfileView: View {
                         Text(config.poweredBy)
                             .font(.system(size: 10, weight: .medium))
                             .foregroundColor(.mdzMuted).tracking(1)
-                            .padding(.bottom, 8)
+
+                        if let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+                            Text("Build \(build)")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.mdzMuted.opacity(0.8))
+                                .padding(.top, 4)
+                        }
+
+                        Spacer().frame(height: 8)
                     }
                     .padding(isWide ? 32 : 16)
                     // Cap width on iPad so content doesn't stretch across the full 12.9"

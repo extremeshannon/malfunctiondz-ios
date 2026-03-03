@@ -91,6 +91,112 @@ struct SafariVideoView: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
 }
 
+// MARK: - HTML Lesson Content (with clickable images)
+
+struct HTMLLessonWebView: UIViewRepresentable {
+    let html: String
+    var onImageTapped: ((URL) -> Void)?
+    var onContentHeightChanged: ((CGFloat) -> Void)?
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onImageTapped: onImageTapped, onContentHeightChanged: onContentHeightChanged)
+    }
+
+    func makeUIView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        config.userContentController.add(context.coordinator, name: "imageTapped")
+        let wv = WKWebView(frame: .zero, configuration: config)
+        wv.scrollView.backgroundColor = .clear
+        wv.scrollView.isScrollEnabled = false
+        wv.backgroundColor = .clear
+        wv.isOpaque = false
+        wv.navigationDelegate = context.coordinator
+
+        let baseURL = URL(string: "\(kServerURL)/")
+        let body = html.trimmingCharacters(in: .whitespacesAndNewlines)
+        let hasHtml = body.contains("<") && body.contains(">")
+        let wrappedHtml = hasHtml ? body : "<p>\(body.replacingOccurrences(of: "\n", with: "<br>"))</p>"
+
+        let fullHtml = """
+        <!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+        body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:16px;line-height:1.55;color:rgba(232,237,245,0.95);background:transparent;margin:0;padding:0;}
+        h1,h2,h3{color:rgba(232,237,245,0.98);margin:0.8em 0 0.4em;}
+        p,ul,ol{margin:0.6em 0;}
+        ul,ol{padding-left:1.5em;}
+        img{max-width:100%;height:auto;border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.2);}
+        img:active{opacity:0.9;}
+        a{color:#F39C12;}
+        </style></head><body>\(wrappedHtml)
+        <script>
+        document.querySelectorAll('img').forEach(function(img){
+          img.onclick=function(){window.webkit.messageHandlers.imageTapped.postMessage(img.src);};
+        });
+        </script></body></html>
+        """
+        wv.loadHTMLString(fullHtml, baseURL: baseURL)
+        return wv
+    }
+
+    func updateUIView(_ wv: WKWebView, context: Context) {
+        if context.coordinator.lastHtml != html {
+            context.coordinator.lastHtml = html
+            let body = html.trimmingCharacters(in: .whitespacesAndNewlines)
+            let hasHtml = body.contains("<") && body.contains(">")
+            let wrappedHtml = hasHtml ? body : "<p>\(body.replacingOccurrences(of: "\n", with: "<br>"))</p>"
+            let fullHtml = """
+            <!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>body{font-family:-apple-system;font-size:16px;line-height:1.55;color:rgba(232,237,245,0.95);background:transparent;}img{max-width:100%;cursor:pointer;}</style></head><body>\(wrappedHtml)
+            <script>document.querySelectorAll('img').forEach(function(img){img.onclick=function(){window.webkit.messageHandlers.imageTapped.postMessage(img.src);};});</script></body></html>
+            """
+            wv.loadHTMLString(fullHtml, baseURL: URL(string: "\(kServerURL)/"))
+        }
+    }
+
+    class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
+        var onImageTapped: ((URL) -> Void)?
+        var onContentHeightChanged: ((CGFloat) -> Void)?
+        var lastHtml: String = ""
+
+        init(onImageTapped: ((URL) -> Void)?, onContentHeightChanged: ((CGFloat) -> Void)?) {
+            self.onImageTapped = onImageTapped
+            self.onContentHeightChanged = onContentHeightChanged
+        }
+
+        func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+            guard message.name == "imageTapped", let src = message.body as? String, let url = URL(string: src) else { return }
+            onImageTapped?(url)
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            webView.evaluateJavaScript("Math.max(document.body.scrollHeight, document.body.offsetHeight)") { val, _ in
+                guard let h = val as? CGFloat, h > 0 else { return }
+                DispatchQueue.main.async { self.onContentHeightChanged?(h) }
+            }
+        }
+    }
+}
+
+// MARK: - Fullscreen image (tap to enlarge)
+struct EnlargeableImageSheet: View {
+    let imageURL: URL
+    let onDismiss: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            AsyncImage(url: imageURL) { phase in
+                switch phase {
+                case .success(let img): img.resizable().scaledToFit()
+                case .failure: Text("Could not load image").foregroundColor(.white)
+                default: ProgressView().tint(.white)
+                }
+            }
+        }
+        .onTapGesture { onDismiss() }
+    }
+}
+
 // MARK: - Helpers
 
 func extractYouTubeId(from text: String) -> String? {
@@ -181,6 +287,8 @@ struct LessonDetailView: View {
     @StateObject private var vm: LessonDetailViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var safariVideoURL: IdentifiableURL?
+    @State private var enlargedImageURL: URL?
+    @State private var htmlContentHeight: CGFloat = 300
 
     init(lessonId: Int, lessonTitle: String, allLessons: [LMSLesson] = [], courseId: Int = 0) {
         self.lessonId    = lessonId
@@ -323,17 +431,18 @@ struct LessonDetailView: View {
                                 }
                             }
 
-                            // ── Text content (strip HTML comments) ───
+                            // ── HTML content (strip comments; images tappable) ───
                             let cleanText = lesson.content?
                                 .replacingOccurrences(of: "<!--.*?-->", with: "", options: .regularExpression)
                                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
-                            if !cleanText.isEmpty && youtubeId == nil {
-                                Text(cleanText)
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.mdzText.opacity(0.9))
-                                    .lineSpacing(6)
-                                    .fixedSize(horizontal: false, vertical: true)
+                            if !cleanText.isEmpty {
+                                HTMLLessonWebView(
+                                    html: cleanText,
+                                    onImageTapped: { url in enlargedImageURL = url },
+                                    onContentHeightChanged: { htmlContentHeight = max(200, $0) }
+                                )
+                                .frame(height: htmlContentHeight)
                             }
 
                             // ── Bottom sentinel ───────────────
@@ -392,6 +501,14 @@ struct LessonDetailView: View {
         .task { await vm.load() }
         .sheet(item: $safariVideoURL, onDismiss: { safariVideoURL = nil }) { item in
             SafariVideoView(url: item.url)
+        }
+        .fullScreenCover(isPresented: Binding(
+            get: { enlargedImageURL != nil },
+            set: { if !$0 { enlargedImageURL = nil } }
+        )) {
+            if let url = enlargedImageURL {
+                EnlargeableImageSheet(imageURL: url, onDismiss: { enlargedImageURL = nil })
+            }
         }
         .alert("Error", isPresented: Binding(
             get: { vm.error != nil },
