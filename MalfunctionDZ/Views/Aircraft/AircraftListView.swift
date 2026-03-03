@@ -1,9 +1,11 @@
 // File: ASC/Views/Aircraft/AircraftListView.swift
+// iPad: NavigationSplitView (list | detail). iPhone: NavigationStack.
 import SwiftUI
 
 struct AircraftListView: View {
     @StateObject private var vm = AircraftViewModel()
     @EnvironmentObject private var config: AppConfig
+    @Environment(\.horizontalSizeClass) private var hSizeClass
 
     private var dateString: String {
         let f = DateFormatter()
@@ -12,12 +14,138 @@ struct AircraftListView: View {
     }
 
     var body: some View {
-        NavigationView {
+        Group {
+            if hSizeClass == .regular {
+                AircraftListSplitView(vm: vm, dateString: dateString)
+            } else {
+                AircraftListStackView(vm: vm, dateString: dateString)
+            }
+        }
+        .task { await vm.loadAll() }
+        .refreshable { await vm.loadAll() }
+        .alert("Error", isPresented: Binding(
+            get: { vm.error != nil },
+            set: { if !$0 { vm.error = nil } }
+        )) {
+            Button("OK", role: .cancel) { vm.error = nil }
+        } message: { Text(vm.error ?? "") }
+    }
+}
+
+// MARK: - iPad: Split (aircraft list | detail)
+struct AircraftListSplitView: View {
+    @ObservedObject var vm: AircraftViewModel
+    let dateString: String
+    @EnvironmentObject private var config: AppConfig
+    @State private var selectedAircraft: Aircraft?
+
+    var body: some View {
+        NavigationSplitView {
             ZStack {
                 Color.mdzBackground.ignoresSafeArea()
                 VStack(spacing: 0) {
+                    aircraftHeader
+                    if vm.isLoading && vm.aircraft.isEmpty {
+                        Spacer()
+                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzBlue)).scaleEffect(1.4)
+                        Spacer()
+                    } else if vm.aircraft.isEmpty {
+                        Spacer()
+                        EmptyStateView(icon: "airplane", title: "No Aircraft", subtitle: "No aircraft found in the fleet.")
+                        Spacer()
+                    } else {
+                        List(selection: $selectedAircraft) {
+                            ForEach(vm.aircraft) { aircraft in
+                                AircraftListRow(aircraft: aircraft)
+                                    .tag(aircraft)
+                                    .listRowBackground(Color.mdzCard)
+                            }
+                        }
+                        .listStyle(.sidebar)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.mdzBackground)
+                    }
+                }
+            }
+            .navigationTitle(config.moduleAviation)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .onAppear { if selectedAircraft == nil, let first = vm.aircraft.first { selectedAircraft = first } }
+            .onChange(of: vm.aircraft.count) { _, _ in
+                if selectedAircraft == nil, let first = vm.aircraft.first { selectedAircraft = first }
+            }
+        } detail: {
+            if let aircraft = selectedAircraft {
+                AircraftDetailView(aircraft: aircraft)
+            } else {
+                ZStack {
+                    Color.mdzBackground.ignoresSafeArea()
+                    VStack(spacing: 12) {
+                        Image(systemName: "airplane")
+                            .font(.system(size: 48))
+                            .foregroundColor(.mdzMuted.opacity(0.5))
+                        Text("Select an aircraft")
+                            .font(.headline)
+                            .foregroundColor(.mdzMuted)
+                    }
+                }
+            }
+        }
+    }
 
-                    // ── Header ──────────────────────────────
+    private var aircraftHeader: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Image(systemName: "airplane")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.mdzBlue)
+                Text(config.moduleAviation.uppercased())
+                    .font(.system(size: 11, weight: .black))
+                    .foregroundColor(.mdzBlue)
+                    .tracking(2)
+            }
+            Text(dateString)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.mdzMuted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(Color.mdzNavyMid)
+    }
+}
+
+struct AircraftListRow: View {
+    let aircraft: Aircraft
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(aircraft.tailNumber)
+                    .font(.system(size: 16, weight: .bold, design: .monospaced))
+                    .foregroundColor(.mdzText)
+                Text(aircraft.model)
+                    .font(.system(size: 12))
+                    .foregroundColor(.mdzMuted)
+            }
+            Spacer()
+            StatusPill(label: aircraft.status.uppercased(), color: aircraft.statusColor)
+        }
+        .padding(.vertical, 6)
+    }
+}
+
+// MARK: - iPhone: Stack (original behavior)
+struct AircraftListStackView: View {
+    @ObservedObject var vm: AircraftViewModel
+    let dateString: String
+    @EnvironmentObject private var config: AppConfig
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.mdzBackground.ignoresSafeArea()
+                VStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Image(systemName: "airplane")
@@ -45,9 +173,7 @@ struct AircraftListView: View {
                         Spacer()
                     } else if vm.aircraft.isEmpty {
                         Spacer()
-                        EmptyStateView(icon: "airplane",
-                                       title: "No Aircraft",
-                                       subtitle: "No aircraft found in the fleet.")
+                        EmptyStateView(icon: "airplane", title: "No Aircraft", subtitle: "No aircraft found in the fleet.")
                         Spacer()
                     } else {
                         ScrollView(showsIndicators: false) {
@@ -61,18 +187,10 @@ struct AircraftListView: View {
                             }
                             .padding(16)
                         }
-                        .refreshable { await vm.loadAll() }
                     }
                 }
             }
             .navigationBarHidden(true)
-            .task { await vm.loadAll() }
-            .alert("Error", isPresented: Binding(
-                get: { vm.error != nil },
-                set: { if !$0 { vm.error = nil } }
-            )) {
-                Button("OK", role: .cancel) { vm.error = nil }
-            } message: { Text(vm.error ?? "") }
         }
     }
 }
@@ -117,17 +235,14 @@ struct AircraftCard: View {
                 }
             }
 
-            // Alert badges
-            if aircraft.hasAlerts {
+            // Alert badges (squawks already in stats row above — no duplicate)
+            if aircraft.overdue > 0 || aircraft.dueSoon > 0 {
                 HStack(spacing: 6) {
                     if aircraft.overdue > 0 {
                         AlertBadge(label: "\(aircraft.overdue) OVERDUE", color: .mdzDanger)
                     }
                     if aircraft.dueSoon > 0 {
                         AlertBadge(label: "\(aircraft.dueSoon) DUE SOON", color: .mdzAmber)
-                    }
-                    if aircraft.openSquawks > 0 {
-                        AlertBadge(label: "\(aircraft.openSquawks) SQUAWKS", color: .mdzAmber)
                     }
                 }
             }

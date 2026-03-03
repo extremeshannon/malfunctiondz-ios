@@ -2,7 +2,9 @@
 import Foundation
 import SwiftUI
 
-struct LoftRig: Codable, Identifiable {
+struct LoftRig: Codable, Identifiable, Hashable {
+    static func == (lhs: LoftRig, rhs: LoftRig) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
     let id: Int
     let label: String
     let manufacturer: String?

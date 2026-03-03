@@ -246,7 +246,7 @@ class HomeViewModel: ObservableObject {
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try? JSONSerialization.data(withJSONObject: [
-            "start_freefall_time": value.isEmpty ? NSNull() : value,
+            "start_freefall_time": (value.isEmpty ? NSNull() : value) as Any,
         ])
         guard let (data, _) = try? await URLSession.shared.data(for: req),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -264,7 +264,7 @@ class HomeViewModel: ObservableObject {
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try? JSONSerialization.data(withJSONObject: [
-            "home_dropzone": value.isEmpty ? NSNull() : value,
+            "home_dropzone": (value.isEmpty ? NSNull() : value) as Any,
         ])
         guard let (data, _) = try? await URLSession.shared.data(for: req),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],

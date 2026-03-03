@@ -73,12 +73,12 @@ struct MDZSplitView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(config.dzName.uppercased())
                             .font(.system(size: 13, weight: .black))
-                            .foregroundColor(.mdzNavy)
+                            .foregroundColor(.mdzText.opacity(0.9))
                             .tracking(1)
                         if let user = auth.currentUser {
                             Text(user.roleDisplayLabel)
                                 .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(.mdzBlue)
+                                .foregroundColor(.mdzMuted)
                         }
                     }
                     .padding(.vertical, 4)

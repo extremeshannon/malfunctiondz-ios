@@ -47,7 +47,7 @@ struct AircraftDetailView: View {
                 .padding()
                 .background(Color.mdzNavyMid)
 
-                // Tab content
+                // Tab content — frame so all tabs (Squawks, Logbook, ADs, PAX) use full width on iPad
                 Group {
                     switch selectedTab {
                     case 0: squawksTab
@@ -57,8 +57,11 @@ struct AircraftDetailView: View {
                     default: squawksTab
                     }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.mdzBackground)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle(aircraft.tailNumber)
         .navigationBarTitleDisplayMode(.inline)
         .task { await vm.loadDetail(aircraftId: aircraft.id) }

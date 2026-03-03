@@ -1,17 +1,158 @@
 // File: ASC/Views/Loft/LoftRootView.swift
+// iPad: NavigationSplitView (rig list | rig detail). iPhone: NavigationStack.
 import SwiftUI
 
 struct LoftRootView: View {
     @StateObject private var vm = LoftViewModel()
-    @State private var showRigList = false
+    @Environment(\.horizontalSizeClass) private var hSizeClass
 
     var body: some View {
-        NavigationView {
+        Group {
+            if hSizeClass == .regular {
+                LoftSplitView(vm: vm)
+            } else {
+                LoftStackView(vm: vm)
+            }
+        }
+        .task { await vm.load() }
+        .refreshable { await vm.load() }
+        .alert("Error", isPresented: Binding(
+            get: { vm.error != nil },
+            set: { if !$0 { vm.error = nil } }
+        )) {
+            Button("OK", role: .cancel) { vm.error = nil }
+        } message: { Text(vm.error ?? "") }
+    }
+
+    fileprivate static var dateString: String {
+        let f = DateFormatter()
+        f.dateFormat = "EEEE, MMMM d"
+        return f.string(from: Date())
+    }
+}
+
+// MARK: - iPad: Split (rig list | rig detail)
+struct LoftSplitView: View {
+    @ObservedObject var vm: LoftViewModel
+    @State private var selectedRig: LoftRig?
+
+    private var dateString: String { LoftRootView.dateString }
+
+    var body: some View {
+        NavigationSplitView {
             ZStack {
                 Color.mdzBackground.ignoresSafeArea()
                 VStack(spacing: 0) {
+                    loftHeader
+                    if vm.isLoading && vm.rigs.isEmpty {
+                        Spacer()
+                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzGreen)).scaleEffect(1.4)
+                        Spacer()
+                    } else if vm.rigs.isEmpty {
+                        Spacer()
+                        EmptyStateView(icon: "backpack.fill", title: "No Rigs", subtitle: "No rigs in the loft.")
+                        Spacer()
+                    } else {
+                        if let s = vm.summary {
+                            HStack(spacing: 0) {
+                                SummaryStatBox(value: s.overdue, label: "OVERDUE", color: .mdzDanger)
+                                Divider().background(Color.mdzBorder).frame(height: 40)
+                                SummaryStatBox(value: s.dueSoon, label: "DUE SOON", color: .mdzAmber)
+                                Divider().background(Color.mdzBorder).frame(height: 40)
+                                SummaryStatBox(value: s.current, label: "CURRENT", color: .mdzGreen)
+                            }
+                            .padding(.vertical, 12)
+                            .background(Color.mdzCard)
+                            .cornerRadius(12)
+                            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                        }
+                        List(selection: $selectedRig) {
+                            ForEach(combinedRigs) { rig in
+                                LoftRigRow(rig: rig)
+                                    .tag(rig)
+                                    .listRowBackground(Color.mdzCard)
+                            }
+                        }
+                        .listStyle(.sidebar)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.mdzBackground)
+                    }
+                }
+            }
+            .navigationTitle("Rigs")
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .onAppear { if selectedRig == nil, let first = vm.rigs.first { selectedRig = first } }
+            .onChange(of: vm.rigs.count) { _, _ in
+                if selectedRig == nil, let first = vm.rigs.first { selectedRig = first }
+            }
+        } detail: {
+            if let rig = selectedRig {
+                NavigationStack {
+                    RigDetailView(rig: rig)
+                }
+            } else {
+                ZStack {
+                    Color.mdzBackground.ignoresSafeArea()
+                    VStack(spacing: 12) {
+                        Image(systemName: "backpack.fill")
+                            .font(.system(size: 48))
+                            .foregroundColor(.mdzMuted.opacity(0.5))
+                        Text("Select a rig")
+                            .font(.headline)
+                            .foregroundColor(.mdzMuted)
+                    }
+                }
+            }
+        }
+    }
 
-                    // ── Header ──────────────────────────────
+    private var loftHeader: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Image(systemName: "backpack.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.mdzGreen)
+                Text("LOFT")
+                    .font(.system(size: 11, weight: .black))
+                    .foregroundColor(.mdzGreen)
+                    .tracking(2)
+                Spacer()
+                if let s = vm.summary {
+                    Text("\(s.total) RIGS")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(.mdzMuted)
+                        .tracking(1)
+                }
+            }
+            Text(dateString)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.mdzMuted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(Color.mdzNavyMid)
+    }
+
+    private var combinedRigs: [LoftRig] {
+        vm.overdueRigs + vm.dueSoonRigs + vm.currentRigs + vm.unknownRigs
+    }
+}
+
+// MARK: - iPhone: Stack (original behavior)
+struct LoftStackView: View {
+    @ObservedObject var vm: LoftViewModel
+
+    private var dateString: String { LoftRootView.dateString }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.mdzBackground.ignoresSafeArea()
+                VStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Image(systemName: "backpack.fill")
@@ -40,101 +181,52 @@ struct LoftRootView: View {
 
                     if vm.isLoading && vm.rigs.isEmpty {
                         Spacer()
-                        ProgressView().progressViewStyle(
-                            CircularProgressViewStyle(tint: .mdzGreen))
-                            .scaleEffect(1.4)
+                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzGreen)).scaleEffect(1.4)
                         Spacer()
                     } else {
                         ScrollView(showsIndicators: false) {
                             VStack(spacing: 12) {
-
-                                // ── Summary bar ─────────────────────
                                 if let s = vm.summary {
                                     HStack(spacing: 0) {
-                                        SummaryStatBox(value: s.overdue,
-                                                       label: "OVERDUE",
-                                                       color: .mdzDanger)
-                                        Divider().background(Color.mdzBorder)
-                                            .frame(height: 40)
-                                        SummaryStatBox(value: s.dueSoon,
-                                                       label: "DUE SOON",
-                                                       color: .mdzAmber)
-                                        Divider().background(Color.mdzBorder)
-                                            .frame(height: 40)
-                                        SummaryStatBox(value: s.current,
-                                                       label: "CURRENT",
-                                                       color: .mdzGreen)
+                                        SummaryStatBox(value: s.overdue, label: "OVERDUE", color: .mdzDanger)
+                                        Divider().background(Color.mdzBorder).frame(height: 40)
+                                        SummaryStatBox(value: s.dueSoon, label: "DUE SOON", color: .mdzAmber)
+                                        Divider().background(Color.mdzBorder).frame(height: 40)
+                                        SummaryStatBox(value: s.current, label: "CURRENT", color: .mdzGreen)
                                     }
                                     .padding(.vertical, 12)
                                     .background(Color.mdzCard)
                                     .cornerRadius(12)
-                                    .overlay(RoundedRectangle(cornerRadius: 12)
-                                        .strokeBorder(Color.mdzBorder, lineWidth: 1))
+                                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
                                 }
-
-                                // ── Overdue section ─────────────────
                                 if !vm.overdueRigs.isEmpty {
-                                    LoftSection(
-                                        title: "OVERDUE — \(vm.overdueRigs.count) RIGS",
-                                        color: .mdzDanger,
-                                        icon: "exclamationmark.circle.fill",
-                                        rigs: vm.overdueRigs
-                                    )
+                                    LoftSection(title: "OVERDUE — \(vm.overdueRigs.count) RIGS", color: .mdzDanger,
+                                                icon: "exclamationmark.circle.fill", rigs: vm.overdueRigs)
                                 }
-
-                                // ── Due soon section ─────────────────
                                 if !vm.dueSoonRigs.isEmpty {
-                                    LoftSection(
-                                        title: "DUE SOON — \(vm.dueSoonRigs.count) RIGS",
-                                        color: .mdzAmber,
-                                        icon: "clock.fill",
-                                        rigs: vm.dueSoonRigs
-                                    )
+                                    LoftSection(title: "DUE SOON — \(vm.dueSoonRigs.count) RIGS", color: .mdzAmber,
+                                                icon: "clock.fill", rigs: vm.dueSoonRigs)
                                 }
-
-                                // ── Current section ──────────────────
                                 if !vm.currentRigs.isEmpty {
-                                    LoftSection(
-                                        title: "CURRENT — \(vm.currentRigs.count) RIGS",
-                                        color: .mdzGreen,
-                                        icon: "checkmark.circle.fill",
-                                        rigs: vm.currentRigs
-                                    )
+                                    LoftSection(title: "CURRENT — \(vm.currentRigs.count) RIGS", color: .mdzGreen,
+                                                icon: "checkmark.circle.fill", rigs: vm.currentRigs)
                                 }
-
-                                // ── Unknown/no pack record ────────────
                                 if !vm.unknownRigs.isEmpty {
-                                    LoftSection(
-                                        title: "NO PACK RECORD — \(vm.unknownRigs.count) RIGS",
-                                        color: .mdzMuted,
-                                        icon: "questionmark.circle.fill",
-                                        rigs: vm.unknownRigs
-                                    )
+                                    LoftSection(title: "NO PACK RECORD — \(vm.unknownRigs.count) RIGS", color: .mdzMuted,
+                                                icon: "questionmark.circle.fill", rigs: vm.unknownRigs)
                                 }
                             }
+                            .frame(maxWidth: .infinity)
                             .padding(16)
                         }
-                        .refreshable { await vm.load() }
                     }
                 }
             }
             .navigationBarHidden(true)
-            .task { await vm.load() }
-            .alert("Error", isPresented: Binding(
-                get: { vm.error != nil },
-                set: { if !$0 { vm.error = nil } }
-            )) {
-                Button("OK", role: .cancel) { vm.error = nil }
-            } message: { Text(vm.error ?? "") }
         }
     }
-
-    private var dateString: String {
-        let f = DateFormatter()
-        f.dateFormat = "EEEE, MMMM d"
-        return f.string(from: Date())
-    }
 }
+
 
 // MARK: - Summary Stat Box
 struct SummaryStatBox: View {

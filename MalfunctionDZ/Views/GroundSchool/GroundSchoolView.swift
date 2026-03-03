@@ -7,14 +7,146 @@ import SwiftUI
 struct GroundSchoolView: View {
     @StateObject private var vm = GroundSchoolViewModel()
     @State private var selectedCourse: LMSCourse?
+    @Environment(\.horizontalSizeClass) private var hSizeClass
 
     var body: some View {
-        NavigationView {
+        Group {
+            if hSizeClass == .regular {
+                GroundSchoolSplitView(vm: vm, selectedCourse: $selectedCourse)
+            } else {
+                GroundSchoolStackView(vm: vm)
+            }
+        }
+        .task { await vm.load() }
+        .refreshable { await vm.load() }
+        .alert("Error", isPresented: Binding(
+            get: { vm.error != nil },
+            set: { if !$0 { vm.error = nil } }
+        )) {
+            Button("OK", role: .cancel) { vm.error = nil }
+        } message: { Text(vm.error ?? "") }
+    }
+}
+
+// MARK: - iPad: Split view (course list | course detail)
+struct GroundSchoolSplitView: View {
+    @ObservedObject var vm: GroundSchoolViewModel
+    @Binding var selectedCourse: LMSCourse?
+
+    var body: some View {
+        NavigationSplitView {
             ZStack {
                 Color.mdzBackground.ignoresSafeArea()
                 VStack(spacing: 0) {
+                    groundSchoolHeader
+                    if vm.isLoading && vm.courses.isEmpty {
+                        Spacer()
+                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzAmber)).scaleEffect(1.4)
+                        Spacer()
+                    } else if vm.courses.isEmpty {
+                        Spacer()
+                        EmptyStateView(icon: "graduationcap", title: "No Courses", subtitle: "No courses available.")
+                        Spacer()
+                    } else {
+                        List(selection: $selectedCourse) {
+                            ForEach(vm.courses) { course in
+                                GroundSchoolCourseRow(course: course)
+                                    .tag(course)
+                                    .listRowBackground(Color.mdzCard)
+                            }
+                        }
+                        .listStyle(.sidebar)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.mdzBackground)
+                    }
+                }
+            }
+            .navigationTitle("Courses")
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .onAppear { if selectedCourse == nil, let first = vm.courses.first { selectedCourse = first } }
+            .onChange(of: vm.courses.count) { _, _ in
+                if selectedCourse == nil, let first = vm.courses.first { selectedCourse = first }
+            }
+        } detail: {
+            if let course = selectedCourse {
+                NavigationStack {
+                    CourseDetailView(course: course, vm: vm)
+                }
+            } else {
+                ZStack {
+                    Color.mdzBackground.ignoresSafeArea()
+                    VStack(spacing: 12) {
+                        Image(systemName: "graduationcap.fill")
+                            .font(.system(size: 48))
+                            .foregroundColor(.mdzMuted.opacity(0.5))
+                        Text("Select a course")
+                            .font(.headline)
+                            .foregroundColor(.mdzMuted)
+                    }
+                }
+            }
+        }
+    }
 
-                    // ── Header ──────────────────────────────
+    private var groundSchoolHeader: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Image(systemName: "graduationcap.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.mdzAmber)
+                Text("GROUND SCHOOL")
+                    .font(.system(size: 11, weight: .black))
+                    .foregroundColor(.mdzAmber)
+                    .tracking(2)
+                Spacer()
+                Text("\(vm.courses.count) COURSES")
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundColor(.mdzMuted)
+                    .tracking(1)
+            }
+            Text("Training & LMS")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.mdzMuted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(Color.mdzNavyMid)
+    }
+}
+
+// Compact row for iPad sidebar
+struct GroundSchoolCourseRow: View {
+    let course: LMSCourse
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(course.title)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.mdzText)
+                    .lineLimit(2)
+                Spacer()
+                StatusPill(label: course.enrollmentStatus.label, color: enrollmentColor(course))
+            }
+            Text("\(course.completedLessons)/\(course.totalLessons) lessons")
+                .font(.system(size: 12))
+                .foregroundColor(.mdzMuted)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+// MARK: - iPhone: Stack navigation (original behavior)
+struct GroundSchoolStackView: View {
+    @ObservedObject var vm: GroundSchoolViewModel
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.mdzBackground.ignoresSafeArea()
+                VStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Image(systemName: "graduationcap.fill")
@@ -47,19 +179,13 @@ struct GroundSchoolView: View {
                         Spacer()
                     } else if vm.courses.isEmpty {
                         Spacer()
-                        EmptyStateView(
-                            icon: "graduationcap",
-                            title: "No Courses",
-                            subtitle: "No courses available."
-                        )
+                        EmptyStateView(icon: "graduationcap", title: "No Courses", subtitle: "No courses available.")
                         Spacer()
                     } else {
                         ScrollView(showsIndicators: false) {
                             VStack(spacing: 12) {
                                 ForEach(vm.courses) { course in
-                                    NavigationLink(
-                                        destination: CourseDetailView(course: course, vm: vm)
-                                    ) {
+                                    NavigationLink(destination: CourseDetailView(course: course, vm: vm)) {
                                         CourseCard(course: course)
                                     }
                                     .buttonStyle(.plain)
@@ -67,20 +193,10 @@ struct GroundSchoolView: View {
                             }
                             .padding(16)
                         }
-                        .refreshable { await vm.load() }
                     }
                 }
             }
             .navigationBarHidden(true)
-            .task { await vm.load() }
-            .alert("Error", isPresented: Binding(
-                get: { vm.error != nil },
-                set: { if !$0 { vm.error = nil } }
-            )) {
-                Button("OK", role: .cancel) { vm.error = nil }
-            } message: {
-                Text(vm.error ?? "")
-            }
         }
     }
 }

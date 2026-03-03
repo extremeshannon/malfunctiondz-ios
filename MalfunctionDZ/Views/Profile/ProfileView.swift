@@ -98,7 +98,7 @@ struct ProfileView: View {
                     }
                     .padding(isWide ? 32 : 16)
                     // Cap width on iPad so content doesn't stretch across the full 12.9"
-                    .frame(maxWidth: isWide ? 640 : .infinity)
+                    .frame(maxWidth: isWide ? 900 : .infinity)
                     .frame(maxWidth: .infinity)          // centre it
                 }
             }

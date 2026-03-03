@@ -3,7 +3,9 @@ import Foundation
 import SwiftUI
 
 // Matches exactly what /api/aircraft/list.php returns
-struct Aircraft: Codable, Identifiable {
+struct Aircraft: Codable, Identifiable, Hashable {
+    static func == (lhs: Aircraft, rhs: Aircraft) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
     let id: Int
     let tailNumber: String
     let model: String

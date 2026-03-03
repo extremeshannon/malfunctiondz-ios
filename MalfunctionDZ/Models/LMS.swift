@@ -9,7 +9,9 @@ struct LMSCoursesResponse: Codable {
 }
 
 // MARK: - Course
-struct LMSCourse: Codable, Identifiable {
+struct LMSCourse: Codable, Identifiable, Hashable {
+    static func == (lhs: LMSCourse, rhs: LMSCourse) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
     let id: Int
     let slug: String
     let title: String
