@@ -43,6 +43,9 @@
 		FB367DD52F52169D00FBAD05 /* LMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD42F52169D00FBAD05 /* LMS.swift */; };
 		FBD783602F5217F800F5EBCD /* GroundSchoolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */; };
 		FBFAB35A2F54FF3E0046027A /* PilotCurrencyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */; };
+		FB063D282F54BB100227638 /* UsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D292F54BB100227638 /* UsersView.swift */; };
+		FB063D2B2F54BB120227638 /* UserDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2C2F54BB120227638 /* UserDetailView.swift */; };
+		FB063D2D2F54BB130227638 /* UserAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2E2F54BB130227638 /* UserAddView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -83,6 +86,9 @@
 		FB367DD42F52169D00FBAD05 /* LMS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMS.swift; sourceTree = "<group>"; };
 		FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroundSchoolViewModel.swift; sourceTree = "<group>"; };
 		FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotCurrencyCard.swift; sourceTree = "<group>"; };
+		FB063D292F54BB100227638 /* UsersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsersView.swift; sourceTree = "<group>"; };
+		FB063D2C2F54BB120227638 /* UserDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDetailView.swift; sourceTree = "<group>"; };
+		FB063D2E2F54BB130227638 /* UserAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAddView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -141,6 +147,16 @@
 				FB063D0D2F52C9CE00227638 /* ProfileView.swift */,
 			);
 			path = Profile;
+			sourceTree = "<group>";
+		};
+		FB063D2A2F54BB110227638 /* Users */ = {
+			isa = PBXGroup;
+			children = (
+				FB063D292F54BB100227638 /* UsersView.swift */,
+				FB063D2C2F54BB120227638 /* UserDetailView.swift */,
+				FB063D2E2F54BB130227638 /* UserAddView.swift */,
+			);
+			path = Users;
 			sourceTree = "<group>";
 		};
 		FB063D032F52AD6B00227638 /* Quiz */ = {
@@ -216,6 +232,7 @@
 			children = (
 				FB063D032F52AD6B00227638 /* Quiz */,
 				FB063CFC2F5231DE00227638 /* Profile */,
+				FB063D2A2F54BB110227638 /* Users */,
 				FB063CF62F521B6C00227638 /* Auth */,
 				FB063CEB2F521AF600227638 /* Aircraft */,
 				FB063CE92F521A9D00227638 /* Loft */,
@@ -372,6 +389,9 @@
 				FB367DCF2F5201DB00FBAD05 /* HomeView.swift in Sources */,
 				FB063D0E2F52C9CE00227638 /* ProfileView.swift in Sources */,
 				FB063CE42F52191600227638 /* GroundSchoolView.swift in Sources */,
+				FB063D282F54BB100227638 /* UsersView.swift in Sources */,
+				FB063D2B2F54BB120227638 /* UserDetailView.swift in Sources */,
+				FB063D2D2F54BB130227638 /* UserAddView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

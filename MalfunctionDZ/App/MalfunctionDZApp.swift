@@ -99,6 +99,9 @@ struct MDZSplitView: View {
                     if auth.currentUser?.canAccessLogbook == true {
                         SidebarButton(icon: "book.closed.fill", title: "Logbook", selected: selectedModule == .logbook) { selectedModule = .logbook }
                     }
+                    if auth.currentUser?.canManageUsers == true {
+                        SidebarButton(icon: "person.2.fill", title: "Users", selected: selectedModule == .users) { selectedModule = .users }
+                    }
                 }
 
                 Section("ACCOUNT") {
@@ -120,6 +123,7 @@ struct MDZSplitView: View {
                 case .loft:         LoftRootView()
                 case .groundSchool: GroundSchoolView()
                 case .logbook:      LogbookRootView()
+                case .users:        UsersView()
                 case .profile:      ProfileView()
                 }
             }
@@ -164,7 +168,7 @@ struct SidebarButton: View {
 
 // MARK: - AppModule enum (maps tab tags)
 enum AppModule: Hashable {
-    case home, aviation, loft, groundSchool, logbook, profile
+    case home, aviation, loft, groundSchool, logbook, users, profile
 
     /// Map fixed tab tags → module
     init?(tag: Int) {
@@ -174,6 +178,7 @@ enum AppModule: Hashable {
         case 2:  self = .loft
         case 3:  self = .groundSchool
         case 4:  self = .logbook
+        case 8:  self = .users
         case 9:  self = .profile
         default: return nil
         }
@@ -186,6 +191,7 @@ enum AppModule: Hashable {
         case .loft:         return 2
         case .groundSchool: return 3
         case .logbook:      return 4
+        case .users:        return 8
         case .profile:      return 9
         }
     }
@@ -233,6 +239,12 @@ struct MDZTabView: View {
                 LogbookRootView()
                     .tabItem { Label("Logbook", systemImage: "book.closed.fill") }
                     .tag(4)
+            }
+
+            if auth.currentUser?.canManageUsers == true {
+                UsersView()
+                    .tabItem { Label("Users", systemImage: "person.2.fill") }
+                    .tag(8)
             }
 
             ProfileView()
