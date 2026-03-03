@@ -66,6 +66,22 @@ struct HomeView: View {
                                 .padding(.bottom, 16)
                         }
 
+                        // ── My rigs (reserve / AAD expiry) ─────────────
+                        if !vm.myRigs.isEmpty {
+                            RigExpiryCard(rigs: vm.myRigs) {
+                                tabSelect.selected = 4
+                            }
+                            .padding(.horizontal, hPad)
+                            .padding(.bottom, 16)
+                        }
+
+                        // ── Logbook config (Start Freefall, Home DZ) for skydivers ──
+                        if (showLogbook || showGroundSchool) && !isAdmin {
+                            LogbookConfigCard(vm: vm)
+                                .padding(.horizontal, hPad)
+                                .padding(.bottom, 16)
+                        }
+
                         // ── Module tiles ──────────────────────────────
                         LazyVGrid(columns: gridColumns, spacing: 14) {
                             if showAviation {
@@ -128,8 +144,8 @@ struct HomeView: View {
                                 .padding(.top, 24)
                         }
 
-                        // ── Alerts ────────────────────────────────────
-                        if !vm.alerts.isEmpty {
+                        // ── Alerts (Today at a Glance) — hidden for admins
+                        if !isAdmin && !vm.alerts.isEmpty {
                             alertsSection
                                 .padding(.horizontal, hPad)
                                 .padding(.top, 24)
@@ -741,5 +757,197 @@ struct AlertRow: View {
         }
         .padding(12).background(Color.mdzCard).cornerRadius(10)
         .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+    }
+}
+
+// MARK: - Rig expiry (reserve DOM / AAD DOM)
+
+struct RigExpiryCard: View {
+    let rigs: [JumperRig]
+    let onTapLogbook: () -> Void
+
+    var body: some View {
+        Button(action: onTapLogbook) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: "backpack.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(.mdzGreen)
+                    Text("MY RIGS")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(.mdzMuted)
+                        .tracking(2)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12))
+                        .foregroundColor(.mdzMuted)
+                }
+                ForEach(rigs) { rig in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(rig.rigLabel)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.mdzText)
+                        HStack(spacing: 16) {
+                            if let dom = rig.reserveDomDisplay, !dom.isEmpty {
+                                labelVal("Reserve DOM", dom)
+                            }
+                            if let dom = rig.aadDomDisplay, !dom.isEmpty {
+                                labelVal("AAD DOM", dom)
+                            }
+                            if (rig.reserveDomDisplay ?? "").isEmpty && (rig.aadDomDisplay ?? "").isEmpty {
+                                Text("Add dates in Logbook")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.mdzMuted)
+                            }
+                        }
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.mdzCard2)
+                    .cornerRadius(8)
+                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                }
+            }
+            .padding(16)
+            .background(Color.mdzCard)
+            .cornerRadius(14)
+            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+            .overlay(
+                Rectangle()
+                    .fill(Color.mdzGreen)
+                    .frame(height: 3)
+                    .cornerRadius(2),
+                alignment: .top
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func labelVal(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(label)
+                .font(.system(size: 9, weight: .black))
+                .foregroundColor(.mdzMuted)
+                .tracking(0.5)
+            Text(value)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(.mdzText)
+        }
+    }
+}
+
+// MARK: - Logbook config (Start Freefall Time, Home Dropzone)
+
+struct LogbookConfigCard: View {
+    @ObservedObject var vm: HomeViewModel
+    @State private var showFreefallEditor = false
+    @State private var freefallEditorValue = ""
+    @State private var showHomeDzEditor = false
+    @State private var homeDzEditorValue = ""
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "book.closed.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(.mdzAmber)
+                Text("LOGBOOK CONFIG")
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundColor(.mdzMuted)
+                    .tracking(2)
+            }
+            configRow("Start Freefall Time", vm.startFreefallTime.isEmpty ? "Not set" : vm.startFreefallTime) {
+                freefallEditorValue = vm.startFreefallTime
+                showFreefallEditor = true
+            }
+            configRow("Home Dropzone", vm.homeDropzone.isEmpty ? "Not set" : vm.homeDropzone) {
+                homeDzEditorValue = vm.homeDropzone
+                showHomeDzEditor = true
+            }
+        }
+        .padding(16)
+        .background(Color.mdzCard)
+        .cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .sheet(isPresented: $showFreefallEditor) {
+            configEditorSheet(title: "Start Freefall Time", hint: "Default freefall when adding a jump (e.g. 45 or 1:30)", value: $freefallEditorValue) {
+                Task { await vm.setStartFreefallTime(freefallEditorValue); showFreefallEditor = false }
+            } onCancel: { showFreefallEditor = false }
+            .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showHomeDzEditor) {
+            configEditorSheet(title: "Home Dropzone", hint: "Your home DZ, prefills when adding a jump", value: $homeDzEditorValue) {
+                Task { await vm.setHomeDropzone(homeDzEditorValue); showHomeDzEditor = false }
+            } onCancel: { showHomeDzEditor = false }
+            .presentationDetents([.medium])
+        }
+    }
+
+    private func configRow(_ label: String, _ value: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(label.uppercased())
+                        .font(.system(size: 9, weight: .black))
+                        .foregroundColor(.mdzMuted)
+                        .tracking(0.5)
+                    Text(value)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.mdzText)
+                }
+                Spacer()
+                Image(systemName: "pencil.circle.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(.mdzMuted)
+            }
+            .padding(12)
+            .background(Color.mdzCard2)
+            .cornerRadius(10)
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .disabled(vm.logbookSettingsSaving)
+    }
+}
+
+private func configEditorSheet(title: String, hint: String, value: Binding<String>, onSave: @escaping () -> Void, onCancel: @escaping () -> Void) -> some View {
+    NavigationStack {
+        ZStack {
+            Color.mdzBackground.ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 16) {
+                Text(hint)
+                    .font(.system(size: 14))
+                    .foregroundColor(.mdzText)
+                Text("VALUE")
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundColor(.mdzAmber)
+                    .tracking(1)
+                TextField("", text: value)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.mdzText)
+                    .padding(14)
+                    .background(Color.mdzCard)
+                    .cornerRadius(10)
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                Spacer()
+            }
+            .padding(20)
+        }
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel", action: onCancel)
+                    .foregroundColor(.mdzAmber)
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save", action: onSave)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.mdzAmber)
+            }
+        }
     }
 }

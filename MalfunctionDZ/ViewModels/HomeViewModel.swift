@@ -164,6 +164,15 @@ class HomeViewModel: ObservableObject {
     @Published var instructorData:    InstructorDashData?
     @Published var airworthyAircraft: [AircraftBrief] = []
 
+    /// My rigs (reserve/AAD expiry for dashboard)
+    @Published var myRigs: [JumperRig] = []
+
+    /// Logbook config (Start Freefall Time, Home Dropzone) for dashboard
+    @Published var startFreefallTime: String = ""
+    @Published var homeDropzone: String = ""
+    @Published var logbookSettingsLoading = false
+    @Published var logbookSettingsSaving = false
+
     // Weather
     @Published var metar:        MetarData? = nil
     @Published var metarLoading: Bool       = false
@@ -203,6 +212,75 @@ class HomeViewModel: ObservableObject {
         } else if isStudent {
             await loadStudentDashboard(userId: user.id)
         }
+
+        // Load my rigs for skydivers and loft customers (anyone who can have rigs)
+        await loadMyRigs()
+
+        // Load logbook config (Start Freefall, Home DZ) for skydivers / loft customers
+        let hasLogbook = user.canAccessLogbook
+        let hasGroundSchool = user.canAccessGroundSchool
+        if hasLogbook || hasGroundSchool { await loadLogbookSettings() }
+    }
+
+    private func loadLogbookSettings() async {
+        logbookSettingsLoading = true
+        defer { logbookSettingsLoading = false }
+        guard let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)/api/lms/logbook_settings.php") else { return }
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              (json["ok"] as? Bool) == true else { return }
+        startFreefallTime = (json["start_freefall_time"] as? String) ?? ""
+        homeDropzone = (json["home_dropzone"] as? String) ?? ""
+    }
+
+    func setStartFreefallTime(_ value: String) async {
+        logbookSettingsSaving = true
+        defer { logbookSettingsSaving = false }
+        guard let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)/api/lms/logbook_settings.php") else { return }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: [
+            "start_freefall_time": value.isEmpty ? NSNull() : value,
+        ])
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              (json["ok"] as? Bool) == true else { return }
+        startFreefallTime = value
+    }
+
+    func setHomeDropzone(_ value: String) async {
+        logbookSettingsSaving = true
+        defer { logbookSettingsSaving = false }
+        guard let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)/api/lms/logbook_settings.php") else { return }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: [
+            "home_dropzone": value.isEmpty ? NSNull() : value,
+        ])
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              (json["ok"] as? Bool) == true else { return }
+        homeDropzone = value
+    }
+
+    private func loadMyRigs() async {
+        guard let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)/api/lms/rigs.php") else { return }
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let resp = try? JSONDecoder().decode(RigsResponse.self, from: data),
+              resp.ok else { myRigs = []; return }
+        myRigs = resp.rigs ?? []
     }
 
     // MARK: - METAR via server proxy
