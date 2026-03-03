@@ -14,6 +14,7 @@ struct LMSCourse: Codable, Identifiable {
     let slug: String
     let title: String
     let description: String?
+    let isActive: Bool
     let enrolled: Bool
     let status: String
     let enrolledAt: String?
@@ -26,11 +27,30 @@ struct LMSCourse: Codable, Identifiable {
 
     enum CodingKeys: String, CodingKey {
         case id, slug, title, description, enrolled, status, modules, quizzes
-        case enrolledAt       = "enrolled_at"
-        case completedAt      = "completed_at"
-        case totalLessons     = "total_lessons"
+        case isActive        = "is_active"
+        case enrolledAt     = "enrolled_at"
+        case completedAt    = "completed_at"
+        case totalLessons   = "total_lessons"
         case completedLessons = "completed_lessons"
-        case progressPct      = "progress_pct"
+        case progressPct    = "progress_pct"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(Int.self, forKey: .id)
+        slug = try c.decode(String.self, forKey: .slug)
+        title = try c.decode(String.self, forKey: .title)
+        description = try c.decodeIfPresent(String.self, forKey: .description)
+        isActive = try c.decodeIfPresent(Bool.self, forKey: .isActive) ?? true
+        enrolled = try c.decode(Bool.self, forKey: .enrolled)
+        status = try c.decode(String.self, forKey: .status)
+        enrolledAt = try c.decodeIfPresent(String.self, forKey: .enrolledAt)
+        completedAt = try c.decodeIfPresent(String.self, forKey: .completedAt)
+        totalLessons = try c.decode(Int.self, forKey: .totalLessons)
+        completedLessons = try c.decode(Int.self, forKey: .completedLessons)
+        progressPct = try c.decode(Double.self, forKey: .progressPct)
+        modules = try c.decode([LMSModule].self, forKey: .modules)
+        quizzes = try c.decodeIfPresent([LMSQuizSummary].self, forKey: .quizzes)
     }
 
     var enrollmentStatus: EnrollmentStatus {

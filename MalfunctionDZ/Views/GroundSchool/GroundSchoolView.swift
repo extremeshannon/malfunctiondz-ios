@@ -108,6 +108,9 @@ struct CourseCard: View {
 
                 Spacer()
 
+                if !course.isActive {
+                    StatusPill(label: "INACTIVE", color: .mdzMuted)
+                }
                 StatusPill(label: course.enrollmentStatus.label, color: enrollmentColor(course))
             }
 
@@ -191,6 +194,9 @@ struct CourseDetailView: View {
                     // Course header
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
+                            if !course.isActive {
+                                StatusPill(label: "INACTIVE", color: .mdzMuted)
+                            }
                             StatusPill(label: course.enrollmentStatus.label, color: enrollmentColor(course))
                             Spacer()
                             Text("\(Int(course.progressPct))% complete")

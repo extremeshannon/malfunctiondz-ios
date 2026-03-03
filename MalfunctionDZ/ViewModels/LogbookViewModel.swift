@@ -129,7 +129,7 @@ class LogbookViewModel: ObservableObject {
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try? JSONSerialization.data(withJSONObject: [
             "prior_jump_count": priorJumpCount,
-            "start_freefall_time": value.isEmpty ? NSNull() : value,
+            "start_freefall_time": (value.isEmpty ? NSNull() : value) as Any,
         ])
         do {
             let (data, _) = try await URLSession.shared.data(for: req)
@@ -157,7 +157,7 @@ class LogbookViewModel: ObservableObject {
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try? JSONSerialization.data(withJSONObject: [
             "prior_jump_count": priorJumpCount,
-            "home_dropzone": value.isEmpty ? NSNull() : value,
+            "home_dropzone": (value.isEmpty ? NSNull() : value) as Any,
         ])
         do {
             let (data, _) = try await URLSession.shared.data(for: req)
