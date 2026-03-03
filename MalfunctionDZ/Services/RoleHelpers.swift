@@ -81,6 +81,11 @@ extension User {
         hasAnyRole(["admin", "master", "godmode", "ops", "chief_pilot", "chief pilot", "ops_admin"])
     }
 
+    /// Admin, Instructor, Ops can manage LMS content (courses, modules, lessons, quizzes)
+    var canManageLMS: Bool {
+        hasAnyRole(["admin", "master", "godmode", "instructor", "lms_instructor", "ops"])
+    }
+
     /// Only full admin (admin/master/godmode) can edit admin users or assign admin role. Chief Pilot/Ops cannot.
     var canEditAdminUsers: Bool {
         isAdminLevel

@@ -102,6 +102,9 @@ struct MDZSplitView: View {
                     if auth.currentUser?.canManageUsers == true {
                         SidebarButton(icon: "person.2.fill", title: "Users", selected: selectedModule == .users) { selectedModule = .users }
                     }
+                    if auth.currentUser?.canManageLMS == true {
+                        SidebarButton(icon: "pencil.and.list.clipboard", title: "Manage LMS", selected: selectedModule == .manageLMS) { selectedModule = .manageLMS }
+                    }
                 }
 
                 Section("ACCOUNT") {
@@ -124,6 +127,7 @@ struct MDZSplitView: View {
                 case .groundSchool: GroundSchoolView()
                 case .logbook:      LogbookRootView()
                 case .users:        UsersView()
+                case .manageLMS:    LMSEditRootView()
                 case .profile:      ProfileView()
                 }
             }
@@ -168,7 +172,7 @@ struct SidebarButton: View {
 
 // MARK: - AppModule enum (maps tab tags)
 enum AppModule: Hashable {
-    case home, aviation, loft, groundSchool, logbook, users, profile
+    case home, aviation, loft, groundSchool, logbook, users, manageLMS, profile
 
     /// Map fixed tab tags → module
     init?(tag: Int) {
@@ -179,6 +183,7 @@ enum AppModule: Hashable {
         case 3:  self = .groundSchool
         case 4:  self = .logbook
         case 8:  self = .users
+        case 10: self = .manageLMS
         case 9:  self = .profile
         default: return nil
         }
@@ -192,6 +197,7 @@ enum AppModule: Hashable {
         case .groundSchool: return 3
         case .logbook:      return 4
         case .users:        return 8
+        case .manageLMS:    return 10
         case .profile:      return 9
         }
     }
@@ -247,6 +253,12 @@ struct MDZTabView: View {
                     .tag(8)
             }
 
+            if auth.currentUser?.canManageLMS == true {
+                LMSEditRootView()
+                    .tabItem { Label("Manage LMS", systemImage: "pencil.and.list.clipboard") }
+                    .tag(10)
+            }
+
             ProfileView()
                 .tabItem { Label("Profile", systemImage: "person.fill") }
                 .tag(9)
@@ -255,10 +267,19 @@ struct MDZTabView: View {
     }
 }
 
-// MARK: - App Delegate (push notifications)
+// MARK: - App Delegate (push notifications, nav bar appearance)
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        // Brighter navigation titles on dark backgrounds
+        let navAppearance = UINavigationBarAppearance()
+        navAppearance.configureWithOpaqueBackground()
+        navAppearance.backgroundColor = UIColor(red: 12/255, green: 29/255, blue: 53/255, alpha: 1)
+        navAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+        UINavigationBar.appearance().standardAppearance = navAppearance
+        UINavigationBar.appearance().scrollEdgeAppearance = navAppearance
+        UINavigationBar.appearance().compactAppearance = navAppearance
         return true
     }
 

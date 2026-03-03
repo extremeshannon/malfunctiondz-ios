@@ -5,6 +5,7 @@
 import SwiftUI
 
 struct GroundSchoolView: View {
+    @EnvironmentObject private var auth: AuthManager
     @StateObject private var vm = GroundSchoolViewModel()
     @State private var selectedCourse: LMSCourse?
     @Environment(\.horizontalSizeClass) private var hSizeClass
@@ -30,6 +31,7 @@ struct GroundSchoolView: View {
 
 // MARK: - iPad: Split view (course list | course detail)
 struct GroundSchoolSplitView: View {
+    @EnvironmentObject private var auth: AuthManager
     @ObservedObject var vm: GroundSchoolViewModel
     @Binding var selectedCourse: LMSCourse?
 
@@ -67,6 +69,15 @@ struct GroundSchoolSplitView: View {
             .onAppear { if selectedCourse == nil, let first = vm.courses.first { selectedCourse = first } }
             .onChange(of: vm.courses.count) { _, _ in
                 if selectedCourse == nil, let first = vm.courses.first { selectedCourse = first }
+            }
+            .toolbar {
+                if auth.currentUser?.canManageLMS == true {
+                    ToolbarItem(placement: .primaryAction) {
+                        NavigationLink(destination: LMSEditRootView()) {
+                            Label("Manage LMS", systemImage: "pencil.and.list.clipboard")
+                        }
+                    }
+                }
             }
         } detail: {
             if let course = selectedCourse {
@@ -140,6 +151,7 @@ struct GroundSchoolCourseRow: View {
 
 // MARK: - iPhone: Stack navigation (original behavior)
 struct GroundSchoolStackView: View {
+    @EnvironmentObject private var auth: AuthManager
     @ObservedObject var vm: GroundSchoolViewModel
 
     var body: some View {
@@ -184,6 +196,33 @@ struct GroundSchoolStackView: View {
                     } else {
                         ScrollView(showsIndicators: false) {
                             VStack(spacing: 12) {
+                                // Manage LMS card for admins/instructors
+                                if auth.currentUser?.canManageLMS == true {
+                                    NavigationLink(destination: LMSEditRootView()) {
+                                        HStack(spacing: 12) {
+                                            Image(systemName: "pencil.and.list.clipboard")
+                                                .font(.system(size: 22))
+                                                .foregroundColor(.mdzRed)
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text("Manage LMS")
+                                                    .font(.system(size: 16, weight: .bold))
+                                                    .foregroundColor(.mdzText)
+                                                Text("Edit courses, modules, lessons & quizzes")
+                                                    .font(.system(size: 12))
+                                                    .foregroundColor(.mdzMuted)
+                                            }
+                                            Spacer()
+                                            Image(systemName: "chevron.right")
+                                                .font(.system(size: 13, weight: .semibold))
+                                                .foregroundColor(.mdzMuted)
+                                        }
+                                        .padding(14)
+                                        .background(Color.mdzCard)
+                                        .cornerRadius(12)
+                                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzRed.opacity(0.5), lineWidth: 1))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                                 ForEach(vm.courses) { course in
                                     NavigationLink(destination: CourseDetailView(course: course, vm: vm)) {
                                         CourseCard(course: course)

@@ -35,6 +35,9 @@
 		FB063D212F54BB020227638 /* LogbookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D232F54BB020227638 /* LogbookViewModel.swift */; };
 		FB063D222F54BB030227638 /* LogbookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D242F54BB030227638 /* LogbookView.swift */; };
 		FB063D262F54BB040227638 /* LogbookRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D252F54BB040227638 /* LogbookRootView.swift */; };
+		FB063D282F54BB100227638 /* UsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D292F54BB100227638 /* UsersView.swift */; };
+		FB063D2B2F54BB120227638 /* UserDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2C2F54BB120227638 /* UserDetailView.swift */; };
+		FB063D2D2F54BB130227638 /* UserAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2E2F54BB130227638 /* UserAddView.swift */; };
 		FB367C542F510E6100FBAD05 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
 		FB367C572F510E6100FBAD05 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */; };
 		FB367DCC2F52007600FBAD05 /* MalfunctionDZApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */; };
@@ -43,9 +46,9 @@
 		FB367DD52F52169D00FBAD05 /* LMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD42F52169D00FBAD05 /* LMS.swift */; };
 		FBD783602F5217F800F5EBCD /* GroundSchoolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */; };
 		FBFAB35A2F54FF3E0046027A /* PilotCurrencyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */; };
-		FB063D282F54BB100227638 /* UsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D292F54BB100227638 /* UsersView.swift */; };
-		FB063D2B2F54BB120227638 /* UserDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2C2F54BB120227638 /* UserDetailView.swift */; };
-		FB063D2D2F54BB130227638 /* UserAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2E2F54BB130227638 /* UserAddView.swift */; };
+		FB063E012F56000100022763 /* LMSEditModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E002F56000100022763 /* LMSEditModels.swift */; };
+		FB063E022F56000100022763 /* LMSEditService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E032F56000100022763 /* LMSEditService.swift */; };
+		FB063E042F56000100022763 /* LMSEditRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E052F56000100022763 /* LMSEditRootView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -77,6 +80,9 @@
 		FB063D232F54BB020227638 /* LogbookViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogbookViewModel.swift; sourceTree = "<group>"; };
 		FB063D242F54BB030227638 /* LogbookView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogbookView.swift; sourceTree = "<group>"; };
 		FB063D252F54BB040227638 /* LogbookRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogbookRootView.swift; sourceTree = "<group>"; };
+		FB063D292F54BB100227638 /* UsersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsersView.swift; sourceTree = "<group>"; };
+		FB063D2C2F54BB120227638 /* UserDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDetailView.swift; sourceTree = "<group>"; };
+		FB063D2E2F54BB130227638 /* UserAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAddView.swift; sourceTree = "<group>"; };
 		FB367C4C2F510E6000FBAD05 /* MalfunctionDZ.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MalfunctionDZ.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FB367C532F510E6100FBAD05 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -86,9 +92,9 @@
 		FB367DD42F52169D00FBAD05 /* LMS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMS.swift; sourceTree = "<group>"; };
 		FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroundSchoolViewModel.swift; sourceTree = "<group>"; };
 		FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotCurrencyCard.swift; sourceTree = "<group>"; };
-		FB063D292F54BB100227638 /* UsersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsersView.swift; sourceTree = "<group>"; };
-		FB063D2C2F54BB120227638 /* UserDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDetailView.swift; sourceTree = "<group>"; };
-		FB063D2E2F54BB130227638 /* UserAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAddView.swift; sourceTree = "<group>"; };
+		FB063E002F56000100022763 /* LMSEditModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMSEditModels.swift; sourceTree = "<group>"; };
+		FB063E032F56000100022763 /* LMSEditService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMSEditService.swift; sourceTree = "<group>"; };
+		FB063E052F56000100022763 /* LMSEditRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMSEditRootView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -110,6 +116,7 @@
 				FB063D242F54BB030227638 /* LogbookView.swift */,
 				FB063D112F52D4EC00227638 /* QuizLaunchCard.swift */,
 				FB063D132F534F9E00227638 /* ModuleSignoffBlock.swift */,
+				FB063E052F56000100022763 /* LMSEditRootView.swift */,
 			);
 			path = GroundSchool;
 			sourceTree = "<group>";
@@ -149,16 +156,6 @@
 			path = Profile;
 			sourceTree = "<group>";
 		};
-		FB063D2A2F54BB110227638 /* Users */ = {
-			isa = PBXGroup;
-			children = (
-				FB063D292F54BB100227638 /* UsersView.swift */,
-				FB063D2C2F54BB120227638 /* UserDetailView.swift */,
-				FB063D2E2F54BB130227638 /* UserAddView.swift */,
-			);
-			path = Users;
-			sourceTree = "<group>";
-		};
 		FB063D032F52AD6B00227638 /* Quiz */ = {
 			isa = PBXGroup;
 			children = (
@@ -174,6 +171,16 @@
 				FB063D252F54BB040227638 /* LogbookRootView.swift */,
 			);
 			path = Logbook;
+			sourceTree = "<group>";
+		};
+		FB063D2A2F54BB110227638 /* Users */ = {
+			isa = PBXGroup;
+			children = (
+				FB063D292F54BB100227638 /* UsersView.swift */,
+				FB063D2C2F54BB120227638 /* UserDetailView.swift */,
+				FB063D2E2F54BB130227638 /* UserAddView.swift */,
+			);
+			path = Users;
 			sourceTree = "<group>";
 		};
 		FB367C432F510E6000FBAD05 = {
@@ -223,6 +230,7 @@
 				FB063CFF2F52ACE600227638 /* Quiz.swift */,
 				FB063D152F53F69A00227638 /* FlightLoad.swift */,
 				FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */,
+				FB063E002F56000100022763 /* LMSEditModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -256,6 +264,7 @@
 			children = (
 				FB367DD02F52032300FBAD05 /* Foundation.swift */,
 				FB063D1B2F54AB7600227638 /* RoleHelpers.swift */,
+				FB063E032F56000100022763 /* LMSEditService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -392,6 +401,9 @@
 				FB063D282F54BB100227638 /* UsersView.swift in Sources */,
 				FB063D2B2F54BB120227638 /* UserDetailView.swift in Sources */,
 				FB063D2D2F54BB130227638 /* UserAddView.swift in Sources */,
+				FB063E012F56000100022763 /* LMSEditModels.swift in Sources */,
+				FB063E022F56000100022763 /* LMSEditService.swift in Sources */,
+				FB063E042F56000100022763 /* LMSEditRootView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -524,7 +536,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
@@ -557,7 +569,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
