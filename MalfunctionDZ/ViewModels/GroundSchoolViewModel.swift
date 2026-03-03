@@ -20,7 +20,7 @@ class GroundSchoolViewModel: ObservableObject {
         do {
             let (data, _) = try await URLSession.shared.data(for: req)
             let resp = try JSONDecoder().decode(LMSCoursesResponse.self, from: data)
-            courses = resp.courses
+            courses = resp.courses.sorted { $0.isActive && !$1.isActive }
         } catch {
             self.error = error.localizedDescription
         }

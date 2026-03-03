@@ -154,16 +154,21 @@ struct LMSEditQuiz: Decodable, Identifiable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(Int.self, forKey: .id)
         title = try c.decode(String.self, forKey: .title)
-        pass_percentage = (try? c.decode(Double.self, forKey: .pass_percentage))
-            ?? (try? c.decode(Int.self, forKey: .pass_percentage)).map { Double($0) }
-            ?? (try? c.decode(Double.self, forKey: .pass_score_pct))
-            ?? (try? c.decode(Int.self, forKey: .pass_score_pct)).map { Double($0) }
+        pass_percentage = Self.decodePassPercentage(from: c)
         num_questions = try? c.decode(Int.self, forKey: .num_questions)
         active = try? c.decode(Int.self, forKey: .active)
     }
+
+    private static func decodePassPercentage(from c: KeyedDecodingContainer<CodingKeys>) -> Double? {
+        if let d = try? c.decode(Double.self, forKey: .pass_percentage) { return d }
+        if let i = try? c.decode(Int.self, forKey: .pass_percentage) { return Double(i) }
+        if let d = try? c.decode(Double.self, forKey: .pass_score_pct) { return d }
+        if let i = try? c.decode(Int.self, forKey: .pass_score_pct) { return Double(i) }
+        return nil
+    }
 }
 
-struct LMSQuizzesListResponse: Codable {
+struct LMSQuizzesListResponse: Decodable {
     let ok: Bool
     let quizzes: [LMSEditQuiz]
 }
