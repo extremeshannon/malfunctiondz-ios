@@ -29,6 +29,7 @@
 		FB063D202F54BB010227638 /* SkydiverLogbook.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */; };
 		FB063D212F54BB020227638 /* LogbookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D232F54BB020227638 /* LogbookViewModel.swift */; };
 		FB063D222F54BB030227638 /* LogbookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D242F54BB030227638 /* LogbookView.swift */; };
+		FB063D262F54BB040227638 /* LogbookRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D252F54BB040227638 /* LogbookRootView.swift */; };
 		FB063D162F53F69A00227638 /* FlightLoad.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D152F53F69A00227638 /* FlightLoad.swift */; };
 		FB063D182F53F6CF00227638 /* PaxViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D172F53F6CF00227638 /* PaxViewModel.swift */; };
 		FB063D1A2F53F92300227638 /* PaxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D192F53F92300227638 /* PaxView.swift */; };
@@ -37,7 +38,6 @@
 		FB367C542F510E6100FBAD05 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
 		FB367C572F510E6100FBAD05 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */; };
 		FB367DCC2F52007600FBAD05 /* MalfunctionDZApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */; };
-		FB367DD62F55000000FBAD05 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD72F55000000FBAD05 /* AppDelegate.swift */; };
 		FB367DCF2F5201DB00FBAD05 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCE2F5201DB00FBAD05 /* HomeView.swift */; };
 		FB367DD12F52032300FBAD05 /* Foundation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD02F52032300FBAD05 /* Foundation.swift */; };
 		FB367DD52F52169D00FBAD05 /* LMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD42F52169D00FBAD05 /* LMS.swift */; };
@@ -68,6 +68,7 @@
 		FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkydiverLogbook.swift; sourceTree = "<group>"; };
 		FB063D232F54BB020227638 /* LogbookViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogbookViewModel.swift; sourceTree = "<group>"; };
 		FB063D242F54BB030227638 /* LogbookView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogbookView.swift; sourceTree = "<group>"; };
+		FB063D252F54BB040227638 /* LogbookRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogbookRootView.swift; sourceTree = "<group>"; };
 		FB063D152F53F69A00227638 /* FlightLoad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightLoad.swift; sourceTree = "<group>"; };
 		FB063D172F53F6CF00227638 /* PaxViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaxViewModel.swift; sourceTree = "<group>"; };
 		FB063D192F53F92300227638 /* PaxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaxView.swift; sourceTree = "<group>"; };
@@ -77,7 +78,6 @@
 		FB367C532F510E6100FBAD05 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MalfunctionDZApp.swift; sourceTree = "<group>"; };
-		FB367DD72F55000000FBAD05 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		FB367DCE2F5201DB00FBAD05 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		FB367DD02F52032300FBAD05 /* Foundation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Foundation.swift; path = ../App/Foundation.swift; sourceTree = "<group>"; };
 		FB367DD42F52169D00FBAD05 /* LMS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMS.swift; sourceTree = "<group>"; };
@@ -203,6 +203,14 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
+		FB063D272F54BB050227638 /* Logbook */ = {
+			isa = PBXGroup;
+			children = (
+				FB063D252F54BB040227638 /* LogbookRootView.swift */,
+			);
+			path = Logbook;
+			sourceTree = "<group>";
+		};
 		FB367DC42F51FD4800FBAD05 /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -211,6 +219,7 @@
 				FB063CF62F521B6C00227638 /* Auth */,
 				FB063CEB2F521AF600227638 /* Aircraft */,
 				FB063CE92F521A9D00227638 /* Loft */,
+				FB063D272F54BB050227638 /* Logbook */,
 				FB063CE22F5218F900227638 /* GroundSchool */,
 				FB367DCD2F5201C600FBAD05 /* Home */,
 			);
@@ -220,7 +229,6 @@
 		FB367DC52F51FECB00FBAD05 /* App */ = {
 			isa = PBXGroup;
 			children = (
-				FB367DD72F55000000FBAD05 /* AppDelegate.swift */,
 				FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */,
 			);
 			path = App;
@@ -334,6 +342,7 @@
 				FB063D202F54BB010227638 /* SkydiverLogbook.swift in Sources */,
 				FB063D212F54BB020227638 /* LogbookViewModel.swift in Sources */,
 				FB063D222F54BB030227638 /* LogbookView.swift in Sources */,
+				FB063D262F54BB040227638 /* LogbookRootView.swift in Sources */,
 				FBFAB35A2F54FF3E0046027A /* PilotCurrencyCard.swift in Sources */,
 				FB063CF52F521B5100227638 /* LoftViewModel.swift in Sources */,
 				FB063CFB2F52305C00227638 /* LoftRootView.swift in Sources */,
@@ -355,7 +364,6 @@
 				FB063D1A2F53F92300227638 /* PaxView.swift in Sources */,
 				FBD783602F5217F800F5EBCD /* GroundSchoolViewModel.swift in Sources */,
 				FB063D1E2F54AB9B00227638 /* AviationRootView.swift in Sources */,
-				FB367DD62F55000000FBAD05 /* AppDelegate.swift in Sources */,
 				FB367DCC2F52007600FBAD05 /* MalfunctionDZApp.swift in Sources */,
 				FB063D1C2F54AB7600227638 /* RoleHelpers.swift in Sources */,
 				FB063CF12F521B3A00227638 /* AircraftViewModel.swift in Sources */,

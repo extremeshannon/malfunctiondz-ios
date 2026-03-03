@@ -3,6 +3,8 @@
 //       falls back to TabView on compact (iPhone) automatically.
 //       Supports all devices (iPhone + iPad); operations can be run from iPad.
 import SwiftUI
+import UIKit
+import UserNotifications
 
 @main
 struct MalfunctionDZApp: App {
@@ -94,6 +96,9 @@ struct MDZSplitView: View {
                     if auth.currentUser?.canAccessGroundSchool == true {
                         SidebarButton(icon: "graduationcap.fill", title: config.moduleGroundSchool, selected: selectedModule == .groundSchool) { selectedModule = .groundSchool }
                     }
+                    if auth.currentUser?.canAccessLogbook == true {
+                        SidebarButton(icon: "book.closed.fill", title: "Logbook", selected: selectedModule == .logbook) { selectedModule = .logbook }
+                    }
                 }
 
                 Section("ACCOUNT") {
@@ -114,6 +119,7 @@ struct MDZSplitView: View {
                 case .aviation:     AviationRootView()
                 case .loft:         LoftRootView()
                 case .groundSchool: GroundSchoolView()
+                case .logbook:      LogbookRootView()
                 case .profile:      ProfileView()
                 }
             }
@@ -158,7 +164,7 @@ struct SidebarButton: View {
 
 // MARK: - AppModule enum (maps tab tags)
 enum AppModule: Hashable {
-    case home, aviation, loft, groundSchool, profile
+    case home, aviation, loft, groundSchool, logbook, profile
 
     /// Map fixed tab tags → module
     init?(tag: Int) {
@@ -167,6 +173,7 @@ enum AppModule: Hashable {
         case 1:  self = .aviation
         case 2:  self = .loft
         case 3:  self = .groundSchool
+        case 4:  self = .logbook
         case 9:  self = .profile
         default: return nil
         }
@@ -178,6 +185,7 @@ enum AppModule: Hashable {
         case .aviation:     return 1
         case .loft:         return 2
         case .groundSchool: return 3
+        case .logbook:      return 4
         case .profile:      return 9
         }
     }
@@ -221,10 +229,37 @@ struct MDZTabView: View {
                     .tag(3)
             }
 
+            if auth.currentUser?.canAccessLogbook == true {
+                LogbookRootView()
+                    .tabItem { Label("Logbook", systemImage: "book.closed.fill") }
+                    .tag(4)
+            }
+
             ProfileView()
                 .tabItem { Label("Profile", systemImage: "person.fill") }
                 .tag(9)
         }
         .accentColor(.mdzRed)
+    }
+}
+
+// MARK: - App Delegate (push notifications)
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        UNUserNotificationCenter.current().delegate = self
+        return true
+    }
+
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+        Task { await PushRegistration.shared.sendTokenToBackend(tokenString) }
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print("⚠️ Push registration failed: \(error.localizedDescription)")
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) -> UNNotificationPresentationOptions {
+        return [.banner, .sound, .badge]
     }
 }

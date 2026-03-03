@@ -10,10 +10,20 @@ struct SkydiverLogbookResponse: Codable {
     let ok: Bool
     let entries: [SkydiverLogbookEntry]?
     let otherTrainingNotes: String?  // "Other training / comments" at bottom (e.g. Clear to jump)
+    let priorJumpCount: Int?
+    let totalJumps: Int?
+    let isStudent: Bool?
+    let isSkydiver: Bool?
+    let nextJumpNumber: Int?
 
     enum CodingKeys: String, CodingKey {
         case ok, entries
         case otherTrainingNotes = "other_training_notes"
+        case priorJumpCount = "prior_jump_count"
+        case totalJumps = "total_jumps"
+        case isStudent = "is_student"
+        case isSkydiver = "is_skydiver"
+        case nextJumpNumber = "next_jump_number"
     }
 }
 

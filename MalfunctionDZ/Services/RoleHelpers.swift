@@ -71,6 +71,11 @@ extension User {
         hasAnyRole(["admin", "master", "godmode", "manifest", "chief_pilot", "chief pilot", "ops"])
     }
 
+    /// Logbook is available to all authenticated users (incl. skydivers without LMS)
+    var canAccessLogbook: Bool {
+        true
+    }
+
     // MARK: - Feature-level access within tabs
     var canManageAircraft: Bool {
         hasAnyRole(["admin", "master", "godmode", "ops"])

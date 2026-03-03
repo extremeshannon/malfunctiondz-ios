@@ -98,6 +98,16 @@ struct HomeView: View {
                                     wide: isWide
                                 ) { tabSelect.selected = 3 }
                             }
+                            if showLogbook {
+                                ModuleTile(
+                                    icon: "book.closed.fill",
+                                    title: "LOGBOOK",
+                                    subtitle: "Jump entries & sign-offs",
+                                    accentColor: .mdzAmber,
+                                    badges: [],
+                                    wide: isWide
+                                ) { tabSelect.selected = 4 }
+                            }
                             if showManifest {
                                 ModuleTile(
                                     icon: "list.clipboard.fill",
@@ -305,6 +315,7 @@ struct HomeView: View {
     private var isPilot:      Bool { allRoles.contains("pilot") }
     private var isInstructor: Bool { allRoles.contains(where: { ["instructor","lms_instructor"].contains($0) }) }
     private var isStudent:    Bool { allRoles.contains(where: { ["student","lms_student"].contains($0) }) }
+    private var isOps:        Bool { allRoles.contains("ops") }
 
     // Weather for skydivers, students, Ops, manifest, chief pilot, instructors (and admin/pilot)
     private var showMetar:        Bool {
@@ -315,6 +326,8 @@ struct HomeView: View {
     private var showAviation:     Bool { auth.currentUser?.canAccessAviation    == true }
     private var showLoft:         Bool { auth.currentUser?.canAccessLoft        == true }
     private var showGroundSchool: Bool { auth.currentUser?.canAccessGroundSchool == true }
+    /// Logbook tile on Home — for skydivers without Ground School access
+    private var showLogbook:      Bool { auth.currentUser?.canAccessLogbook == true && !showGroundSchool }
     private var showManifest:     Bool { auth.currentUser?.canAccessManifest == true }
 
     // MARK: - Helpers
