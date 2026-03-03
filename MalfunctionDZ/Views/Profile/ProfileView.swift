@@ -58,6 +58,34 @@ struct ProfileView: View {
                         .background(Color.mdzCard).cornerRadius(14)
                         .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
 
+                        // ── Manage LMS (admin/instructor) ─────────────────────
+                        if auth.currentUser?.canManageLMS == true {
+                            NavigationLink(destination: LMSEditRootView()) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "pencil.and.list.clipboard")
+                                        .font(.system(size: 18))
+                                        .foregroundColor(.mdzRed)
+                                        .frame(width: 28)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Manage LMS")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(.mdzText)
+                                        Text("Edit courses, modules, lessons & quizzes")
+                                            .font(.system(size: 12))
+                                            .foregroundColor(.mdzMuted)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(.mdzMuted)
+                                }
+                                .padding(16)
+                            }
+                            .buttonStyle(.plain)
+                            .background(Color.mdzCard).cornerRadius(14)
+                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                        }
+
                         // ── DZ Info ────────────────────────────────────────
                         VStack(alignment: .leading, spacing: 0) {
                             SectionHeader(title: "DROPZONE")

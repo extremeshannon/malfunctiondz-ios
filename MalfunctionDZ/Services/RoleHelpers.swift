@@ -76,6 +76,21 @@ extension User {
         true
     }
 
+    /// Admin, Chief Pilot, Ops Manager can manage users (list, create, edit roles)
+    var canManageUsers: Bool {
+        hasAnyRole(["admin", "master", "godmode", "ops", "chief_pilot", "chief pilot", "ops_admin"])
+    }
+
+    /// Admin, Instructor, Ops can manage LMS content (courses, modules, lessons, quizzes)
+    var canManageLMS: Bool {
+        hasAnyRole(["admin", "master", "godmode", "instructor", "lms_instructor", "ops"])
+    }
+
+    /// Only full admin (admin/master/godmode) can edit admin users or assign admin role. Chief Pilot/Ops cannot.
+    var canEditAdminUsers: Bool {
+        isAdminLevel
+    }
+
     // MARK: - Feature-level access within tabs
     var canManageAircraft: Bool {
         hasAnyRole(["admin", "master", "godmode", "ops"])

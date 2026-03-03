@@ -134,6 +134,16 @@ struct HomeView: View {
                                     wide: isWide
                                 ) { /* manifest TBD */ }
                             }
+                            if auth.currentUser?.canManageUsers == true {
+                                ModuleTile(
+                                    icon: "person.2.fill",
+                                    title: "USERS",
+                                    subtitle: "Manage logins and roles",
+                                    accentColor: .mdzRed,
+                                    badges: [],
+                                    wide: isWide
+                                ) { tabSelect.selected = 8 }
+                            }
                         }
                         .padding(.horizontal, hPad)
 
