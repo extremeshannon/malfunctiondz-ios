@@ -31,6 +31,29 @@ struct LoftRig: Codable, Identifiable, Hashable {
         case packerCert = "packer_cert"
     }
 
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = (try? c.decode(Int.self, forKey: .id)) ?? (try? c.decode(String.self, forKey: .id)).flatMap { Int($0) } ?? 0
+        label = (try? c.decode(String.self, forKey: .label)) ?? ""
+        manufacturer = try? c.decodeIfPresent(String.self, forKey: .manufacturer)
+        model = try? c.decodeIfPresent(String.self, forKey: .model)
+        if let b = try? c.decode(Bool.self, forKey: .isDzRig) { isDzRig = b }
+        else if let i = try? c.decode(Int.self, forKey: .isDzRig) { isDzRig = i != 0 }
+        else { isDzRig = true }
+        harness = (try? c.decode(RigComponent.self, forKey: .harness)) ?? RigComponent(mfr: nil, model: nil, sn: nil)
+        reserve = (try? c.decode(ReserveComponent.self, forKey: .reserve)) ?? ReserveComponent(mfr: nil, model: nil, sn: nil, dom: nil)
+        aad = (try? c.decode(RigComponent.self, forKey: .aad)) ?? RigComponent(mfr: nil, model: nil, sn: nil)
+        lastPack = try? c.decodeIfPresent(String.self, forKey: .lastPack)
+        dueDate = try? c.decodeIfPresent(String.self, forKey: .dueDate)
+        if let i = try? c.decode(Int.self, forKey: .daysLeft) { daysLeft = i }
+        else if let s = try? c.decode(String.self, forKey: .daysLeft) { daysLeft = Int(s) }
+        else { daysLeft = nil }
+        status = (try? c.decode(String.self, forKey: .status)) ?? "unknown"
+        packedBy = try? c.decodeIfPresent(String.self, forKey: .packedBy)
+        packerCert = try? c.decodeIfPresent(String.self, forKey: .packerCert)
+        notes = try? c.decodeIfPresent(String.self, forKey: .notes)
+    }
+
     var statusColor: Color {
         switch status {
         case "overdue":  return .mdzDanger

@@ -126,6 +126,15 @@ struct InstructorDashData {
     var activeStudents:  Int = 0
 }
 
+struct JumpCheckSummary {
+    var passed25: Int = 0
+    var total: Int = 0
+    var summaryText: String {
+        if total == 0 { return "No data" }
+        return "\(passed25) of \(total) at 25+ jumps"
+    }
+}
+
 struct AircraftBrief: Identifiable {
     let id:         Int
     let tailNumber: String
@@ -210,6 +219,12 @@ class HomeViewModel: ObservableObject {
     /// DZ Status (open/closed/announcement) — shown on Home
     @Published var dzStatus: DZStatus? = nil
 
+    /// 25 Jump Check summary for Manifest / Ops Admin home
+    @Published var jumpCheckSummary: JumpCheckSummary? = nil
+
+    /// Pilot rigs count (rigs marked for pilots) — placeholder for new backend feature
+    @Published var pilotRigsCount: Int? = nil
+
     // MARK: - Load dashboard
     func loadDashboard(user: User?) async {
         isLoading = true; defer { isLoading = false }
@@ -217,25 +232,34 @@ class HomeViewModel: ObservableObject {
         guard let user else { return }
 
         let all          = ((user.roles ?? []) + [user.role ?? ""]).map { $0.lowercased() }
-        let isAdmin      = all.contains(where: { ["admin","master","godmode","ops"].contains($0) })
+        let isAdmin      = all.contains(where: { ["admin","master","godmode","ops","ops_admin"].contains($0) })
         let isPilot      = all.contains("pilot")
         let isInstructor = all.contains(where: { ["instructor","lms_instructor"].contains($0) })
         let isStudent    = all.contains(where: { ["student","lms_student"].contains($0) })
         let isManifest   = all.contains("manifest")
+        let isManifestOnly = user.isManifestOnly
         let isChiefPilot = all.contains(where: { ["chief_pilot", "chief pilot"].contains($0) })
 
-        // Weather for skydivers, students, Ops, manifest, chief pilot, instructors
-        if isAdmin || isPilot || isInstructor || isStudent || isManifest || isChiefPilot { await loadMetar() }
+        // Weather for everyone (all authenticated users)
+        await loadMetar()
 
         if isAdmin {
             await withTaskGroup(of: Void.self) {
                 $0.addTask { await self.loadAviationSummary() }
                 $0.addTask { await self.loadLoftSummary() }
+                $0.addTask { await self.loadJumpCheckSummary() }
+            }
+        } else if isManifestOnly {
+            // Manifest-only: 25 Jump Check + Aviation status on home
+            await withTaskGroup(of: Void.self) {
+                $0.addTask { await self.loadAviationSummary() }
+                $0.addTask { await self.loadJumpCheckSummary() }
             }
         } else if isPilot {
             await withTaskGroup(of: Void.self) {
                 $0.addTask { await self.loadPilotDashboard(userId: user.id) }
                 $0.addTask { await self.loadAirworthyAircraft() }
+                $0.addTask { await self.loadPilotLMSProgress(userId: user.id) }
             }
         } else if isInstructor {
             await withTaskGroup(of: Void.self) {
@@ -496,5 +520,34 @@ class HomeViewModel: ObservableObject {
         if d.pending_count > 0 {
             alerts.append(.init(message: "\(d.pending_count) student\(d.pending_count == 1 ? "" : "s") awaiting sign-off", category: "Ground School", color: .mdzAmber))
         }
+    }
+
+    // MARK: - 25 Jump Check summary (Manifest, Ops Admin)
+    func loadJumpCheckSummary() async {
+        guard let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)/api/users/jump_check.php") else { return }
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let resp = try? JSONDecoder().decode(JumpCheckResponse.self, from: data),
+              resp.ok, let users = resp.users else { return }
+        let passed = users.filter { $0.passed25 }.count
+        jumpCheckSummary = JumpCheckSummary(passed25: passed, total: users.count)
+    }
+
+    // MARK: - Pilot LMS progress (Jump Pilot Training course status)
+    private func loadPilotLMSProgress(userId: Int) async {
+        guard let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)/api/lms/my_courses.php") else { return }
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let resp = try? JSONDecoder().decode(LMSCoursesResponse.self, from: data),
+              resp.ok, let course = resp.courses.first else { return }
+        groundSchoolSummary = course.title
+        let pct = Int(course.progressPct)
+        groundSchoolBadges = [
+            .init(label: "\(pct)% Complete", color: pct == 100 ? .mdzGreen : .mdzAmber)
+        ]
     }
 }

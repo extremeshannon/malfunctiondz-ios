@@ -40,8 +40,18 @@ extension User {
         hasAnyRole(["ops"]) || isAdminLevel
     }
 
+    var isOpsAdminRole: Bool {
+        hasAnyRole(["ops_admin"]) || isAdminLevel
+    }
+
     var isManifestRole: Bool {
         hasAnyRole(["manifest"]) || isAdminLevel
+    }
+
+    /// Manifest-only: has manifest role but no other operational roles (ops, pilot, admin, etc.)
+    var isManifestOnly: Bool {
+        guard hasAnyRole(["manifest"]) else { return false }
+        return !hasAnyRole(["admin", "master", "godmode", "pilot", "ops", "ops_admin", "chief_pilot", "chief pilot", "instructor", "lms_instructor"])
     }
 
     var isChiefPilotRole: Bool {
@@ -50,27 +60,27 @@ extension User {
 
     // MARK: - Tab access
     var canAccessAviation: Bool {
-        hasAnyRole(["admin", "master", "godmode", "pilot", "ops"])
+        hasAnyRole(["admin", "master", "godmode", "pilot", "ops", "ops_admin"])
     }
 
-    /// Full Loft access: Admin and Master Rigger only
+    /// Full Loft access: Admin and Master Rigger only (not ops_admin — they use Rigs)
     var canAccessLoft: Bool {
         hasAnyRole(["admin", "master", "godmode", "master_rigger"])
     }
 
-    /// Rig owners see their own rigs only (read-only). Ops always get Rigs tab; others when they own rigs and lack full Loft access.
+    /// Rig owners see their own rigs only. Ops/Ops Admin always get Rigs tab; skydivers when they own rigs (not manifest-only).
     var canAccessMyRigs: Bool {
-        hasAnyRole(["ops"]) || (!canAccessLoft && (totalRigs ?? 0) > 0)
+        hasAnyRole(["ops", "ops_admin"]) || (!canAccessLoft && !isManifestOnly && (totalRigs ?? 0) > 0)
     }
 
-    /// DZ-owned rigs: Ops (read-only), Packers + 25+ jumps (can mark packed)
+    /// DZ-owned rigs: Ops/Ops Admin, Packers, or 25+ jumps (not manifest-only)
     var canAccessDzRigs: Bool {
-        hasAnyRole(["packer", "ops"]) || (totalJumps ?? 0) >= 25
+        hasAnyRole(["packer", "ops", "ops_admin"]) || ((totalJumps ?? 0) >= 25 && !isManifestOnly)
     }
 
-    /// 25 Jump Check: Ops (and admin) see users with jump counts
+    /// 25 Jump Check tab: Ops, Ops Admin, Admin (Manifest sees widget on Home only)
     var canAccess25JumpCheck: Bool {
-        hasAnyRole(["ops", "admin", "master", "godmode"])
+        hasAnyRole(["ops", "ops_admin", "admin", "master", "godmode"])
     }
 
     /// Can mark DZ rigs as packed: Packers or 25+ jumps (Ops is read-only)
@@ -92,9 +102,9 @@ extension User {
         hasAnyRole(["admin", "master", "godmode", "manifest", "chief_pilot", "chief pilot", "ops"])
     }
 
-    /// Logbook is available to all authenticated users except Ops (Ops use Rigs instead)
+    /// Logbook: Skydivers, Pilots, Students, Instructors — not Ops/Ops Admin or Manifest-only
     var canAccessLogbook: Bool {
-        !hasAnyRole(["ops"])
+        !hasAnyRole(["ops", "ops_admin"]) && !isManifestOnly
     }
 
     /// Admin, Chief Pilot, Ops Manager can manage users (list, create, edit roles)
@@ -102,9 +112,9 @@ extension User {
         hasAnyRole(["admin", "master", "godmode", "ops", "chief_pilot", "chief pilot", "ops_admin"])
     }
 
-    /// Admin, Instructor, Ops can manage LMS content (courses, modules, lessons, quizzes)
+    /// Admin, Instructor, Ops, Ops Admin can manage LMS content (courses, modules, lessons, quizzes)
     var canManageLMS: Bool {
-        hasAnyRole(["admin", "master", "godmode", "instructor", "lms_instructor", "ops"])
+        hasAnyRole(["admin", "master", "godmode", "instructor", "lms_instructor", "ops", "ops_admin"])
     }
 
     /// Only full admin (admin/master/godmode) can edit admin users or assign admin role. Chief Pilot/Ops cannot.
@@ -127,14 +137,14 @@ extension User {
         isPilotRole
     }
 
-    /// See all aircraft (admin full edit, Ops read-only)
+    /// See all aircraft (admin full edit, Ops/Ops Admin read-only)
     var seesAllAircraft: Bool {
-        canManageAircraft || hasAnyRole(["ops"])
+        canManageAircraft || hasAnyRole(["ops", "ops_admin"])
     }
 
-    /// Aviation is read-only for Ops (no add aircraft, no log flights/pax)
+    /// Aviation is read-only for Ops/Ops Admin (no add aircraft, no log flights/pax)
     var isAviationReadOnly: Bool {
-        hasAnyRole(["ops"])
+        hasAnyRole(["ops", "ops_admin"])
     }
 
     var canManageGroundSchool: Bool {
@@ -160,8 +170,8 @@ extension User {
         return allRolesLowercased.contains(key) || isAdminLevel
     }
 
-    /// All users can view calendar (events + shifts); shifts require auth.
-    var canAccessCalendar: Bool { true }
+    /// Calendar: all except Manifest-only (events + shifts)
+    var canAccessCalendar: Bool { !isManifestOnly }
 
     /// Admin and Ops can update DZ status and send push notifications.
     var canUpdateDzStatus: Bool {
@@ -171,6 +181,7 @@ extension User {
     // MARK: - Display label
     var roleDisplayLabel: String {
         if isAdminLevel      { return "Admin" }
+        if isOpsAdminRole    { return "Ops Admin" }
         if isPilotRole       { return "Pilot" }
         if isInstructorRole  { return "Instructor" }
         if isStudentRole     { return "Student" }
@@ -179,5 +190,10 @@ extension User {
         if isManifestRole    { return "Manifest" }
         if isChiefPilotRole  { return "Chief Pilot" }
         return role?.capitalized ?? "Member"
+    }
+
+    /// Manifest tile on Home: for Admin/Chief Pilot/Ops who run manifest — not for manifest-only users
+    var canSeeManifestTile: Bool {
+        canAccessManifest && !isManifestOnly
     }
 }

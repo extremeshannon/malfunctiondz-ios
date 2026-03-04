@@ -3,6 +3,21 @@
 import Foundation
 import SwiftUI
 
+private func decodeErrorMessage(_ e: DecodingError) -> String {
+    switch e {
+    case .typeMismatch(let type, let context):
+        return "Data type mismatch: expected \(type) at \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
+    case .valueNotFound(let type, let context):
+        return "Missing value for \(type) at \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
+    case .keyNotFound(let key, let context):
+        return "Missing key '\(key.stringValue)' at \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
+    case .dataCorrupted(let context):
+        return "Invalid data: \(context.debugDescription)"
+    @unknown default:
+        return "The data couldn't be read because it isn't in the correct format."
+    }
+}
+
 struct DzRigsResponse: Codable {
     let ok: Bool
     let summary: LoftSummary?
@@ -40,7 +55,16 @@ class DzRigsViewModel: ObservableObject {
         var req = URLRequest(url: url)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         do {
-            let (data, _) = try await URLSession.shared.data(for: req)
+            let (data, response) = try await URLSession.shared.data(for: req)
+            if let http = response as? HTTPURLResponse, http.statusCode == 403 {
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let err = json["error"] as? String {
+                    error = err
+                } else {
+                    error = "Access denied"
+                }
+                return
+            }
             let resp = try JSONDecoder().decode(DzRigsResponse.self, from: data)
             if resp.ok {
                 rigs = resp.rigs ?? []
@@ -49,6 +73,8 @@ class DzRigsViewModel: ObservableObject {
             } else {
                 error = "Failed to load DZ rigs"
             }
+        } catch let dec as DecodingError {
+            self.error = decodeErrorMessage(dec)
         } catch {
             self.error = error.localizedDescription
         }

@@ -74,6 +74,13 @@ struct HomeView: View {
                             .padding(.horizontal, hPad)
                             .padding(.bottom, 16)
 
+                        // ── Manifest-only: 25 Jump Check + Aviation status ──
+                        if isManifestOnly {
+                            manifestHomeSection
+                                .padding(.horizontal, hPad)
+                                .padding(.bottom, 16)
+                        }
+
                         // ── Students awaiting check-offs (instructors) ──
                         if isInstructor, let pending = vm.instructorData?.pendingSignoffs, pending > 0 {
                             studentsAwaitingCard(pending: pending)
@@ -130,6 +137,16 @@ struct HomeView: View {
                                     wide: isWide
                                 ) { tabSelect.selected = 2 }
                             }
+                            if auth.currentUser?.canAccess25JumpCheck == true {
+                                ModuleTile(
+                                    icon: "figure.fall",
+                                    title: "25 JUMP CHECK",
+                                    subtitle: vm.jumpCheckSummary?.summaryText ?? "Users with jump counts",
+                                    accentColor: .mdzAmber,
+                                    badges: [],
+                                    wide: isWide
+                                ) { tabSelect.selected = 11 }
+                            }
                             if auth.currentUser?.canAccessMyRigs == true {
                                 ModuleTile(
                                     icon: "briefcase.fill",
@@ -144,9 +161,9 @@ struct HomeView: View {
                                 ModuleTile(
                                     icon: "square.stack.3d.up.fill",
                                     title: "DZ RIGS",
-                                    subtitle: "DZ-owned rigs — Packers can mark packed",
+                                    subtitle: isAdmin ? vm.loftSummary : "DZ-owned rigs — Packers can mark packed",
                                     accentColor: .mdzAmber,
-                                    badges: [],
+                                    badges: isAdmin ? vm.loftBadges : [],
                                     wide: isWide
                                 ) { tabSelect.selected = 7 }
                             }
@@ -271,6 +288,28 @@ struct HomeView: View {
                     .font(.system(size: isWide ? 15 : 13, weight: .semibold))
                     .foregroundColor(.mdzBlue)
             }
+        }
+    }
+
+    // MARK: - Manifest home section (25 Jump Check + Aviation status)
+    @ViewBuilder
+    private var manifestHomeSection: some View {
+        VStack(spacing: 14) {
+            if let jc = vm.jumpCheckSummary {
+                ManifestStatusCard(
+                    icon: "figure.fall",
+                    title: "25 JUMP CHECK",
+                    subtitle: jc.summaryText,
+                    accentColor: .mdzAmber
+                )
+            }
+            ManifestStatusCard(
+                icon: "airplane",
+                title: config.moduleAviation.uppercased(),
+                subtitle: vm.aviationSummary,
+                accentColor: .mdzBlue,
+                badges: vm.aviationBadges
+            )
         }
     }
 
@@ -411,24 +450,21 @@ struct HomeView: View {
     private var allRoles: [String] {
         ((auth.currentUser?.roles ?? []) + [auth.currentUser?.role ?? ""]).map { $0.lowercased() }
     }
-    private var isAdmin:      Bool { allRoles.contains(where: { ["admin","master","godmode","ops"].contains($0) }) }
+    private var isAdmin:      Bool { allRoles.contains(where: { ["admin","master","godmode","ops","ops_admin"].contains($0) }) }
     private var isPilot:      Bool { allRoles.contains("pilot") }
     private var isInstructor: Bool { allRoles.contains(where: { ["instructor","lms_instructor"].contains($0) }) }
     private var isStudent:    Bool { allRoles.contains(where: { ["student","lms_student"].contains($0) }) }
     private var isOps:        Bool { allRoles.contains("ops") }
+    private var isManifestOnly: Bool { auth.currentUser?.isManifestOnly == true }
 
-    // Weather for skydivers, students, Ops, manifest, chief pilot, instructors (and admin/pilot)
-    private var showMetar:        Bool {
-        isAdmin || isPilot || isInstructor || isStudent || isOps
-        || (auth.currentUser?.isManifestRole == true)
-        || (auth.currentUser?.isChiefPilotRole == true)
-    }
+    // Weather + DZ Status for everyone (all authenticated users)
+    private var showMetar: Bool { true }
     private var showAviation:     Bool { auth.currentUser?.canAccessAviation    == true }
     private var showLoft:         Bool { auth.currentUser?.canAccessLoft        == true }
     private var showGroundSchool: Bool { auth.currentUser?.canAccessGroundSchool == true }
     /// Logbook tile on Home — for skydivers without Ground School access
     private var showLogbook:      Bool { auth.currentUser?.canAccessLogbook == true && !showGroundSchool }
-    private var showManifest:     Bool { auth.currentUser?.canAccessManifest == true }
+    private var showManifest:     Bool { auth.currentUser?.canSeeManifestTile == true }
 
     // MARK: - Helpers
     private var greeting: String {
@@ -572,6 +608,56 @@ struct MetarStat: View {
             Text(label).font(.system(size: 8, weight: .bold)).foregroundColor(.mdzMuted).tracking(0.8)
             Text(value).font(.system(size: 13, weight: .semibold)).foregroundColor(.mdzText)
         }
+    }
+}
+
+// MARK: - Manifest status card (25 Jump Check, Aviation on home)
+struct ManifestStatusCard: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let accentColor: Color
+    var badges: [DashBadge] = []
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(accentColor)
+                Text(title)
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundColor(.mdzMuted)
+                    .tracking(1.5)
+            }
+            Text(subtitle)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.mdzText)
+            if !badges.isEmpty {
+                HStack(spacing: 6) {
+                    ForEach(badges) { b in
+                        Text(b.label)
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(b.color)
+                            .padding(.horizontal, 6).padding(.vertical, 3)
+                            .background(b.color.opacity(0.15))
+                            .clipShape(Capsule())
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.mdzCard)
+        .cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(
+            Rectangle()
+                .fill(accentColor)
+                .frame(height: 3)
+                .cornerRadius(2),
+            alignment: .top
+        )
     }
 }
 
