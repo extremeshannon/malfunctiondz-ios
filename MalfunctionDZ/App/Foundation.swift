@@ -449,10 +449,23 @@ final class PushRegistration: ObservableObject {
     static let shared = PushRegistration()
 
     func requestPermissionAndRegister() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
-            guard granted else { return }
-            DispatchQueue.main.async {
-                UIApplication.shared.registerForRemoteNotifications()
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            switch settings.authorizationStatus {
+            case .authorized, .provisional:
+                DispatchQueue.main.async {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            case .notDetermined:
+                UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+                    guard granted else { return }
+                    DispatchQueue.main.async {
+                        UIApplication.shared.registerForRemoteNotifications()
+                    }
+                }
+            case .denied, .ephemeral:
+                break
+            @unknown default:
+                break
             }
         }
     }

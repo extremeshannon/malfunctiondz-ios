@@ -26,12 +26,18 @@ struct MalfunctionDZApp: App {
 // MARK: - Content Root
 struct ContentRootView: View {
     @EnvironmentObject private var auth: AuthManager
+    @Environment(\.scenePhase) private var scenePhase
     var body: some View {
         if auth.isAuthenticated {
             MDZRootView()
                 .id(auth.sessionID)
         } else {
             LoginView()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active, auth.isAuthenticated {
+                PushRegistration.shared.requestPermissionAndRegister()
+            }
         }
     }
 }
