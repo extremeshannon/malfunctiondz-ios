@@ -214,3 +214,22 @@ struct MessageAPIResponse: Decodable {
     let message: String?
     let error: String?
 }
+
+// MARK: - DZ Status API response
+struct DZStatusAPIResponse: Decodable {
+    let ok: Bool
+    let status: DZStatus?
+}
+
+// MARK: - DZ Status (open/closed/announcement)
+struct DZStatus: Codable {
+    let id: Int
+    let status: String
+    let announcement: String?
+    let updatedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, status, announcement
+        case updatedAt = "updated_at"
+    }
+}

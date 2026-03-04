@@ -45,6 +45,44 @@ actor CalendarAPIService {
         return try await postMessage(path: "/api/calendar/shift_request_release.php", body: body)
     }
 
+    // MARK: - DZ Status (GET no auth, PUT auth)
+    func fetchDzStatus() async throws -> DZStatus {
+        guard let url = URL(string: baseURL() + "/api/dz/status.php") else { throw APIError.invalidURL }
+        var req = URLRequest(url: url)
+        req.httpMethod = "GET"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let (data, _) = try await URLSession.shared.data(for: req)
+        let decoded = try JSONDecoder().decode(DZStatusAPIResponse.self, from: data)
+        guard decoded.ok, let s = decoded.status else { throw APIError.serverError("Invalid response") }
+        return s
+    }
+
+    func updateDzStatus(status: String, announcement: String?) async throws -> DZStatus {
+        struct Body: Encodable {
+            let status: String
+            let announcement: String?
+        }
+        return try await putDzStatus(path: "/api/dz/status.php", body: Body(status: status, announcement: announcement))
+    }
+
+    private func putDzStatus<T: Encodable>(path: String, body: T) async throws -> DZStatus {
+        guard let token = KeychainHelper.readToken(), !token.isEmpty else { throw APIError.notAuthenticated }
+        guard let url = URL(string: baseURL() + path) else { throw APIError.invalidURL }
+        var req = URLRequest(url: url)
+        req.httpMethod = "PUT"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.httpBody = try JSONEncoder().encode(body)
+        let (data, response) = try await URLSession.shared.data(for: req)
+        if let http = response as? HTTPURLResponse {
+            if http.statusCode == 403 { throw APIError.serverError("You don't have permission to update DZ status") }
+            if http.statusCode == 401 { await AuthManager.shared.logout(); throw APIError.notAuthenticated }
+        }
+        let decoded = try JSONDecoder().decode(DZStatusAPIResponse.self, from: data)
+        guard decoded.ok, let s = decoded.status else { throw APIError.serverError("Invalid response") }
+        return s
+    }
+
     // MARK: - Internal request helpers
     private func requestEvents(path: String, requiresAuth: Bool) async throws -> [CalendarEvent] {
         guard let url = URL(string: baseURL() + path) else { throw APIError.invalidURL }

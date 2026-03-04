@@ -127,6 +127,11 @@ extension User {
     /// All users can view calendar (events + shifts); shifts require auth.
     var canAccessCalendar: Bool { true }
 
+    /// Admin and Ops can update DZ status and send push notifications.
+    var canUpdateDzStatus: Bool {
+        hasAnyRole(["admin", "master", "godmode", "ops"])
+    }
+
     // MARK: - Display label
     var roleDisplayLabel: String {
         if isAdminLevel      { return "Admin" }

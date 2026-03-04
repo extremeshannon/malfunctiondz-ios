@@ -9,9 +9,10 @@ import UserNotifications
 @main
 struct MalfunctionDZApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    @StateObject private var auth      = AuthManager.shared
-    @StateObject private var config    = AppConfig()
-    @StateObject private var tabSelect = TabSelection.shared
+    @StateObject private var auth       = AuthManager.shared
+    @StateObject private var config     = AppConfig()
+    @StateObject private var tabSelect  = TabSelection.shared
+    @StateObject private var pushNav    = PushNavigationTarget.shared
 
     var body: some Scene {
         WindowGroup {
@@ -19,22 +20,47 @@ struct MalfunctionDZApp: App {
                 .environmentObject(auth)
                 .environmentObject(config)
                 .environmentObject(tabSelect)
+                .environmentObject(pushNav)
         }
     }
 }
 
+// MARK: - Push navigation (notification tap → show content)
+struct PendingPushTap: Identifiable {
+    let id = UUID()
+    let type: String
+    let title: String
+    let body: String
+    let announcement: String?
+    let payload: [String: Any]?
+}
+
+@MainActor
+final class PushNavigationTarget: ObservableObject {
+    static let shared = PushNavigationTarget()
+    @Published var pendingTap: PendingPushTap?
+    func handleTap(type: String, title: String, body: String, payload: [String: Any]) {
+        let announcement = payload["announcement"] as? String
+        pendingTap = PendingPushTap(type: type, title: title, body: body, announcement: announcement, payload: payload)
+    }
+    func dismiss() { pendingTap = nil }
+}
+
 // MARK: - Content Root
 struct ContentRootView: View {
-    @EnvironmentObject private var auth: AuthManager
+    @EnvironmentObject private var auth:    AuthManager
+    @EnvironmentObject private var pushNav: PushNavigationTarget
     @Environment(\.scenePhase) private var scenePhase
     var body: some View {
-        if auth.isAuthenticated {
-            MDZRootView()
-                .id(auth.sessionID)
-        } else {
-            LoginView()
+        Group {
+            if auth.isAuthenticated {
+                MDZRootView()
+                    .id(auth.sessionID)
+            } else {
+                LoginView()
+            }
         }
-        .onChange(of: scenePhase) { _, newPhase in
+        .onChange(of: scenePhase) { newPhase in
             if newPhase == .active, auth.isAuthenticated {
                 PushRegistration.shared.requestPermissionAndRegister()
             }
@@ -48,6 +74,7 @@ struct MDZRootView: View {
     @EnvironmentObject private var auth:      AuthManager
     @EnvironmentObject private var config:    AppConfig
     @EnvironmentObject private var tabSelect: TabSelection
+    @EnvironmentObject private var pushNav:   PushNavigationTarget
 
     var body: some View {
         Group {
@@ -58,6 +85,12 @@ struct MDZRootView: View {
             }
         }
         .task { await config.loadConfig() }
+        .onChange(of: pushNav.pendingTap?.id) { _ in
+            if pushNav.pendingTap != nil { tabSelect.selected = 0 }
+        }
+        .sheet(item: $pushNav.pendingTap) { tap in
+            NotificationDetailSheet(tap: tap) { pushNav.dismiss() }
+        }
     }
 }
 
@@ -118,6 +151,24 @@ struct MDZSplitView: View {
 
                 Section("ACCOUNT") {
                     SidebarButton(icon: "person.fill", title: "Profile", selected: selectedModule == .profile) { selectedModule = .profile }
+                    Button {
+                        auth.logout()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.mdzDanger)
+                                .frame(width: 22)
+                            Text("Sign Out")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.mdzDanger)
+                            Spacer()
+                        }
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 8)
+                    }
+                    .buttonStyle(.plain)
+                    .listRowBackground(Color.clear)
                 }
             }
             .listStyle(.sidebar)
@@ -313,5 +364,67 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) -> UNNotificationPresentationOptions {
         return [.banner, .sound, .badge]
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+        let userInfo = response.notification.request.content.userInfo
+        guard let aps = userInfo["aps"] as? [String: Any],
+              let alert = aps["alert"] as? [String: Any] else { return }
+        let title = (alert["title"] as? String) ?? "Notification"
+        let body  = (alert["body"]  as? String) ?? ""
+        var payload: [String: Any] = [:]
+        for (k, v) in userInfo {
+            if let key = k as? String, key != "aps" {
+                payload[key] = v
+            }
+        }
+        let type = (payload["type"] as? String) ?? "unknown"
+        await MainActor.run {
+            PushNavigationTarget.shared.handleTap(type: type, title: title, body: body, payload: payload)
+        }
+    }
+}
+
+// MARK: - Notification detail sheet (shown when user taps push)
+struct NotificationDetailSheet: View {
+    let tap: PendingPushTap
+    let onDismiss: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.mdzBackground.ignoresSafeArea()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text(tap.title)
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.mdzText)
+                        if !tap.body.isEmpty {
+                            Text(tap.body)
+                                .font(.system(size: 15))
+                                .foregroundColor(.mdzText)
+                        }
+                        if let ann = tap.announcement, !ann.isEmpty {
+                            Text(ann)
+                                .font(.system(size: 15))
+                                .foregroundColor(.mdzMuted)
+                                .padding(.top, 8)
+                        }
+                        Spacer(minLength: 24)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(20)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done", action: onDismiss)
+                        .foregroundColor(.mdzRed)
+                }
+            }
+        }
     }
 }

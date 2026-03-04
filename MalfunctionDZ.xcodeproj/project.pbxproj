@@ -47,6 +47,8 @@
 		FB063F062F56000200022763 /* CalendarRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F072F56000200022763 /* CalendarRootView.swift */; };
 		FB063F082F56000200022763 /* EventsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F092F56000200022763 /* EventsView.swift */; };
 		FB063F0A2F56000200022763 /* ShiftsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0B2F56000200022763 /* ShiftsView.swift */; };
+		FB063F0C2F56000200022764 /* DZStatusUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0D2F56000200022764 /* DZStatusUpdateView.swift */; };
+		FB063F0E2F56000200022765 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0F2F56000200022765 /* NotificationsView.swift */; };
 		FB367C542F510E6100FBAD05 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
 		FB367C572F510E6100FBAD05 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */; };
 		FB367DCC2F52007600FBAD05 /* MalfunctionDZApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */; };
@@ -98,7 +100,9 @@
 		FB063F072F56000200022763 /* CalendarRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarRootView.swift; sourceTree = "<group>"; };
 		FB063F092F56000200022763 /* EventsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsView.swift; sourceTree = "<group>"; };
 		FB063F0B2F56000200022763 /* ShiftsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShiftsView.swift; sourceTree = "<group>"; };
+		FB063F0D2F56000200022764 /* DZStatusUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DZStatusUpdateView.swift; sourceTree = "<group>"; };
 		FB063F0D2F56000300022763 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FB063F0F2F56000200022765 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		FB367C4C2F510E6000FBAD05 /* MalfunctionDZ.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MalfunctionDZ.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FB367C532F510E6100FBAD05 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -108,6 +112,7 @@
 		FB367DD42F52169D00FBAD05 /* LMS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMS.swift; sourceTree = "<group>"; };
 		FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroundSchoolViewModel.swift; sourceTree = "<group>"; };
 		FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotCurrencyCard.swift; sourceTree = "<group>"; };
+		FBFFF0E42F58BC1F009895AE /* MalfunctionDZ.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MalfunctionDZ.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -202,8 +207,17 @@
 				FB063F072F56000200022763 /* CalendarRootView.swift */,
 				FB063F092F56000200022763 /* EventsView.swift */,
 				FB063F0B2F56000200022763 /* ShiftsView.swift */,
+				FB063F0D2F56000200022764 /* DZStatusUpdateView.swift */,
 			);
 			path = Calendar;
+			sourceTree = "<group>";
+		};
+		FB063F102F56000200022766 /* Notifications */ = {
+			isa = PBXGroup;
+			children = (
+				FB063F0F2F56000200022765 /* NotificationsView.swift */,
+			);
+			path = Notifications;
 			sourceTree = "<group>";
 		};
 		FB367C432F510E6000FBAD05 = {
@@ -225,6 +239,7 @@
 		FB367C4E2F510E6000FBAD05 /* MalfunctionDZ */ = {
 			isa = PBXGroup;
 			children = (
+				FBFFF0E42F58BC1F009895AE /* MalfunctionDZ.entitlements */,
 				FB367DC52F51FECB00FBAD05 /* App */,
 				FB367DC32F51FD3A00FBAD05 /* Models */,
 				FB367DD32F52037A00FBAD05 /* ViewModels */,
@@ -263,6 +278,7 @@
 		FB367DC42F51FD4800FBAD05 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				FB063F102F56000200022766 /* Notifications */,
 				FB063D032F52AD6B00227638 /* Quiz */,
 				FB063CFC2F5231DE00227638 /* Profile */,
 				FB063D2A2F54BB110227638 /* Users */,
@@ -438,6 +454,8 @@
 				FB063F062F56000200022763 /* CalendarRootView.swift in Sources */,
 				FB063F082F56000200022763 /* EventsView.swift in Sources */,
 				FB063F0A2F56000200022763 /* ShiftsView.swift in Sources */,
+				FB063F0C2F56000200022764 /* DZStatusUpdateView.swift in Sources */,
+				FB063F0E2F56000200022765 /* NotificationsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -569,8 +587,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/MalfunctionDZ.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = A10;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
@@ -603,8 +622,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/MalfunctionDZ.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = A10;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;

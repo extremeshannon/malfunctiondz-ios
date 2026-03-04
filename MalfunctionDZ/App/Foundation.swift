@@ -448,6 +448,10 @@ actor APIClient {
 final class PushRegistration: ObservableObject {
     static let shared = PushRegistration()
 
+    /// For Profile diagnostics: "received" | "sent" | "skipped" | "failed" | "denied" | nil
+    @Published var lastStatus: String?
+    @Published var lastError: String?
+
     func requestPermissionAndRegister() {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             switch settings.authorizationStatus {
@@ -463,7 +467,10 @@ final class PushRegistration: ObservableObject {
                     }
                 }
             case .denied, .ephemeral:
-                break
+                DispatchQueue.main.async {
+                    self.lastStatus = "denied"
+                    self.lastError = "Enable in Settings"
+                }
             @unknown default:
                 break
             }
@@ -471,11 +478,19 @@ final class PushRegistration: ObservableObject {
     }
 
     func sendTokenToBackend(_ deviceToken: String) async {
+        lastStatus = "received"
+        lastError = nil
         guard let token = KeychainHelper.readToken(), !token.isEmpty else {
+            lastStatus = "skipped"
+            lastError = "No auth token"
             print("⚠️ PUSH: Skipped — no auth token (user not logged in?)")
             return
         }
-        guard let url = URL(string: "\(kServerURL)/api/push/register.php") else { return }
+        guard let url = URL(string: "\(kServerURL)/api/push/register.php") else {
+            lastStatus = "failed"
+            lastError = "Invalid URL"
+            return
+        }
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -489,11 +504,17 @@ final class PushRegistration: ObservableObject {
             let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
             let body = String(data: data, encoding: .utf8) ?? ""
             if code == 200 || (200...299).contains(code) {
+                lastStatus = "sent"
+                lastError = nil
                 print("✅ PUSH: Registered at \(kServerURL)/api/push/register.php (HTTP \(code))")
             } else {
+                lastStatus = "failed"
+                lastError = "HTTP \(code): \(body)"
                 print("⚠️ PUSH: Register failed HTTP \(code): \(body)")
             }
         } catch {
+            lastStatus = "failed"
+            lastError = error.localizedDescription
             print("⚠️ PUSH: Register request failed: \(error.localizedDescription)")
         }
     }

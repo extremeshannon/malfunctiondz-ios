@@ -36,7 +36,7 @@ struct MetarData {
     }
 
     var flightCategoryColor: Color {
-        switch flightCategory {
+        switch resolvedFlightCategory {
         case "VFR":  return .mdzGreen
         case "MVFR": return Color(hex: "0080FF")
         case "IFR":  return .mdzDanger
@@ -68,6 +68,36 @@ struct MetarData {
         case "OVC": return "Overcast \(alt)"
         default:    return top.cover
         }
+    }
+
+    /// Altimeter in inHg for display. API may return mb (if > 50) — convert.
+    var altimInHgDisplay: Double? {
+        guard let raw = altimInHg else { return nil }
+        if raw > 50 { return raw / 33.8639 }
+        return raw
+    }
+
+    /// Flight category VFR/MVFR/IFR/LIFR. Compute from ceiling & vis when API returns UNKN.
+    var resolvedFlightCategory: String {
+        if !["UNKN", "UNKNOWN", ""].contains(flightCategory.uppercased()) {
+            return flightCategory.uppercased()
+        }
+        let ceilingFt = lowestCeilingFeet
+        let visSM = visibilitySM ?? 10
+        if ceilingFt != nil && (ceilingFt ?? 9999) < 500 || visSM < 1 { return "LIFR" }
+        if ceilingFt != nil && (ceilingFt ?? 9999) < 1000 || visSM < 3 { return "IFR" }
+        if ceilingFt != nil && (ceilingFt ?? 9999) < 3000 || visSM < 5 { return "MVFR" }
+        return "VFR"
+    }
+
+    private var lowestCeilingFeet: Int? {
+        for c in clouds {
+            switch c.cover.uppercased() {
+            case "BKN", "OVC": return (c.base ?? 0) * 100
+            default: continue
+            }
+        }
+        return nil
     }
 }
 
@@ -177,6 +207,9 @@ class HomeViewModel: ObservableObject {
     @Published var metar:        MetarData? = nil
     @Published var metarLoading: Bool       = false
 
+    /// DZ Status (open/closed/announcement) — shown on Home
+    @Published var dzStatus: DZStatus? = nil
+
     // MARK: - Load dashboard
     func loadDashboard(user: User?) async {
         isLoading = true; defer { isLoading = false }
@@ -220,6 +253,17 @@ class HomeViewModel: ObservableObject {
         let hasLogbook = user.canAccessLogbook
         let hasGroundSchool = user.canAccessGroundSchool
         if hasLogbook || hasGroundSchool { await loadLogbookSettings() }
+
+        // DZ Status — always load for Home banner
+        await loadDzStatus()
+    }
+
+    func loadDzStatus() async {
+        do {
+            dzStatus = try await CalendarAPIService.shared.fetchDzStatus()
+        } catch {
+            dzStatus = nil
+        }
     }
 
     private func loadLogbookSettings() async {

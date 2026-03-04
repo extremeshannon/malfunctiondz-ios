@@ -5,6 +5,7 @@ import SwiftUI
 struct ProfileView: View {
     @EnvironmentObject private var auth:   AuthManager
     @EnvironmentObject private var config: AppConfig
+    @ObservedObject private var pushReg  = PushRegistration.shared
     @Environment(\.horizontalSizeClass) private var hSizeClass
     private var isWide: Bool { hSizeClass == .regular }
 
@@ -86,6 +87,69 @@ struct ProfileView: View {
                             .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
                         }
 
+                        // ── Notifications history ────────────────────────────
+                        NavigationLink(destination: NotificationsView()) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "bell.badge")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.mdzRed)
+                                    .frame(width: 28)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Notifications")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.mdzText)
+                                    Text("View status notes & announcements")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.mdzMuted)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.mdzMuted)
+                            }
+                            .padding(16)
+                        }
+                        .buttonStyle(.plain)
+                        .background(Color.mdzCard).cornerRadius(14)
+                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+
+                        // ── Push status (diagnostics) ──────────────────────
+                        VStack(alignment: .leading, spacing: 0) {
+                            SectionHeader(title: "PUSH NOTIFICATIONS")
+                            HStack {
+                                Text("Status")
+                                    .font(.system(size: isWide ? 15 : 14))
+                                    .foregroundColor(.mdzMuted)
+                                Spacer()
+                                Group {
+                                    if let s = pushReg.lastStatus {
+                                        switch s {
+                                        case "sent": Text("Registered ✓").foregroundColor(.mdzGreen)
+                                        case "received": Text("Token received…").foregroundColor(.mdzBlue)
+                                        case "skipped": Text("Skipped").foregroundColor(.mdzMuted)
+                                        case "denied": Text("Denied").foregroundColor(.mdzMuted)
+                                        case "failed": Text("Failed").foregroundColor(.mdzDanger)
+                                        default: Text(s).foregroundColor(.mdzMuted)
+                                        }
+                                    } else {
+                                        Text("Checking…").foregroundColor(.mdzMuted)
+                                    }
+                                }
+                                .font(.system(size: isWide ? 15 : 14))
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, isWide ? 14 : 10)
+                            if let err = pushReg.lastError, !err.isEmpty {
+                                Text(err)
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.mdzDanger)
+                                    .padding(.horizontal, 16)
+                                    .padding(.bottom, 10)
+                            }
+                        }
+                        .background(Color.mdzCard).cornerRadius(14)
+                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+
                         // ── DZ Info ────────────────────────────────────────
                         VStack(alignment: .leading, spacing: 0) {
                             SectionHeader(title: "DROPZONE")
@@ -134,6 +198,16 @@ struct ProfileView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Sign Out", action: { auth.logout() })
+                        .foregroundColor(.mdzDanger)
+                        .font(.system(size: 15, weight: .semibold))
+                }
+            }
+            .onAppear {
+                PushRegistration.shared.requestPermissionAndRegister()
+            }
         }
     }
 

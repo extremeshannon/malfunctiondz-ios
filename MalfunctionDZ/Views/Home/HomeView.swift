@@ -13,6 +13,7 @@ struct HomeView: View {
     @EnvironmentObject private var config:    AppConfig
     @EnvironmentObject private var tabSelect: TabSelection
     @StateObject private var vm = HomeViewModel()
+    @State private var dzStatusJustUpdated = false
     @Environment(\.horizontalSizeClass) private var hSizeClass
 
     // iPad uses more columns and wider padding
@@ -35,6 +36,27 @@ struct HomeView: View {
                             .padding(.horizontal, hPad)
                             .padding(.top, isWide ? 28 : 20)
                             .padding(.bottom, 20)
+
+                        // ── DZ Status (open/closed/announcement) — tappable for Admin/Ops ─
+                        if let dz = vm.dzStatus {
+                            Group {
+                                if auth.currentUser?.canUpdateDzStatus == true {
+                                    NavigationLink(destination: DZStatusUpdateView(
+                                        onSaved: {
+                                            Task { await vm.loadDzStatus() }
+                                            dzStatusJustUpdated = true
+                                        }
+                                    )) {
+                                        DZStatusCard(status: dz, tappable: true)
+                                    }
+                                    .buttonStyle(.plain)
+                                } else {
+                                    DZStatusCard(status: dz, tappable: false)
+                                }
+                            }
+                            .padding(.horizontal, hPad)
+                            .padding(.bottom, 16)
+                        }
 
                         // ── METAR ────────────────────────────────────
                         if showMetar {
@@ -181,6 +203,18 @@ struct HomeView: View {
             }
             .navigationBarHidden(true)
             .task { await vm.loadDashboard(user: auth.currentUser) }
+            .overlay(alignment: .top) {
+                if dzStatusJustUpdated {
+                    DZStatusUpdatedBanner(onDismiss: {
+                        dzStatusJustUpdated = false
+                    })
+                    .padding(.horizontal, hPad)
+                    .padding(.top, 12)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .zIndex(100)
+                }
+            }
+            .animation(.easeOut(duration: 0.3), value: dzStatusJustUpdated)
         }
     }
 
@@ -420,7 +454,7 @@ struct MetarWidget: View {
                     HStack(alignment: .center, spacing: 24) {
                         // Flight category
                         VStack(spacing: 4) {
-                            Text(m.flightCategory)
+                            Text(m.resolvedFlightCategory)
                                 .font(.system(size: 20, weight: .black))
                                 .foregroundColor(m.flightCategoryColor)
                             Text("CATEGORY")
@@ -441,7 +475,7 @@ struct MetarWidget: View {
                         MetarStat(label: "VIS",
                                   value: m.visibilitySM.map { $0 >= 10 ? "10+ SM" : String(format: "%.1f SM", $0) } ?? "--")
                         MetarStat(label: "SKY",  value: m.skyCondition)
-                        MetarStat(label: "ALT",  value: m.altimInHg.map { String(format: "%.2f\"", $0) } ?? "--")
+                        MetarStat(label: "ALT",  value: m.altimInHgDisplay.map { String(format: "%.2f\"", $0) } ?? "--")
 
                         Spacer()
 
@@ -457,7 +491,7 @@ struct MetarWidget: View {
                     // iPhone: stacked
                     HStack(alignment: .top, spacing: 16) {
                         VStack(spacing: 4) {
-                            Text(m.flightCategory)
+                            Text(m.resolvedFlightCategory)
                                 .font(.system(size: 16, weight: .black))
                                 .foregroundColor(m.flightCategoryColor)
                             Text("CATEGORY")
@@ -482,7 +516,7 @@ struct MetarWidget: View {
                                 MetarStat(label: "SKY",  value: m.skyCondition)
                             }
                             MetarStat(label: "ALTIMETER",
-                                      value: m.altimInHg.map { String(format: "%.2f inHg", $0) } ?? "--")
+                                      value: m.altimInHgDisplay.map { String(format: "%.2f inHg", $0) } ?? "--")
                         }
                     }
                     if !m.rawText.isEmpty {
@@ -927,6 +961,101 @@ struct LogbookConfigCard: View {
         }
         .buttonStyle(.plain)
         .disabled(vm.logbookSettingsSaving)
+    }
+}
+
+// MARK: - DZ Status card (open/closed/announcement)
+struct DZStatusCard: View {
+    let status: DZStatus
+    var tappable: Bool = false
+    @Environment(\.horizontalSizeClass) private var hSizeClass
+    private var isWide: Bool { hSizeClass == .regular }
+
+    private var statusColor: Color {
+        switch status.status.lowercased() {
+        case "open": return .mdzGreen
+        case "closed": return .mdzDanger
+        case "announcement": return .mdzAmber
+        default: return .mdzMuted
+        }
+    }
+
+    private var statusLabel: String {
+        switch status.status.lowercased() {
+        case "open": return "DZ OPEN"
+        case "closed": return "DZ CLOSED"
+        case "announcement": return "ANNOUNCEMENT"
+        default: return status.status.uppercased()
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: 10, height: 10)
+                Text(statusLabel)
+                    .font(.system(size: 11, weight: .black))
+                    .foregroundColor(statusColor)
+                    .tracking(1.5)
+                if tappable {
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.mdzMuted)
+                }
+            }
+            if let ann = status.announcement, !ann.isEmpty {
+                Text(ann)
+                    .font(.system(size: isWide ? 15 : 14))
+                    .foregroundColor(.mdzText)
+            }
+        }
+        .padding(isWide ? 18 : 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.mdzCard)
+        .cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(
+            Rectangle()
+                .fill(statusColor)
+                .frame(height: 3)
+                .cornerRadius(2),
+            alignment: .top
+        )
+    }
+}
+
+// MARK: - DZ Status updated banner (shown briefly after save)
+struct DZStatusUpdatedBanner: View {
+    let onDismiss: () -> Void
+    @State private var appeared = false
+
+    var body: some View {
+        Button(action: onDismiss) {
+            HStack(spacing: 10) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(.mdzGreen)
+                Text("DZ status updated")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.mdzText)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
+            .background(Color.mdzGreen.opacity(0.15))
+            .cornerRadius(12)
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzGreen.opacity(0.5), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .onAppear {
+            appeared = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                onDismiss()
+            }
+        }
     }
 }
 

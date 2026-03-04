@@ -12,7 +12,6 @@ struct CalendarRootView: View {
                 Color.mdzBackground.ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    // Custom segmented control for better visibility on dark background
                     CalendarSegmentPicker(selectedTab: $selectedTab)
                         .padding()
                         .background(Color.mdzBackground)
