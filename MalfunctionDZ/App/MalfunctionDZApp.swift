@@ -99,6 +99,9 @@ struct MDZSplitView: View {
                     if auth.currentUser?.canAccessLogbook == true {
                         SidebarButton(icon: "book.closed.fill", title: "Logbook", selected: selectedModule == .logbook) { selectedModule = .logbook }
                     }
+                    if auth.currentUser?.canAccessCalendar == true {
+                        SidebarButton(icon: "calendar", title: "Calendar", selected: selectedModule == .calendar) { selectedModule = .calendar }
+                    }
                     if auth.currentUser?.canManageUsers == true {
                         SidebarButton(icon: "person.2.fill", title: "Users", selected: selectedModule == .users) { selectedModule = .users }
                     }
@@ -126,6 +129,7 @@ struct MDZSplitView: View {
                 case .loft:         LoftRootView()
                 case .groundSchool: GroundSchoolView()
                 case .logbook:      LogbookRootView()
+                case .calendar:     CalendarRootView()
                 case .users:        UsersView()
                 case .manageLMS:    LMSEditRootView()
                 case .profile:      ProfileView()
@@ -172,7 +176,7 @@ struct SidebarButton: View {
 
 // MARK: - AppModule enum (maps tab tags)
 enum AppModule: Hashable {
-    case home, aviation, loft, groundSchool, logbook, users, manageLMS, profile
+    case home, aviation, loft, groundSchool, logbook, calendar, users, manageLMS, profile
 
     /// Map fixed tab tags → module
     init?(tag: Int) {
@@ -182,6 +186,7 @@ enum AppModule: Hashable {
         case 2:  self = .loft
         case 3:  self = .groundSchool
         case 4:  self = .logbook
+        case 5:  self = .calendar
         case 8:  self = .users
         case 10: self = .manageLMS
         case 9:  self = .profile
@@ -196,6 +201,7 @@ enum AppModule: Hashable {
         case .loft:         return 2
         case .groundSchool: return 3
         case .logbook:      return 4
+        case .calendar:     return 5
         case .users:        return 8
         case .manageLMS:    return 10
         case .profile:      return 9
@@ -247,6 +253,12 @@ struct MDZTabView: View {
                     .tag(4)
             }
 
+            if auth.currentUser?.canAccessCalendar == true {
+                CalendarRootView()
+                    .tabItem { Label("Calendar", systemImage: "calendar") }
+                    .tag(5)
+            }
+
             if auth.currentUser?.canManageUsers == true {
                 UsersView()
                     .tabItem { Label("Users", systemImage: "person.2.fill") }
@@ -285,6 +297,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+        print("📲 PUSH: Device token received (\(tokenString.count) chars), sending to backend...")
         Task { await PushRegistration.shared.sendTokenToBackend(tokenString) }
     }
 

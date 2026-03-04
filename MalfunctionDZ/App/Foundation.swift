@@ -7,6 +7,7 @@ import Security
 import UserNotifications
 
 // MARK: - Server URL
+// For local MAMP testing, temporarily use: "http://localhost:8888" (or your MAMP port)
 let kServerURL = "https://malfunctiondz.com"
 
 // MARK: - Keychain
@@ -173,6 +174,33 @@ struct User: Codable, Identifiable {
         case id, username, email, role, roles
         case firstName = "first_name"; case lastName = "last_name"
     }
+
+    /// Build from raw JSON (handles PHP/MySQL type variations)
+    init?(from dict: [String: Any]) {
+        guard let idVal = dict["id"] else { return nil }
+        if let i = idVal as? Int { id = i }
+        else if let s = idVal as? String, let i = Int(s) { id = i }
+        else { return nil }
+        username = dict["username"] as? String ?? ""
+        firstName = dict["first_name"] as? String
+        lastName = dict["last_name"] as? String
+        email = dict["email"] as? String
+        role = dict["role"] as? String
+        if let r = dict["roles"] as? [String] { roles = r }
+        else if let r = dict["roles"] as? [Any] { roles = r.compactMap { $0 as? String } }
+        else { roles = nil }
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(Int.self, forKey: .id)
+        username = try c.decode(String.self, forKey: .username)
+        firstName = try c.decodeIfPresent(String.self, forKey: .firstName)
+        lastName = try c.decodeIfPresent(String.self, forKey: .lastName)
+        email = try c.decodeIfPresent(String.self, forKey: .email)
+        role = try c.decodeIfPresent(String.self, forKey: .role)
+        roles = try c.decodeIfPresent([String].self, forKey: .roles)
+    }
     var fullName: String { "\(firstName ?? "") \(lastName ?? "")".trimmingCharacters(in:.whitespaces) }
     var displayInitials: String {
         (firstName?.first.map(String.init) ?? "") + (lastName?.first.map(String.init) ?? "")
@@ -318,21 +346,46 @@ actor APIClient {
             let (data, _) = try await URLSession.shared.data(for: req)
             let raw = String(data: data, encoding: .utf8) ?? "nil"
             print("📡 LOGIN RESPONSE: \(raw)")
-            let resp = try JSONDecoder().decode(LoginResponse.self, from: data)
-            guard resp.ok, let token = resp.token, let user = resp.user else {
-                errorMessage = resp.error ?? "Login failed."; return
+            // Try Codable first, then raw JSON (handles PHP/MySQL type variations)
+            if let resp = try? JSONDecoder().decode(LoginResponse.self, from: data),
+               resp.ok, let token = resp.token, let user = resp.user {
+                finishLogin(token: token, user: user)
+                return
             }
-            print("✅ LOGIN SUCCESS: user=\(user.username) roles=\(user.roles ?? []) sessionID will be: \(token.prefix(20))")
-            KeychainHelper.deleteToken()
-            KeychainHelper.saveToken(token)
-            currentUser = user
-            isAuthenticated = true
-            sessionID = token
-            print("✅ SESSION ID SET: \(sessionID.prefix(20))")
-            await refreshCurrentUser()
-            PushRegistration.shared.requestPermissionAndRegister()
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                errorMessage = "Invalid response. Check API URL."
+                return
+            }
+            guard let ok = json["ok"] as? Bool else {
+                errorMessage = (json["error"] as? String) ?? "Login failed."
+                return
+            }
+            if !ok {
+                errorMessage = (json["error"] as? String) ?? "Invalid login"
+                return
+            }
+            guard let token = json["token"] as? String, !token.isEmpty,
+                  let userDict = json["user"] as? [String: Any],
+                  let user = User(from: userDict) else {
+                errorMessage = "Invalid response format."
+                return
+            }
+            finishLogin(token: token, user: user)
         } catch {
             errorMessage = "Network error: \(error.localizedDescription)"
+        }
+    }
+
+    private func finishLogin(token: String, user: User) {
+        print("✅ LOGIN SUCCESS: user=\(user.username) roles=\(user.roles ?? [])")
+        KeychainHelper.deleteToken()
+        KeychainHelper.saveToken(token)
+        currentUser = user
+        isAuthenticated = true
+        sessionID = token
+        Task {
+            await refreshCurrentUser()
+            PushRegistration.shared.requestPermissionAndRegister()
         }
     }
 
@@ -362,8 +415,12 @@ actor APIClient {
         }
         let raw = String(data: data, encoding: .utf8) ?? "nil"
         print("📡 ME RESPONSE: \(raw)")
-        if let resp = try? JSONDecoder().decode(LoginResponse.self, from: data), resp.ok, let u = resp.user {
-            print("✅ REFRESH SUCCESS: user=\(u.username) roles=\(u.roles ?? []) currentSessionID=\(sessionID.prefix(20))")
+        var user: User?
+        if let resp = try? JSONDecoder().decode(LoginResponse.self, from: data), resp.ok { user = resp.user }
+        else if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                json["ok"] as? Bool == true, let uDict = json["user"] as? [String: Any] { user = User(from: uDict) }
+        if let u = user {
+            print("✅ REFRESH SUCCESS: user=\(u.username) roles=\(u.roles ?? [])")
             currentUser = u
             isAuthenticated = true
             await autoEnroll(token: token)
@@ -399,7 +456,10 @@ final class PushRegistration: ObservableObject {
     }
 
     func sendTokenToBackend(_ deviceToken: String) async {
-        guard let token = KeychainHelper.readToken(), !token.isEmpty else { return }
+        guard let token = KeychainHelper.readToken(), !token.isEmpty else {
+            print("⚠️ PUSH: Skipped — no auth token (user not logged in?)")
+            return
+        }
         guard let url = URL(string: "\(kServerURL)/api/push/register.php") else { return }
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
@@ -409,6 +469,17 @@ final class PushRegistration: ObservableObject {
             "device_token": deviceToken,
             "platform": "ios"
         ])
-        _ = try? await URLSession.shared.data(for: req)
+        do {
+            let (data, resp) = try await URLSession.shared.data(for: req)
+            let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
+            let body = String(data: data, encoding: .utf8) ?? ""
+            if code == 200 || (200...299).contains(code) {
+                print("✅ PUSH: Registered at \(kServerURL)/api/push/register.php (HTTP \(code))")
+            } else {
+                print("⚠️ PUSH: Register failed HTTP \(code): \(body)")
+            }
+        } catch {
+            print("⚠️ PUSH: Register request failed: \(error.localizedDescription)")
+        }
     }
 }
