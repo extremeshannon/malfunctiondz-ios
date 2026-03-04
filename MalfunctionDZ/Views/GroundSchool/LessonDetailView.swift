@@ -453,6 +453,7 @@ struct LessonDetailView: View {
                         .padding(20)
                         .padding(.bottom, 120)
                     }
+                    .refreshable { await vm.load() }
 
                     // ── Bottom bar ────────────────────────────
                     VStack(spacing: 0) {

@@ -113,6 +113,7 @@ struct LogbookView: View {
                     }
                     .padding(20)
                 }
+                .refreshable { await vm.load(courseId: courseId) }
             }
         }
         .navigationBarTitleDisplayMode(.inline)

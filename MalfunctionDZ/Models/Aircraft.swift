@@ -71,12 +71,67 @@ struct LogbookEntry: Codable, Identifiable {
     let tachTime: Double?
     let hobbsTime: Double?
     let performedBy: String?
+    let bookType: String?
+    let thumbnailPath: String?
 
     enum CodingKeys: String, CodingKey {
         case id, date, description
+        case tachTime       = "tach_time"
+        case hobbsTime      = "hobbs_time"
+        case performedBy    = "performed_by"
+        case bookType       = "book_type"
+        case thumbnailPath  = "thumbnail_path"
+    }
+
+    var bookTypeLabel: String {
+        switch (bookType ?? "airframe").lowercased() {
+        case "engine": return "Engine"
+        case "prop":   return "Prop"
+        default:      return "Aircraft"
+        }
+    }
+
+    func thumbnailURL(base: String = kServerURL) -> URL? {
+        guard let path = thumbnailPath, !path.isEmpty else { return nil }
+        let baseClean = base.hasSuffix("/") ? String(base.dropLast()) : base
+        let pathClean = path.hasPrefix("/") ? path : "/" + path
+        return URL(string: baseClean + pathClean)
+    }
+}
+
+struct LogbookEntryDetail: Codable {
+    let id: Int
+    let date: String
+    let description: String
+    let tachTime: Double?
+    let hobbsTime: Double?
+    let performedBy: String?
+    let bookType: String?
+    let images: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case id, date, description, images
         case tachTime    = "tach_time"
         case hobbsTime   = "hobbs_time"
         case performedBy = "performed_by"
+        case bookType   = "book_type"
+    }
+
+    var bookTypeLabel: String {
+        switch (bookType ?? "airframe").lowercased() {
+        case "engine": return "Engine"
+        case "prop":   return "Prop"
+        default:      return "Aircraft"
+        }
+    }
+
+    func imageURLs(base: String = kServerURL) -> [URL] {
+        let baseClean = base.hasSuffix("/") ? String(base.dropLast()) : base
+        return images.compactMap { path in
+            guard !path.isEmpty else { return nil }
+            let pathClean = path.hasPrefix("/") ? path : "/" + path
+            return URL(string: baseClean + pathClean)
+        }
     }
 }
 

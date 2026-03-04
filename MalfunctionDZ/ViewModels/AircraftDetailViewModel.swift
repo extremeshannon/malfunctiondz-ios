@@ -7,11 +7,18 @@ private struct DetailListWrapper<T: Decodable>: Decodable {
     let data: [T]?
 }
 
+private struct DetailSingleWrapper<T: Decodable>: Decodable {
+    let ok: Bool
+    let data: T?
+}
+
 @MainActor
 class AircraftDetailViewModel: ObservableObject {
     @Published var squawks: [Squawk] = []
     @Published var logbook: [LogbookEntry] = []
     @Published var ads: [AirworthinessDirective] = []
+    @Published var logbookDetail: LogbookEntryDetail?
+    @Published var logbookDetailLoading = false
     @Published var isLoading = false
     @Published var error: String?
 
@@ -19,11 +26,24 @@ class AircraftDetailViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         async let sq = fetchSquawks(aircraftId: aircraftId)
-        async let lb = fetchLogbook(aircraftId: aircraftId)
+        async let lb = fetchLogbook(aircraftId: aircraftId, bookType: "all")
         async let ad = fetchAds(aircraftId: aircraftId)
         squawks = await sq
         logbook = await lb
         ads     = await ad
+    }
+
+    func loadLogbook(aircraftId: Int, bookType: String) async {
+        let entries = await fetchLogbook(aircraftId: aircraftId, bookType: bookType)
+        logbook = entries
+    }
+
+    func loadLogbookEntryDetail(aircraftId: Int, entryId: Int) async {
+        logbookDetailLoading = true
+        logbookDetail = nil
+        defer { logbookDetailLoading = false }
+        guard let data = await fetch(path: "/api/aircraft/logbook_entry.php?id=\(aircraftId)&entry_id=\(entryId)") else { return }
+        logbookDetail = (try? JSONDecoder().decode(DetailSingleWrapper<LogbookEntryDetail>.self, from: data))?.data
     }
 
     private func fetchSquawks(aircraftId: Int) async -> [Squawk] {
@@ -31,8 +51,9 @@ class AircraftDetailViewModel: ObservableObject {
         return (try? JSONDecoder().decode(DetailListWrapper<Squawk>.self, from: data))?.data ?? []
     }
 
-    private func fetchLogbook(aircraftId: Int) async -> [LogbookEntry] {
-        guard let data = await fetch(path: "/api/aircraft/logbook.php?id=\(aircraftId)") else { return [] }
+    private func fetchLogbook(aircraftId: Int, bookType: String = "all") async -> [LogbookEntry] {
+        let encoded = bookType.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? bookType
+        guard let data = await fetch(path: "/api/aircraft/logbook.php?id=\(aircraftId)&book_type=\(encoded)") else { return [] }
         return (try? JSONDecoder().decode(DetailListWrapper<LogbookEntry>.self, from: data))?.data ?? []
     }
 

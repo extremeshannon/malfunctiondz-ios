@@ -193,6 +193,7 @@ struct ProfileView: View {
                     .frame(maxWidth: isWide ? 900 : .infinity)
                     .frame(maxWidth: .infinity)          // centre it
                 }
+                .refreshable { await auth.refreshCurrentUser() }
             }
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)

@@ -203,6 +203,12 @@ struct HomeView: View {
             }
             .navigationBarHidden(true)
             .task { await vm.loadDashboard(user: auth.currentUser) }
+            .onReceive(Timer.publish(every: 120, on: .main, in: .common).autoconnect()) { _ in
+                Task {
+                    await vm.loadDzStatus()
+                    if showMetar { await vm.loadMetar() }
+                }
+            }
             .overlay(alignment: .top) {
                 if dzStatusJustUpdated {
                     DZStatusUpdatedBanner(onDismiss: {

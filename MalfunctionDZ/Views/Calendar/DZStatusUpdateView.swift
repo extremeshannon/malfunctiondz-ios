@@ -79,6 +79,7 @@ struct DZStatusUpdateView: View {
                 }
                 .padding(isWide ? 24 : 16)
             }
+            .refreshable { await loadCurrent() }
         }
         .navigationTitle("DZ Status")
         .navigationBarTitleDisplayMode(.inline)
