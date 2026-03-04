@@ -118,6 +118,15 @@ extension User {
         canManageAircraft ? .adminFull : .pilotRestricted
     }
 
+    /// Shift positions map 1:1 to roles. User can pick shifts only for positions they have.
+    func canPickShiftForPosition(_ positionKey: String) -> Bool {
+        let key = positionKey.lowercased()
+        return allRolesLowercased.contains(key) || isAdminLevel
+    }
+
+    /// All users can view calendar (events + shifts); shifts require auth.
+    var canAccessCalendar: Bool { true }
+
     // MARK: - Display label
     var roleDisplayLabel: String {
         if isAdminLevel      { return "Admin" }

@@ -105,11 +105,18 @@ struct LoginView: View {
                 Spacer()
 
                 // ── Footer ────────────────────────────────────
-                Text("Powered by MalfunctionDZ")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(.mdzMuted)
-                    .tracking(1)
-                    .padding(.bottom, 24)
+                VStack(spacing: 2) {
+                    Text("Powered by MalfunctionDZ")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.mdzMuted)
+                        .tracking(1)
+                    if let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+                        Text("Build \(build)")
+                            .font(.system(size: 9, weight: .regular))
+                            .foregroundColor(.mdzMuted.opacity(0.8))
+                    }
+                }
+                .padding(.bottom, 24)
             }
         }
     }

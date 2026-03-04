@@ -38,6 +38,15 @@
 		FB063D282F54BB100227638 /* UsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D292F54BB100227638 /* UsersView.swift */; };
 		FB063D2B2F54BB120227638 /* UserDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2C2F54BB120227638 /* UserDetailView.swift */; };
 		FB063D2D2F54BB130227638 /* UserAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2E2F54BB130227638 /* UserAddView.swift */; };
+		FB063E012F56000100022763 /* LMSEditModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E002F56000100022763 /* LMSEditModels.swift */; };
+		FB063E022F56000100022763 /* LMSEditService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E032F56000100022763 /* LMSEditService.swift */; };
+		FB063E042F56000100022763 /* LMSEditRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E052F56000100022763 /* LMSEditRootView.swift */; };
+		FB063F002F56000200022763 /* CalendarModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F012F56000200022763 /* CalendarModels.swift */; };
+		FB063F022F56000200022763 /* CalendarAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F032F56000200022763 /* CalendarAPIService.swift */; };
+		FB063F042F56000200022763 /* CalendarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F052F56000200022763 /* CalendarViewModel.swift */; };
+		FB063F062F56000200022763 /* CalendarRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F072F56000200022763 /* CalendarRootView.swift */; };
+		FB063F082F56000200022763 /* EventsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F092F56000200022763 /* EventsView.swift */; };
+		FB063F0A2F56000200022763 /* ShiftsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0B2F56000200022763 /* ShiftsView.swift */; };
 		FB367C542F510E6100FBAD05 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
 		FB367C572F510E6100FBAD05 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */; };
 		FB367DCC2F52007600FBAD05 /* MalfunctionDZApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */; };
@@ -46,9 +55,6 @@
 		FB367DD52F52169D00FBAD05 /* LMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD42F52169D00FBAD05 /* LMS.swift */; };
 		FBD783602F5217F800F5EBCD /* GroundSchoolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */; };
 		FBFAB35A2F54FF3E0046027A /* PilotCurrencyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */; };
-		FB063E012F56000100022763 /* LMSEditModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E002F56000100022763 /* LMSEditModels.swift */; };
-		FB063E022F56000100022763 /* LMSEditService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E032F56000100022763 /* LMSEditService.swift */; };
-		FB063E042F56000100022763 /* LMSEditRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E052F56000100022763 /* LMSEditRootView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -83,6 +89,16 @@
 		FB063D292F54BB100227638 /* UsersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsersView.swift; sourceTree = "<group>"; };
 		FB063D2C2F54BB120227638 /* UserDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDetailView.swift; sourceTree = "<group>"; };
 		FB063D2E2F54BB130227638 /* UserAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAddView.swift; sourceTree = "<group>"; };
+		FB063E002F56000100022763 /* LMSEditModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMSEditModels.swift; sourceTree = "<group>"; };
+		FB063E032F56000100022763 /* LMSEditService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMSEditService.swift; sourceTree = "<group>"; };
+		FB063E052F56000100022763 /* LMSEditRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMSEditRootView.swift; sourceTree = "<group>"; };
+		FB063F012F56000200022763 /* CalendarModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarModels.swift; sourceTree = "<group>"; };
+		FB063F032F56000200022763 /* CalendarAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarAPIService.swift; sourceTree = "<group>"; };
+		FB063F052F56000200022763 /* CalendarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarViewModel.swift; sourceTree = "<group>"; };
+		FB063F072F56000200022763 /* CalendarRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarRootView.swift; sourceTree = "<group>"; };
+		FB063F092F56000200022763 /* EventsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsView.swift; sourceTree = "<group>"; };
+		FB063F0B2F56000200022763 /* ShiftsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShiftsView.swift; sourceTree = "<group>"; };
+		FB063F0D2F56000300022763 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FB367C4C2F510E6000FBAD05 /* MalfunctionDZ.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MalfunctionDZ.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FB367C532F510E6100FBAD05 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -92,9 +108,6 @@
 		FB367DD42F52169D00FBAD05 /* LMS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMS.swift; sourceTree = "<group>"; };
 		FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroundSchoolViewModel.swift; sourceTree = "<group>"; };
 		FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotCurrencyCard.swift; sourceTree = "<group>"; };
-		FB063E002F56000100022763 /* LMSEditModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMSEditModels.swift; sourceTree = "<group>"; };
-		FB063E032F56000100022763 /* LMSEditService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMSEditService.swift; sourceTree = "<group>"; };
-		FB063E052F56000100022763 /* LMSEditRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMSEditRootView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -183,6 +196,16 @@
 			path = Users;
 			sourceTree = "<group>";
 		};
+		FB063F0C2F56000200022763 /* Calendar */ = {
+			isa = PBXGroup;
+			children = (
+				FB063F072F56000200022763 /* CalendarRootView.swift */,
+				FB063F092F56000200022763 /* EventsView.swift */,
+				FB063F0B2F56000200022763 /* ShiftsView.swift */,
+			);
+			path = Calendar;
+			sourceTree = "<group>";
+		};
 		FB367C432F510E6000FBAD05 = {
 			isa = PBXGroup;
 			children = (
@@ -208,6 +231,7 @@
 				FB367DC62F51FED600FBAD05 /* Services */,
 				FB367DC42F51FD4800FBAD05 /* Views */,
 				FB367C532F510E6100FBAD05 /* Assets.xcassets */,
+				FB063F0D2F56000300022763 /* Info.plist */,
 				FB367C552F510E6100FBAD05 /* Preview Content */,
 			);
 			path = MalfunctionDZ;
@@ -225,6 +249,7 @@
 			isa = PBXGroup;
 			children = (
 				FB063CE52F521A7400227638 /* Aircraft.swift */,
+				FB063F012F56000200022763 /* CalendarModels.swift */,
 				FB063CE72F521A8800227638 /* Loft.swift */,
 				FB367DD42F52169D00FBAD05 /* LMS.swift */,
 				FB063CFF2F52ACE600227638 /* Quiz.swift */,
@@ -245,6 +270,7 @@
 				FB063CEB2F521AF600227638 /* Aircraft */,
 				FB063CE92F521A9D00227638 /* Loft */,
 				FB063D272F54BB050227638 /* Logbook */,
+				FB063F0C2F56000200022763 /* Calendar */,
 				FB063CE22F5218F900227638 /* GroundSchool */,
 				FB367DCD2F5201C600FBAD05 /* Home */,
 			);
@@ -262,6 +288,7 @@
 		FB367DC62F51FED600FBAD05 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				FB063F032F56000200022763 /* CalendarAPIService.swift */,
 				FB367DD02F52032300FBAD05 /* Foundation.swift */,
 				FB063D1B2F54AB7600227638 /* RoleHelpers.swift */,
 				FB063E032F56000100022763 /* LMSEditService.swift */,
@@ -283,6 +310,7 @@
 			children = (
 				FB063CED2F521B1A00227638 /* AircraftDetailViewModel.swift */,
 				FB063CF02F521B3A00227638 /* AircraftViewModel.swift */,
+				FB063F052F56000200022763 /* CalendarViewModel.swift */,
 				FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */,
 				FB063D232F54BB020227638 /* LogbookViewModel.swift */,
 				FB063CF22F521B4B00227638 /* HomeViewModel.swift */,
@@ -404,6 +432,12 @@
 				FB063E012F56000100022763 /* LMSEditModels.swift in Sources */,
 				FB063E022F56000100022763 /* LMSEditService.swift in Sources */,
 				FB063E042F56000100022763 /* LMSEditRootView.swift in Sources */,
+				FB063F002F56000200022763 /* CalendarModels.swift in Sources */,
+				FB063F022F56000200022763 /* CalendarAPIService.swift in Sources */,
+				FB063F042F56000200022763 /* CalendarViewModel.swift in Sources */,
+				FB063F062F56000200022763 /* CalendarRootView.swift in Sources */,
+				FB063F082F56000200022763 /* EventsView.swift in Sources */,
+				FB063F0A2F56000200022763 /* ShiftsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -536,11 +570,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = A10;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -569,11 +604,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = A10;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

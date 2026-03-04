@@ -124,6 +124,16 @@ struct HomeView: View {
                                     wide: isWide
                                 ) { tabSelect.selected = 4 }
                             }
+                            if auth.currentUser?.canAccessCalendar == true {
+                                ModuleTile(
+                                    icon: "calendar",
+                                    title: "CALENDAR",
+                                    subtitle: "Events & staff shifts",
+                                    accentColor: .mdzBlue,
+                                    badges: [],
+                                    wide: isWide
+                                ) { tabSelect.selected = 5 }
+                            }
                             if showManifest {
                                 ModuleTile(
                                     icon: "list.clipboard.fill",

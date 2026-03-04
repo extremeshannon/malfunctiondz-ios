@@ -422,32 +422,6 @@ struct CourseDetailView: View {
                         }
                     }
 
-                    // Logbook (skydiver logbook for this course)
-                    NavigationLink(destination: LogbookView(courseId: course.id, courseTitle: course.title)) {
-                        HStack(spacing: 12) {
-                            Image(systemName: "book.closed.fill")
-                                .font(.system(size: 18))
-                                .foregroundColor(.mdzAmber)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Logbook")
-                                    .font(.system(size: 15, weight: .bold))
-                                    .foregroundColor(.mdzText)
-                                Text("Jump entries & sign-offs")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.mdzMuted)
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.mdzMuted)
-                        }
-                        .padding(14)
-                        .background(Color.mdzCard)
-                        .cornerRadius(12)
-                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
-                    }
-                    .buttonStyle(.plain)
-
                     // Modules
                     ForEach(course.modules) { module in
                         ModuleSection(
