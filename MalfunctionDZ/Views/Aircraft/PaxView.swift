@@ -10,10 +10,11 @@ import SwiftUI
 struct PaxView: View {
     @StateObject private var vm: PaxViewModel
     @EnvironmentObject private var auth: AuthManager
+    var isReadOnly: Bool = false
 
-    init(aircraft: Aircraft) {
-        // pilotUserId is re-read live inside PaxViewModel via AuthManager
+    init(aircraft: Aircraft, isReadOnly: Bool = false) {
         _vm = StateObject(wrappedValue: PaxViewModel())
+        self.isReadOnly = isReadOnly
     }
 
     var body: some View {
@@ -23,7 +24,10 @@ struct PaxView: View {
                 case .loading:
                     loadingView
                 case .noFlight:
-                    startFlightView
+                    Group {
+                        if isReadOnly { paxReadOnlyNoFlight }
+                        else { startFlightView }
+                    }
                 case .openFlight:
                     openFlightView
                 case .closedFlight:
@@ -151,12 +155,24 @@ struct PaxView: View {
             // Loads table
             loadsSection
 
-            // Add load
-            addLoadSection
-
-            // Close flight
-            closeFlightSection
+            // Add load + Close flight (editable only)
+            if !isReadOnly {
+                addLoadSection
+                closeFlightSection
+            }
         }
+    }
+
+    private var paxReadOnlyNoFlight: some View {
+        VStack(spacing: 12) {
+            PaxSectionHeader(icon: "airplane", title: "PAX")
+            Text("No active flight for this aircraft.")
+                .font(.subheadline)
+                .foregroundColor(.mdzMuted)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(24)
+        .paxCard()
     }
 
     private func flightInfoBar(_ f: Flight) -> some View {
@@ -215,9 +231,9 @@ struct PaxView: View {
                     .background(Color.mdzNavyMid)
 
                     ForEach(vm.loads) { load in
-                        LoadRow(load: load) {
+                        LoadRow(load: load, onDelete: isReadOnly ? nil : {
                             Task { await vm.deleteLoad(load) }
-                        }
+                        })
                     }
                 }
                 .cornerRadius(8)

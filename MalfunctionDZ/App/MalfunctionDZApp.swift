@@ -132,6 +132,15 @@ struct MDZSplitView: View {
                     if auth.currentUser?.canAccessLoft == true {
                         SidebarButton(icon: "backpack.fill",  title: config.moduleLoft,       selected: selectedModule == .loft)        { selectedModule = .loft }
                     }
+                    if auth.currentUser?.canAccessMyRigs == true {
+                        SidebarButton(icon: "briefcase.fill", title: "My Rigs",               selected: selectedModule == .myRigs)     { selectedModule = .myRigs }
+                    }
+                    if auth.currentUser?.canAccessDzRigs == true {
+                        SidebarButton(icon: "square.stack.3d.up.fill", title: "DZ Rigs",       selected: selectedModule == .dzRigs)     { selectedModule = .dzRigs }
+                    }
+                    if auth.currentUser?.canAccess25JumpCheck == true {
+                        SidebarButton(icon: "figure.fall", title: "25 Jump Check", selected: selectedModule == .jumpCheck) { selectedModule = .jumpCheck }
+                    }
                     if auth.currentUser?.canAccessGroundSchool == true {
                         SidebarButton(icon: "graduationcap.fill", title: config.moduleGroundSchool, selected: selectedModule == .groundSchool) { selectedModule = .groundSchool }
                     }
@@ -184,6 +193,9 @@ struct MDZSplitView: View {
                 case .home:         HomeView()
                 case .aviation:     AviationRootView()
                 case .loft:         LoftRootView()
+                case .myRigs:       MyRigsView()
+                case .dzRigs:       DzRigsView()
+                case .jumpCheck:    JumpCheckView()
                 case .groundSchool: GroundSchoolView()
                 case .logbook:      LogbookRootView()
                 case .calendar:     CalendarRootView()
@@ -233,7 +245,7 @@ struct SidebarButton: View {
 
 // MARK: - AppModule enum (maps tab tags)
 enum AppModule: Hashable {
-    case home, aviation, loft, groundSchool, logbook, calendar, users, manageLMS, profile
+    case home, aviation, loft, myRigs, dzRigs, groundSchool, logbook, jumpCheck, calendar, users, manageLMS, profile
 
     /// Map fixed tab tags → module
     init?(tag: Int) {
@@ -241,8 +253,11 @@ enum AppModule: Hashable {
         case 0:  self = .home
         case 1:  self = .aviation
         case 2:  self = .loft
+        case 6:  self = .myRigs
+        case 7:  self = .dzRigs
         case 3:  self = .groundSchool
         case 4:  self = .logbook
+        case 11: self = .jumpCheck
         case 5:  self = .calendar
         case 8:  self = .users
         case 10: self = .manageLMS
@@ -256,8 +271,11 @@ enum AppModule: Hashable {
         case .home:         return 0
         case .aviation:     return 1
         case .loft:         return 2
+        case .myRigs:       return 6
+        case .dzRigs:       return 7
         case .groundSchool: return 3
         case .logbook:      return 4
+        case .jumpCheck:    return 11
         case .calendar:     return 5
         case .users:        return 8
         case .manageLMS:    return 10
@@ -296,6 +314,24 @@ struct MDZTabView: View {
                 LoftRootView()
                     .tabItem { Label(config.moduleLoft, systemImage: "backpack.fill") }
                     .tag(2)
+            }
+
+            if auth.currentUser?.canAccessMyRigs == true {
+                MyRigsView()
+                    .tabItem { Label("My Rigs", systemImage: "briefcase.fill") }
+                    .tag(6)
+            }
+
+            if auth.currentUser?.canAccessDzRigs == true {
+                DzRigsView()
+                    .tabItem { Label("DZ Rigs", systemImage: "square.stack.3d.up.fill") }
+                    .tag(7)
+            }
+
+            if auth.currentUser?.canAccess25JumpCheck == true {
+                JumpCheckView()
+                    .tabItem { Label("25 Jump", systemImage: "figure.fall") }
+                    .tag(11)
             }
 
             if auth.currentUser?.canAccessGroundSchool == true {

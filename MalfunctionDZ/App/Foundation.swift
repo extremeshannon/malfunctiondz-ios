@@ -172,9 +172,12 @@ struct InfoRow: View {
 struct User: Codable, Identifiable {
     let id: Int; let username: String; let firstName: String?; let lastName: String?
     let email: String?; let role: String?; let roles: [String]?
+    let totalRigs: Int?
+    let totalJumps: Int?
     enum CodingKeys: String, CodingKey {
         case id, username, email, role, roles
         case firstName = "first_name"; case lastName = "last_name"
+        case totalRigs = "total_rigs"; case totalJumps = "total_jumps"
     }
 
     /// Build from raw JSON (handles PHP/MySQL type variations)
@@ -191,6 +194,8 @@ struct User: Codable, Identifiable {
         if let r = dict["roles"] as? [String] { roles = r }
         else if let r = dict["roles"] as? [Any] { roles = r.compactMap { $0 as? String } }
         else { roles = nil }
+        totalRigs = (dict["total_rigs"] as? Int) ?? (dict["total_rigs"] as? String).flatMap(Int.init)
+        totalJumps = (dict["total_jumps"] as? Int) ?? (dict["total_jumps"] as? String).flatMap(Int.init)
     }
 
     init(from decoder: Decoder) throws {
@@ -202,6 +207,8 @@ struct User: Codable, Identifiable {
         email = try c.decodeIfPresent(String.self, forKey: .email)
         role = try c.decodeIfPresent(String.self, forKey: .role)
         roles = try c.decodeIfPresent([String].self, forKey: .roles)
+        totalRigs = try c.decodeIfPresent(Int.self, forKey: .totalRigs)
+        totalJumps = try c.decodeIfPresent(Int.self, forKey: .totalJumps)
     }
     var fullName: String { "\(firstName ?? "") \(lastName ?? "")".trimmingCharacters(in:.whitespaces) }
     var displayInitials: String {

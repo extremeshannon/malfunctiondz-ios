@@ -57,6 +57,12 @@
 		FB367DD52F52169D00FBAD05 /* LMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD42F52169D00FBAD05 /* LMS.swift */; };
 		FBD783602F5217F800F5EBCD /* GroundSchoolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */; };
 		FBFAB35A2F54FF3E0046027A /* PilotCurrencyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */; };
+		FB063D302F54BB200227638 /* MyRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2F2F54BB200227638 /* MyRigsView.swift */; };
+		FB063D342F54BB210227638 /* DzRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D332F54BB210227638 /* DzRigsView.swift */; };
+		FB063D362F54BB220227638 /* MyRigsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D352F54BB220227638 /* MyRigsViewModel.swift */; };
+		FB063D382F54BB230227638 /* DzRigsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D372F54BB230227638 /* DzRigsViewModel.swift */; };
+		FB063D3A2F54BB260227638 /* JumpCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D392F54BB260227638 /* JumpCheckView.swift */; };
+		FB063D3C2F54BB280227638 /* JumpCheckViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D3B2F54BB280227638 /* JumpCheckViewModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -113,6 +119,12 @@
 		FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroundSchoolViewModel.swift; sourceTree = "<group>"; };
 		FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotCurrencyCard.swift; sourceTree = "<group>"; };
 		FBFFF0E42F58BC1F009895AE /* MalfunctionDZ.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MalfunctionDZ.entitlements; sourceTree = "<group>"; };
+		FB063D2F2F54BB200227638 /* MyRigsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyRigsView.swift; sourceTree = "<group>"; };
+		FB063D332F54BB210227638 /* DzRigsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DzRigsView.swift; sourceTree = "<group>"; };
+		FB063D352F54BB220227638 /* MyRigsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyRigsViewModel.swift; sourceTree = "<group>"; };
+		FB063D372F54BB230227638 /* DzRigsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DzRigsViewModel.swift; sourceTree = "<group>"; };
+		FB063D392F54BB260227638 /* JumpCheckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JumpCheckView.swift; sourceTree = "<group>"; };
+		FB063D3B2F54BB280227638 /* JumpCheckViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JumpCheckViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -143,6 +155,8 @@
 			isa = PBXGroup;
 			children = (
 				FB063CEA2F521AD900227638 /* LoftRootView.swift */,
+				FB063D2F2F54BB200227638 /* MyRigsView.swift */,
+				FB063D332F54BB210227638 /* DzRigsView.swift */,
 			);
 			path = Loft;
 			sourceTree = "<group>";
@@ -197,6 +211,7 @@
 				FB063D292F54BB100227638 /* UsersView.swift */,
 				FB063D2C2F54BB120227638 /* UserDetailView.swift */,
 				FB063D2E2F54BB130227638 /* UserAddView.swift */,
+				FB063D392F54BB260227638 /* JumpCheckView.swift */,
 			);
 			path = Users;
 			sourceTree = "<group>";
@@ -331,6 +346,9 @@
 				FB063D232F54BB020227638 /* LogbookViewModel.swift */,
 				FB063CF22F521B4B00227638 /* HomeViewModel.swift */,
 				FB063CF42F521B5100227638 /* LoftViewModel.swift */,
+				FB063D352F54BB220227638 /* MyRigsViewModel.swift */,
+				FB063D372F54BB230227638 /* DzRigsViewModel.swift */,
+				FB063D3B2F54BB280227638 /* JumpCheckViewModel.swift */,
 				FB063D012F52AD1E00227638 /* QuizViewModel.swift */,
 				FB063D172F53F6CF00227638 /* PaxViewModel.swift */,
 			);
@@ -416,6 +434,12 @@
 				FBFAB35A2F54FF3E0046027A /* PilotCurrencyCard.swift in Sources */,
 				FB063CF52F521B5100227638 /* LoftViewModel.swift in Sources */,
 				FB063CFB2F52305C00227638 /* LoftRootView.swift in Sources */,
+				FB063D302F54BB200227638 /* MyRigsView.swift in Sources */,
+				FB063D342F54BB210227638 /* DzRigsView.swift in Sources */,
+				FB063D362F54BB220227638 /* MyRigsViewModel.swift in Sources */,
+				FB063D382F54BB230227638 /* DzRigsViewModel.swift in Sources */,
+				FB063D3A2F54BB260227638 /* JumpCheckView.swift in Sources */,
+				FB063D3C2F54BB280227638 /* JumpCheckViewModel.swift in Sources */,
 				FB367DD12F52032300FBAD05 /* Foundation.swift in Sources */,
 				FB063D102F52D10B00227638 /* LessonDetailView.swift in Sources */,
 				FB063CEE2F521B1A00227638 /* AircraftDetailViewModel.swift in Sources */,

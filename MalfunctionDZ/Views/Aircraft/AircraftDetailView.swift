@@ -4,6 +4,7 @@ import SwiftUI
 
 struct AircraftDetailView: View {
     let aircraft: Aircraft
+    var isReadOnly: Bool = false
     @StateObject private var vm = AircraftDetailViewModel()
     @State private var selectedTab = 0
     @State private var logbookFilter = "all"
@@ -58,7 +59,7 @@ struct AircraftDetailView: View {
                     case 0: squawksTab
                     case 1: logbookTab
                     case 2: adsTab
-                    case 3: PaxView(aircraft: aircraft)
+                    case 3: PaxView(aircraft: aircraft, isReadOnly: isReadOnly)
                     default: squawksTab
                     }
                 }

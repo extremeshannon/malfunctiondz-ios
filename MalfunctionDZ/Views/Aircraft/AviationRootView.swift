@@ -10,7 +10,9 @@ struct AviationRootView: View {
 
     var body: some View {
         if auth.currentUser?.aviationViewMode == .adminFull {
-            AircraftListView()
+            AircraftListView(isReadOnly: false)
+        } else if auth.currentUser?.aviationViewMode == .opsReadOnly {
+            AircraftListView(isReadOnly: true)
         } else {
             if hSizeClass == .regular {
                 PilotAviationSplitView()

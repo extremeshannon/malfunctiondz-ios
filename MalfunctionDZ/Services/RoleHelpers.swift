@@ -53,8 +53,29 @@ extension User {
         hasAnyRole(["admin", "master", "godmode", "pilot", "ops"])
     }
 
+    /// Full Loft access: Admin and Master Rigger only
     var canAccessLoft: Bool {
-        hasAnyRole(["admin", "master", "godmode", "loft", "rigger", "ops"])
+        hasAnyRole(["admin", "master", "godmode", "master_rigger"])
+    }
+
+    /// Rig owners see their own rigs only (read-only). Ops always get Rigs tab; others when they own rigs and lack full Loft access.
+    var canAccessMyRigs: Bool {
+        hasAnyRole(["ops"]) || (!canAccessLoft && (totalRigs ?? 0) > 0)
+    }
+
+    /// DZ-owned rigs: Ops (read-only), Packers + 25+ jumps (can mark packed)
+    var canAccessDzRigs: Bool {
+        hasAnyRole(["packer", "ops"]) || (totalJumps ?? 0) >= 25
+    }
+
+    /// 25 Jump Check: Ops (and admin) see users with jump counts
+    var canAccess25JumpCheck: Bool {
+        hasAnyRole(["ops", "admin", "master", "godmode"])
+    }
+
+    /// Can mark DZ rigs as packed: Packers or 25+ jumps (Ops is read-only)
+    var canMarkPackedDzRigs: Bool {
+        hasAnyRole(["packer"]) || (totalJumps ?? 0) >= 25
     }
 
     var canAccessGroundSchool: Bool {
@@ -71,9 +92,9 @@ extension User {
         hasAnyRole(["admin", "master", "godmode", "manifest", "chief_pilot", "chief pilot", "ops"])
     }
 
-    /// Logbook is available to all authenticated users (incl. skydivers without LMS)
+    /// Logbook is available to all authenticated users except Ops (Ops use Rigs instead)
     var canAccessLogbook: Bool {
-        true
+        !hasAnyRole(["ops"])
     }
 
     /// Admin, Chief Pilot, Ops Manager can manage users (list, create, edit roles)
@@ -92,7 +113,13 @@ extension User {
     }
 
     // MARK: - Feature-level access within tabs
+    /// Full aircraft/flight/pax management (Admin only)
     var canManageAircraft: Bool {
+        hasAnyRole(["admin", "master", "godmode"])
+    }
+
+    /// Ops: sees aircraft + pax read-only; can edit pilots
+    var canEditPilotsInAviation: Bool {
         hasAnyRole(["admin", "master", "godmode", "ops"])
     }
 
@@ -100,8 +127,14 @@ extension User {
         isPilotRole
     }
 
+    /// See all aircraft (admin full edit, Ops read-only)
     var seesAllAircraft: Bool {
-        canManageAircraft
+        canManageAircraft || hasAnyRole(["ops"])
+    }
+
+    /// Aviation is read-only for Ops (no add aircraft, no log flights/pax)
+    var isAviationReadOnly: Bool {
+        hasAnyRole(["ops"])
     }
 
     var canManageGroundSchool: Bool {
@@ -110,12 +143,15 @@ extension User {
 
     // MARK: - Aviation view mode
     enum AviationViewMode {
-        case adminFull
-        case pilotRestricted
+        case adminFull       // Admin: full edit
+        case opsReadOnly     // Ops: aircraft + pax read-only, pilots editable
+        case pilotRestricted // Pilot: own flights only
     }
 
     var aviationViewMode: AviationViewMode {
-        canManageAircraft ? .adminFull : .pilotRestricted
+        if canManageAircraft { return .adminFull }
+        if isAviationReadOnly { return .opsReadOnly }
+        return .pilotRestricted
     }
 
     /// Shift positions map 1:1 to roles. User can pick shifts only for positions they have.

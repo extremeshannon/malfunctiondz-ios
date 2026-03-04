@@ -6,6 +6,7 @@ struct AircraftListView: View {
     @StateObject private var vm = AircraftViewModel()
     @EnvironmentObject private var config: AppConfig
     @Environment(\.horizontalSizeClass) private var hSizeClass
+    var isReadOnly: Bool = false
 
     private var dateString: String {
         let f = DateFormatter()
@@ -16,9 +17,9 @@ struct AircraftListView: View {
     var body: some View {
         Group {
             if hSizeClass == .regular {
-                AircraftListSplitView(vm: vm, dateString: dateString)
+                AircraftListSplitView(vm: vm, dateString: dateString, isReadOnly: isReadOnly)
             } else {
-                AircraftListStackView(vm: vm, dateString: dateString)
+                AircraftListStackView(vm: vm, dateString: dateString, isReadOnly: isReadOnly)
             }
         }
         .task { await vm.loadAll() }
@@ -36,6 +37,7 @@ struct AircraftListView: View {
 struct AircraftListSplitView: View {
     @ObservedObject var vm: AircraftViewModel
     let dateString: String
+    var isReadOnly: Bool = false
     @EnvironmentObject private var config: AppConfig
     @State private var selectedAircraft: Aircraft?
 
@@ -76,7 +78,7 @@ struct AircraftListSplitView: View {
             }
         } detail: {
             if let aircraft = selectedAircraft {
-                AircraftDetailView(aircraft: aircraft)
+                AircraftDetailView(aircraft: aircraft, isReadOnly: isReadOnly)
             } else {
                 ZStack {
                     Color.mdzBackground.ignoresSafeArea()
@@ -139,6 +141,7 @@ struct AircraftListRow: View {
 struct AircraftListStackView: View {
     @ObservedObject var vm: AircraftViewModel
     let dateString: String
+    var isReadOnly: Bool = false
     @EnvironmentObject private var config: AppConfig
 
     var body: some View {
@@ -179,7 +182,7 @@ struct AircraftListStackView: View {
                         ScrollView(showsIndicators: false) {
                             VStack(spacing: 12) {
                                 ForEach(vm.aircraft) { aircraft in
-                                    NavigationLink(destination: AircraftDetailView(aircraft: aircraft)) {
+                                    NavigationLink(destination: AircraftDetailView(aircraft: aircraft, isReadOnly: isReadOnly)) {
                                         AircraftCard(aircraft: aircraft)
                                     }
                                     .buttonStyle(.plain)

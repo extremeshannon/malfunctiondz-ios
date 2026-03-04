@@ -91,7 +91,11 @@ struct HomeView: View {
                         // ── My rigs (reserve / AAD expiry) ─────────────
                         if !vm.myRigs.isEmpty {
                             RigExpiryCard(rigs: vm.myRigs) {
-                                tabSelect.selected = 4
+                                if auth.currentUser?.canAccessMyRigs == true {
+                                    tabSelect.selected = 6
+                                } else {
+                                    tabSelect.selected = 4
+                                }
                             }
                             .padding(.horizontal, hPad)
                             .padding(.bottom, 16)
@@ -125,6 +129,26 @@ struct HomeView: View {
                                     badges: vm.loftBadges,
                                     wide: isWide
                                 ) { tabSelect.selected = 2 }
+                            }
+                            if auth.currentUser?.canAccessMyRigs == true {
+                                ModuleTile(
+                                    icon: "briefcase.fill",
+                                    title: "MY RIGS",
+                                    subtitle: "Your rigs — reserve & AAD expiry",
+                                    accentColor: .mdzGreen,
+                                    badges: [],
+                                    wide: isWide
+                                ) { tabSelect.selected = 6 }
+                            }
+                            if auth.currentUser?.canAccessDzRigs == true {
+                                ModuleTile(
+                                    icon: "square.stack.3d.up.fill",
+                                    title: "DZ RIGS",
+                                    subtitle: "DZ-owned rigs — Packers can mark packed",
+                                    accentColor: .mdzAmber,
+                                    badges: [],
+                                    wide: isWide
+                                ) { tabSelect.selected = 7 }
                             }
                             if showGroundSchool {
                                 ModuleTile(
