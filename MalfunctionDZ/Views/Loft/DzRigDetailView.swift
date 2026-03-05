@@ -299,41 +299,73 @@ struct DzRigDetailView: View {
     }
 
     private var packHistorySection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        let (currentRecords, expiredRecords) = partitionPackHistory(vm.detailRecords)
+        return VStack(alignment: .leading, spacing: 8) {
             Text("Pack history")
                 .font(.system(size: 12, weight: .black))
                 .foregroundColor(.mdzMuted)
-            ForEach(vm.detailRecords) { rec in
+            ForEach(currentRecords) { rec in
+                packHistoryRow(rec: rec)
+            }
+            if !expiredRecords.isEmpty {
                 HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(rec.packDate)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.mdzText)
-                        if let by = rec.packedBy {
-                            Text(by)
-                                .font(.system(size: 11))
-                                .foregroundColor(.mdzMuted)
-                        }
-                    }
+                    Text("EXPIRED")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(.mdzDanger)
+                        .tracking(1)
                     Spacer()
-                    Text("×\(rec.packJobCount ?? 1)")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.mdzGreen)
-                    if rec.isLocked == true {
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(.mdzMuted)
-                    }
                 }
-                .padding(12)
-                .background(Color.mdzNavyMid.opacity(0.5))
-                .cornerRadius(8)
+                .padding(.top, 4)
+                ForEach(expiredRecords) { rec in
+                    packHistoryRow(rec: rec, isExpired: true)
+                }
             }
         }
         .padding(16)
         .background(Color.mdzCard)
         .cornerRadius(12)
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+    }
+
+    private func partitionPackHistory(_ records: [PackRecord]) -> (current: [PackRecord], expired: [PackRecord]) {
+        let df = DateFormatter()
+        df.dateFormat = "yyyy-MM-dd"
+        let today = df.string(from: Date())
+        var current: [PackRecord] = []
+        var expired: [PackRecord] = []
+        for rec in records {
+            let exp = rec.isExpired == true || (rec.dueDate != nil && (rec.dueDate ?? "") < today)
+            if exp { expired.append(rec) }
+            else { current.append(rec) }
+        }
+        return (current, expired)
+    }
+
+    private func packHistoryRow(rec: PackRecord, isExpired: Bool = false) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(rec.packDate)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.mdzText)
+                if let by = rec.packedBy {
+                    Text(by)
+                        .font(.system(size: 11))
+                        .foregroundColor(.mdzMuted)
+                }
+            }
+            Spacer()
+            Text("×\(rec.packJobCount ?? 1)")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(isExpired ? .mdzDanger : .mdzGreen)
+            if rec.isLocked == true {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 10))
+                    .foregroundColor(.mdzMuted)
+            }
+        }
+        .padding(12)
+        .background(isExpired ? Color.mdzDanger.opacity(0.08) : Color.mdzNavyMid.opacity(0.5))
+        .cornerRadius(8)
     }
 
     private func isoDate(from s: String) -> Date? {

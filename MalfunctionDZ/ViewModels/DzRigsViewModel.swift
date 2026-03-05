@@ -57,6 +57,7 @@ struct PackRecord: Codable, Identifiable {
     let packJobCount: Int?
     let packedBy: String?
     let isLocked: Bool?
+    let isExpired: Bool?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -65,6 +66,7 @@ struct PackRecord: Codable, Identifiable {
         case packJobCount = "pack_job_count"
         case packedBy = "packed_by"
         case isLocked = "is_locked"
+        case isExpired = "is_expired"
     }
 }
 
