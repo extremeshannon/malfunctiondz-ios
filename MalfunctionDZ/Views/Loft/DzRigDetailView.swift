@@ -301,7 +301,7 @@ struct DzRigDetailView: View {
     private var packHistorySection: some View {
         let (currentRecords, expiredRecords) = partitionPackHistory(vm.detailRecords)
         return VStack(alignment: .leading, spacing: 8) {
-            Text("Pack history")
+            Text("25 Jump Check pack jobs")
                 .font(.system(size: 12, weight: .black))
                 .foregroundColor(.mdzMuted)
             ForEach(currentRecords) { rec in
