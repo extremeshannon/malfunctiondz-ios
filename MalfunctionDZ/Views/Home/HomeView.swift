@@ -137,16 +137,6 @@ struct HomeView: View {
                                     wide: isWide
                                 ) { tabSelect.selected = 2 }
                             }
-                            if auth.currentUser?.canAccess25JumpCheck == true {
-                                ModuleTile(
-                                    icon: "figure.fall",
-                                    title: "25 JUMP CHECK",
-                                    subtitle: vm.jumpCheckSummary?.summaryText ?? "Users with jump counts",
-                                    accentColor: .mdzAmber,
-                                    badges: [],
-                                    wide: isWide
-                                ) { tabSelect.selected = 11 }
-                            }
                             if auth.currentUser?.canAccessMyRigs == true {
                                 ModuleTile(
                                     icon: "briefcase.fill",
@@ -291,15 +281,15 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Manifest home section (25 Jump Check + Aviation status)
+    // MARK: - Manifest home section (DZ Rigs + Aviation status)
     @ViewBuilder
     private var manifestHomeSection: some View {
         VStack(spacing: 14) {
-            if let jc = vm.jumpCheckSummary {
+            if let dr = vm.dzRigsSummary {
                 ManifestStatusCard(
-                    icon: "figure.fall",
-                    title: "25 JUMP CHECK",
-                    subtitle: jc.summaryText,
+                    icon: "square.stack.3d.up.fill",
+                    title: "DZ RIGS",
+                    subtitle: dr.summaryText,
                     accentColor: .mdzAmber
                 )
             }

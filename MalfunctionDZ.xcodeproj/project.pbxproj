@@ -40,6 +40,7 @@
 		FB063D2D2F54BB130227638 /* UserAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2E2F54BB130227638 /* UserAddView.swift */; };
 		FB063D302F54BB200227638 /* MyRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2F2F54BB200227638 /* MyRigsView.swift */; };
 		FB063D342F54BB210227638 /* DzRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D332F54BB210227638 /* DzRigsView.swift */; };
+		FB063D3D2F54BB240227638 /* DzRigDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D3E2F54BB250227638 /* DzRigDetailView.swift */; };
 		FB063D362F54BB220227638 /* MyRigsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D352F54BB220227638 /* MyRigsViewModel.swift */; };
 		FB063D382F54BB230227638 /* DzRigsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D372F54BB230227638 /* DzRigsViewModel.swift */; };
 		FB063D3A2F54BB260227638 /* JumpCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D392F54BB260227638 /* JumpCheckView.swift */; };
@@ -99,6 +100,7 @@
 		FB063D2E2F54BB130227638 /* UserAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAddView.swift; sourceTree = "<group>"; };
 		FB063D2F2F54BB200227638 /* MyRigsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyRigsView.swift; sourceTree = "<group>"; };
 		FB063D332F54BB210227638 /* DzRigsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DzRigsView.swift; sourceTree = "<group>"; };
+		FB063D3E2F54BB250227638 /* DzRigDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DzRigDetailView.swift; sourceTree = "<group>"; };
 		FB063D352F54BB220227638 /* MyRigsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyRigsViewModel.swift; sourceTree = "<group>"; };
 		FB063D372F54BB230227638 /* DzRigsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DzRigsViewModel.swift; sourceTree = "<group>"; };
 		FB063D392F54BB260227638 /* JumpCheckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JumpCheckView.swift; sourceTree = "<group>"; };
@@ -157,6 +159,7 @@
 				FB063CEA2F521AD900227638 /* LoftRootView.swift */,
 				FB063D2F2F54BB200227638 /* MyRigsView.swift */,
 				FB063D332F54BB210227638 /* DzRigsView.swift */,
+				FB063D3E2F54BB250227638 /* DzRigDetailView.swift */,
 			);
 			path = Loft;
 			sourceTree = "<group>";
@@ -436,6 +439,7 @@
 				FB063CFB2F52305C00227638 /* LoftRootView.swift in Sources */,
 				FB063D302F54BB200227638 /* MyRigsView.swift in Sources */,
 				FB063D342F54BB210227638 /* DzRigsView.swift in Sources */,
+				FB063D3D2F54BB240227638 /* DzRigDetailView.swift in Sources */,
 				FB063D362F54BB220227638 /* MyRigsViewModel.swift in Sources */,
 				FB063D382F54BB230227638 /* DzRigsViewModel.swift in Sources */,
 				FB063D3A2F54BB260227638 /* JumpCheckView.swift in Sources */,

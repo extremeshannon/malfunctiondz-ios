@@ -135,6 +135,15 @@ struct JumpCheckSummary {
     }
 }
 
+struct DzRigsSummary {
+    var total: Int = 0
+    var outOfService: Int = 0
+    var summaryText: String {
+        if total == 0 { return "No DZ rigs" }
+        return outOfService > 0 ? "\(outOfService) of \(total) out of service (25 packs)" : "\(total) rigs — pack jobs"
+    }
+}
+
 struct AircraftBrief: Identifiable {
     let id:         Int
     let tailNumber: String
@@ -221,6 +230,7 @@ class HomeViewModel: ObservableObject {
 
     /// 25 Jump Check summary for Manifest / Ops Admin home
     @Published var jumpCheckSummary: JumpCheckSummary? = nil
+    @Published var dzRigsSummary: DzRigsSummary? = nil
 
     /// Pilot rigs count (rigs marked for pilots) — placeholder for new backend feature
     @Published var pilotRigsCount: Int? = nil
@@ -247,13 +257,13 @@ class HomeViewModel: ObservableObject {
             await withTaskGroup(of: Void.self) {
                 $0.addTask { await self.loadAviationSummary() }
                 $0.addTask { await self.loadLoftSummary() }
-                $0.addTask { await self.loadJumpCheckSummary() }
+                $0.addTask { await self.loadDzRigsSummary() }
             }
         } else if isManifestOnly {
-            // Manifest-only: 25 Jump Check + Aviation status on home
+            // Manifest-only: DZ Rigs + Aviation status on home
             await withTaskGroup(of: Void.self) {
                 $0.addTask { await self.loadAviationSummary() }
-                $0.addTask { await self.loadJumpCheckSummary() }
+                $0.addTask { await self.loadDzRigsSummary() }
             }
         } else if isPilot {
             await withTaskGroup(of: Void.self) {
@@ -522,17 +532,31 @@ class HomeViewModel: ObservableObject {
         }
     }
 
-    // MARK: - 25 Jump Check summary (Manifest, Ops Admin)
-    func loadJumpCheckSummary() async {
+    // MARK: - DZ Rigs summary (Manifest, Admin) — pack jobs per rig, out of service at 25
+    func loadDzRigsSummary() async {
         guard let token = KeychainHelper.readToken(),
-              let url = URL(string: "\(kServerURL)/api/users/jump_check.php") else { return }
+              let url = URL(string: "\(kServerURL)/api/loft/dz_rigs.php") else { return }
         var req = URLRequest(url: url)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        struct DzRigsSummaryResp: Decodable {
+            let ok: Bool
+            let summary: LoftSummary?
+            let rigs: [LoftRigBrief]?
+        }
+        struct LoftRigBrief: Decodable {
+            let packJobsSinceInspection: Int?
+            let outOfService: Bool?
+            enum CodingKeys: String, CodingKey {
+                case packJobsSinceInspection = "pack_jobs_since_inspection"
+                case outOfService = "out_of_service"
+            }
+        }
         guard let (data, _) = try? await URLSession.shared.data(for: req),
-              let resp = try? JSONDecoder().decode(JumpCheckResponse.self, from: data),
-              resp.ok, let users = resp.users else { return }
-        let passed = users.filter { $0.passed25 }.count
-        jumpCheckSummary = JumpCheckSummary(passed25: passed, total: users.count)
+              let resp = try? JSONDecoder().decode(DzRigsSummaryResp.self, from: data),
+              resp.ok else { return }
+        let rigs = resp.rigs ?? []
+        let outOfService = rigs.filter { $0.outOfService == true }.count
+        dzRigsSummary = DzRigsSummary(total: rigs.count, outOfService: outOfService)
     }
 
     // MARK: - Pilot LMS progress (Jump Pilot Training course status)

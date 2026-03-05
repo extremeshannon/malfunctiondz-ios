@@ -138,9 +138,6 @@ struct MDZSplitView: View {
                     if auth.currentUser?.canAccessDzRigs == true {
                         SidebarButton(icon: "square.stack.3d.up.fill", title: "DZ Rigs",       selected: selectedModule == .dzRigs)     { selectedModule = .dzRigs }
                     }
-                    if auth.currentUser?.canAccess25JumpCheck == true {
-                        SidebarButton(icon: "figure.fall", title: "25 Jump Check", selected: selectedModule == .jumpCheck) { selectedModule = .jumpCheck }
-                    }
                     if auth.currentUser?.canAccessGroundSchool == true {
                         SidebarButton(icon: "graduationcap.fill", title: config.moduleGroundSchool, selected: selectedModule == .groundSchool) { selectedModule = .groundSchool }
                     }
@@ -195,7 +192,7 @@ struct MDZSplitView: View {
                 case .loft:         LoftRootView()
                 case .myRigs:       MyRigsView()
                 case .dzRigs:       DzRigsView()
-                case .jumpCheck:    JumpCheckView()
+                case .jumpCheck:    DzRigsView()
                 case .groundSchool: GroundSchoolView()
                 case .logbook:      LogbookRootView()
                 case .calendar:     CalendarRootView()
@@ -326,12 +323,6 @@ struct MDZTabView: View {
                 DzRigsView()
                     .tabItem { Label("DZ Rigs", systemImage: "square.stack.3d.up.fill") }
                     .tag(7)
-            }
-
-            if auth.currentUser?.canAccess25JumpCheck == true {
-                JumpCheckView()
-                    .tabItem { Label("25 Jump", systemImage: "figure.fall") }
-                    .tag(11)
             }
 
             if auth.currentUser?.canAccessGroundSchool == true {

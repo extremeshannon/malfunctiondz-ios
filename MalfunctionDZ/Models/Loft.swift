@@ -20,6 +20,9 @@ struct LoftRig: Codable, Identifiable, Hashable {
     let packedBy: String?
     let packerCert: String?
     let notes: String?
+    let packJobsSinceInspection: Int?
+    let outOfService: Bool?
+    let lastInspectionAt: String?
 
     enum CodingKeys: String, CodingKey {
         case id, label, manufacturer, model, harness, reserve, aad, notes, status
@@ -29,6 +32,9 @@ struct LoftRig: Codable, Identifiable, Hashable {
         case daysLeft  = "days_left"
         case packedBy  = "packed_by"
         case packerCert = "packer_cert"
+        case packJobsSinceInspection = "pack_jobs_since_inspection"
+        case outOfService = "out_of_service"
+        case lastInspectionAt = "last_inspection_at"
     }
 
     init(from decoder: Decoder) throws {
@@ -52,6 +58,9 @@ struct LoftRig: Codable, Identifiable, Hashable {
         packedBy = try? c.decodeIfPresent(String.self, forKey: .packedBy)
         packerCert = try? c.decodeIfPresent(String.self, forKey: .packerCert)
         notes = try? c.decodeIfPresent(String.self, forKey: .notes)
+        packJobsSinceInspection = try? c.decodeIfPresent(Int.self, forKey: .packJobsSinceInspection)
+        outOfService = try? c.decodeIfPresent(Bool.self, forKey: .outOfService)
+        lastInspectionAt = try? c.decodeIfPresent(String.self, forKey: .lastInspectionAt)
     }
 
     var statusColor: Color {

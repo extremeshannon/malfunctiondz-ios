@@ -1,5 +1,5 @@
 // File: ASC/Views/Loft/DzRigsView.swift
-// DZ Rigs — DZ-owned rigs. Packers + 25+ jump users can view; Packers can mark as packed.
+// DZ Rigs — DZ-owned rigs. Packers see list, tap rig for detail; pack form in detail; at 25 pack jobs rig is out of service.
 import SwiftUI
 
 struct DzRigsView: View {
@@ -7,6 +7,23 @@ struct DzRigsView: View {
     @Environment(\.horizontalSizeClass) private var hSizeClass
 
     var body: some View {
+        NavigationStack {
+            dzRigsContent
+        }
+        .task { await vm.load() }
+        .refreshable { await vm.load() }
+        .navigationDestination(for: Int.self) { rigId in
+            DzRigDetailView(rigId: rigId, vm: vm)
+        }
+        .alert("Error", isPresented: Binding(
+            get: { vm.error != nil },
+            set: { if !$0 { vm.error = nil } }
+        )) {
+            Button("OK", role: .cancel) { vm.error = nil }
+        } message: { Text(vm.error ?? "") }
+    }
+
+    private var dzRigsContent: some View {
         ZStack {
             Color.mdzBackground.ignoresSafeArea()
             VStack(spacing: 0) {
@@ -37,23 +54,19 @@ struct DzRigsView: View {
                             }
                             if !vm.overdueRigs.isEmpty {
                                 DzRigsSection(title: "OVERDUE — \(vm.overdueRigs.count) RIGS", color: .mdzDanger,
-                                               icon: "exclamationmark.circle.fill", rigs: vm.overdueRigs,
-                                               canMarkPacked: vm.canMarkPacked, onMarkPacked: vm.markPacked)
+                                               icon: "exclamationmark.circle.fill", rigs: vm.overdueRigs)
                             }
                             if !vm.dueSoonRigs.isEmpty {
                                 DzRigsSection(title: "DUE SOON — \(vm.dueSoonRigs.count) RIGS", color: .mdzAmber,
-                                               icon: "clock.fill", rigs: vm.dueSoonRigs,
-                                               canMarkPacked: vm.canMarkPacked, onMarkPacked: vm.markPacked)
+                                               icon: "clock.fill", rigs: vm.dueSoonRigs)
                             }
                             if !vm.currentRigs.isEmpty {
                                 DzRigsSection(title: "CURRENT — \(vm.currentRigs.count) RIGS", color: .mdzGreen,
-                                               icon: "checkmark.circle.fill", rigs: vm.currentRigs,
-                                               canMarkPacked: vm.canMarkPacked, onMarkPacked: vm.markPacked)
+                                               icon: "checkmark.circle.fill", rigs: vm.currentRigs)
                             }
                             if !vm.unknownRigs.isEmpty {
                                 DzRigsSection(title: "NO PACK RECORD — \(vm.unknownRigs.count) RIGS", color: .mdzMuted,
-                                               icon: "questionmark.circle.fill", rigs: vm.unknownRigs,
-                                               canMarkPacked: vm.canMarkPacked, onMarkPacked: vm.markPacked)
+                                               icon: "questionmark.circle.fill", rigs: vm.unknownRigs)
                             }
                         }
                         .padding(16)
@@ -61,14 +74,6 @@ struct DzRigsView: View {
                 }
             }
         }
-        .task { await vm.load() }
-        .refreshable { await vm.load() }
-        .alert("Error", isPresented: Binding(
-            get: { vm.error != nil },
-            set: { if !$0 { vm.error = nil } }
-        )) {
-            Button("OK", role: .cancel) { vm.error = nil }
-        } message: { Text(vm.error ?? "") }
     }
 
     private var headerSection: some View {
@@ -93,7 +98,7 @@ struct DzRigsView: View {
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.mdzMuted)
             if vm.canMarkPacked {
-                Text("Tap \"Mark Packed\" on a rig to record a pack")
+                Text("Tap a rig to open detail — add pack jobs, set date")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.mdzAmber)
             }
@@ -111,14 +116,12 @@ struct DzRigsView: View {
     }
 }
 
-// MARK: - DzRigsSection with Mark Packed button for packers
+// MARK: - DzRigsSection
 struct DzRigsSection: View {
     let title: String
     let color: Color
     let icon: String
     let rigs: [LoftRig]
-    let canMarkPacked: Bool
-    let onMarkPacked: (Int) async -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -136,7 +139,10 @@ struct DzRigsSection: View {
 
             VStack(spacing: 0) {
                 ForEach(rigs) { rig in
-                    DzRigRow(rig: rig, canMarkPacked: canMarkPacked, onMarkPacked: onMarkPacked)
+                    NavigationLink(value: rig.id) {
+                        DzRigRow(rig: rig)
+                    }
+                    .buttonStyle(.plain)
                     if rig.id != rigs.last?.id {
                         Divider().background(Color.mdzBorder)
                             .padding(.horizontal, 14)
@@ -154,11 +160,21 @@ struct DzRigsSection: View {
     }
 }
 
-// MARK: - DzRigRow with optional Mark Packed button
+// MARK: - DzRigRow
 struct DzRigRow: View {
     let rig: LoftRig
-    let canMarkPacked: Bool
-    let onMarkPacked: (Int) async -> Void
+
+    private var packJobsText: String {
+        let n = rig.packJobsSinceInspection ?? 0
+        if rig.outOfService == true {
+            return "25/25 — Out"
+        }
+        return "\(n)/25"
+    }
+
+    private var packJobsColor: Color {
+        rig.outOfService == true ? .mdzDanger : .mdzGreen
+    }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -188,28 +204,17 @@ struct DzRigRow: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 3) {
-                Text(rig.statusLabel)
+                Text(packJobsText)
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(rig.statusColor)
+                    .foregroundColor(packJobsColor)
                 Text(rig.daysLeftText)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.mdzMuted)
             }
 
-            if canMarkPacked {
-                Button {
-                    Task { await onMarkPacked(rig.id) }
-                } label: {
-                    Text("Mark Packed")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Color.mdzGreen)
-                        .cornerRadius(8)
-                }
-                .buttonStyle(.plain)
-            }
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(.mdzMuted)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
