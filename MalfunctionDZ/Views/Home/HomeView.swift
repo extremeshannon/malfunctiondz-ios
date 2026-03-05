@@ -37,8 +37,8 @@ struct HomeView: View {
                             .padding(.top, isWide ? 28 : 20)
                             .padding(.bottom, 20)
 
-                        // ── DZ Status (open/closed/announcement) — tappable for Admin/Ops ─
-                        if let dz = vm.dzStatus {
+                        // ── DZ Status (open/closed/announcement) — everyone sees it; tappable for Admin/Ops ─
+                        if showDzStatus, let dz = vm.dzStatus {
                             Group {
                                 if auth.currentUser?.canUpdateDzStatus == true {
                                     NavigationLink(destination: DZStatusUpdateView(
@@ -245,6 +245,7 @@ struct HomeView: View {
             }
             .navigationBarHidden(true)
             .task { await vm.loadDashboard(user: auth.currentUser) }
+            .task(id: "dz") { await vm.loadDzStatus() }
             .onReceive(Timer.publish(every: 120, on: .main, in: .common).autoconnect()) { _ in
                 Task {
                     await vm.loadDzStatus()
@@ -460,6 +461,7 @@ struct HomeView: View {
 
     // Weather + DZ Status for everyone (all authenticated users)
     private var showMetar: Bool { true }
+    private var showDzStatus: Bool { true }
     private var showAviation:     Bool { auth.currentUser?.canAccessAviation    == true }
     private var showLoft:         Bool { auth.currentUser?.canAccessLoft        == true }
     private var showGroundSchool: Bool { auth.currentUser?.canAccessGroundSchool == true }
