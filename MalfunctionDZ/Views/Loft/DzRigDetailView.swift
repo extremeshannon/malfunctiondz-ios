@@ -38,11 +38,8 @@ struct DzRigDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task(id: rigId) {
             await vm.loadDetail(rigId: rigId)
-            if let rig = vm.detailRig, let last = vm.detailRecords.first, let pd = isoDate(from: last.packDate) {
-                packDate = pd
-            } else {
-                packDate = Date()
-            }
+            packDate = Date()
+            packJobCount = 1
         }
         .onDisappear {
             vm.clearDetail()
@@ -50,23 +47,106 @@ struct DzRigDetailView: View {
     }
 
     private func rigHeaderSection(rig: LoftRig) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(rig.label)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.mdzText)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                rigThumbnail(rig: rig)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(rig.label)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.mdzText)
+                    packJobsBadge(rig: rig)
+                }
                 Spacer()
-                packJobsBadge(rig: rig)
             }
             if let mfr = rig.harness.mfr { detailRow("Harness", mfr) }
+            if let mod = rig.harness.model, !mod.isEmpty { detailRow("Harness model", mod) }
+            if let sn = rig.harness.sn { detailRow("Harness SN", sn) }
+            if let mfr = rig.reserve.mfr { detailRow("Reserve", mfr) }
             if let sn = rig.reserve.sn { detailRow("Reserve SN", sn) }
             if let dom = rig.reserve.dom { detailRow("Reserve DOM", dom) }
+            if let mfr = rig.aad.mfr { detailRow("AAD", mfr) }
             if let sn = rig.aad.sn { detailRow("AAD SN", sn) }
+            if let mfr = rig.manufacturer { detailRow("Manufacturer", mfr) }
+            if let mod = rig.model { detailRow("Model", mod) }
+            rigImagesSection(rig: rig)
         }
         .padding(16)
         .background(Color.mdzCard)
         .cornerRadius(12)
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+    }
+
+    @ViewBuilder
+    private func rigThumbnail(rig: LoftRig) -> some View {
+        let url = rig.imageURL(path: rig.imageContainer)
+        Group {
+            if let u = url {
+                AsyncImage(url: u) { phase in
+                    switch phase {
+                    case .success(let img): img.resizable().scaledToFill()
+                    case .failure: placeholderImage(icon: "square.stack.3d.up.fill")
+                    default: placeholderImage(icon: "square.stack.3d.up.fill")
+                    }
+                }
+            } else {
+                placeholderImage(icon: "square.stack.3d.up.fill")
+            }
+        }
+        .frame(width: 80, height: 80)
+        .clipped()
+        .cornerRadius(8)
+    }
+
+    private func placeholderImage(icon: String) -> some View {
+        ZStack {
+            Color.mdzNavyMid
+            Image(systemName: icon)
+                .font(.system(size: 28))
+                .foregroundColor(.mdzMuted)
+        }
+    }
+
+    @ViewBuilder
+    private func rigImagesSection(rig: LoftRig) -> some View {
+        let hasAny = (rig.imageContainer != nil && !(rig.imageContainer ?? "").isEmpty)
+            || (rig.imageReserve != nil && !(rig.imageReserve ?? "").isEmpty)
+            || (rig.imageMain != nil && !(rig.imageMain ?? "").isEmpty)
+        if hasAny {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Pictures")
+                    .font(.system(size: 12, weight: .black))
+                    .foregroundColor(.mdzMuted)
+                HStack(spacing: 12) {
+                    if let p = rig.imageContainer, !p.isEmpty, let url = rig.imageURL(path: p) {
+                        rigImageCell(label: "Container", url: url)
+                    }
+                    if let p = rig.imageReserve, !p.isEmpty, let url = rig.imageURL(path: p) {
+                        rigImageCell(label: "Reserve", url: url)
+                    }
+                    if let p = rig.imageMain, !p.isEmpty, let url = rig.imageURL(path: p) {
+                        rigImageCell(label: "Main", url: url)
+                    }
+                }
+            }
+        }
+    }
+
+    private func rigImageCell(label: String, url: URL) -> some View {
+        VStack(spacing: 4) {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .success(let img): img.resizable().scaledToFill()
+                case .failure: placeholderImage(icon: "photo")
+                default: placeholderImage(icon: "photo")
+                }
+            }
+            .frame(width: 70, height: 70)
+            .clipped()
+            .cornerRadius(6)
+            Text(label)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(.mdzMuted)
+        }
     }
 
     private func packJobsBadge(rig: LoftRig) -> some View {
@@ -113,12 +193,14 @@ struct DzRigDetailView: View {
                     .font(.system(size: 13))
                     .foregroundColor(.mdzText)
                 Spacer()
-                Stepper("\(packJobCount)", value: $packJobCount, in: 1...25)
-                    .labelsHidden()
-                Text("\(packJobCount)")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.mdzGreen)
-                    .frame(minWidth: 28, alignment: .trailing)
+                Picker("", selection: $packJobCount) {
+                    ForEach(1...25, id: \.self) { n in
+                        Text("\(n)").tag(n)
+                    }
+                }
+                .pickerStyle(.menu)
+                .labelsHidden()
+                .tint(.mdzGreen)
             }
             Button {
                 Task {

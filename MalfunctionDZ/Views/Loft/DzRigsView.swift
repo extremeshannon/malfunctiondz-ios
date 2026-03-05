@@ -163,6 +163,7 @@ struct DzRigsSection: View {
 // MARK: - DzRigRow
 struct DzRigRow: View {
     let rig: LoftRig
+    var showThumbnails: Bool = false
 
     private var packJobsText: String {
         let n = rig.packJobsSinceInspection ?? 0
@@ -180,7 +181,14 @@ struct DzRigRow: View {
         HStack(spacing: 12) {
             RoundedRectangle(cornerRadius: 2)
                 .fill(rig.statusColor)
-                .frame(width: 4, height: 44)
+                .frame(width: 4, height: showThumbnails ? 56 : 44)
+
+            if showThumbnails {
+                HStack(spacing: 6) {
+                    rigThumbnail(path: rig.imageContainer, size: 44)
+                    rigThumbnail(path: rig.imageMain, size: 44)
+                }
+            }
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(rig.label)
@@ -218,5 +226,34 @@ struct DzRigRow: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
+    }
+
+    @ViewBuilder
+    private func rigThumbnail(path: String?, size: CGFloat) -> some View {
+        Group {
+            if let p = path, !p.isEmpty, let url = rig.imageURL(path: p) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let img): img.resizable().scaledToFill()
+                    case .failure: thumbPlaceholder
+                    default: thumbPlaceholder
+                    }
+                }
+            } else {
+                thumbPlaceholder
+            }
+        }
+        .frame(width: size, height: size)
+        .clipped()
+        .cornerRadius(6)
+    }
+
+    private var thumbPlaceholder: some View {
+        ZStack {
+            Color.mdzNavyMid
+            Image(systemName: "photo")
+                .font(.system(size: 16))
+                .foregroundColor(.mdzMuted)
+        }
     }
 }

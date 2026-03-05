@@ -23,6 +23,9 @@ struct LoftRig: Codable, Identifiable, Hashable {
     let packJobsSinceInspection: Int?
     let outOfService: Bool?
     let lastInspectionAt: String?
+    let imageContainer: String?
+    let imageReserve: String?
+    let imageMain: String?
 
     enum CodingKeys: String, CodingKey {
         case id, label, manufacturer, model, harness, reserve, aad, notes, status
@@ -35,6 +38,9 @@ struct LoftRig: Codable, Identifiable, Hashable {
         case packJobsSinceInspection = "pack_jobs_since_inspection"
         case outOfService = "out_of_service"
         case lastInspectionAt = "last_inspection_at"
+        case imageContainer = "image_container"
+        case imageReserve = "image_reserve"
+        case imageMain = "image_main"
     }
 
     init(from decoder: Decoder) throws {
@@ -61,6 +67,9 @@ struct LoftRig: Codable, Identifiable, Hashable {
         packJobsSinceInspection = try? c.decodeIfPresent(Int.self, forKey: .packJobsSinceInspection)
         outOfService = try? c.decodeIfPresent(Bool.self, forKey: .outOfService)
         lastInspectionAt = try? c.decodeIfPresent(String.self, forKey: .lastInspectionAt)
+        imageContainer = try? c.decodeIfPresent(String.self, forKey: .imageContainer)
+        imageReserve = try? c.decodeIfPresent(String.self, forKey: .imageReserve)
+        imageMain = try? c.decodeIfPresent(String.self, forKey: .imageMain)
     }
 
     var statusColor: Color {
@@ -86,6 +95,13 @@ struct LoftRig: Codable, Identifiable, Hashable {
         if d < 0 { return "\(abs(d))d overdue" }
         if d == 0 { return "Due today" }
         return "\(d)d left"
+    }
+
+    func imageURL(path: String?, base: String = kServerURL) -> URL? {
+        guard let p = path, !p.isEmpty else { return nil }
+        let b = base.hasSuffix("/") ? String(base.dropLast()) : base
+        let clean = p.hasPrefix("/") ? p : "/" + p
+        return URL(string: b + clean)
     }
 }
 

@@ -3,6 +3,7 @@
 import SwiftUI
 
 struct RigsView: View {
+    @EnvironmentObject private var auth: AuthManager
     @StateObject private var myRigsVm = MyRigsViewModel()
     @StateObject private var dzRigsVm = DzRigsViewModel()
 
@@ -82,6 +83,24 @@ struct RigsView: View {
             Text("Read-only — personal rigs and DZ rigs")
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.mdzAmber)
+            if auth.currentUser?.canAccess25JumpCheck == true {
+                NavigationLink {
+                    JumpCheckView(vm: dzRigsVm)
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "figure.fall")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("25 Jump Check")
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .foregroundColor(.mdzAmber)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.mdzAmber.opacity(0.15))
+                    .cornerRadius(8)
+                }
+                .padding(.top, 8)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
