@@ -184,6 +184,7 @@ struct DzRigsSection: View {
 struct DzRigRow: View {
     let rig: LoftRig
     var showThumbnails: Bool = false
+    var isExpired: Bool = false
 
     private var packJobsText: String {
         let n = rig.packJobsSinceInspection ?? 0
@@ -197,10 +198,14 @@ struct DzRigRow: View {
         rig.outOfService == true ? .mdzDanger : .mdzGreen
     }
 
+    private var statusBarColor: Color {
+        isExpired ? .mdzDanger : rig.statusColor
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             RoundedRectangle(cornerRadius: 2)
-                .fill(rig.statusColor)
+                .fill(statusBarColor)
                 .frame(width: 4, height: showThumbnails ? 56 : 44)
 
             if showThumbnails {
@@ -232,6 +237,11 @@ struct DzRigRow: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 3) {
+                if isExpired {
+                    Text("Not eligible")
+                        .font(.system(size: 9, weight: .black))
+                        .foregroundColor(.mdzDanger)
+                }
                 Text(packJobsText)
                     .font(.system(size: 10, weight: .black))
                     .foregroundColor(packJobsColor)

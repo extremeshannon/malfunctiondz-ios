@@ -270,10 +270,11 @@ struct UserEditView: View {
                     } label: {
                         Text(r.label)
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(isSel ? .white : .mdzBlue)
+                            .foregroundColor(isSel ? .white : .mdzText)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .background(isSel ? Color.mdzRed : Color.mdzBlue.opacity(0.12))
+                            .background(isSel ? Color.mdzRed : Color.mdzNavyMid)
+                            .overlay(Capsule().strokeBorder(isSel ? Color.mdzRed : Color.mdzBorder, lineWidth: isSel ? 2 : 1))
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)

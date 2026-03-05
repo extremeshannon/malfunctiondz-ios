@@ -8,15 +8,20 @@ struct JumpCheckView: View {
 
     private var filteredRigs: [LoftRig] {
         let q = searchQuery.trimmingCharacters(in: .whitespaces).lowercased()
-        guard !q.isEmpty else { return vm.rigs }
-        return vm.rigs.filter {
+        let base = q.isEmpty ? vm.rigs : vm.rigs.filter {
             $0.label.lowercased().contains(q)
             || ($0.manufacturer ?? "").lowercased().contains(q)
             || ($0.model ?? "").lowercased().contains(q)
             || ($0.harness.sn ?? "").lowercased().contains(q)
             || ($0.reserve.sn ?? "").lowercased().contains(q)
         }
+        return base
     }
+
+    /// In date: current or due_soon — can add pack jobs.
+    private var eligibleRigs: [LoftRig] { filteredRigs.filter { $0.status == "current" || $0.status == "due_soon" } }
+    /// Overdue or no pack data — read-only at bottom.
+    private var ineligibleRigs: [LoftRig] { filteredRigs.filter { $0.status == "overdue" || $0.status == "unknown" } }
 
     var body: some View {
         ZStack {
@@ -37,7 +42,7 @@ struct JumpCheckView: View {
                             .foregroundColor(.mdzMuted)
                             .tracking(1)
                     }
-                    Text("DZ rigs — pack jobs X/25. At 25 pack jobs rig is out of service until inspected.")
+                    Text("DZ rigs — pack jobs X/25. At 25 pack jobs rig is out of service. Expired rigs (reserve overdue) are read-only.")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.mdzMuted)
                 }
@@ -68,7 +73,8 @@ struct JumpCheckView: View {
                 } else {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 0) {
-                            ForEach(filteredRigs) { rig in
+                            // Eligible rigs (can add pack jobs)
+                            ForEach(eligibleRigs) { rig in
                                 NavigationLink {
                                     DzRigDetailView(rigId: rig.id, vm: vm)
                                 } label: {
@@ -76,8 +82,36 @@ struct JumpCheckView: View {
                                 }
                                 .buttonStyle(.plain)
                                 .contentShape(Rectangle())
-                                if rig.id != filteredRigs.last?.id {
+                                if rig.id != eligibleRigs.last?.id {
                                     Divider().background(Color.mdzBorder).padding(.horizontal, 14)
+                                }
+                            }
+                            // Overdue / no pack data — read-only at bottom
+                            if !ineligibleRigs.isEmpty {
+                                if !eligibleRigs.isEmpty {
+                                    Divider().background(Color.mdzBorder).padding(.horizontal, 14)
+                                }
+                                HStack {
+                                    Text("EXPIRED / NO PACK DATA — READ ONLY")
+                                        .font(.system(size: 10, weight: .black))
+                                        .foregroundColor(.mdzMuted)
+                                        .tracking(1)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .background(Color.mdzDanger.opacity(0.08))
+                                ForEach(ineligibleRigs) { rig in
+                                    NavigationLink {
+                                        DzRigDetailView(rigId: rig.id, vm: vm)
+                                    } label: {
+                                        DzRigRow(rig: rig, showThumbnails: true, isExpired: true)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .contentShape(Rectangle())
+                                    if rig.id != ineligibleRigs.last?.id {
+                                        Divider().background(Color.mdzBorder).padding(.horizontal, 14)
+                                    }
                                 }
                             }
                         }

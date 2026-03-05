@@ -118,12 +118,51 @@ final class UsersViewModel: ObservableObject {
     func applyAndLoad() async {
         await load()
     }
+
+    func deleteUser(_ user: PlatformUser) async -> Bool {
+        guard let token = KeychainHelper.readToken() else {
+            error = "Not authenticated"
+            return false
+        }
+        guard let url = URL(string: "\(kServerURL)/api/user.php?id=\(user.id)") else {
+            error = "Invalid URL"
+            return false
+        }
+        var req = URLRequest(url: url)
+        req.httpMethod = "DELETE"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            if let http = response as? HTTPURLResponse, http.statusCode == 401 {
+                await AuthManager.shared.logout()
+                error = "Session expired"
+                return false
+            }
+            if let http = response as? HTTPURLResponse, http.statusCode == 403 {
+                error = "You don't have permission to delete users"
+                return false
+            }
+            struct R: Decodable { let ok: Bool; let error: String? }
+            let r = try JSONDecoder().decode(R.self, from: data)
+            if r.ok {
+                return true
+            } else {
+                error = r.error ?? "Delete failed"
+                return false
+            }
+        } catch {
+            self.error = error.localizedDescription
+            return false
+        }
+    }
 }
 
 struct UsersView: View {
     @StateObject private var vm = UsersViewModel()
     @EnvironmentObject private var auth: AuthManager
     @State private var showAddUser = false
+    @State private var userToDelete: PlatformUser?
+    @State private var deletedUserName: String?
 
     var body: some View {
         NavigationStack {
@@ -175,6 +214,13 @@ struct UsersView: View {
                                 }
                                 .listRowBackground(Color.mdzCard)
                                 .listRowSeparatorTint(Color.mdzBorder)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    Button(role: .destructive) {
+                                        userToDelete = u
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
                             }
                         }
                         .listStyle(.plain)
@@ -210,6 +256,49 @@ struct UsersView: View {
                     showAddUser = false
                     Task { await vm.load() }
                 })
+            }
+            .alert("Delete User", isPresented: Binding(
+                get: { userToDelete != nil },
+                set: { if !$0 { userToDelete = nil } }
+            )) {
+                Button("Cancel", role: .cancel) { userToDelete = nil }
+                Button("Delete", role: .destructive) {
+                    guard let u = userToDelete else { return }
+                    Task {
+                        let ok = await vm.deleteUser(u)
+                        if ok {
+                            deletedUserName = u.username
+                            await vm.load()
+                            userToDelete = nil
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                                deletedUserName = nil
+                            }
+                        } else {
+                            userToDelete = nil
+                        }
+                    }
+                }
+            } message: {
+                Text("Are you sure you want to delete \(userToDelete?.username ?? "")? This cannot be undone.")
+            }
+            .overlay(alignment: .top) {
+                if let name = deletedUserName {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.mdzGreen)
+                        Text("\(name) was deleted")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.mdzText)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(Color.mdzCard)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzGreen, lineWidth: 2))
+                    .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
+                    .padding(.top, 20)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                }
             }
             .task { await vm.load() }
             .refreshable { await vm.load() }

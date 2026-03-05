@@ -8,6 +8,7 @@ struct UserAddView: View {
     @State private var username = ""
     @State private var email = ""
     @State private var password = ""
+    @State private var confirmPassword = ""
     @State private var firstName = ""
     @State private var lastName = ""
     @State private var phone = ""
@@ -65,6 +66,8 @@ struct UserAddView: View {
                 .keyboardType(.emailAddress)
             fieldRow("Password", $password)
                 .textContentType(.password)
+            fieldRow("Confirm password", $confirmPassword)
+                .textContentType(.password)
             HStack(spacing: 12) {
                 fieldRow("First name", $firstName)
                 fieldRow("Last name", $lastName)
@@ -115,10 +118,11 @@ struct UserAddView: View {
                     } label: {
                         Text(r.label)
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(isSel ? .white : .mdzBlue)
+                            .foregroundColor(isSel ? .white : .mdzText)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .background(isSel ? Color.mdzRed : Color.mdzBlue.opacity(0.12))
+                            .background(isSel ? Color.mdzRed : Color.mdzNavyMid)
+                            .overlay(Capsule().strokeBorder(isSel ? Color.mdzRed : Color.mdzBorder, lineWidth: isSel ? 2 : 1))
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
@@ -157,6 +161,7 @@ struct UserAddView: View {
         if e.isEmpty { error = "Email is required"; return }
         if p.isEmpty { error = "Password is required"; return }
         if p.count < 6 { error = "Password must be at least 6 characters"; return }
+        if password != confirmPassword { error = "Passwords do not match"; return }
         if fn.isEmpty { error = "First name is required"; return }
         if ln.isEmpty { error = "Last name is required"; return }
         if selectedRoles.isEmpty { error = "At least one role is required"; return }

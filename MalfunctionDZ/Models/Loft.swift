@@ -97,6 +97,12 @@ struct LoftRig: Codable, Identifiable, Hashable {
         return "\(d)d left"
     }
 
+    /// Reserve past due — rig cannot be used for 25 Jump Check.
+    var isExpired: Bool { status == "overdue" || (daysLeft ?? 0) < 0 }
+
+    /// In date (current or due_soon) — eligible for pack jobs. Overdue and unknown (no pack data) are not.
+    var isEligibleFor25JumpCheck: Bool { status == "current" || status == "due_soon" }
+
     func imageURL(path: String?, base: String = kServerURL) -> URL? {
         guard let p = path, !p.isEmpty else { return nil }
         let b = base.hasSuffix("/") ? String(base.dropLast()) : base

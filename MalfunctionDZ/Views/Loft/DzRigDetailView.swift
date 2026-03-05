@@ -19,7 +19,9 @@ struct DzRigDetailView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
                         rigHeaderSection(rig: rig)
-                        if vm.detailCanMarkPacked && (rig.outOfService != true) {
+                        if !rig.isEligibleFor25JumpCheck {
+                            expiredReadOnlyBanner(rig: rig)
+                        } else if vm.detailCanMarkPacked && (rig.outOfService != true) {
                             packFormSection
                         }
                         if vm.detailCanInspect && (rig.outOfService == true) {
@@ -179,6 +181,30 @@ struct DzRigDetailView: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(.mdzText)
         }
+    }
+
+    private func expiredReadOnlyBanner(rig: LoftRig) -> some View {
+        let (title, subtitle): (String, String) = rig.status == "overdue"
+            ? ("Rig Expired — Not eligible for 25 Jump Check", "Reserve is overdue. This rig cannot be used for pack jobs until repacked.")
+            : ("No Pack Data — Not eligible for 25 Jump Check", "No pack record on file. This rig cannot be used until pack data is entered.")
+        return HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 18))
+                .foregroundColor(.mdzDanger)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.mdzText)
+                Text(subtitle)
+                    .font(.system(size: 12))
+                    .foregroundColor(.mdzMuted)
+            }
+            Spacer()
+        }
+        .padding(16)
+        .background(Color.mdzDanger.opacity(0.12))
+        .cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzDanger.opacity(0.5), lineWidth: 1))
     }
 
     private var packFormSection: some View {
