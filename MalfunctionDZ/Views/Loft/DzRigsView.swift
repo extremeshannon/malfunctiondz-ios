@@ -9,6 +9,9 @@ struct DzRigsView: View {
     var body: some View {
         NavigationStack {
             dzRigsContent
+                .navigationDestination(for: Int.self) { rigId in
+                    DzRigDetailView(rigId: rigId, vm: vm)
+                }
         }
         .task { await vm.load() }
         .refreshable { await vm.load() }
@@ -101,6 +104,22 @@ struct DzRigsView: View {
                 Text("Tap a rig to open detail — add pack jobs, set date")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.mdzAmber)
+                NavigationLink {
+                    JumpCheckView(vm: vm)
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "figure.fall")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("25 Jump Check")
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .foregroundColor(.mdzAmber)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.mdzAmber.opacity(0.15))
+                    .cornerRadius(8)
+                }
+                .padding(.top, 8)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -143,6 +162,7 @@ struct DzRigsSection: View {
                         DzRigRow(rig: rig)
                     }
                     .buttonStyle(.plain)
+                    .contentShape(Rectangle())
                     if rig.id != rigs.last?.id {
                         Divider().background(Color.mdzBorder)
                             .padding(.horizontal, 14)

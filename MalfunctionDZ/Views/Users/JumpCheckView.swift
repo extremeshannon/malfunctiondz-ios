@@ -69,10 +69,13 @@ struct JumpCheckView: View {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 0) {
                             ForEach(filteredRigs) { rig in
-                                NavigationLink(value: rig.id) {
+                                NavigationLink {
+                                    DzRigDetailView(rigId: rig.id, vm: vm)
+                                } label: {
                                     DzRigRow(rig: rig, showThumbnails: true)
                                 }
                                 .buttonStyle(.plain)
+                                .contentShape(Rectangle())
                                 if rig.id != filteredRigs.last?.id {
                                     Divider().background(Color.mdzBorder).padding(.horizontal, 14)
                                 }

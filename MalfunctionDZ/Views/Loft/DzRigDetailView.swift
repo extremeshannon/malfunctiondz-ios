@@ -7,6 +7,7 @@ struct DzRigDetailView: View {
     @ObservedObject var vm: DzRigsViewModel
     @State private var packDate = Date()
     @State private var packJobCount = 1
+    @State private var packNotes = ""
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -202,12 +203,16 @@ struct DzRigDetailView: View {
                 .labelsHidden()
                 .tint(.mdzGreen)
             }
+            TextField("Notes (optional)", text: $packNotes, axis: .vertical)
+                .lineLimit(2...4)
+                .mdzInputStyle()
             Button {
                 Task {
                     let df = DateFormatter()
                     df.dateFormat = "yyyy-MM-dd"
-                    await vm.markPacked(rigId: rigId, packDate: df.string(from: packDate), packJobCount: packJobCount)
+                    await vm.markPacked(rigId: rigId, packDate: df.string(from: packDate), packJobCount: packJobCount, notes: packNotes)
                     await vm.loadDetail(rigId: rigId)
+                    packNotes = ""
                 }
             } label: {
                 HStack {

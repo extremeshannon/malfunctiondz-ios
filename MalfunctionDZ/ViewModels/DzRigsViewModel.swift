@@ -162,7 +162,7 @@ class DzRigsViewModel: ObservableObject {
         }
     }
 
-    func markPacked(rigId: Int, packDate: String? = nil, packJobCount: Int = 1) async {
+    func markPacked(rigId: Int, packDate: String? = nil, packJobCount: Int = 1, notes: String? = nil) async {
         markingRigId = rigId
         defer { markingRigId = nil }
         guard let token = KeychainHelper.readToken(),
@@ -170,6 +170,7 @@ class DzRigsViewModel: ObservableObject {
         var body: [String: Any] = ["rig_id": rigId, "action": "pack"]
         if let d = packDate, !d.isEmpty { body["pack_date"] = d }
         body["pack_job_count"] = max(1, min(25, packJobCount))
+        if let n = notes, !n.trimmingCharacters(in: .whitespaces).isEmpty { body["notes"] = n }
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")

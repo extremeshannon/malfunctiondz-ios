@@ -19,9 +19,6 @@ struct RigsView: View {
             await myRigsVm.load()
             await dzRigsVm.load()
         }
-        .navigationDestination(for: Int.self) { rigId in
-            DzRigDetailView(rigId: rigId, vm: dzRigsVm)
-        }
         .alert("Error", isPresented: Binding(
             get: { dzRigsVm.error != nil },
             set: { if !$0 { dzRigsVm.error = nil } }
@@ -154,10 +151,13 @@ struct RigsView: View {
             .padding(.top, 12)
             VStack(spacing: 0) {
                 ForEach(dzRigsVm.rigs) { rig in
-                    NavigationLink(value: rig.id) {
+                    NavigationLink {
+                        DzRigDetailView(rigId: rig.id, vm: dzRigsVm)
+                    } label: {
                         DzRigRow(rig: rig)
                     }
                     .buttonStyle(.plain)
+                    .contentShape(Rectangle())
                     if rig.id != dzRigsVm.rigs.last?.id {
                         Divider().background(Color.mdzBorder).padding(.horizontal, 14)
                     }
