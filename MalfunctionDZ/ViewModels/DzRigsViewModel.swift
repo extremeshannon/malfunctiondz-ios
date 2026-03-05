@@ -94,8 +94,10 @@ class DzRigsViewModel: ObservableObject {
         }
         var req = URLRequest(url: url)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        var responseData = Data()
         do {
             let (data, response) = try await URLSession.shared.data(for: req)
+            responseData = data
             if let http = response as? HTTPURLResponse, http.statusCode == 403 {
                 if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                    let err = json["error"] as? String {
@@ -105,11 +107,26 @@ class DzRigsViewModel: ObservableObject {
                 }
                 return
             }
-            guard !data.isEmpty, let first = data.first, first == UInt8(ascii: "{") else {
-                error = "Server returned invalid response. Check API URL and server logs."
+            guard !data.isEmpty else {
+                error = "Server returned empty response."
                 return
             }
-            let resp = try JSONDecoder().decode(DzRigsResponse.self, from: data)
+            var jsonData = data
+            if let first = data.first, first != UInt8(ascii: "{") {
+                if let str = String(data: data, encoding: .utf8),
+                   let start = str.firstIndex(of: "{"),
+                   let extracted = str[start...].data(using: .utf8) {
+                    jsonData = extracted
+                } else {
+                    if let str = String(data: data, encoding: .utf8), str.contains("<html") || str.contains("<!DOCTYPE") {
+                        error = "API returned HTML (wrong URL?). Check kServerURL."
+                    } else {
+                        error = "Server returned invalid response. Check API URL and server logs."
+                    }
+                    return
+                }
+            }
+            let resp = try JSONDecoder().decode(DzRigsResponse.self, from: jsonData)
             if resp.ok {
                 rigs = resp.rigs ?? []
                 summary = resp.summary
@@ -122,7 +139,21 @@ class DzRigsViewModel: ObservableObject {
         } catch let dec as DecodingError {
             let msg = decodeErrorMessage(dec)
             if msg.contains("valid JSON") || msg.contains("correct format") {
-                self.error = "DZ rigs API returned invalid data. Ensure migration 024 is run and the server is returning JSON."
+                if let str = String(data: responseData, encoding: .utf8) {
+                    if str.contains("<html") || str.contains("<!DOCTYPE") {
+                        self.error = "API returned HTML — wrong URL or 404. Check kServerURL and server config."
+                    } else if str.hasPrefix("<?")
+                        || str.contains("Fatal error")
+                        || str.contains("Parse error")
+                        || str.contains("Unknown column") {
+                        self.error = "PHP/DB error in response. Run migration 024 on server. Raw: \(String(str.prefix(120)))..."
+                    } else {
+                        let preview = String(str.prefix(150)).replacingOccurrences(of: "\n", with: " ")
+                        self.error = "Invalid JSON from DZ rigs API. First 150 chars: \(preview)"
+                    }
+                } else {
+                    self.error = "Invalid JSON (empty or non-UTF8). Size: \(responseData.count) bytes."
+                }
             } else {
                 self.error = msg
             }
