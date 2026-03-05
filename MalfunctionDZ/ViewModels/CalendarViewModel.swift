@@ -50,10 +50,15 @@ final class CalendarViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Shifts
+    // MARK: - Shifts (loads week containing selected date)
     var shiftDateRange: (Date, Date) {
-        let start = calendar.date(byAdding: .day, value: -7, to: selectedShiftDate) ?? selectedShiftDate
-        let end = calendar.date(byAdding: .day, value: 14, to: selectedShiftDate) ?? selectedShiftDate
+        guard let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: selectedShiftDate)) else {
+            let fallback = calendar.date(byAdding: .day, value: -7, to: selectedShiftDate) ?? selectedShiftDate
+            return (fallback, calendar.date(byAdding: .day, value: 14, to: selectedShiftDate) ?? selectedShiftDate)
+        }
+        let weekEnd = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
+        let start = calendar.date(byAdding: .day, value: -1, to: weekStart) ?? weekStart
+        let end = calendar.date(byAdding: .day, value: 1, to: weekEnd) ?? weekEnd
         return (start, end)
     }
 

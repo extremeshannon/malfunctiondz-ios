@@ -192,11 +192,19 @@ struct HomeView: View {
                                 ModuleTile(
                                     icon: "calendar",
                                     title: "CALENDAR",
-                                    subtitle: "Events & staff shifts",
+                                    subtitle: "Events & todos",
                                     accentColor: .mdzBlue,
                                     badges: [],
                                     wide: isWide
                                 ) { tabSelect.selected = 5 }
+                                ModuleTile(
+                                    icon: "square.grid.3x3.fill",
+                                    title: "SHIFTS",
+                                    subtitle: "My schedule & pick shifts",
+                                    accentColor: .mdzRed,
+                                    badges: [],
+                                    wide: isWide
+                                ) { tabSelect.selected = 12 }
                             }
                             if showManifest {
                                 ModuleTile(

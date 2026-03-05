@@ -1,5 +1,5 @@
 // File: MalfunctionDZ/Views/Calendar/ShiftsView.swift
-// Staff shifts with date picker and Pick / Request Release actions.
+// Staff shifts with per-day view: week picker + day rows.
 
 import SwiftUI
 
@@ -7,6 +7,19 @@ struct ShiftsView: View {
     @EnvironmentObject private var auth: AuthManager
     @StateObject private var vm = CalendarViewModel()
     @State private var showDatePicker = false
+
+    private var weekDays: [Date] {
+        let cal = Calendar.current
+        guard let weekStart = cal.date(from: cal.dateComponents([.yearForWeekOfYear, .weekOfYear], from: vm.selectedShiftDate)) else { return [] }
+        return (0..<7).compactMap { cal.date(byAdding: .day, value: $0, to: weekStart) }
+    }
+
+    private var weekRangeText: String {
+        guard let first = weekDays.first, let last = weekDays.last else { return "" }
+        let f = DateFormatter()
+        f.dateFormat = "d MMM"
+        return "\(f.string(from: first)) – \(f.string(from: last))"
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -23,20 +36,14 @@ struct ShiftsView: View {
                 .background((vm.feedbackIsError ? Color.mdzDanger : Color.mdzGreen).opacity(0.15))
             }
 
-            dateHeader
+            weekPickerHeader
 
             if vm.shiftsLoading && vm.shifts.isEmpty {
                 LoadingOverlay(message: "Loading shifts…")
             } else if let err = vm.shiftsError {
                 shiftsErrorView(err)
-            } else if vm.shifts.isEmpty {
-                EmptyStateView(
-                    icon: "calendar",
-                    title: "No Shifts",
-                    subtitle: "No shifts in this date range."
-                )
             } else {
-                shiftsList
+                perDayList
             }
         }
         .refreshable { await vm.loadShifts() }
@@ -46,38 +53,83 @@ struct ShiftsView: View {
         }
     }
 
-    private var dateHeader: some View {
-        Button {
-            showDatePicker = true
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "calendar")
-                    .font(.system(size: 17))
-                    .foregroundColor(.mdzBlue)
-                Text(dateDisplay)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.mdzText)
-                Spacer()
-                Image(systemName: "chevron.down.circle.fill")
-                    .font(.system(size: 16))
-                    .foregroundColor(.mdzBlue)
+    private var weekPickerHeader: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                Button {
+                    if let first = weekDays.first {
+                        vm.selectedShiftDate = Calendar.current.date(byAdding: .day, value: -7, to: first) ?? vm.selectedShiftDate
+                    }
+                } label: {
+                    Image(systemName: "chevron.left.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(.mdzBlue)
+                }
+                .buttonStyle(.plain)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 16) {
+                        ForEach(weekDays, id: \.timeIntervalSince1970) { day in
+                            dayButton(day)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                }
+                .frame(maxWidth: .infinity)
+
+                Button {
+                    if let last = weekDays.last {
+                        vm.selectedShiftDate = Calendar.current.date(byAdding: .day, value: 1, to: last) ?? vm.selectedShiftDate
+                    }
+                } label: {
+                    Image(systemName: "chevron.right.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(.mdzBlue)
+                }
+                .buttonStyle(.plain)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(Color.mdzCard)
+
+            Button {
+                showDatePicker = true
+            } label: {
+                HStack(spacing: 8) {
+                    Text(weekRangeText)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.mdzMuted)
+                    Image(systemName: "chevron.down.circle.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.mdzMuted)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+            }
+            .buttonStyle(.plain)
             .background(Color.mdzCard)
             .overlay(RoundedRectangle(cornerRadius: 0).strokeBorder(Color.mdzBorder, lineWidth: 0.5))
         }
-        .buttonStyle(.plain)
         .sheet(isPresented: $showDatePicker) {
             datePickerSheet
         }
     }
 
-    private var dateDisplay: String {
-        let f = DateFormatter()
-        f.dateFormat = "EEEE, MMM d"
-        return f.string(from: vm.selectedShiftDate)
+    private func dayButton(_ day: Date) -> some View {
+        let cal = Calendar.current
+        let isSelected = cal.isDate(day, inSameDayAs: vm.selectedShiftDate)
+        let dayNum = cal.component(.day, from: day)
+
+        return Button {
+            vm.selectedShiftDate = day
+        } label: {
+            Text("\(dayNum)")
+                .font(.system(size: 16, weight: isSelected ? .bold : .medium))
+                .foregroundColor(isSelected ? .mdzBackground : .mdzText)
+                .frame(width: 36, height: 36)
+                .background(isSelected ? Color.mdzRed : Color.clear)
+                .clipShape(Circle())
+        }
+        .buttonStyle(.plain)
     }
 
     private var datePickerSheet: some View {
@@ -111,13 +163,13 @@ struct ShiftsView: View {
         }
     }
 
-    private var shiftsList: some View {
+    private var perDayList: some View {
         ScrollView(showsIndicators: false) {
-            LazyVStack(alignment: .leading, spacing: 16) {
-                ForEach(vm.shiftsGroupedByDate(), id: \.0) { dateStr, dayShifts in
-                    ShiftDaySection(
-                        dateStr: dateStr,
-                        shifts: dayShifts,
+            LazyVStack(spacing: 0) {
+                ForEach(weekDays, id: \.timeIntervalSince1970) { day in
+                    ShiftDayRow(
+                        date: day,
+                        shifts: vm.shiftsForDate(day),
                         currentUserId: auth.currentUser?.id,
                         canPick: { shift in
                             auth.currentUser?.canPickShiftForPosition(shift.positionKey) ?? false
@@ -165,46 +217,53 @@ struct ShiftsView: View {
     }
 }
 
-struct ShiftDaySection: View {
-    let dateStr: String
+struct ShiftDayRow: View {
+    let date: Date
     let shifts: [StaffShift]
     let currentUserId: Int?
     let canPick: (StaffShift) -> Bool
     let onClaim: (StaffShift) -> Void
     let onRequestRelease: (StaffShift) -> Void
 
-    private var formattedDate: String {
-        guard let d = parseDate(dateStr) else { return dateStr }
+    private var dayLabel: String {
         let f = DateFormatter()
-        f.dateFormat = "EEEE, MMM d"
-        return f.string(from: d)
-    }
-
-    private func parseDate(_ s: String) -> Date? {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return f.date(from: s)
+        f.dateFormat = "d EEE"
+        return f.string(from: date).uppercased()
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(formattedDate)
-                .font(.system(size: 12, weight: .black))
-                .foregroundColor(.mdzMuted)
-                .tracking(1.5)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                Text(dayLabel)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.mdzText)
+                    .frame(width: 70, alignment: .leading)
 
-            ForEach(shifts) { shift in
-                ShiftRow(
-                    shift: shift,
-                    isCurrentUser: shift.userId == currentUserId,
-                    showPick: shift.status == "available" && canPick(shift),
-                    showRequestRelease: shift.status == "approved" && shift.userId == currentUserId,
-                    onPick: { onClaim(shift) },
-                    onRequestRelease: { onRequestRelease(shift) }
-                )
+                if shifts.isEmpty {
+                    Text("No shift scheduled.")
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(.mdzMuted)
+                } else {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(shifts) { shift in
+                            ShiftRow(
+                                shift: shift,
+                                isCurrentUser: shift.userId == currentUserId,
+                                showPick: shift.status == "available" && canPick(shift),
+                                showRequestRelease: shift.status == "approved" && shift.userId == currentUserId,
+                                onPick: { onClaim(shift) },
+                                onRequestRelease: { onRequestRelease(shift) }
+                            )
+                        }
+                    }
+                }
             }
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.mdzCard)
+            .overlay(RoundedRectangle(cornerRadius: 0).strokeBorder(Color.mdzBorder, lineWidth: 0.5))
         }
+        .padding(.vertical, 4)
     }
 }
 

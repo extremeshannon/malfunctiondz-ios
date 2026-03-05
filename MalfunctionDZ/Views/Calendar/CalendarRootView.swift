@@ -1,5 +1,5 @@
 // File: MalfunctionDZ/Views/Calendar/CalendarRootView.swift
-// Root view for Calendar (Shifts | Todos | Events) with segmented control.
+// Root view for Calendar (Todos | Events). Shifts has its own tab.
 
 import SwiftUI
 
@@ -20,8 +20,6 @@ struct CalendarRootView: View {
 
                     Group {
                         if selectedTab == 0 {
-                            ShiftsView()
-                        } else if selectedTab == 1 {
                             TodosView()
                         } else {
                             EventsView()
@@ -40,15 +38,14 @@ struct CalendarRootView: View {
     }
 }
 
-// MARK: - Segmented control: Shifts | Todos | Events
+// MARK: - Segmented control: Todos | Events
 struct CalendarSegmentPicker: View {
     @Binding var selectedTab: Int
 
     var body: some View {
         HStack(spacing: 0) {
-            segmentButton(title: "Shifts", tag: 0)
-            segmentButton(title: "Todos", tag: 1)
-            segmentButton(title: "Events", tag: 2)
+            segmentButton(title: "Todos", tag: 0)
+            segmentButton(title: "Events", tag: 1)
         }
         .padding(4)
         .background(Color.mdzCard)

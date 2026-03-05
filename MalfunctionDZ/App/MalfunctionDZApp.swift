@@ -150,6 +150,7 @@ struct MDZSplitView: View {
                     }
                     if auth.currentUser?.canAccessCalendar == true {
                         SidebarButton(icon: "calendar", title: "Calendar", selected: selectedModule == .calendar) { selectedModule = .calendar }
+                        SidebarButton(icon: "square.grid.3x3.fill", title: "Shifts", selected: selectedModule == .shifts) { selectedModule = .shifts }
                     }
                     if auth.currentUser?.canManageUsers == true {
                         SidebarButton(icon: "person.2.fill", title: "Users", selected: selectedModule == .users) { selectedModule = .users }
@@ -201,6 +202,7 @@ struct MDZSplitView: View {
                 case .groundSchool: GroundSchoolView()
                 case .logbook:      LogbookRootView()
                 case .calendar:     CalendarRootView()
+                case .shifts:       ShiftsRootView()
                 case .users:        UsersView()
                 case .manageLMS:    LMSEditRootView()
                 case .profile:      ProfileView()
@@ -247,7 +249,7 @@ struct SidebarButton: View {
 
 // MARK: - AppModule enum (maps tab tags)
 enum AppModule: Hashable {
-    case home, aviation, loft, rigs, myRigs, dzRigs, groundSchool, logbook, jumpCheck, calendar, users, manageLMS, profile
+    case home, aviation, loft, rigs, myRigs, dzRigs, groundSchool, logbook, jumpCheck, calendar, shifts, users, manageLMS, profile
 
     /// Map fixed tab tags → module
     init?(tag: Int) {
@@ -261,6 +263,7 @@ enum AppModule: Hashable {
         case 4:  self = .logbook
         case 11: self = .jumpCheck
         case 5:  self = .calendar
+        case 12: self = .shifts
         case 8:  self = .users
         case 10: self = .manageLMS
         case 9:  self = .profile
@@ -280,6 +283,7 @@ enum AppModule: Hashable {
         case .logbook:      return 4
         case .jumpCheck:    return 11
         case .calendar:     return 5
+        case .shifts:       return 12
         case .users:        return 8
         case .manageLMS:    return 10
         case .profile:      return 9
@@ -352,6 +356,9 @@ struct MDZTabView: View {
                 CalendarRootView()
                     .tabItem { Label("Calendar", systemImage: "calendar") }
                     .tag(5)
+                ShiftsRootView()
+                    .tabItem { Label("Shifts", systemImage: "square.grid.3x3.fill") }
+                    .tag(12)
             }
 
             if auth.currentUser?.canManageUsers == true {
