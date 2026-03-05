@@ -1,5 +1,5 @@
 // File: MalfunctionDZ/Views/Calendar/CalendarRootView.swift
-// Root view for Calendar (Events + Shifts) with segmented control.
+// Root view for Calendar (Shifts | Todos | Events) with segmented control.
 
 import SwiftUI
 
@@ -13,16 +13,22 @@ struct CalendarRootView: View {
 
                 VStack(spacing: 0) {
                     CalendarSegmentPicker(selectedTab: $selectedTab)
-                        .padding()
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .padding(.bottom, 12)
                         .background(Color.mdzBackground)
 
-                    if selectedTab == 0 {
-                        EventsView()
-                            .transition(.opacity)
-                    } else {
-                        ShiftsView()
-                            .transition(.opacity)
+                    Group {
+                        if selectedTab == 0 {
+                            ShiftsView()
+                        } else if selectedTab == 1 {
+                            TodosView()
+                        } else {
+                            EventsView()
+                        }
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .transition(.opacity)
                 }
             }
             .navigationTitle("Calendar")
@@ -34,14 +40,15 @@ struct CalendarRootView: View {
     }
 }
 
-// MARK: - Bright segmented control (both states clearly visible)
+// MARK: - Segmented control: Shifts | Todos | Events
 struct CalendarSegmentPicker: View {
     @Binding var selectedTab: Int
 
     var body: some View {
         HStack(spacing: 0) {
-            segmentButton(title: "Events", tag: 0)
-            segmentButton(title: "Shifts", tag: 1)
+            segmentButton(title: "Shifts", tag: 0)
+            segmentButton(title: "Todos", tag: 1)
+            segmentButton(title: "Events", tag: 2)
         }
         .padding(4)
         .background(Color.mdzCard)

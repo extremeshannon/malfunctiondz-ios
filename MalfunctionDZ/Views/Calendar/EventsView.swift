@@ -8,26 +8,49 @@ struct EventsView: View {
     @State private var selectedEvent: CalendarEvent?
 
     var body: some View {
-        Group {
-            if vm.eventsLoading && vm.events.isEmpty {
-                LoadingOverlay(message: "Loading events…")
-            } else if let err = vm.eventsError {
-                errorView(err)
-            } else if vm.events.isEmpty {
-                EmptyStateView(
-                    icon: "calendar.badge.exclamationmark",
-                    title: "No Events",
-                    subtitle: "No public events in this date range."
-                )
-            } else {
-                eventList
+        VStack(spacing: 0) {
+            dateRangeHeader
+
+            Group {
+                if vm.eventsLoading && vm.events.isEmpty {
+                    LoadingOverlay(message: "Loading events…")
+                } else if let err = vm.eventsError {
+                    errorView(err)
+                } else if vm.events.isEmpty {
+                    EmptyStateView(
+                        icon: "calendar.badge.exclamationmark",
+                        title: "No Events",
+                        subtitle: "No public events in this date range."
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    eventList
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .refreshable { await vm.loadEvents() }
         .task { await vm.loadEvents() }
         .sheet(item: $selectedEvent) { event in
             EventDetailSheet(event: event)
         }
+    }
+
+    private var dateRangeHeader: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "calendar")
+                .font(.system(size: 17))
+                .foregroundColor(.mdzBlue)
+            Text(vm.eventsDateRangeText)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.mdzText)
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity)
+        .background(Color.mdzCard)
+        .overlay(RoundedRectangle(cornerRadius: 0).strokeBorder(Color.mdzBorder, lineWidth: 0.5))
     }
 
     private var eventList: some View {

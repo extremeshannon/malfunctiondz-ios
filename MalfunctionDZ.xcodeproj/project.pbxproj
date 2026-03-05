@@ -55,6 +55,7 @@
 		FB063F062F56000200022763 /* CalendarRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F072F56000200022763 /* CalendarRootView.swift */; };
 		FB063F082F56000200022763 /* EventsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F092F56000200022763 /* EventsView.swift */; };
 		FB063F0A2F56000200022763 /* ShiftsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0B2F56000200022763 /* ShiftsView.swift */; };
+		FB063F122F56000200022763 /* TodosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F132F56000200022763 /* TodosView.swift */; };
 		FB063F0C2F56000200022764 /* DZStatusUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0D2F56000200022764 /* DZStatusUpdateView.swift */; };
 		FB063F0E2F56000200022765 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0F2F56000200022765 /* NotificationsView.swift */; };
 		FB367C542F510E6100FBAD05 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
@@ -116,6 +117,7 @@
 		FB063F072F56000200022763 /* CalendarRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarRootView.swift; sourceTree = "<group>"; };
 		FB063F092F56000200022763 /* EventsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsView.swift; sourceTree = "<group>"; };
 		FB063F0B2F56000200022763 /* ShiftsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShiftsView.swift; sourceTree = "<group>"; };
+		FB063F132F56000200022763 /* TodosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodosView.swift; sourceTree = "<group>"; };
 		FB063F0D2F56000200022764 /* DZStatusUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DZStatusUpdateView.swift; sourceTree = "<group>"; };
 		FB063F0D2F56000300022763 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FB063F0F2F56000200022765 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
@@ -228,6 +230,7 @@
 				FB063F072F56000200022763 /* CalendarRootView.swift */,
 				FB063F092F56000200022763 /* EventsView.swift */,
 				FB063F0B2F56000200022763 /* ShiftsView.swift */,
+				FB063F132F56000200022763 /* TodosView.swift */,
 				FB063F0D2F56000200022764 /* DZStatusUpdateView.swift */,
 			);
 			path = Calendar;
@@ -486,6 +489,7 @@
 				FB063F062F56000200022763 /* CalendarRootView.swift in Sources */,
 				FB063F082F56000200022763 /* EventsView.swift in Sources */,
 				FB063F0A2F56000200022763 /* ShiftsView.swift in Sources */,
+				FB063F122F56000200022763 /* TodosView.swift in Sources */,
 				FB063F0C2F56000200022764 /* DZStatusUpdateView.swift in Sources */,
 				FB063F0E2F56000200022765 /* NotificationsView.swift in Sources */,
 			);

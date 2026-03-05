@@ -299,26 +299,12 @@ struct DzRigDetailView: View {
     }
 
     private var packHistorySection: some View {
-        let (currentRecords, expiredRecords) = partitionPackHistory(vm.detailRecords)
-        return VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("25 Jump Check pack jobs")
                 .font(.system(size: 12, weight: .black))
                 .foregroundColor(.mdzMuted)
-            ForEach(currentRecords) { rec in
+            ForEach(vm.detailRecords) { rec in
                 packHistoryRow(rec: rec)
-            }
-            if !expiredRecords.isEmpty {
-                HStack {
-                    Text("EXPIRED")
-                        .font(.system(size: 10, weight: .black))
-                        .foregroundColor(.mdzDanger)
-                        .tracking(1)
-                    Spacer()
-                }
-                .padding(.top, 4)
-                ForEach(expiredRecords) { rec in
-                    packHistoryRow(rec: rec, isExpired: true)
-                }
             }
         }
         .padding(16)
@@ -327,21 +313,7 @@ struct DzRigDetailView: View {
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
     }
 
-    private func partitionPackHistory(_ records: [PackRecord]) -> (current: [PackRecord], expired: [PackRecord]) {
-        let df = DateFormatter()
-        df.dateFormat = "yyyy-MM-dd"
-        let today = df.string(from: Date())
-        var current: [PackRecord] = []
-        var expired: [PackRecord] = []
-        for rec in records {
-            let exp = rec.isExpired == true || (rec.dueDate != nil && (rec.dueDate ?? "") < today)
-            if exp { expired.append(rec) }
-            else { current.append(rec) }
-        }
-        return (current, expired)
-    }
-
-    private func packHistoryRow(rec: PackRecord, isExpired: Bool = false) -> some View {
+    private func packHistoryRow(rec: PackRecord) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(rec.packDate)
@@ -356,7 +328,7 @@ struct DzRigDetailView: View {
             Spacer()
             Text("×\(rec.packJobCount ?? 1)")
                 .font(.system(size: 12, weight: .bold))
-                .foregroundColor(isExpired ? .mdzDanger : .mdzGreen)
+                .foregroundColor(.mdzGreen)
             if rec.isLocked == true {
                 Image(systemName: "lock.fill")
                     .font(.system(size: 10))
@@ -364,7 +336,7 @@ struct DzRigDetailView: View {
             }
         }
         .padding(12)
-        .background(isExpired ? Color.mdzDanger.opacity(0.08) : Color.mdzNavyMid.opacity(0.5))
+        .background(Color.mdzNavyMid.opacity(0.5))
         .cornerRadius(8)
     }
 

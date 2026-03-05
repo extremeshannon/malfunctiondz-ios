@@ -21,16 +21,27 @@ final class CalendarViewModel: ObservableObject {
 
     private let calendar = Calendar.current
 
+    /// Date range for events (current month ± 1)
+    var eventsDateRange: (Date, Date) {
+        let start = calendar.date(byAdding: .month, value: -1, to: Date()) ?? Date()
+        let end = calendar.date(byAdding: .month, value: 1, to: Date()) ?? Date()
+        return (start, end)
+    }
+
+    var eventsDateRangeText: String {
+        let (start, end) = eventsDateRange
+        let f = DateFormatter()
+        f.dateFormat = "MMM d"
+        return "\(f.string(from: start)) – \(f.string(from: end))"
+    }
+
     // MARK: - Events
     func loadEvents() async {
         eventsLoading = true
         eventsError = nil
         defer { eventsLoading = false }
 
-        // Current month ± 1
-        let start = calendar.date(byAdding: .month, value: -1, to: Date()) ?? Date()
-        let end = calendar.date(byAdding: .month, value: 1, to: Date()) ?? Date()
-
+        let (start, end) = eventsDateRange
         do {
             events = try await CalendarAPIService.shared.fetchEvents(from: start, to: end)
         } catch {
