@@ -105,6 +105,10 @@ class DzRigsViewModel: ObservableObject {
                 }
                 return
             }
+            guard !data.isEmpty, let first = data.first, first == UInt8(ascii: "{") else {
+                error = "Server returned invalid response. Check API URL and server logs."
+                return
+            }
             let resp = try JSONDecoder().decode(DzRigsResponse.self, from: data)
             if resp.ok {
                 rigs = resp.rigs ?? []
@@ -116,7 +120,12 @@ class DzRigsViewModel: ObservableObject {
                 error = "Failed to load DZ rigs"
             }
         } catch let dec as DecodingError {
-            self.error = decodeErrorMessage(dec)
+            let msg = decodeErrorMessage(dec)
+            if msg.contains("valid JSON") || msg.contains("correct format") {
+                self.error = "DZ rigs API returned invalid data. Ensure migration 024 is run and the server is returning JSON."
+            } else {
+                self.error = msg
+            }
         } catch {
             self.error = error.localizedDescription
         }

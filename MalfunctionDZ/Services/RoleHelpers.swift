@@ -73,9 +73,14 @@ extension User {
         hasAnyRole(["ops", "ops_admin"]) || (!canAccessLoft && !isManifestOnly && (totalRigs ?? 0) > 0)
     }
 
-    /// DZ-owned rigs: Ops/Ops Admin, Packers, or 25+ jumps (not manifest-only)
+    /// Consolidated Rigs tab: Ops Admin and Manifest get ONE "Rigs" tab with all rigs (personal + DZ). DZ rigs read-only.
+    var canAccessRigs: Bool {
+        hasAnyRole(["ops_admin", "manifest"])
+    }
+
+    /// DZ-owned rigs: Ops, Packers, or 25+ jumps. Ops Admin and Manifest use consolidated Rigs tab instead.
     var canAccessDzRigs: Bool {
-        hasAnyRole(["packer", "ops", "ops_admin"]) || ((totalJumps ?? 0) >= 25 && !isManifestOnly)
+        hasAnyRole(["packer", "ops"]) || ((totalJumps ?? 0) >= 25 && !isManifestOnly)
     }
 
     /// 25 Jump Check tab: Ops, Ops Admin, Admin (Manifest sees widget on Home only)

@@ -132,11 +132,15 @@ struct MDZSplitView: View {
                     if auth.currentUser?.canAccessLoft == true {
                         SidebarButton(icon: "backpack.fill",  title: config.moduleLoft,       selected: selectedModule == .loft)        { selectedModule = .loft }
                     }
-                    if auth.currentUser?.canAccessMyRigs == true {
-                        SidebarButton(icon: "briefcase.fill", title: "My Rigs",               selected: selectedModule == .myRigs)     { selectedModule = .myRigs }
-                    }
-                    if auth.currentUser?.canAccessDzRigs == true {
-                        SidebarButton(icon: "square.stack.3d.up.fill", title: "DZ Rigs",       selected: selectedModule == .dzRigs)     { selectedModule = .dzRigs }
+                    if auth.currentUser?.canAccessRigs == true {
+                        SidebarButton(icon: "briefcase.fill", title: "Rigs",                  selected: selectedModule == .rigs)        { selectedModule = .rigs }
+                    } else {
+                        if auth.currentUser?.canAccessMyRigs == true {
+                            SidebarButton(icon: "briefcase.fill", title: "My Rigs",            selected: selectedModule == .myRigs)     { selectedModule = .myRigs }
+                        }
+                        if auth.currentUser?.canAccessDzRigs == true {
+                            SidebarButton(icon: "square.stack.3d.up.fill", title: "DZ Rigs",   selected: selectedModule == .dzRigs)     { selectedModule = .dzRigs }
+                        }
                     }
                     if auth.currentUser?.canAccessGroundSchool == true {
                         SidebarButton(icon: "graduationcap.fill", title: config.moduleGroundSchool, selected: selectedModule == .groundSchool) { selectedModule = .groundSchool }
@@ -190,6 +194,7 @@ struct MDZSplitView: View {
                 case .home:         HomeView()
                 case .aviation:     AviationRootView()
                 case .loft:         LoftRootView()
+                case .rigs:         RigsView()
                 case .myRigs:       MyRigsView()
                 case .dzRigs:       DzRigsView()
                 case .jumpCheck:    DzRigsView()
@@ -242,7 +247,7 @@ struct SidebarButton: View {
 
 // MARK: - AppModule enum (maps tab tags)
 enum AppModule: Hashable {
-    case home, aviation, loft, myRigs, dzRigs, groundSchool, logbook, jumpCheck, calendar, users, manageLMS, profile
+    case home, aviation, loft, rigs, myRigs, dzRigs, groundSchool, logbook, jumpCheck, calendar, users, manageLMS, profile
 
     /// Map fixed tab tags → module
     init?(tag: Int) {
@@ -250,7 +255,7 @@ enum AppModule: Hashable {
         case 0:  self = .home
         case 1:  self = .aviation
         case 2:  self = .loft
-        case 6:  self = .myRigs
+        case 6:  self = .rigs   // Rigs (consolidated) or My Rigs — tag 6 for both
         case 7:  self = .dzRigs
         case 3:  self = .groundSchool
         case 4:  self = .logbook
@@ -268,6 +273,7 @@ enum AppModule: Hashable {
         case .home:         return 0
         case .aviation:     return 1
         case .loft:         return 2
+        case .rigs:         return 6
         case .myRigs:       return 6
         case .dzRigs:       return 7
         case .groundSchool: return 3
@@ -313,16 +319,21 @@ struct MDZTabView: View {
                     .tag(2)
             }
 
-            if auth.currentUser?.canAccessMyRigs == true {
-                MyRigsView()
-                    .tabItem { Label("My Rigs", systemImage: "briefcase.fill") }
+            if auth.currentUser?.canAccessRigs == true {
+                RigsView()
+                    .tabItem { Label("Rigs", systemImage: "briefcase.fill") }
                     .tag(6)
-            }
-
-            if auth.currentUser?.canAccessDzRigs == true {
-                DzRigsView()
-                    .tabItem { Label("DZ Rigs", systemImage: "square.stack.3d.up.fill") }
-                    .tag(7)
+            } else {
+                if auth.currentUser?.canAccessMyRigs == true {
+                    MyRigsView()
+                        .tabItem { Label("My Rigs", systemImage: "briefcase.fill") }
+                        .tag(6)
+                }
+                if auth.currentUser?.canAccessDzRigs == true {
+                    DzRigsView()
+                        .tabItem { Label("DZ Rigs", systemImage: "square.stack.3d.up.fill") }
+                        .tag(7)
+                }
             }
 
             if auth.currentUser?.canAccessGroundSchool == true {

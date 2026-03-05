@@ -40,11 +40,12 @@
 		FB063D2D2F54BB130227638 /* UserAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2E2F54BB130227638 /* UserAddView.swift */; };
 		FB063D302F54BB200227638 /* MyRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2F2F54BB200227638 /* MyRigsView.swift */; };
 		FB063D342F54BB210227638 /* DzRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D332F54BB210227638 /* DzRigsView.swift */; };
-		FB063D3D2F54BB240227638 /* DzRigDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D3E2F54BB250227638 /* DzRigDetailView.swift */; };
 		FB063D362F54BB220227638 /* MyRigsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D352F54BB220227638 /* MyRigsViewModel.swift */; };
 		FB063D382F54BB230227638 /* DzRigsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D372F54BB230227638 /* DzRigsViewModel.swift */; };
 		FB063D3A2F54BB260227638 /* JumpCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D392F54BB260227638 /* JumpCheckView.swift */; };
 		FB063D3C2F54BB280227638 /* JumpCheckViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D3B2F54BB280227638 /* JumpCheckViewModel.swift */; };
+		FB063D3D2F54BB240227638 /* DzRigDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D3E2F54BB250227638 /* DzRigDetailView.swift */; };
+		FB063D412F54BB260227638 /* RigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D422F54BB270227638 /* RigsView.swift */; };
 		FB063E012F56000100022763 /* LMSEditModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E002F56000100022763 /* LMSEditModels.swift */; };
 		FB063E022F56000100022763 /* LMSEditService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E032F56000100022763 /* LMSEditService.swift */; };
 		FB063E042F56000100022763 /* LMSEditRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E052F56000100022763 /* LMSEditRootView.swift */; };
@@ -100,11 +101,12 @@
 		FB063D2E2F54BB130227638 /* UserAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAddView.swift; sourceTree = "<group>"; };
 		FB063D2F2F54BB200227638 /* MyRigsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyRigsView.swift; sourceTree = "<group>"; };
 		FB063D332F54BB210227638 /* DzRigsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DzRigsView.swift; sourceTree = "<group>"; };
-		FB063D3E2F54BB250227638 /* DzRigDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DzRigDetailView.swift; sourceTree = "<group>"; };
 		FB063D352F54BB220227638 /* MyRigsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyRigsViewModel.swift; sourceTree = "<group>"; };
 		FB063D372F54BB230227638 /* DzRigsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DzRigsViewModel.swift; sourceTree = "<group>"; };
 		FB063D392F54BB260227638 /* JumpCheckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JumpCheckView.swift; sourceTree = "<group>"; };
 		FB063D3B2F54BB280227638 /* JumpCheckViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JumpCheckViewModel.swift; sourceTree = "<group>"; };
+		FB063D3E2F54BB250227638 /* DzRigDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DzRigDetailView.swift; sourceTree = "<group>"; };
+		FB063D422F54BB270227638 /* RigsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigsView.swift; sourceTree = "<group>"; };
 		FB063E002F56000100022763 /* LMSEditModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMSEditModels.swift; sourceTree = "<group>"; };
 		FB063E032F56000100022763 /* LMSEditService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMSEditService.swift; sourceTree = "<group>"; };
 		FB063E052F56000100022763 /* LMSEditRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMSEditRootView.swift; sourceTree = "<group>"; };
@@ -160,6 +162,7 @@
 				FB063D2F2F54BB200227638 /* MyRigsView.swift */,
 				FB063D332F54BB210227638 /* DzRigsView.swift */,
 				FB063D3E2F54BB250227638 /* DzRigDetailView.swift */,
+				FB063D422F54BB270227638 /* RigsView.swift */,
 			);
 			path = Loft;
 			sourceTree = "<group>";
@@ -440,6 +443,7 @@
 				FB063D302F54BB200227638 /* MyRigsView.swift in Sources */,
 				FB063D342F54BB210227638 /* DzRigsView.swift in Sources */,
 				FB063D3D2F54BB240227638 /* DzRigDetailView.swift in Sources */,
+				FB063D412F54BB260227638 /* RigsView.swift in Sources */,
 				FB063D362F54BB220227638 /* MyRigsViewModel.swift in Sources */,
 				FB063D382F54BB230227638 /* DzRigsViewModel.swift in Sources */,
 				FB063D3A2F54BB260227638 /* JumpCheckView.swift in Sources */,
@@ -617,7 +621,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/MalfunctionDZ.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 16;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
@@ -652,7 +656,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/MalfunctionDZ.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 16;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;

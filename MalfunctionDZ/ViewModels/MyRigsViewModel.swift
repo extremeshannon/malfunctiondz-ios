@@ -21,14 +21,16 @@ class MyRigsViewModel: ObservableObject {
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         do {
             let (data, _) = try await URLSession.shared.data(for: req)
+            guard !data.isEmpty, let first = data.first, first == UInt8(ascii: "{") else {
+                return // Non-JSON response, skip silently (e.g. HTML error page)
+            }
             let resp = try JSONDecoder().decode(RigsResponse.self, from: data)
             if resp.ok {
                 rigs = resp.rigs ?? []
-            } else {
-                error = "Failed to load rigs"
             }
         } catch {
-            self.error = error.localizedDescription
+            // Don't set error for my rigs — RigsView shows DZ rigs as primary
+            rigs = []
         }
     }
 }

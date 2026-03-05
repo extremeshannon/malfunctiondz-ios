@@ -137,25 +137,36 @@ struct HomeView: View {
                                     wide: isWide
                                 ) { tabSelect.selected = 2 }
                             }
-                            if auth.currentUser?.canAccessMyRigs == true {
+                            if auth.currentUser?.canAccessRigs == true {
                                 ModuleTile(
                                     icon: "briefcase.fill",
-                                    title: "MY RIGS",
-                                    subtitle: "Your rigs — reserve & AAD expiry",
+                                    title: "RIGS",
+                                    subtitle: "Personal rigs + DZ rigs (read-only)",
                                     accentColor: .mdzGreen,
                                     badges: [],
                                     wide: isWide
                                 ) { tabSelect.selected = 6 }
-                            }
-                            if auth.currentUser?.canAccessDzRigs == true {
-                                ModuleTile(
-                                    icon: "square.stack.3d.up.fill",
-                                    title: "DZ RIGS",
-                                    subtitle: isAdmin ? vm.loftSummary : "DZ-owned rigs — Packers can mark packed",
-                                    accentColor: .mdzAmber,
-                                    badges: isAdmin ? vm.loftBadges : [],
-                                    wide: isWide
-                                ) { tabSelect.selected = 7 }
+                            } else {
+                                if auth.currentUser?.canAccessMyRigs == true {
+                                    ModuleTile(
+                                        icon: "briefcase.fill",
+                                        title: "MY RIGS",
+                                        subtitle: "Your rigs — reserve & AAD expiry",
+                                        accentColor: .mdzGreen,
+                                        badges: [],
+                                        wide: isWide
+                                    ) { tabSelect.selected = 6 }
+                                }
+                                if auth.currentUser?.canAccessDzRigs == true {
+                                    ModuleTile(
+                                        icon: "square.stack.3d.up.fill",
+                                        title: "DZ RIGS",
+                                        subtitle: isAdmin ? vm.loftSummary : "DZ-owned rigs — Packers can mark packed",
+                                        accentColor: .mdzAmber,
+                                        badges: isAdmin ? vm.loftBadges : [],
+                                        wide: isWide
+                                    ) { tabSelect.selected = 7 }
+                                }
                             }
                             if showGroundSchool {
                                 ModuleTile(
