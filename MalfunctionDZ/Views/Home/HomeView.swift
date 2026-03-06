@@ -15,6 +15,7 @@ struct HomeView: View {
     @StateObject private var vm = HomeViewModel()
     @State private var dzStatusJustUpdated = false
     @Environment(\.horizontalSizeClass) private var hSizeClass
+    @Environment(\.scenePhase) private var scenePhase
 
     // iPad uses more columns and wider padding
     private var isWide: Bool { hSizeClass == .regular }
@@ -249,13 +250,21 @@ struct HomeView: View {
                     .frame(maxWidth: isWide ? 1100 : .infinity)
                     .frame(maxWidth: .infinity) // centre it
                 }
-                .refreshable { await vm.loadDashboard(user: auth.currentUser) }
+                .refreshable {
+                    await vm.loadDashboard(user: auth.currentUser)
+                    await vm.loadDzStatus()
+                }
             }
             .navigationBarHidden(true)
             .task { await vm.loadDashboard(user: auth.currentUser) }
             .task(id: "dz") { await vm.loadDzStatus() }
             .onReceive(NotificationCenter.default.publisher(for: .dzStatusDidUpdateFromPush)) { _ in
                 Task { await vm.loadDzStatus() }
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active {
+                    Task { await vm.loadDzStatus() }
+                }
             }
             .onReceive(Timer.publish(every: 120, on: .main, in: .common).autoconnect()) { _ in
                 Task {
