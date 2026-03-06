@@ -16,6 +16,8 @@ struct HomeView: View {
     @State private var dzStatusJustUpdated = false
     @Environment(\.horizontalSizeClass) private var hSizeClass
     @Environment(\.scenePhase) private var scenePhase
+    @State private var showDzStatusModal = false
+    @State private var showDzAnnouncementModal = false
 
     // iPad uses more columns and wider padding
     private var isWide: Bool { hSizeClass == .regular }
@@ -38,19 +40,35 @@ struct HomeView: View {
                             .padding(.top, isWide ? 28 : 20)
                             .padding(.bottom, 20)
 
-                        // ── DZ Status (open/closed/announcement) — everyone sees it; tappable for Admin/Ops ─
+                        // ── DZ Status (open/closed) — everyone sees it; Admin/Ops: tap = status modal, separate Announcement button ─
                         if showDzStatus, let dz = vm.dzStatus {
                             Group {
                                 if auth.currentUser?.canUpdateDzStatus == true {
-                                    NavigationLink(destination: DZStatusUpdateView(
-                                        onSaved: {
-                                            Task { await vm.loadDzStatus() }
-                                            dzStatusJustUpdated = true
+                                    VStack(alignment: .leading, spacing: 10) {
+                                        Button {
+                                            showDzStatusModal = true
+                                        } label: {
+                                            DZStatusCard(status: dz, tappable: true)
                                         }
-                                    )) {
-                                        DZStatusCard(status: dz, tappable: true)
+                                        .buttonStyle(.plain)
+                                        Button {
+                                            showDzAnnouncementModal = true
+                                        } label: {
+                                            HStack(spacing: 8) {
+                                                Image(systemName: "megaphone.fill")
+                                                    .font(.system(size: 14))
+                                                Text("Send announcement")
+                                                    .font(.system(size: 14, weight: .medium))
+                                            }
+                                            .foregroundColor(.mdzAmber)
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 10)
+                                            .background(Color.mdzCard)
+                                            .cornerRadius(10)
+                                            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                                        }
+                                        .buttonStyle(.plain)
                                     }
-                                    .buttonStyle(.plain)
                                 } else {
                                     DZStatusCard(status: dz, tappable: false)
                                 }
@@ -284,6 +302,18 @@ struct HomeView: View {
                 }
             }
             .animation(.easeOut(duration: 0.3), value: dzStatusJustUpdated)
+            .sheet(isPresented: $showDzStatusModal) {
+                DZStatusModalView(onSaved: {
+                    Task { await vm.loadDzStatus() }
+                    dzStatusJustUpdated = true
+                })
+            }
+            .sheet(isPresented: $showDzAnnouncementModal) {
+                DZAnnouncementModalView(onSaved: {
+                    Task { await vm.loadDzStatus() }
+                    dzStatusJustUpdated = true
+                })
+            }
         }
     }
 
