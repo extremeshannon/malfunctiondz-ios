@@ -233,6 +233,13 @@ struct DZStatus: Codable {
         case updatedAt = "updated_at"
     }
 
+    init(id: Int, status: String, announcement: String?, updatedAt: String?) {
+        self.id = id
+        self.status = status
+        self.announcement = announcement
+        self.updatedAt = updatedAt
+    }
+
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decodeIntOrString(forKey: .id)

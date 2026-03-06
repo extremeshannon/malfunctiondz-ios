@@ -77,17 +77,38 @@ actor CalendarAPIService {
         if let http = response as? HTTPURLResponse {
             if http.statusCode == 403 { throw APIError.serverError("You don't have permission to update DZ status") }
             if http.statusCode == 401 { await AuthManager.shared.logout(); throw APIError.notAuthenticated }
+            if http.statusCode != 200 && http.statusCode != 201 {
+                if let err = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String {
+                    throw APIError.serverError(err)
+                }
+                let preview = String(data: data.prefix(300), encoding: .utf8) ?? ""
+                if preview.trimmingCharacters(in: .whitespaces).hasPrefix("<") {
+                    throw APIError.serverError("Server returned an error page (HTTP \(http.statusCode)). Check API URL and server logs.")
+                }
+                throw APIError.serverError("Server returned HTTP \(http.statusCode)")
+            }
         }
-        let decoded: DZStatusAPIResponse
-        do {
-            decoded = try JSONDecoder().decode(DZStatusAPIResponse.self, from: data)
-        } catch {
+        // Parse as raw JSON so we can handle different server response shapes
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             let preview = String(data: data.prefix(200), encoding: .utf8) ?? ""
             let isHtml = preview.trimmingCharacters(in: .whitespaces).hasPrefix("<")
             throw APIError.serverError(isHtml ? "Server returned an error page. Check API URL and server logs." : "Invalid response format from server.")
         }
-        guard decoded.ok, let s = decoded.status else { throw APIError.serverError("Invalid response") }
-        return s
+        if let ok = json["ok"] as? Bool, !ok {
+            throw APIError.serverError((json["error"] as? String) ?? "Invalid response")
+        }
+        // status can be object { id, status, announcement, updated_at } or we build from request
+        if let statusObj = json["status"] as? [String: Any] {
+            let statusValue = statusObj["status"] as? String ?? ""
+            let id = (statusObj["id"] as? Int) ?? (statusObj["id"] as? String).flatMap(Int.init) ?? 1
+            let announcement = statusObj["announcement"] as? String
+            let updatedAt = statusObj["updated_at"] as? String
+            return DZStatus(id: id, status: statusValue, announcement: announcement, updatedAt: updatedAt)
+        }
+        if let statusStr = json["status"] as? String {
+            return DZStatus(id: 1, status: statusStr, announcement: nil, updatedAt: nil)
+        }
+        throw APIError.serverError("Invalid response")
     }
 
     // MARK: - Internal request helpers
