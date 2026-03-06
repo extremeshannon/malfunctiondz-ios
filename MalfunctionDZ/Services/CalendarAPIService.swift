@@ -69,7 +69,7 @@ actor CalendarAPIService {
         guard let token = KeychainHelper.readToken(), !token.isEmpty else { throw APIError.notAuthenticated }
         guard let url = URL(string: baseURL() + path) else { throw APIError.invalidURL }
         var req = URLRequest(url: url)
-        req.httpMethod = "PUT"
+        req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         req.httpBody = try JSONEncoder().encode(body)
