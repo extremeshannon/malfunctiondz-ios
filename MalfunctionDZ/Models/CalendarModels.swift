@@ -232,4 +232,29 @@ struct DZStatus: Codable {
         case id, status, announcement
         case updatedAt = "updated_at"
     }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIntOrString(forKey: .id)
+        status = try c.decode(String.self, forKey: .status)
+        announcement = try c.decodeIfPresent(String.self, forKey: .announcement)
+        updatedAt = try c.decodeIfPresent(String.self, forKey: .updatedAt)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(status, forKey: .status)
+        try c.encodeIfPresent(announcement, forKey: .announcement)
+        try c.encodeIfPresent(updatedAt, forKey: .updatedAt)
+    }
+}
+
+// Helper so DZStatus and others can decode id as Int or String (PHP/PDO may return string)
+extension KeyedDecodingContainer {
+    func decodeIntOrString(forKey key: Key) throws -> Int {
+        if let i = try? decode(Int.self, forKey: key) { return i }
+        if let s = try? decode(String.self, forKey: key), let i = Int(s) { return i }
+        throw DecodingError.typeMismatch(Int.self, DecodingError.Context(codingPath: codingPath + [key], debugDescription: "Expected Int or numeric String"))
+    }
 }

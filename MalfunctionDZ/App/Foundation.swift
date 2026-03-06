@@ -80,6 +80,15 @@ extension Color {
     static let mdzAmber      = Color(hex:"F39C12")
     static let mdzDanger     = Color(hex:"E74C3C")
     static let mdzBorder     = Color(hex:"1A3A5C")
+
+    // Login screen — Alaska Skydive Center logo palette (cream, orange, warm earth)
+    static let ascLoginBackground = Color(hex:"F5F0E8")
+    static let ascLoginCard       = Color(hex:"FDFBF7")
+    static let ascLoginBorder    = Color(hex:"D4C4A8")
+    static let ascLoginText      = Color(hex:"2C2419")
+    static let ascLoginMuted     = Color(hex:"7A6F5C")
+    static let ascLoginOrange    = Color(hex:"D94E1F")
+    static let ascLoginOrangeDark = Color(hex:"B83D12")
 }
 
 // MARK: - View Modifiers

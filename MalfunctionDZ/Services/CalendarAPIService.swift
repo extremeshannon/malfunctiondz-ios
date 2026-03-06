@@ -78,7 +78,14 @@ actor CalendarAPIService {
             if http.statusCode == 403 { throw APIError.serverError("You don't have permission to update DZ status") }
             if http.statusCode == 401 { await AuthManager.shared.logout(); throw APIError.notAuthenticated }
         }
-        let decoded = try JSONDecoder().decode(DZStatusAPIResponse.self, from: data)
+        let decoded: DZStatusAPIResponse
+        do {
+            decoded = try JSONDecoder().decode(DZStatusAPIResponse.self, from: data)
+        } catch {
+            let preview = String(data: data.prefix(200), encoding: .utf8) ?? ""
+            let isHtml = preview.trimmingCharacters(in: .whitespaces).hasPrefix("<")
+            throw APIError.serverError(isHtml ? "Server returned an error page. Check API URL and server logs." : "Invalid response format from server.")
+        }
         guard decoded.ok, let s = decoded.status else { throw APIError.serverError("Invalid response") }
         return s
     }

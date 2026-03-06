@@ -1,16 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "ASC_LoginLogo 1.png",
+      "filename" : "ASCLogo_1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "ASC_LoginLogo.png",
+      "filename" : "ASCLogo_2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
+      "filename" : "ASCLogo_3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
