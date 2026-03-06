@@ -28,6 +28,10 @@ class GroundSchoolViewModel: ObservableObject {
                 error = "You don't have permission to view courses"
                 return
             }
+            if let http = response as? HTTPURLResponse, http.statusCode == 404 {
+                error = "Ground School is not available on this server"
+                return
+            }
             let resp = try JSONDecoder().decode(LMSCoursesResponse.self, from: data)
             if resp.ok {
                 courses = (resp.courses ?? []).sorted { $0.isActive && !$1.isActive }

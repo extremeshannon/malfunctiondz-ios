@@ -35,9 +35,9 @@ struct Aircraft: Codable, Identifiable, Hashable {
         tailNumber = (try? c.decode(String.self, forKey: .tailNumber)) ?? ""
         let make = try? c.decode(String.self, forKey: .make)
         let modelVal = try? c.decode(String.self, forKey: .model)
-        model = [make, modelVal].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " ")
+        let combined = [make, modelVal].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " ")
             .trimmingCharacters(in: .whitespaces)
-        if model.isEmpty { model = "Aircraft" }
+        model = combined.isEmpty ? "Aircraft" : combined
         status = (try? c.decode(String.self, forKey: .status)) ?? "active"
         openSquawks = (try? c.decode(Int.self, forKey: .openSquawks)) ?? 0
         dueSoon = (try? c.decode(Int.self, forKey: .dueSoon)) ?? 0

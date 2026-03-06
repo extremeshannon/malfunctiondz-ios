@@ -45,15 +45,15 @@ struct LMSCourse: Codable, Identifiable, Hashable {
         title = try c.decode(String.self, forKey: .title)
         description = try c.decodeIfPresent(String.self, forKey: .description)
         isActive = try c.decodeIfPresent(Bool.self, forKey: .isActive) ?? true
-        enrolled = try c.decode(Bool.self, forKey: .enrolled)
-        status = try c.decode(String.self, forKey: .status)
-        enrolledAt = try c.decodeIfPresent(String.self, forKey: .enrolledAt)
-        completedAt = try c.decodeIfPresent(String.self, forKey: .completedAt)
-        totalLessons = try c.decode(Int.self, forKey: .totalLessons)
-        completedLessons = try c.decode(Int.self, forKey: .completedLessons)
-        progressPct = try c.decode(Double.self, forKey: .progressPct)
-        modules = try c.decode([LMSModule].self, forKey: .modules)
-        quizzes = try c.decodeIfPresent([LMSQuizSummary].self, forKey: .quizzes)
+        enrolled = (try? c.decode(Bool.self, forKey: .enrolled)) ?? false
+        status = (try? c.decode(String.self, forKey: .status)) ?? "not_enrolled"
+        enrolledAt = try? c.decodeIfPresent(String.self, forKey: .enrolledAt)
+        completedAt = try? c.decodeIfPresent(String.self, forKey: .completedAt)
+        totalLessons = (try? c.decode(Int.self, forKey: .totalLessons)) ?? 0
+        completedLessons = (try? c.decode(Int.self, forKey: .completedLessons)) ?? 0
+        progressPct = (try? c.decode(Double.self, forKey: .progressPct)) ?? 0
+        modules = (try? c.decode([LMSModule].self, forKey: .modules)) ?? []
+        quizzes = try? c.decodeIfPresent([LMSQuizSummary].self, forKey: .quizzes)
     }
 
     var enrollmentStatus: EnrollmentStatus {
