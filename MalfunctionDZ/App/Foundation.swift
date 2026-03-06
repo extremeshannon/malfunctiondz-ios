@@ -10,7 +10,7 @@ import UserNotifications
 // Production (HTTPS): "https://malfunctiondz.com"
 // VPS direct (HTTP, for push testing): "http://51.81.210.212:8080" — requires NSAllowsArbitraryLoads in project
 // Local MAMP: "http://localhost:8888"
-let kServerURL = "http://51.81.210.212:8080"
+let kServerURL = "https://malfunctiondz.com"
 
 // MARK: - Keychain
 struct KeychainHelper {
