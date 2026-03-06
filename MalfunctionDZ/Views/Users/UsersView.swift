@@ -46,6 +46,19 @@ struct UsersListResponse: Decodable {
     let ok: Bool
     let total: Int
     let users: [PlatformUser]
+    let error: String?
+
+    enum CodingKeys: String, CodingKey {
+        case ok, total, users, error
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        ok = try c.decode(Bool.self, forKey: .ok)
+        total = (try? c.decode(Int.self, forKey: .total)) ?? 0
+        users = (try? c.decode([PlatformUser].self, forKey: .users)) ?? []
+        error = try? c.decodeIfPresent(String.self, forKey: .error)
+    }
 }
 
 @MainActor
@@ -100,12 +113,17 @@ final class UsersViewModel: ObservableObject {
                 return
             }
             if let http = response as? HTTPURLResponse, http.statusCode == 403 {
-                error = "You don't have permission to view users"
+                if let errBody = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let msg = errBody["error"] as? String {
+                    error = msg
+                } else {
+                    error = "You don't have permission to view users"
+                }
                 return
             }
             let decoded = try JSONDecoder().decode(UsersListResponse.self, from: data)
             guard decoded.ok else {
-                error = "Failed to load users"
+                error = decoded.error ?? "Failed to load users"
                 return
             }
             users = decoded.users

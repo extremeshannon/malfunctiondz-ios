@@ -7,9 +7,9 @@ import Security
 import UserNotifications
 
 // MARK: - Server URL
-// Production (HTTPS): "https://malfunctiondz.com"
-// VPS direct (HTTP, for push testing): "http://51.81.210.212:8080" — requires NSAllowsArbitraryLoads in project
-// Local MAMP: "http://localhost:8888"
+// Production: https://malfunctiondz.com (no trailing slash).
+// Backend is FastAPI (platform-py). All API paths use this base + path e.g. base + "/api/login.php".
+// 401 on any request triggers logout (session expired); app shows login again.
 let kServerURL = "https://malfunctiondz.com"
 
 // MARK: - Keychain

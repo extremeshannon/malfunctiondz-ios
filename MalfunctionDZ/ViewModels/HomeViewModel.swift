@@ -491,7 +491,7 @@ class HomeViewModel: ObservableObject {
         var req = URLRequest(url: url); req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         guard let (data, _) = try? await URLSession.shared.data(for: req),
               let resp = try? JSONDecoder().decode(LMSCoursesResponse.self, from: data),
-              resp.ok, let course = resp.courses.first else { return }
+              resp.ok, let course = resp.courses?.first else { return }
 
         studentData = StudentDashData(
             courseTitle:      course.title,
@@ -567,7 +567,7 @@ class HomeViewModel: ObservableObject {
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         guard let (data, _) = try? await URLSession.shared.data(for: req),
               let resp = try? JSONDecoder().decode(LMSCoursesResponse.self, from: data),
-              resp.ok, let course = resp.courses.first else { return }
+              resp.ok, let course = resp.courses?.first else { return }
         groundSchoolSummary = course.title
         let pct = Int(course.progressPct)
         groundSchoolBadges = [

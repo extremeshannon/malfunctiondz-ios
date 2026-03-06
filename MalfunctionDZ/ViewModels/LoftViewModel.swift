@@ -22,7 +22,16 @@ class LoftViewModel: ObservableObject {
         var req = URLRequest(url: url)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         do {
-            let (data, _) = try await URLSession.shared.data(for: req)
+            let (data, response) = try await URLSession.shared.data(for: req)
+            if let http = response as? HTTPURLResponse, http.statusCode == 401 {
+                await AuthManager.shared.logout()
+                error = "Session expired"
+                return
+            }
+            if let http = response as? HTTPURLResponse, http.statusCode == 403 {
+                error = "You don't have permission to view loft"
+                return
+            }
             let resp = try JSONDecoder().decode(LoftListResponse.self, from: data)
             if resp.ok {
                 rigs    = resp.rigs ?? []

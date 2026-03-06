@@ -2,10 +2,11 @@
 // Purpose: Codable models for LMS courses, modules, lessons, quizzes, and sign-off data.
 import Foundation
 
-// MARK: - Course List Response
+// MARK: - Course List Response (courses optional so 401/403 body decodes without failure)
 struct LMSCoursesResponse: Codable {
     let ok: Bool
-    let courses: [LMSCourse]
+    let courses: [LMSCourse]?
+    let error: String?
 }
 
 // MARK: - Course
