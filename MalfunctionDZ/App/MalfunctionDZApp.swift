@@ -6,6 +6,10 @@ import SwiftUI
 import UIKit
 import UserNotifications
 
+extension Notification.Name {
+    static let dzStatusDidUpdateFromPush = Notification.Name("dzStatusDidUpdateFromPush")
+}
+
 @main
 struct MalfunctionDZApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
@@ -408,11 +412,20 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) -> UNNotificationPresentationOptions {
+        let userInfo = notification.request.content.userInfo
+        let type = (userInfo["type"] as? String) ?? ""
+        if type == "dz_status" {
+            NotificationCenter.default.post(name: .dzStatusDidUpdateFromPush, object: nil)
+        }
         return [.banner, .sound, .badge]
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
         let userInfo = response.notification.request.content.userInfo
+        let type = (userInfo["type"] as? String) ?? ""
+        if type == "dz_status" {
+            NotificationCenter.default.post(name: .dzStatusDidUpdateFromPush, object: nil)
+        }
         guard let aps = userInfo["aps"] as? [String: Any],
               let alert = aps["alert"] as? [String: Any] else { return }
         let title = (alert["title"] as? String) ?? "Notification"
@@ -423,9 +436,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
                 payload[key] = v
             }
         }
-        let type = (payload["type"] as? String) ?? "unknown"
+        let pushType = type.isEmpty ? "unknown" : type
         await MainActor.run {
-            PushNavigationTarget.shared.handleTap(type: type, title: title, body: body, payload: payload)
+            PushNavigationTarget.shared.handleTap(type: pushType, title: title, body: body, payload: payload)
         }
     }
 }

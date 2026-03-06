@@ -254,6 +254,9 @@ struct HomeView: View {
             .navigationBarHidden(true)
             .task { await vm.loadDashboard(user: auth.currentUser) }
             .task(id: "dz") { await vm.loadDzStatus() }
+            .onReceive(NotificationCenter.default.publisher(for: .dzStatusDidUpdateFromPush)) { _ in
+                Task { await vm.loadDzStatus() }
+            }
             .onReceive(Timer.publish(every: 120, on: .main, in: .common).autoconnect()) { _ in
                 Task {
                     await vm.loadDzStatus()
