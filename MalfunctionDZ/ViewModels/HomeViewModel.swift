@@ -294,9 +294,10 @@ class HomeViewModel: ObservableObject {
 
     func loadDzStatus() async {
         do {
-            dzStatus = try await CalendarAPIService.shared.fetchDzStatus()
+            let newStatus = try await CalendarAPIService.shared.fetchDzStatus()
+            dzStatus = newStatus
         } catch {
-            dzStatus = nil
+            // Keep previous dzStatus so the banner doesn't disappear on refresh/network blip
         }
     }
 
