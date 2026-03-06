@@ -2,7 +2,8 @@
 import Foundation
 import SwiftUI
 
-// Matches exactly what /api/aircraft/list.php returns
+// Compatible with FastAPI /api/aircraft/list (id, tail_number, make, model, year, status, ...)
+// and legacy PHP (adds open_squawks, due_soon, overdue, next_100hr_due, annual_due, last_oil_change).
 struct Aircraft: Codable, Identifiable, Hashable {
     static func == (lhs: Aircraft, rhs: Aircraft) -> Bool { lhs.id == rhs.id }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
@@ -18,7 +19,7 @@ struct Aircraft: Codable, Identifiable, Hashable {
     let lastOilChange: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, model, status
+        case id, model, status, make, year
         case tailNumber    = "tail_number"
         case openSquawks   = "open_squawks"
         case dueSoon       = "due_soon"
@@ -28,12 +29,44 @@ struct Aircraft: Codable, Identifiable, Hashable {
         case lastOilChange = "last_oil_change"
     }
 
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(Int.self, forKey: .id)
+        tailNumber = (try? c.decode(String.self, forKey: .tailNumber)) ?? ""
+        let make = try? c.decode(String.self, forKey: .make)
+        let modelVal = try? c.decode(String.self, forKey: .model)
+        model = [make, modelVal].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " ")
+            .trimmingCharacters(in: .whitespaces)
+        if model.isEmpty { model = "Aircraft" }
+        status = (try? c.decode(String.self, forKey: .status)) ?? "active"
+        openSquawks = (try? c.decode(Int.self, forKey: .openSquawks)) ?? 0
+        dueSoon = (try? c.decode(Int.self, forKey: .dueSoon)) ?? 0
+        overdue = (try? c.decode(Int.self, forKey: .overdue)) ?? 0
+        next100hrDue = try? c.decodeIfPresent(String.self, forKey: .next100hrDue)
+        annualDue = try? c.decodeIfPresent(String.self, forKey: .annualDue)
+        lastOilChange = try? c.decodeIfPresent(String.self, forKey: .lastOilChange)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(tailNumber, forKey: .tailNumber)
+        try c.encode(model, forKey: .model)
+        try c.encode(status, forKey: .status)
+        try c.encode(openSquawks, forKey: .openSquawks)
+        try c.encode(dueSoon, forKey: .dueSoon)
+        try c.encode(overdue, forKey: .overdue)
+        try c.encodeIfPresent(next100hrDue, forKey: .next100hrDue)
+        try c.encodeIfPresent(annualDue, forKey: .annualDue)
+        try c.encodeIfPresent(lastOilChange, forKey: .lastOilChange)
+    }
+
     var statusColor: Color {
         switch status.lowercased() {
-        case "airworthy": return .mdzGreen
-        case "grounded":  return .mdzDanger
+        case "airworthy", "active": return .mdzGreen
+        case "grounded", "inactive": return .mdzDanger
         case "maintenance": return .mdzAmber
-        default:          return .mdzMuted
+        default: return .mdzMuted
         }
     }
 

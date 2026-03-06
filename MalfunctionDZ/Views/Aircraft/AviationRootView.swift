@@ -481,10 +481,16 @@ class PilotAviationViewModel: ObservableObject {
         guard let token = KeychainHelper.readToken(),
               let url = URL(string: "\(kServerURL)/api/aircraft/list.php") else { return }
         var req = URLRequest(url: url); req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        guard let (data, _) = try? await URLSession.shared.data(for: req),
-              let resp = try? JSONDecoder().decode(MobileResponse<[Aircraft]>.self, from: data),
-              resp.ok, let all = resp.data else { return }
-        airworthyAircraft = all.filter { $0.status == "airworthy" }
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            if (response as? HTTPURLResponse)?.statusCode == 401 {
+                await AuthManager.shared.logout()
+                return
+            }
+            struct ListResp: Decodable { let ok: Bool; let aircraft: [Aircraft]? }
+            guard let resp = try? JSONDecoder().decode(ListResp.self, from: data), resp.ok, let all = resp.aircraft else { return }
+            airworthyAircraft = all.filter { ["airworthy", "active"].contains($0.status.lowercased()) }
+        } catch { /* network error */ }
     }
 
     private func loadRecentFlights(pilotId: Int) async {

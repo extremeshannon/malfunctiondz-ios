@@ -396,11 +396,12 @@ class HomeViewModel: ObservableObject {
               let url   = URL(string: "\(kServerURL)/api/aircraft/list.php") else { return }
         var req = URLRequest(url: url)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        struct ListResp: Decodable { let ok: Bool; let aircraft: [Aircraft]? }
         guard let (data, _) = try? await URLSession.shared.data(for: req),
-              let resp = try? JSONDecoder().decode(MobileResponse<[Aircraft]>.self, from: data),
-              resp.ok, let all = resp.data else { return }
+              let resp = try? JSONDecoder().decode(ListResp.self, from: data),
+              resp.ok, let all = resp.aircraft else { return }
         airworthyAircraft = all
-            .filter { $0.status.lowercased() == "airworthy" }
+            .filter { ["airworthy", "active"].contains($0.status.lowercased()) }
             .map    { AircraftBrief(id: $0.id, tailNumber: $0.tailNumber, model: $0.model, status: $0.status) }
     }
 
