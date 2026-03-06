@@ -62,7 +62,7 @@ actor CalendarAPIService {
             let status: String
             let announcement: String?
         }
-        return try await putDzStatus(path: "/api/dz/status.php", body: Body(status: status, announcement: announcement))
+        return try await putDzStatus(path: "/api/dz/status_update.php", body: Body(status: status, announcement: announcement))
     }
 
     private func putDzStatus<T: Encodable>(path: String, body: T) async throws -> DZStatus {
