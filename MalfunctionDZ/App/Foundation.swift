@@ -91,6 +91,69 @@ extension Color {
     static let ascLoginOrangeDark = Color(hex:"B83D12")
 }
 
+// MARK: - Theme-based color set (from server: theme "slate_fire" vs "old_glory")
+struct MDZColorSet {
+    let background: Color
+    let card: Color
+    let card2: Color
+    let text: Color
+    let muted: Color
+    let primary: Color
+    let accent: Color
+    let border: Color
+    let green: Color
+    let amber: Color
+    let danger: Color
+    let navy: Color
+    let navyMid: Color
+
+    static let oldGlory = MDZColorSet(
+        background: .mdzBackground,
+        card: .mdzCard,
+        card2: .mdzCard2,
+        text: .mdzText,
+        muted: .mdzMuted,
+        primary: .mdzBlue,
+        accent: .mdzRed,
+        border: .mdzBorder,
+        green: .mdzGreen,
+        amber: .mdzAmber,
+        danger: .mdzDanger,
+        navy: .mdzNavy,
+        navyMid: .mdzNavyMid
+    )
+
+    static let slateFire = MDZColorSet(
+        background: Color(hex: "D6DCE3"),
+        card: Color(hex: "E8ECF0"),
+        card2: Color(hex: "EFF2F5"),
+        text: Color(hex: "1A2830"),
+        muted: Color(hex: "6A8090"),
+        primary: Color(hex: "5AACCA"),
+        accent: Color(hex: "F06020"),
+        border: Color(hex: "2A3A47").opacity(0.12),
+        green: Color(hex: "2EAA72"),
+        amber: Color(hex: "D4920A"),
+        danger: Color(hex: "D63C3C"),
+        navy: Color(hex: "2A3A47"),
+        navyMid: Color(hex: "1E2D38")
+    )
+
+    static func `for`(_ theme: String) -> MDZColorSet {
+        theme == "slate_fire" ? .slateFire : .oldGlory
+    }
+}
+
+private struct MDZColorsKey: EnvironmentKey {
+    static let defaultValue = MDZColorSet.oldGlory
+}
+extension EnvironmentValues {
+    var mdzColors: MDZColorSet {
+        get { self[MDZColorsKey.self] }
+        set { self[MDZColorsKey.self] = newValue }
+    }
+}
+
 // MARK: - View Modifiers
 struct MDZCardModifier: ViewModifier {
     func body(content: Content) -> some View {
@@ -292,32 +355,34 @@ actor APIClient {
 
 // MARK: - AppConfig
 @MainActor final class AppConfig: ObservableObject {
-    init() {}
+    init() { restore() }
     @Published var dzName             = "Alaska Skydive Center"
     @Published var moduleAviation     = "Aviation"
     @Published var moduleLoft         = "Loft"
     @Published var moduleGroundSchool = "Ground School"
     @Published var moduleManifest     = "Manifest"
+    @Published var theme              = "old_glory"
     let poweredBy                     = "Powered by MalfunctionDZ"
     func loadConfig() async {
         guard let url = URL(string:"\(kServerURL)/api/config.php") else { return }
         guard let (data,_) = try? await URLSession.shared.data(from:url) else { return }
         struct R: Decodable { let ok:Bool; let data:D? }
         struct D: Decodable {
-            let dzName:String?; let av:String?; let loft:String?; let gs:String?; let mf:String?
+            let dzName:String?; let av:String?; let loft:String?; let gs:String?; let mf:String?; let theme:String?
             enum CodingKeys:String,CodingKey {
                 case dzName="dz_name"; case av="module_aviation"; case loft="module_loft"
-                case gs="module_ground_school"; case mf="module_manifest"
+                case gs="module_ground_school"; case mf="module_manifest"; case theme="theme"
             }
         }
         if let r = try? JSONDecoder().decode(R.self, from:data), r.ok, let d = r.data {
             dzName = d.dzName ?? dzName; moduleAviation = d.av ?? moduleAviation
             moduleLoft = d.loft ?? moduleLoft; moduleGroundSchool = d.gs ?? moduleGroundSchool
             moduleManifest = d.mf ?? moduleManifest
+            if let t = d.theme, !t.isEmpty { theme = t }
             let ud = UserDefaults.standard
             ud.set(dzName, forKey:"cfg_dz"); ud.set(moduleAviation, forKey:"cfg_av")
             ud.set(moduleLoft, forKey:"cfg_loft"); ud.set(moduleGroundSchool, forKey:"cfg_gs")
-            ud.set(moduleManifest, forKey:"cfg_mf")
+            ud.set(moduleManifest, forKey:"cfg_mf"); ud.set(theme, forKey:"cfg_theme")
         }
     }
     private func restore() {
@@ -327,6 +392,7 @@ actor APIClient {
         if let v=ud.string(forKey:"cfg_loft"),!v.isEmpty{moduleLoft=v}
         if let v=ud.string(forKey:"cfg_gs"),!v.isEmpty{moduleGroundSchool=v}
         if let v=ud.string(forKey:"cfg_mf"),!v.isEmpty{moduleManifest=v}
+        if let v=ud.string(forKey:"cfg_theme"),!v.isEmpty{theme=v}
     }
 }
 

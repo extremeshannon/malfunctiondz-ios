@@ -12,6 +12,7 @@ struct HomeView: View {
     @EnvironmentObject private var auth:      AuthManager
     @EnvironmentObject private var config:    AppConfig
     @EnvironmentObject private var tabSelect: TabSelection
+    @Environment(\.mdzColors) private var colors
     @StateObject private var vm = HomeViewModel()
     @State private var dzStatusJustUpdated = false
     @Environment(\.horizontalSizeClass) private var hSizeClass
@@ -30,7 +31,7 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 0) {
 
@@ -60,12 +61,12 @@ struct HomeView: View {
                                                 Text("Send announcement")
                                                     .font(.system(size: 14, weight: .medium))
                                             }
-                                            .foregroundColor(.mdzAmber)
+                                            .foregroundColor(colors.amber)
                                             .frame(maxWidth: .infinity)
                                             .padding(.vertical, 10)
-                                            .background(Color.mdzCard)
+                                            .background(colors.card)
                                             .cornerRadius(10)
-                                            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                                            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
                                         }
                                         .buttonStyle(.plain)
                                     }
@@ -322,23 +323,23 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(dateString)
                 .font(.system(size: isWide ? 12 : 11, weight: .semibold))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(2)
                 .textCase(.uppercase)
 
             Text(config.dzName.uppercased())
                 .font(.system(size: isWide ? 36 : 28, weight: .black, design: .rounded))
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
                 .lineLimit(2)
 
             HStack(spacing: 6) {
                 Text(greeting)
                     .font(.system(size: isWide ? 15 : 13, weight: .medium))
-                    .foregroundColor(.mdzMuted)
-                Text("·").foregroundColor(.mdzBorder)
+                    .foregroundColor(colors.muted)
+                Text("·").foregroundColor(colors.border)
                 Text(auth.currentUser?.roleDisplayLabel ?? "")
                     .font(.system(size: isWide ? 15 : 13, weight: .semibold))
-                    .foregroundColor(.mdzBlue)
+                    .foregroundColor(colors.primary)
             }
         }
     }

@@ -53,6 +53,7 @@ final class PushNavigationTarget: ObservableObject {
 // MARK: - Content Root
 struct ContentRootView: View {
     @EnvironmentObject private var auth:    AuthManager
+    @EnvironmentObject private var config:  AppConfig
     @EnvironmentObject private var pushNav: PushNavigationTarget
     @Environment(\.scenePhase) private var scenePhase
     var body: some View {
@@ -64,6 +65,8 @@ struct ContentRootView: View {
                 LoginView()
             }
         }
+        .environment(\.mdzColors, MDZColorSet.for(config.theme))
+        .task { await config.loadConfig() }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active, auth.isAuthenticated {
                 PushRegistration.shared.requestPermissionAndRegister()
@@ -101,8 +104,9 @@ struct MDZRootView: View {
 // MARK: - iPad: NavigationSplitView
 struct MDZSplitView: View {
     @EnvironmentObject private var auth:      AuthManager
-    @EnvironmentObject private var config:    AppConfig
+    @EnvironmentObject private var config:   AppConfig
     @EnvironmentObject private var tabSelect: TabSelection
+    @Environment(\.mdzColors) private var colors
 
     // Maps our tab tags to a stable selection type
     @State private var selectedModule: AppModule = .home
@@ -116,12 +120,12 @@ struct MDZSplitView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(config.dzName.uppercased())
                             .font(.system(size: 13, weight: .black))
-                            .foregroundColor(.mdzText.opacity(0.9))
+                            .foregroundColor(colors.text.opacity(0.9))
                             .tracking(1)
                         if let user = auth.currentUser {
                             Text(user.roleDisplayLabel)
                                 .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                         }
                     }
                     .padding(.vertical, 4)
@@ -172,11 +176,11 @@ struct MDZSplitView: View {
                         HStack(spacing: 12) {
                             Image(systemName: "rectangle.portrait.and.arrow.right")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.mdzDanger)
+                                .foregroundColor(colors.danger)
                                 .frame(width: 22)
                             Text("Sign Out")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.mdzDanger)
+                                .foregroundColor(colors.danger)
                             Spacer()
                         }
                         .padding(.vertical, 6)
@@ -189,7 +193,7 @@ struct MDZSplitView: View {
             .listStyle(.sidebar)
             .navigationTitle("MalfunctionDZ")
             .navigationBarTitleDisplayMode(.inline)
-            .background(Color.mdzBackground)
+            .background(colors.background)
             .scrollContentBackground(.hidden)
 
         } detail: {
@@ -217,8 +221,8 @@ struct MDZSplitView: View {
                 selectedModule = AppModule(tag: tag) ?? .home
             }
         }
-        .accentColor(.mdzRed)
-        .preferredColorScheme(.dark)
+        .accentColor(colors.accent)
+        .preferredColorScheme(config.theme == "slate_fire" ? .light : .dark)
     }
 }
 
@@ -228,22 +232,23 @@ struct SidebarButton: View {
     let title:    String
     let selected: Bool
     let action:   () -> Void
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(selected ? .mdzRed : .mdzMuted)
+                    .foregroundColor(selected ? colors.accent : colors.muted)
                     .frame(width: 22)
                 Text(title)
                     .font(.system(size: 15, weight: selected ? .bold : .regular))
-                    .foregroundColor(selected ? .mdzText : .mdzMuted)
+                    .foregroundColor(selected ? colors.text : colors.muted)
                 Spacer()
             }
             .padding(.vertical, 6)
             .padding(.horizontal, 8)
-            .background(selected ? Color.mdzRed.opacity(0.12) : Color.clear)
+            .background(selected ? colors.accent.opacity(0.12) : Color.clear)
             .cornerRadius(8)
         }
         .buttonStyle(.plain)
@@ -300,11 +305,12 @@ struct MDZTabView: View {
     @EnvironmentObject private var auth:      AuthManager
     @EnvironmentObject private var config:    AppConfig
     @EnvironmentObject private var tabSelect: TabSelection
+    @Environment(\.mdzColors) private var colors
 
     init() {
         let a = UITabBarAppearance()
         a.configureWithOpaqueBackground()
-        a.backgroundColor = UIColor(Color.mdzNavyMid)
+        a.backgroundColor = UIColor(Color(hex: "1E2D38"))
         UITabBar.appearance().standardAppearance   = a
         UITabBar.appearance().scrollEdgeAppearance = a
     }
@@ -381,7 +387,8 @@ struct MDZTabView: View {
                 .tabItem { Label("Profile", systemImage: "person.fill") }
                 .tag(9)
         }
-        .accentColor(.mdzRed)
+        .accentColor(colors.accent)
+        .preferredColorScheme(config.theme == "slate_fire" ? .light : .dark)
     }
 }
 
@@ -447,25 +454,26 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 struct NotificationDetailSheet: View {
     let tap: PendingPushTap
     let onDismiss: () -> Void
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         Text(tap.title)
                             .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(.mdzText)
+                            .foregroundColor(colors.text)
                         if !tap.body.isEmpty {
                             Text(tap.body)
                                 .font(.system(size: 15))
-                                .foregroundColor(.mdzText)
+                                .foregroundColor(colors.text)
                         }
                         if let ann = tap.announcement, !ann.isEmpty {
                             Text(ann)
                                 .font(.system(size: 15))
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                                 .padding(.top, 8)
                         }
                         Spacer(minLength: 24)
@@ -476,11 +484,11 @@ struct NotificationDetailSheet: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done", action: onDismiss)
-                        .foregroundColor(.mdzRed)
+                        .foregroundColor(colors.accent)
                 }
             }
         }
