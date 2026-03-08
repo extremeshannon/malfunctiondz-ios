@@ -208,3 +208,33 @@ struct AirworthinessDirective: Codable, Identifiable {
         case dueDate  = "due_date"
     }
 }
+
+struct StcEntry: Codable, Identifiable {
+    let id: Int
+    let recordType: String
+    let entryDate: String
+    let title: String
+    let description: String
+    let stcNumber: String?
+    let form337Number: String?
+    let approvalDate: String?
+    let fieldApproval: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, description
+        case recordType   = "record_type"
+        case entryDate   = "entry_date"
+        case stcNumber   = "stc_number"
+        case form337Number = "form337_number"
+        case approvalDate = "approval_date"
+        case fieldApproval = "field_approval"
+    }
+
+    var recordTypeLabel: String {
+        switch (recordType).lowercased() {
+        case "form337": return "337"
+        case "stc":    return "STC"
+        default:       return recordType.uppercased()
+        }
+    }
+}

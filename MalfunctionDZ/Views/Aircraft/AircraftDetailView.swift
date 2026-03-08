@@ -259,11 +259,61 @@ struct AircraftDetailView: View {
     }
 
     private var stcTab: some View {
-        EmptyStateView(
-            icon: "doc.badge.clock",
-            title: "STC / 337",
-            subtitle: "Supplemental Type Certificates and Form 337s for this aircraft. Data will appear here when available."
-        )
+        Group {
+            if vm.stcEntries.isEmpty {
+                EmptyStateView(
+                    icon: "doc.badge.clock",
+                    title: "STC / 337",
+                    subtitle: "Supplemental Type Certificates and Form 337s for this aircraft. Data will appear here when available."
+                )
+            } else {
+                List(vm.stcEntries) { entry in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(entry.title.isEmpty ? "STC / 337" : entry.title)
+                                .font(.subheadline.weight(.medium))
+                                .foregroundColor(colors.text)
+                            Spacer()
+                            Text(entry.recordTypeLabel)
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(colors.primary)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(colors.primary.opacity(0.2))
+                                .cornerRadius(6)
+                        }
+                        if !entry.description.isEmpty {
+                            Text(entry.description)
+                                .font(.caption)
+                                .foregroundColor(colors.muted)
+                                .lineLimit(2)
+                        }
+                        HStack(spacing: 12) {
+                            if let stc = entry.stcNumber, !stc.isEmpty {
+                                Text("STC \(stc)")
+                                    .font(.caption2.monospaced())
+                                    .foregroundColor(colors.primary)
+                            }
+                            if let f337 = entry.form337Number, !f337.isEmpty {
+                                Text("337 \(f337)")
+                                    .font(.caption2.monospaced())
+                                    .foregroundColor(colors.muted)
+                            }
+                            if !entry.entryDate.isEmpty {
+                                Text(entry.entryDate)
+                                    .font(.caption2)
+                                    .foregroundColor(colors.muted)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 6)
+                    .listRowBackground(colors.card)
+                    .listRowSeparatorTint(colors.border)
+                }
+                .listStyle(.plain)
+                .refreshable { await vm.loadDetail(aircraftId: aircraft.id) }
+            }
+        }
     }
 
     private var adsTab: some View {

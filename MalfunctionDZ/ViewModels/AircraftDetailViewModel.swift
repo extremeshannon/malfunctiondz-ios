@@ -18,6 +18,7 @@ class AircraftDetailViewModel: ObservableObject {
     @Published var squawks: [Squawk] = []
     @Published var logbook: [LogbookEntry] = []
     @Published var ads: [AirworthinessDirective] = []
+    @Published var stcEntries: [StcEntry] = []
     @Published var logbookDetail: LogbookEntryDetail?
     @Published var logbookDetailLoading = false
     @Published var isLoading = false
@@ -30,11 +31,13 @@ class AircraftDetailViewModel: ObservableObject {
         async let sq = fetchSquawks(aircraftId: aircraftId)
         async let lb = fetchLogbook(aircraftId: aircraftId, bookType: "all")
         async let ad = fetchAds(aircraftId: aircraftId)
-        let (squawkResult, logbookResult, adsResult) = await (sq, lb, ad)
+        async let stc = fetchStc337(aircraftId: aircraftId)
+        let (squawkResult, logbookResult, adsResult, stcResult) = await (sq, lb, ad, stc)
         squawks = squawkResult.entries
         logbook = logbookResult.entries
         ads = adsResult.entries
-        if let e = squawkResult.error ?? logbookResult.error ?? adsResult.error {
+        stcEntries = stcResult.entries
+        if let e = squawkResult.error ?? logbookResult.error ?? adsResult.error ?? stcResult.error {
             error = friendlyError(e)
         }
     }
@@ -42,7 +45,7 @@ class AircraftDetailViewModel: ObservableObject {
     private func friendlyError(_ message: String) -> String {
         let lower = message.lowercased()
         if lower.contains("not found") || lower.contains("404") {
-            return "Squawks, logbook, or ADs could not be loaded (404). In More → Profile, check API Base URL and ensure the server provides /api/aircraft/ endpoints (squawks, logbook, ads)."
+            return "Squawks, logbook, ADs, or STC/337 could not be loaded (404). In More → Profile, check API Base URL and ensure the server provides /api/aircraft/ endpoints."
         }
         return message
     }
@@ -105,6 +108,25 @@ class AircraftDetailViewModel: ObservableObject {
             return (wrapper.data ?? [], nil)
         }
         return ([], "Invalid response from ADs API.")
+    }
+
+    private func fetchStc337(aircraftId: Int, typeFilter: String = "") async -> (entries: [StcEntry], error: String?) {
+        var path = "/api/aircraft/stc337.php?id=\(aircraftId)"
+        if !typeFilter.isEmpty {
+            path += "&type_filter=\(typeFilter.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? typeFilter)"
+        }
+        let (data, statusCode) = await fetch(path: path)
+        if statusCode == 404 {
+            return ([], "STC/337 endpoint not found (404). Check API Base URL in Profile.")
+        }
+        guard let data = data else {
+            return ([], "Could not reach server.")
+        }
+        if let wrapper = try? JSONDecoder().decode(DetailListWrapper<StcEntry>.self, from: data) {
+            if !(wrapper.ok) { return ([], wrapper.error ?? "Server error") }
+            return (wrapper.data ?? [], nil)
+        }
+        return ([], "Invalid response from STC/337 API.")
     }
 
     private func fetch(path: String) async -> (data: Data?, statusCode: Int?) {
