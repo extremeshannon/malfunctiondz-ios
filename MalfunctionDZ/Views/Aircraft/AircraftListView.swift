@@ -60,8 +60,8 @@ struct AircraftListSplitView: View {
                         Spacer()
                         EmptyStateView(
                             icon: "airplane",
-                            title: multiOnly ? "No Multi-Engine Aircraft" : "No Aircraft",
-                            subtitle: multiOnly ? "Turn off Multi to see all aircraft." : "No aircraft found in the fleet."
+                            title: "No Aircraft",
+                            subtitle: "No aircraft found in the fleet."
                         )
                         Spacer()
                     } else {
