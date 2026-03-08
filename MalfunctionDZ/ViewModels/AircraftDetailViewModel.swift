@@ -42,7 +42,7 @@ class AircraftDetailViewModel: ObservableObject {
     private func friendlyError(_ message: String) -> String {
         let lower = message.lowercased()
         if lower.contains("not found") || lower.contains("404") {
-            return "Aircraft data not found. Ensure the app’s API URL points at the PHP backend (e.g. MAMP) that serves /api/aircraft/squawks.php, logbook.php, and ads.php."
+            return "Squawks, logbook, or ADs could not be loaded (404). In More → Profile, check API Base URL and ensure the server provides /api/aircraft/ endpoints (squawks, logbook, ads)."
         }
         return message
     }
@@ -64,10 +64,10 @@ class AircraftDetailViewModel: ObservableObject {
     private func fetchSquawks(aircraftId: Int) async -> (entries: [Squawk], error: String?) {
         let (data, statusCode) = await fetch(path: "/api/aircraft/squawks.php?id=\(aircraftId)")
         if statusCode == 404 {
-            return ([], "Squawks endpoint not found. Point the app at the PHP API (e.g. MAMP) that serves /api/aircraft/.")
+            return ([], "Squawks endpoint not found (404). Check API Base URL in Profile.")
         }
         guard let data = data else {
-            return ([], "Could not reach server. Check that the app is pointed at the correct API (e.g. MAMP).")
+            return ([], "Could not reach server. Check API Base URL in More → Profile.")
         }
         if let wrapper = try? JSONDecoder().decode(DetailListWrapper<Squawk>.self, from: data) {
             if !(wrapper.ok) { return ([], wrapper.error ?? "Server error") }
@@ -80,7 +80,7 @@ class AircraftDetailViewModel: ObservableObject {
         let encoded = bookType.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? bookType
         let (data, statusCode) = await fetch(path: "/api/aircraft/logbook.php?id=\(aircraftId)&book_type=\(encoded)")
         if statusCode == 404 {
-            return ([], "Logbook endpoint not found. Point the app at the PHP API (e.g. MAMP) that serves /api/aircraft/.")
+            return ([], "Logbook endpoint not found (404). Check API Base URL in Profile.")
         }
         guard let data = data else {
             return ([], "Could not reach server.")
@@ -95,7 +95,7 @@ class AircraftDetailViewModel: ObservableObject {
     private func fetchAds(aircraftId: Int) async -> (entries: [AirworthinessDirective], error: String?) {
         let (data, statusCode) = await fetch(path: "/api/aircraft/ads.php?id=\(aircraftId)")
         if statusCode == 404 {
-            return ([], "ADs endpoint not found. Point the app at the PHP API (e.g. MAMP) that serves /api/aircraft/.")
+            return ([], "ADs endpoint not found (404). Check API Base URL in Profile.")
         }
         guard let data = data else {
             return ([], "Could not reach server.")
