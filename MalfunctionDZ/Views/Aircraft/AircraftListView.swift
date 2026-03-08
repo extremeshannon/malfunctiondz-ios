@@ -42,13 +42,9 @@ struct AircraftListSplitView: View {
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
     @State private var selectedAircraft: Aircraft?
-    @State private var multiOnly = false
     @State private var showAddAircraft = false
 
-    private var displayedAircraft: [Aircraft] {
-        if multiOnly { return vm.aircraft.filter { $0.isMultiEngine == true } }
-        return vm.aircraft
-    }
+    private var displayedAircraft: [Aircraft] { vm.aircraft }
 
     var body: some View {
         NavigationSplitView {
@@ -87,18 +83,11 @@ struct AircraftListSplitView: View {
             .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    HStack(spacing: 12) {
-                        Toggle(isOn: $multiOnly) {
-                            Text("Multi").font(.system(size: 12))
-                        }
-                        .toggleStyle(.button)
-                        .labelsHidden()
-                        if !isReadOnly {
-                            Button {
-                                showAddAircraft = true
-                            } label: {
-                                Image(systemName: "plus.circle.fill")
-                            }
+                    if !isReadOnly {
+                        Button {
+                            showAddAircraft = true
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
                         }
                     }
                 }
@@ -182,13 +171,9 @@ struct AircraftListStackView: View {
     var isReadOnly: Bool = false
     @EnvironmentObject private var config: AppConfig
     @Environment(\.mdzColors) private var colors
-    @State private var multiOnly = false
     @State private var showAddAircraft = false
 
-    private var displayedAircraft: [Aircraft] {
-        if multiOnly { return vm.aircraft.filter { $0.isMultiEngine == true } }
-        return vm.aircraft
-    }
+    private var displayedAircraft: [Aircraft] { vm.aircraft }
 
     var body: some View {
         NavigationStack {
@@ -196,21 +181,35 @@ struct AircraftListStackView: View {
                 colors.background.ignoresSafeArea()
                 VStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(config.dzName)
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(colors.text)
-                        HStack {
-                            Image(systemName: "airplane")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(colors.aviation)
-                            Text(config.moduleAviation.uppercased())
-                                .font(.system(size: 11, weight: .black))
-                                .foregroundColor(colors.aviation)
-                                .tracking(2)
+                        HStack(alignment: .top) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(config.dzName)
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(colors.text)
+                                HStack {
+                                    Image(systemName: "airplane")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(colors.aviation)
+                                    Text(config.moduleAviation.uppercased())
+                                        .font(.system(size: 11, weight: .black))
+                                        .foregroundColor(colors.aviation)
+                                        .tracking(2)
+                                }
+                                Text(dateString)
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(colors.muted)
+                            }
+                            Spacer()
+                            if !isReadOnly {
+                                Button {
+                                    showAddAircraft = true
+                                } label: {
+                                    Image(systemName: "plus.circle.fill")
+                                        .font(.system(size: 24))
+                                        .foregroundColor(colors.aviation)
+                                }
+                            }
                         }
-                        Text(dateString)
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(colors.muted)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 20)
@@ -227,26 +226,13 @@ struct AircraftListStackView: View {
                         Spacer()
                         EmptyStateView(
                             icon: "airplane",
-                            title: multiOnly ? "No Multi-Engine Aircraft" : "No Aircraft",
-                            subtitle: multiOnly ? "Turn off Multi to see all aircraft." : "No aircraft found in the fleet."
+                            title: "No Aircraft",
+                            subtitle: "No aircraft found in the fleet."
                         )
                         Spacer()
                     } else {
                         ScrollView(showsIndicators: false) {
                             VStack(spacing: 12) {
-                                HStack {
-                                    Toggle("Multi only", isOn: $multiOnly)
-                                        .font(.system(size: 13))
-                                    if !isReadOnly {
-                                        Button {
-                                            showAddAircraft = true
-                                        } label: {
-                                            Label("Add Aircraft", systemImage: "plus.circle.fill")
-                                                .font(.system(size: 14))
-                                        }
-                                    }
-                                }
-                                .padding(.horizontal, 4)
                                 ForEach(displayedAircraft) { aircraft in
                                     NavigationLink(destination: AircraftDetailView(aircraft: aircraft, isReadOnly: isReadOnly)) {
                                         AircraftCard(aircraft: aircraft)

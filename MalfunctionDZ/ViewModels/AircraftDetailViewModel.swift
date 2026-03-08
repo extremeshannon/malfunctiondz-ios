@@ -21,6 +21,8 @@ class AircraftDetailViewModel: ObservableObject {
     @Published var stcEntries: [StcEntry] = []
     @Published var logbookDetail: LogbookEntryDetail?
     @Published var logbookDetailLoading = false
+    @Published var stcEntryDetail: StcEntryDetail?
+    @Published var stcEntryDetailLoading = false
     @Published var isLoading = false
     @Published var error: String?
 
@@ -73,6 +75,14 @@ class AircraftDetailViewModel: ObservableObject {
         defer { logbookDetailLoading = false }
         guard let data = await fetch(path: "/api/aircraft/logbook_entry.php?id=\(aircraftId)&entry_id=\(entryId)").data else { return }
         logbookDetail = (try? JSONDecoder().decode(DetailSingleWrapper<LogbookEntryDetail>.self, from: data))?.data
+    }
+
+    func loadStcEntryDetail(aircraftId: Int, entryId: Int) async {
+        stcEntryDetailLoading = true
+        stcEntryDetail = nil
+        defer { stcEntryDetailLoading = false }
+        guard let data = await fetch(path: "/api/aircraft/stc337_entry.php?id=\(aircraftId)&entry_id=\(entryId)").data else { return }
+        stcEntryDetail = (try? JSONDecoder().decode(DetailSingleWrapper<StcEntryDetail>.self, from: data))?.data
     }
 
     private func fetchSquawks(aircraftId: Int) async -> (entries: [Squawk], error: String?) {

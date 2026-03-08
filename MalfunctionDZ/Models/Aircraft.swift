@@ -24,6 +24,9 @@ struct Aircraft: Codable, Identifiable, Hashable {
     let lastMic: String?
     /// Multi-engine (optional from API); when true, logbook has Left/Right engine.
     var isMultiEngine: Bool?
+    /// Min/max slots for aircraft (e.g. pax); shown in header.
+    let slotsMin: Int?
+    let slotsMax: Int?
 
     enum CodingKeys: String, CodingKey {
         case id, model, status, make, year
@@ -38,6 +41,8 @@ struct Aircraft: Codable, Identifiable, Hashable {
         case lastMic       = "last_mic"
         case propTime      = "prop_time"
         case isMultiEngine = "multi_engine"
+        case slotsMin      = "slots_min"
+        case slotsMax      = "slots_max"
     }
 
     init(from decoder: Decoder) throws {
@@ -62,6 +67,8 @@ struct Aircraft: Codable, Identifiable, Hashable {
         lastMic = try? c.decodeIfPresent(String.self, forKey: .lastMic)
         propTime = try? c.decodeIfPresent(String.self, forKey: .propTime)
         isMultiEngine = try? c.decodeIfPresent(Bool.self, forKey: .isMultiEngine)
+        slotsMin = try? c.decodeIfPresent(Int.self, forKey: .slotsMin)
+        slotsMax = try? c.decodeIfPresent(Int.self, forKey: .slotsMax)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -82,6 +89,8 @@ struct Aircraft: Codable, Identifiable, Hashable {
         try c.encodeIfPresent(lastMic, forKey: .lastMic)
         try c.encodeIfPresent(propTime, forKey: .propTime)
         try c.encodeIfPresent(isMultiEngine, forKey: .isMultiEngine)
+        try c.encodeIfPresent(slotsMin, forKey: .slotsMin)
+        try c.encodeIfPresent(slotsMax, forKey: .slotsMax)
     }
 
     var statusColor: Color {
@@ -235,6 +244,47 @@ struct StcEntry: Codable, Identifiable {
         case "form337": return "337"
         case "stc":    return "STC"
         default:       return recordType.uppercased()
+        }
+    }
+}
+
+/// Single STC/337 entry with images (from GET stc337_entry).
+struct StcEntryDetail: Codable {
+    let id: Int
+    let recordType: String
+    let entryDate: String
+    let title: String
+    let description: String
+    let stcNumber: String?
+    let form337Number: String?
+    let approvalDate: String?
+    let fieldApproval: String?
+    let images: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, description, images
+        case recordType   = "record_type"
+        case entryDate   = "entry_date"
+        case stcNumber   = "stc_number"
+        case form337Number = "form337_number"
+        case approvalDate = "approval_date"
+        case fieldApproval = "field_approval"
+    }
+
+    var recordTypeLabel: String {
+        switch (recordType).lowercased() {
+        case "form337": return "337"
+        case "stc":    return "STC"
+        default:       return recordType.uppercased()
+        }
+    }
+
+    func imageURLs(base: String = kServerURL) -> [URL] {
+        let baseClean = base.hasSuffix("/") ? String(base.dropLast()) : base
+        return images.compactMap { path in
+            guard !path.isEmpty else { return nil }
+            let pathClean = path.hasPrefix("/") ? path : "/" + path
+            return URL(string: baseClean + pathClean)
         }
     }
 }

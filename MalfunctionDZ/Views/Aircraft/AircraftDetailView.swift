@@ -12,7 +12,7 @@ struct AircraftDetailView: View {
     @State private var selectedTab = 0
     @State private var logbookFilter = "all"
     @State private var selectedLogbookEntry: LogbookEntry?
-    @State private var enlargedImageURL: URL?
+    @State private var selectedStcEntry: StcEntry?
     @State private var showEditAircraft = false
     @State private var showAddSquawk = false
     @State private var showAddAd = false
@@ -97,17 +97,16 @@ struct AircraftDetailView: View {
                 aircraft: aircraft,
                 entry: entry,
                 vm: vm,
-                enlargedImageURL: $enlargedImageURL,
                 onDismiss: { selectedLogbookEntry = nil }
             )
         }
-        .fullScreenCover(isPresented: Binding(
-            get: { enlargedImageURL != nil },
-            set: { if !$0 { enlargedImageURL = nil } }
-        )) {
-            if let url = enlargedImageURL {
-                EnlargeableImageSheet(imageURL: url, onDismiss: { enlargedImageURL = nil })
-            }
+        .sheet(item: $selectedStcEntry) { entry in
+            StcEntryDetailSheet(
+                aircraft: aircraft,
+                entry: entry,
+                vm: vm,
+                onDismiss: { selectedStcEntry = nil }
+            )
         }
         .sheet(isPresented: $showEditAircraft) {
             EditAircraftSheet(aircraft: aircraft, onDismiss: { showEditAircraft = false })
@@ -150,12 +149,12 @@ struct AircraftDetailView: View {
                             .foregroundColor(.white.opacity(0.85))
                     }
                 }
-                // TTSN, SMOH, PROP, SLOTS — left-aligned, label grey / value white (SMOH orange)
+                // TTAF (total airframe), TSMOH (engine), TSPOH (prop), SLOTS (min–max) — left-aligned
                 HStack(alignment: .top, spacing: 24) {
-                    metricBlock(label: "TTSN", value: formatHours(aircraft.ttsn), valueColor: .white)
-                    metricBlock(label: "SMOH", value: formatHours(aircraft.smoh), valueColor: colors.amber)
-                    metricBlock(label: "PROP", value: formatHours(aircraft.propTime), valueColor: .white)
-                    metricBlock(label: "SLOTS", value: aircraft.slots.map { "\($0)" } ?? "—", valueColor: .white)
+                    metricBlock(label: "TTAF", value: formatHours(aircraft.ttsn), valueColor: .white)
+                    metricBlock(label: "TSMOH", value: formatHours(aircraft.smoh), valueColor: colors.amber)
+                    metricBlock(label: "TSPOH", value: formatHours(aircraft.propTime), valueColor: .white)
+                    metricBlock(label: "SLOTS", value: slotsDisplay, valueColor: .white)
                 }
                 .padding(.top, 4)
             }
@@ -175,6 +174,15 @@ struct AircraftDetailView: View {
             .padding(.vertical, 10)
             .background(colors.navyMid.opacity(0.95))
         }
+    }
+
+    /// Slots display: "min–max" when both set, else single slots value, else "—"
+    private var slotsDisplay: String {
+        if let minV = aircraft.slotsMin, let maxV = aircraft.slotsMax {
+            return "\(minV)–\(maxV)"
+        }
+        if let s = aircraft.slots { return "\(s)" }
+        return "—"
     }
 
     private func formatHours(_ s: String?) -> String {
@@ -306,45 +314,50 @@ struct AircraftDetailView: View {
                 )
             } else {
                 List(vm.stcEntries) { entry in
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Text(entry.title.isEmpty ? "STC / 337" : entry.title)
-                                .font(.subheadline.weight(.medium))
-                                .foregroundColor(colors.text)
-                            Spacer()
-                            Text(entry.recordTypeLabel)
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(colors.primary)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(colors.primary.opacity(0.2))
-                                .cornerRadius(6)
-                        }
-                        if !entry.description.isEmpty {
-                            Text(entry.description)
-                                .font(.caption)
-                                .foregroundColor(colors.muted)
-                                .lineLimit(2)
-                        }
-                        HStack(spacing: 12) {
-                            if let stc = entry.stcNumber, !stc.isEmpty {
-                                Text("STC \(stc)")
-                                    .font(.caption2.monospaced())
+                    Button {
+                        selectedStcEntry = entry
+                    } label: {
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Text(entry.title.isEmpty ? "STC / 337" : entry.title)
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundColor(colors.text)
+                                Spacer()
+                                Text(entry.recordTypeLabel)
+                                    .font(.system(size: 10, weight: .bold))
                                     .foregroundColor(colors.primary)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(colors.primary.opacity(0.2))
+                                    .cornerRadius(6)
                             }
-                            if let f337 = entry.form337Number, !f337.isEmpty {
-                                Text("337 \(f337)")
-                                    .font(.caption2.monospaced())
+                            if !entry.description.isEmpty {
+                                Text(entry.description)
+                                    .font(.caption)
                                     .foregroundColor(colors.muted)
+                                    .lineLimit(2)
                             }
-                            if !entry.entryDate.isEmpty {
-                                Text(entry.entryDate)
-                                    .font(.caption2)
-                                    .foregroundColor(colors.muted)
+                            HStack(spacing: 12) {
+                                if let stc = entry.stcNumber, !stc.isEmpty {
+                                    Text("STC \(stc)")
+                                        .font(.caption2.monospaced())
+                                        .foregroundColor(colors.primary)
+                                }
+                                if let f337 = entry.form337Number, !f337.isEmpty {
+                                    Text("337 \(f337)")
+                                        .font(.caption2.monospaced())
+                                        .foregroundColor(colors.muted)
+                                }
+                                if !entry.entryDate.isEmpty {
+                                    Text(entry.entryDate)
+                                        .font(.caption2)
+                                        .foregroundColor(colors.muted)
+                                }
                             }
                         }
+                        .padding(.vertical, 6)
                     }
-                    .padding(.vertical, 6)
+                    .buttonStyle(.plain)
                     .listRowBackground(colors.card)
                     .listRowSeparatorTint(colors.border)
                 }
@@ -446,10 +459,11 @@ struct AircraftLogbookEntryDetailSheet: View {
     let aircraft: Aircraft
     let entry: LogbookEntry
     @ObservedObject var vm: AircraftDetailViewModel
-    @Binding var enlargedImageURL: URL?
     let onDismiss: () -> Void
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
+    /// Shown in a fullScreenCover *inside this sheet* so the image appears on top when tapped (not behind the sheet).
+    @State private var localEnlargedImageURL: URL?
 
     var body: some View {
         NavigationStack {
@@ -516,7 +530,7 @@ struct AircraftLogbookEntryDetailSheet: View {
                                     ], spacing: 10) {
                                         ForEach(Array(detail.imageURLs().enumerated()), id: \.offset) { _, url in
                                             Button {
-                                                enlargedImageURL = url
+                                                localEnlargedImageURL = url
                                             } label: {
                                                 AsyncImage(url: url) { phase in
                                                     switch phase {
@@ -566,6 +580,157 @@ struct AircraftLogbookEntryDetailSheet: View {
                     Button("Done", action: onDismiss)
                         .foregroundColor(colors.amber)
                 }
+            }
+            .fullScreenCover(isPresented: Binding(
+                get: { localEnlargedImageURL != nil },
+                set: { if !$0 { localEnlargedImageURL = nil } }
+            )) {
+                if let url = localEnlargedImageURL {
+                    EnlargeableImageSheet(imageURL: url, onDismiss: { localEnlargedImageURL = nil })
+                }
+            }
+        }
+    }
+}
+
+// MARK: - STC/337 Entry Detail Sheet (full entry + image gallery, tap image to enlarge)
+struct StcEntryDetailSheet: View {
+    let aircraft: Aircraft
+    let entry: StcEntry
+    @ObservedObject var vm: AircraftDetailViewModel
+    let onDismiss: () -> Void
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
+    @State private var localEnlargedImageURL: URL?
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                colors.background.ignoresSafeArea()
+                if vm.stcEntryDetailLoading && vm.stcEntryDetail == nil {
+                    VStack(spacing: 16) {
+                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.primary)).scaleEffect(1.2)
+                        Text("Loading entry…").font(.subheadline).foregroundColor(colors.muted)
+                    }
+                } else if let detail = vm.stcEntryDetail {
+                    ScrollView(showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: 20) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text(detail.recordTypeLabel)
+                                        .font(.system(size: 10, weight: .black))
+                                        .foregroundColor(colors.primary)
+                                        .tracking(1)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(colors.primary.opacity(0.2))
+                                        .cornerRadius(6)
+                                    Spacer()
+                                }
+                                if !detail.title.isEmpty {
+                                    InfoRow(label: "Title", value: detail.title)
+                                }
+                                InfoRow(label: "Date", value: detail.entryDate)
+                                if let stc = detail.stcNumber, !stc.isEmpty {
+                                    InfoRow(label: "STC number", value: stc)
+                                }
+                                if let f337 = detail.form337Number, !f337.isEmpty {
+                                    InfoRow(label: "Form 337", value: f337)
+                                }
+                                if let approval = detail.approvalDate, !approval.isEmpty {
+                                    InfoRow(label: "Approval date", value: approval)
+                                }
+                                if let field = detail.fieldApproval, !field.isEmpty {
+                                    InfoRow(label: "Field approval", value: field)
+                                }
+                                if !detail.description.isEmpty {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("DESCRIPTION")
+                                            .font(.system(size: 9, weight: .black))
+                                            .foregroundColor(colors.muted)
+                                            .tracking(1)
+                                        Text(detail.description)
+                                            .font(.system(size: 15))
+                                            .foregroundColor(colors.text)
+                                    }
+                                }
+                            }
+                            .padding(20)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(colors.card)
+                            .cornerRadius(14)
+                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
+
+                            if !detail.images.isEmpty {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text("ATTACHMENTS")
+                                        .font(.system(size: 10, weight: .black))
+                                        .foregroundColor(colors.muted)
+                                        .tracking(1)
+                                    LazyVGrid(columns: [
+                                        GridItem(.flexible(), spacing: 10),
+                                        GridItem(.flexible(), spacing: 10),
+                                        GridItem(.flexible(), spacing: 10),
+                                    ], spacing: 10) {
+                                        ForEach(Array(detail.imageURLs().enumerated()), id: \.offset) { _, url in
+                                            Button {
+                                                localEnlargedImageURL = url
+                                            } label: {
+                                                AsyncImage(url: url) { phase in
+                                                    switch phase {
+                                                    case .success(let img): img.resizable().scaledToFill()
+                                                    case .failure: Image(systemName: "photo").foregroundColor(colors.muted)
+                                                    default: ProgressView()
+                                                    }
+                                                }
+                                                .frame(minWidth: 0, maxWidth: .infinity)
+                                                .aspectRatio(4/3, contentMode: .fill)
+                                                .clipped()
+                                                .cornerRadius(10)
+                                                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
+                                            }
+                                            .buttonStyle(.plain)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        .padding(20)
+                        .padding(.bottom, 40)
+                    }
+                } else {
+                    ScrollView(showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            InfoRow(label: "Title", value: entry.title.isEmpty ? "STC / 337" : entry.title)
+                            InfoRow(label: "Date", value: entry.entryDate)
+                            if !entry.description.isEmpty {
+                                InfoRow(label: "Description", value: entry.description)
+                            }
+                        }
+                        .padding(20)
+                    }
+                }
+            }
+            .navigationTitle("STC / 337 Entry")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done", action: onDismiss)
+                        .foregroundColor(colors.amber)
+                }
+            }
+            .fullScreenCover(isPresented: Binding(
+                get: { localEnlargedImageURL != nil },
+                set: { if !$0 { localEnlargedImageURL = nil } }
+            )) {
+                if let url = localEnlargedImageURL {
+                    EnlargeableImageSheet(imageURL: url, onDismiss: { localEnlargedImageURL = nil })
+                }
+            }
+            .task {
+                await vm.loadStcEntryDetail(aircraftId: aircraft.id, entryId: entry.id)
             }
         }
     }

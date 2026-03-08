@@ -177,7 +177,7 @@ struct HTMLLessonWebView: UIViewRepresentable {
     }
 }
 
-// MARK: - Fullscreen image (tap to enlarge)
+// Fullscreen image (tap to enlarge); use full space and allow landscape for maximum size
 struct EnlargeableImageSheet: View {
     let imageURL: URL
     let onDismiss: () -> Void
@@ -192,7 +192,9 @@ struct EnlargeableImageSheet: View {
                 default: ProgressView().tint(.white)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onTapGesture { onDismiss() }
     }
 }
