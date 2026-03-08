@@ -1,6 +1,7 @@
 // File: ASC/Views/Aircraft/AircraftDetailView.swift
 // Change from previous version: added PAX tab (index 3), logbook filter, detail view, thumbnails
 import SwiftUI
+import PhotosUI
 
 struct AircraftDetailView: View {
     let aircraft: Aircraft
@@ -112,16 +113,16 @@ struct AircraftDetailView: View {
             EditAircraftSheet(aircraft: aircraft, onDismiss: { showEditAircraft = false })
         }
         .sheet(isPresented: $showAddSquawk) {
-            AddSquawkPlaceholderSheet(aircraft: aircraft, onDismiss: { showAddSquawk = false }, onSaved: { Task { await vm.loadDetail(aircraftId: aircraft.id) } })
+            AddSquawkSheet(aircraft: aircraft, vm: vm, onDismiss: { showAddSquawk = false }, onSaved: { Task { await vm.loadDetail(aircraftId: aircraft.id) } })
         }
         .sheet(isPresented: $showAddAd) {
-            AddAdPlaceholderSheet(aircraft: aircraft, onDismiss: { showAddAd = false }, onSaved: { Task { await vm.loadDetail(aircraftId: aircraft.id) } })
+            AddAdSheet(aircraft: aircraft, vm: vm, onDismiss: { showAddAd = false }, onSaved: { Task { await vm.loadDetail(aircraftId: aircraft.id) } })
         }
         .sheet(isPresented: $showAddStc337) {
-            AddStc337PlaceholderSheet(aircraft: aircraft, onDismiss: { showAddStc337 = false }, onSaved: { Task { await vm.loadDetail(aircraftId: aircraft.id) } })
+            AddStc337Sheet(aircraft: aircraft, vm: vm, onDismiss: { showAddStc337 = false }, onSaved: { Task { await vm.loadDetail(aircraftId: aircraft.id) } })
         }
         .sheet(isPresented: $showAddLogbookEntry) {
-            AddLogbookEntryPlaceholderSheet(aircraft: aircraft, onDismiss: { showAddLogbookEntry = false }, onSaved: { Task { await vm.loadDetail(aircraftId: aircraft.id) } })
+            AddLogbookEntrySheet(aircraft: aircraft, vm: vm, onDismiss: { showAddLogbookEntry = false }, onSaved: { Task { await vm.loadDetail(aircraftId: aircraft.id) } })
         }
     }
 
@@ -622,111 +623,321 @@ struct EditAircraftSheet: View {
     }
 }
 
-// MARK: - Add Squawk / AD / STC/337 / Logbook placeholder sheets (API wiring later)
-private struct AddSquawkPlaceholderSheet: View {
+// MARK: - Image picker (camera or photo library) for logbook/STC scans
+private struct AircraftImagePicker: UIViewControllerRepresentable {
+    let sourceType: UIImagePickerController.SourceType
+    @Binding var imageData: Data?
+    @Environment(\.dismiss) private var dismiss
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = sourceType
+        picker.delegate = context.coordinator
+        picker.allowsEditing = false
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: AircraftImagePicker
+        init(_ parent: AircraftImagePicker) { self.parent = parent }
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+            if let img = info[.originalImage] as? UIImage {
+                parent.imageData = img.jpegData(compressionQuality: 0.85)
+            }
+            parent.dismiss()
+        }
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) { parent.dismiss() }
+    }
+}
+
+// MARK: - Add Squawk
+private struct AddSquawkSheet: View {
     let aircraft: Aircraft
+    @ObservedObject var vm: AircraftDetailViewModel
     let onDismiss: () -> Void
     let onSaved: () -> Void
     @Environment(\.mdzColors) private var colors
+    @State private var title = ""
+    @State private var description = ""
+    @State private var status = "open"
+    @State private var priority = "normal"
+    @State private var squawkDate = ""
+    @State private var saving = false
+    @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                colors.background.ignoresSafeArea()
-                Text("Add squawk for \(aircraft.tailNumber). Form and API integration coming soon.")
-                    .font(.subheadline)
-                    .foregroundColor(colors.muted)
-                    .multilineTextAlignment(.center)
-                    .padding()
+            Form {
+                Section { TextField("Title", text: $title).textInputAutocapitalization(.sentences) }
+                Section { TextField("Description (optional)", text: $description, axis: .vertical).lineLimit(3...) }
+                Section {
+                    Picker("Status", selection: $status) {
+                        Text("Open").tag("open"); Text("Deferred").tag("deferred"); Text("Closed").tag("closed")
+                    }
+                    Picker("Priority", selection: $priority) {
+                        Text("Low").tag("low"); Text("Normal").tag("normal"); Text("High").tag("high"); Text("Critical").tag("critical")
+                    }
+                    TextField("Date (YYYY-MM-DD)", text: $squawkDate).keyboardType(.numbersAndPunctuation)
+                }
+                if let err = errorMessage {
+                    Section { Text(err).foregroundColor(colors.danger).font(.caption) }
+                }
             }
+            .scrollContentBackground(.hidden).background(colors.background)
             .navigationTitle("Add Squawk")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", action: onDismiss).foregroundColor(colors.amber)
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel", action: onDismiss).foregroundColor(colors.amber) }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { Task { await save() } }.fontWeight(.semibold).foregroundColor(colors.amber).disabled(saving || title.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
+            .onAppear { if squawkDate.isEmpty { squawkDate = Self.todayString() } }
         }
+    }
+    private static func todayString() -> String {
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; return f.string(from: Date())
+    }
+    private func save() async {
+        saving = true; errorMessage = nil; defer { saving = false }
+        let (id, err) = await vm.postSquawk(aircraftId: aircraft.id, title: title.trimmingCharacters(in: .whitespaces), description: description.trimmingCharacters(in: .whitespaces), status: status, priority: priority, squawkDate: squawkDate.isEmpty ? Self.todayString() : squawkDate)
+        if err != nil { errorMessage = err; return }
+        onSaved(); onDismiss()
     }
 }
 
-private struct AddAdPlaceholderSheet: View {
+// MARK: - Add AD
+private struct AddAdSheet: View {
     let aircraft: Aircraft
+    @ObservedObject var vm: AircraftDetailViewModel
     let onDismiss: () -> Void
     let onSaved: () -> Void
     @Environment(\.mdzColors) private var colors
+    @State private var category = "airframe"
+    @State private var adNumber = ""
+    @State private var title = ""
+    @State private var notes = ""
+    @State private var lastCompliedDate = ""
+    @State private var nextDueDate = ""
+    @State private var statusOverride = "ok"
+    @State private var saving = false
+    @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                colors.background.ignoresSafeArea()
-                Text("Add AD for \(aircraft.tailNumber). Form and API integration coming soon.")
-                    .font(.subheadline)
-                    .foregroundColor(colors.muted)
-                    .multilineTextAlignment(.center)
-                    .padding()
+            Form {
+                Section {
+                    Picker("Category", selection: $category) {
+                        Text("Airframe").tag("airframe"); Text("Engine").tag("engine"); Text("Prop").tag("prop")
+                    }
+                    TextField("AD Number", text: $adNumber).textInputAutocapitalization(.none)
+                    TextField("Title", text: $title).textInputAutocapitalization(.sentences)
+                    TextField("Notes", text: $notes, axis: .vertical).lineLimit(2...)
+                }
+                Section {
+                    TextField("Last complied (YYYY-MM-DD)", text: $lastCompliedDate).keyboardType(.numbersAndPunctuation)
+                    TextField("Next due (YYYY-MM-DD)", text: $nextDueDate).keyboardType(.numbersAndPunctuation)
+                    Picker("Status", selection: $statusOverride) {
+                        Text("OK").tag("ok"); Text("Due").tag("due"); Text("Overdue").tag("overdue")
+                    }
+                }
+                if let err = errorMessage {
+                    Section { Text(err).foregroundColor(colors.danger).font(.caption) }
+                }
             }
+            .scrollContentBackground(.hidden).background(colors.background)
             .navigationTitle("Add AD")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", action: onDismiss).foregroundColor(colors.amber)
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel", action: onDismiss).foregroundColor(colors.amber) }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { Task { await save() } }.fontWeight(.semibold).foregroundColor(colors.amber).disabled(saving)
                 }
             }
         }
     }
-}
-
-private struct AddStc337PlaceholderSheet: View {
-    let aircraft: Aircraft
-    let onDismiss: () -> Void
-    let onSaved: () -> Void
-    @Environment(\.mdzColors) private var colors
-
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                colors.background.ignoresSafeArea()
-                Text("Add STC/337 for \(aircraft.tailNumber). Form and API integration coming soon.")
-                    .font(.subheadline)
-                    .foregroundColor(colors.muted)
-                    .multilineTextAlignment(.center)
-                    .padding()
-            }
-            .navigationTitle("Add STC/337")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", action: onDismiss).foregroundColor(colors.amber)
-                }
-            }
-        }
+    private func save() async {
+        saving = true; errorMessage = nil; defer { saving = false }
+        let (_, err) = await vm.postAd(aircraftId: aircraft.id, category: category, adNumber: adNumber, title: title, notes: notes, lastCompliedDate: lastCompliedDate, nextDueDate: nextDueDate, statusOverride: statusOverride)
+        if err != nil { errorMessage = err; return }
+        onSaved(); onDismiss()
     }
 }
 
-private struct AddLogbookEntryPlaceholderSheet: View {
+// MARK: - Add Logbook Entry (with camera/photo)
+private struct AddLogbookEntrySheet: View {
     let aircraft: Aircraft
+    @ObservedObject var vm: AircraftDetailViewModel
     let onDismiss: () -> Void
     let onSaved: () -> Void
     @Environment(\.mdzColors) private var colors
+    @State private var entryDate = ""
+    @State private var description = ""
+    @State private var bookType = "airframe"
+    @State private var tachTime = ""
+    @State private var hobbsTime = ""
+    @State private var mechanicName = ""
+    @State private var mechanicRating = ""
+    @State private var imageData: Data?
+    @State private var showImageSource = false
+    @State private var showCamera = false
+    @State private var showPhotoLibrary = false
+    @State private var saving = false
+    @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                colors.background.ignoresSafeArea()
-                Text("Add logbook entry for \(aircraft.tailNumber). Form and API integration coming soon.")
-                    .font(.subheadline)
-                    .foregroundColor(colors.muted)
-                    .multilineTextAlignment(.center)
-                    .padding()
+            Form {
+                Section {
+                    TextField("Date (YYYY-MM-DD)", text: $entryDate).keyboardType(.numbersAndPunctuation)
+                    TextField("Description", text: $description, axis: .vertical).lineLimit(3...)
+                    Picker("Book type", selection: $bookType) {
+                        Text("Aircraft").tag("airframe"); Text("Engine").tag("engine"); Text("Prop").tag("prop")
+                    }
+                    TextField("Tach time", text: $tachTime).keyboardType(.decimalPad)
+                    TextField("Hobbs time", text: $hobbsTime).keyboardType(.decimalPad)
+                    TextField("Performed by", text: $mechanicName)
+                    TextField("Rating", text: $mechanicRating)
+                }
+                Section(header: Text("Photo / Scan")) {
+                    Button {
+                        showImageSource = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "camera.fill").foregroundColor(colors.primary)
+                            Text(imageData == nil ? "Take photo or choose from library" : "Photo attached (tap to change)")
+                                .foregroundColor(colors.text)
+                        }
+                    }
+                    .confirmationDialog("Add photo", isPresented: $showImageSource) {
+                        Button("Take Photo") { showCamera = true }
+                        Button("Choose from Library") { showPhotoLibrary = true }
+                        Button("Cancel", role: .cancel) { }
+                    }
+                    if imageData != nil {
+                        Image(uiImage: UIImage(data: imageData!) ?? UIImage())
+                            .resizable().scaledToFit().frame(maxHeight: 120).cornerRadius(8)
+                    }
+                }
+                if let err = errorMessage {
+                    Section { Text(err).foregroundColor(colors.danger).font(.caption) }
+                }
             }
+            .scrollContentBackground(.hidden).background(colors.background)
             .navigationTitle("Add Logbook Entry")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", action: onDismiss).foregroundColor(colors.amber)
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel", action: onDismiss).foregroundColor(colors.amber) }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { Task { await save() } }.fontWeight(.semibold).foregroundColor(colors.amber).disabled(saving || description.trimmingCharacters(in: .whitespaces).isEmpty || entryDate.isEmpty)
                 }
             }
+            .fullScreenCover(isPresented: $showCamera) {
+                AircraftImagePicker(sourceType: .camera, imageData: $imageData)
+            }
+            .fullScreenCover(isPresented: $showPhotoLibrary) {
+                AircraftImagePicker(sourceType: .photoLibrary, imageData: $imageData)
+            }
+            .onAppear { if entryDate.isEmpty { entryDate = Self.todayString() } }
         }
+    }
+    private static func todayString() -> String { let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; return f.string(from: Date()) }
+    private func save() async {
+        saving = true; errorMessage = nil; defer { saving = false }
+        let (_, err) = await vm.postLogbook(aircraftId: aircraft.id, entryDate: entryDate.isEmpty ? Self.todayString() : entryDate, description: description.trimmingCharacters(in: .whitespaces), bookType: bookType, tachTime: tachTime, hobbsTime: hobbsTime, mechanicName: mechanicName, mechanicRating: mechanicRating, imageData: imageData)
+        if err != nil { errorMessage = err; return }
+        onSaved(); onDismiss()
+    }
+}
+
+// MARK: - Add STC/337 (with camera/photo)
+private struct AddStc337Sheet: View {
+    let aircraft: Aircraft
+    @ObservedObject var vm: AircraftDetailViewModel
+    let onDismiss: () -> Void
+    let onSaved: () -> Void
+    @Environment(\.mdzColors) private var colors
+    @State private var recordType = "stc"
+    @State private var title = ""
+    @State private var description = ""
+    @State private var stcNumber = ""
+    @State private var form337Number = ""
+    @State private var entryDate = ""
+    @State private var approvalDate = ""
+    @State private var fieldApproval = ""
+    @State private var imageData: Data?
+    @State private var showImageSource = false
+    @State private var showCamera = false
+    @State private var showPhotoLibrary = false
+    @State private var saving = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Picker("Type", selection: $recordType) {
+                        Text("STC").tag("stc"); Text("Form 337").tag("form337")
+                    }
+                    TextField("Title", text: $title).textInputAutocapitalization(.sentences)
+                    TextField("Description", text: $description, axis: .vertical).lineLimit(2...)
+                    TextField("STC number", text: $stcNumber).textInputAutocapitalization(.none)
+                    TextField("Form 337 number", text: $form337Number).textInputAutocapitalization(.none)
+                    TextField("Entry date (YYYY-MM-DD)", text: $entryDate).keyboardType(.numbersAndPunctuation)
+                    TextField("Approval date (YYYY-MM-DD)", text: $approvalDate).keyboardType(.numbersAndPunctuation)
+                    TextField("Field approval", text: $fieldApproval)
+                }
+                Section(header: Text("Photo / Scan")) {
+                    Button {
+                        showImageSource = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "camera.fill").foregroundColor(colors.primary)
+                            Text(imageData == nil ? "Take photo or choose from library" : "Photo attached (tap to change)")
+                                .foregroundColor(colors.text)
+                        }
+                    }
+                    .confirmationDialog("Add photo", isPresented: $showImageSource) {
+                        Button("Take Photo") { showCamera = true }
+                        Button("Choose from Library") { showPhotoLibrary = true }
+                        Button("Cancel", role: .cancel) { }
+                    }
+                    if imageData != nil {
+                        Image(uiImage: UIImage(data: imageData!) ?? UIImage())
+                            .resizable().scaledToFit().frame(maxHeight: 120).cornerRadius(8)
+                    }
+                }
+                if let err = errorMessage {
+                    Section { Text(err).foregroundColor(colors.danger).font(.caption) }
+                }
+            }
+            .scrollContentBackground(.hidden).background(colors.background)
+            .navigationTitle("Add STC/337")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel", action: onDismiss).foregroundColor(colors.amber) }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { Task { await save() } }.fontWeight(.semibold).foregroundColor(colors.amber).disabled(saving)
+                }
+            }
+            .fullScreenCover(isPresented: $showCamera) {
+                AircraftImagePicker(sourceType: .camera, imageData: $imageData)
+            }
+            .fullScreenCover(isPresented: $showPhotoLibrary) {
+                AircraftImagePicker(sourceType: .photoLibrary, imageData: $imageData)
+            }
+            .onAppear { if entryDate.isEmpty { entryDate = Self.todayString() } }
+        }
+    }
+    private static func todayString() -> String { let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; return f.string(from: Date()) }
+    private func save() async {
+        saving = true; errorMessage = nil; defer { saving = false }
+        let (_, err) = await vm.postStc337(aircraftId: aircraft.id, recordType: recordType, title: title, description: description, stcNumber: stcNumber, form337Number: form337Number, entryDate: entryDate, approvalDate: approvalDate, fieldApproval: fieldApproval, imageData: imageData)
+        if err != nil { errorMessage = err; return }
+        onSaved(); onDismiss()
     }
 }

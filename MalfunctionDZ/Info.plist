@@ -7,5 +7,9 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Used to photograph logbook pages and STC/337 documents for aircraft records.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Used to attach existing photos or scans of logbook pages and STC/337 documents.</string>
 </dict>
 </plist>

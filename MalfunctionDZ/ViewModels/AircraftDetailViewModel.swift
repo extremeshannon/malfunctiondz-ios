@@ -149,4 +149,95 @@ class AircraftDetailViewModel: ObservableObject {
               let http = response as? HTTPURLResponse else { return (nil, nil) }
         return (data, http.statusCode)
     }
+
+    // MARK: - Create (POST multipart) for Add flows
+    private struct CreateResponse: Decodable { let ok: Bool; let id: Int?; let error: String? }
+
+    private func postMultipart(path: String, formFields: [String: String], fileData: Data? = nil, fileName: String = "photo.jpg") async -> (id: Int?, error: String?) {
+        guard let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)\(path)") else { return (nil, "Not configured") }
+        let boundary = "----MalfunctionDZ-\(UUID().uuidString)"
+        var body = Data()
+        for (key, value) in formFields {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(value)\r\n".data(using: .utf8)!)
+        }
+        if let data = fileData, !data.isEmpty {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
+            body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+            body.append(data)
+            body.append("\r\n".data(using: .utf8)!)
+        }
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        req.setValue("\(body.count)", forHTTPHeaderField: "Content-Length")
+        req.httpBody = body
+        guard let (data, response) = try? await URLSession.shared.data(for: req),
+              let http = response as? HTTPURLResponse else { return (nil, "Network error") }
+        guard let decoded = try? JSONDecoder().decode(CreateResponse.self, from: data) else {
+            return (nil, "Invalid response")
+        }
+        if decoded.ok { return (decoded.id, nil) }
+        return (nil, decoded.error ?? "Server error")
+    }
+
+    func postSquawk(aircraftId: Int, title: String, description: String, status: String, priority: String, squawkDate: String) async -> (id: Int?, error: String?) {
+        let fields: [String: String] = [
+            "id": "\(aircraftId)",
+            "title": title,
+            "description": description,
+            "status": status,
+            "priority": priority,
+            "squawk_date": squawkDate,
+        ]
+        return await postMultipart(path: "/api/aircraft/squawks.php", formFields: fields)
+    }
+
+    func postAd(aircraftId: Int, category: String, adNumber: String, title: String, notes: String, lastCompliedDate: String, nextDueDate: String, statusOverride: String) async -> (id: Int?, error: String?) {
+        let fields: [String: String] = [
+            "id": "\(aircraftId)",
+            "category": category,
+            "ad_number": adNumber,
+            "title": title,
+            "notes": notes,
+            "last_complied_date": lastCompliedDate,
+            "next_due_date": nextDueDate,
+            "status_override": statusOverride,
+        ]
+        return await postMultipart(path: "/api/aircraft/ads.php", formFields: fields)
+    }
+
+    func postLogbook(aircraftId: Int, entryDate: String, description: String, bookType: String, tachTime: String, hobbsTime: String, mechanicName: String, mechanicRating: String, imageData: Data?) async -> (id: Int?, error: String?) {
+        var fields: [String: String] = [
+            "id": "\(aircraftId)",
+            "entry_date": entryDate,
+            "description": description,
+            "book_type": bookType,
+            "tach_time": tachTime,
+            "hobbs_time": hobbsTime,
+            "mechanic_name": mechanicName,
+            "mechanic_rating": mechanicRating,
+        ]
+        return await postMultipart(path: "/api/aircraft/logbook.php", formFields: fields, fileData: imageData, fileName: "logbook.jpg")
+    }
+
+    func postStc337(aircraftId: Int, recordType: String, title: String, description: String, stcNumber: String, form337Number: String, entryDate: String, approvalDate: String, fieldApproval: String, imageData: Data?) async -> (id: Int?, error: String?) {
+        let fields: [String: String] = [
+            "id": "\(aircraftId)",
+            "record_type": recordType,
+            "title": title,
+            "description": description,
+            "stc_number": stcNumber,
+            "form337_number": form337Number,
+            "entry_date": entryDate,
+            "approval_date": approvalDate,
+            "field_approval": fieldApproval,
+        ]
+        return await postMultipart(path: "/api/aircraft/stc337.php", formFields: fields, fileData: imageData, fileName: "stc337.jpg")
+    }
 }
