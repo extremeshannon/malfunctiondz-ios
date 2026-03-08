@@ -19,9 +19,10 @@ struct Aircraft: Codable, Identifiable, Hashable {
     let lastOilChange: String?
     let ttsn: String?
     let smoh: String?
+    let propTime: String?
     let slots: Int?
     let lastMic: String?
-    /// Multi-engine (optional from API); used for "Multi only" filter.
+    /// Multi-engine (optional from API); when true, logbook has Left/Right engine.
     var isMultiEngine: Bool?
 
     enum CodingKeys: String, CodingKey {
@@ -35,6 +36,7 @@ struct Aircraft: Codable, Identifiable, Hashable {
         case lastOilChange = "last_oil_change"
         case ttsn, smoh, slots
         case lastMic       = "last_mic"
+        case propTime      = "prop_time"
         case isMultiEngine = "multi_engine"
     }
 
@@ -58,6 +60,7 @@ struct Aircraft: Codable, Identifiable, Hashable {
         smoh = try? c.decodeIfPresent(String.self, forKey: .smoh)
         slots = try? c.decodeIfPresent(Int.self, forKey: .slots)
         lastMic = try? c.decodeIfPresent(String.self, forKey: .lastMic)
+        propTime = try? c.decodeIfPresent(String.self, forKey: .propTime)
         isMultiEngine = try? c.decodeIfPresent(Bool.self, forKey: .isMultiEngine)
     }
 
@@ -77,6 +80,7 @@ struct Aircraft: Codable, Identifiable, Hashable {
         try c.encodeIfPresent(smoh, forKey: .smoh)
         try c.encodeIfPresent(slots, forKey: .slots)
         try c.encodeIfPresent(lastMic, forKey: .lastMic)
+        try c.encodeIfPresent(propTime, forKey: .propTime)
         try c.encodeIfPresent(isMultiEngine, forKey: .isMultiEngine)
     }
 
@@ -138,6 +142,8 @@ struct LogbookEntry: Codable, Identifiable {
     var bookTypeLabel: String {
         switch (bookType ?? "airframe").lowercased() {
         case "engine": return "Engine"
+        case "engine_left", "left_engine": return "Left Engine"
+        case "engine_right", "right_engine": return "Right Engine"
         case "prop":   return "Prop"
         default:      return "Aircraft"
         }
@@ -172,6 +178,8 @@ struct LogbookEntryDetail: Codable {
     var bookTypeLabel: String {
         switch (bookType ?? "airframe").lowercased() {
         case "engine": return "Engine"
+        case "engine_left", "left_engine": return "Left Engine"
+        case "engine_right", "right_engine": return "Right Engine"
         case "prop":   return "Prop"
         default:      return "Aircraft"
         }

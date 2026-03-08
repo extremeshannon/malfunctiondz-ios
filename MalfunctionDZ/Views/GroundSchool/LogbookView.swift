@@ -176,82 +176,6 @@ struct LogbookView: View {
             Button("OK", role: .cancel) { vm.error = nil }
         } message: { Text(vm.error ?? "") }
     }
-}
-
-// MARK: - Logbook Config (single page, opened from gear icon)
-struct LogbookConfigSheet: View {
-    @ObservedObject var vm: LogbookViewModel
-    let onTapPrior: () -> Void
-    let onTapStartFreefall: () -> Void
-    let onTapHomeDz: () -> Void
-    let onDismiss: () -> Void
-    @Environment(\.mdzColors) private var colors
-    @Environment(\.mdzColorScheme) private var mdzColorScheme
-
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                colors.background.ignoresSafeArea()
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("All logbook settings in one place. Tap to edit.")
-                            .font(.system(size: 13))
-                            .foregroundColor(colors.muted)
-                            .padding(.bottom, 8)
-                        configRow("Prior Jumps", subtitle: "Jumps you had before using this system", value: "\(vm.priorJumpCount)") {
-                            onTapPrior()
-                        }
-                        configRow("Start Freefall Time", subtitle: "Default freefall when adding a jump (e.g. 45 or 1:30)", value: vm.startFreefallTime.isEmpty ? "Not set" : vm.startFreefallTime) {
-                            onTapStartFreefall()
-                        }
-                        configRow("Home Dropzone", subtitle: "Your home DZ, prefills when adding a jump", value: vm.homeDropzone.isEmpty ? "Not set" : vm.homeDropzone) {
-                            onTapHomeDz()
-                        }
-                    }
-                    .padding(20)
-                }
-            }
-            .navigationTitle("Logbook Config")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
-            .toolbarBackground(colors.navyMid, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done", action: onDismiss)
-                        .foregroundColor(colors.amber)
-                }
-            }
-        }
-    }
-
-    private func configRow(_ label: String, subtitle: String, value: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(label.uppercased())
-                        .font(.system(size: 9, weight: .black))
-                        .foregroundColor(colors.muted)
-                        .tracking(1)
-                    Text(subtitle)
-                        .font(.system(size: 12))
-                        .foregroundColor(colors.muted)
-                }
-                Spacer()
-                Text(value)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(colors.amber)
-                    .lineLimit(1)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(colors.muted)
-            }
-            .padding(14)
-            .background(colors.card)
-            .cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
-        }
-        .buttonStyle(.plain)
-    }
 
     private func configCard(_ label: String, subtitle: String, value: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -500,6 +424,82 @@ struct LogbookConfigSheet: View {
             },
             onCancel: { showAddEntry = false }
         )
+    }
+}
+
+// MARK: - Logbook Config (single page, opened from gear icon)
+struct LogbookConfigSheet: View {
+    @ObservedObject var vm: LogbookViewModel
+    let onTapPrior: () -> Void
+    let onTapStartFreefall: () -> Void
+    let onTapHomeDz: () -> Void
+    let onDismiss: () -> Void
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                colors.background.ignoresSafeArea()
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("All logbook settings in one place. Tap to edit.")
+                            .font(.system(size: 13))
+                            .foregroundColor(colors.muted)
+                            .padding(.bottom, 8)
+                        configRow("Prior Jumps", subtitle: "Jumps you had before using this system", value: "\(vm.priorJumpCount)") {
+                            onTapPrior()
+                        }
+                        configRow("Start Freefall Time", subtitle: "Default freefall when adding a jump (e.g. 45 or 1:30)", value: vm.startFreefallTime.isEmpty ? "Not set" : vm.startFreefallTime) {
+                            onTapStartFreefall()
+                        }
+                        configRow("Home Dropzone", subtitle: "Your home DZ, prefills when adding a jump", value: vm.homeDropzone.isEmpty ? "Not set" : vm.homeDropzone) {
+                            onTapHomeDz()
+                        }
+                    }
+                    .padding(20)
+                }
+            }
+            .navigationTitle("Logbook Config")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done", action: onDismiss)
+                        .foregroundColor(colors.amber)
+                }
+            }
+        }
+    }
+
+    private func configRow(_ label: String, subtitle: String, value: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(label.uppercased())
+                        .font(.system(size: 9, weight: .black))
+                        .foregroundColor(colors.muted)
+                        .tracking(1)
+                    Text(subtitle)
+                        .font(.system(size: 12))
+                        .foregroundColor(colors.muted)
+                }
+                Spacer()
+                Text(value)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(colors.amber)
+                    .lineLimit(1)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(colors.muted)
+            }
+            .padding(14)
+            .background(colors.card)
+            .cornerRadius(12)
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
     }
 }
 

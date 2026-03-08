@@ -12,8 +12,11 @@ struct AircraftDetailView: View {
     @State private var logbookFilter = "all"
     @State private var selectedLogbookEntry: LogbookEntry?
     @State private var enlargedImageURL: URL?
+    @State private var showEditAircraft = false
 
-    private let logbookFilters = [("all", "All"), ("airframe", "Aircraft"), ("engine", "Engine"), ("prop", "Prop")]
+    private let logbookFiltersSingle: [(String, String)] = [("all", "All"), ("airframe", "Aircraft"), ("engine", "Engine"), ("prop", "Prop")]
+    private var logbookFiltersMulti: [(String, String)] { [("all", "All"), ("airframe", "Aircraft"), ("engine_left", "Left Engine"), ("engine_right", "Right Engine"), ("prop", "Prop")] }
+    private var logbookFilters: [(String, String)] { (aircraft.isMultiEngine == true) ? logbookFiltersMulti : logbookFiltersSingle }
 
     var body: some View {
         ZStack {
@@ -38,7 +41,25 @@ struct AircraftDetailView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle(aircraft.tailNumber)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if !isReadOnly {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showEditAircraft = true
+                    } label: {
+                        Image(systemName: "pencil.circle")
+                            .font(.system(size: 20))
+                    }
+                }
+            }
+        }
         .task { await vm.loadDetail(aircraftId: aircraft.id) }
+        .onChange(of: aircraft.isMultiEngine) { _, _ in
+            if aircraft.isMultiEngine == true && (logbookFilter == "engine" || logbookFilter == "airframe") {
+                logbookFilter = "all"
+                Task { await vm.loadLogbook(aircraftId: aircraft.id, bookType: "all") }
+            }
+        }
         .sheet(item: $selectedLogbookEntry) { entry in
             AircraftLogbookEntryDetailSheet(
                 aircraft: aircraft,
@@ -55,6 +76,9 @@ struct AircraftDetailView: View {
             if let url = enlargedImageURL {
                 EnlargeableImageSheet(imageURL: url, onDismiss: { enlargedImageURL = nil })
             }
+        }
+        .sheet(isPresented: $showEditAircraft) {
+            EditAircraftSheet(aircraft: aircraft, onDismiss: { showEditAircraft = false })
         }
     }
 
@@ -76,14 +100,16 @@ struct AircraftDetailView: View {
                         .background(aircraft.status == "airworthy" || aircraft.status == "active" ? colors.aviation : colors.amber)
                         .cornerRadius(8)
                     if let mic = aircraft.lastMic ?? aircraft.lastOilChange ?? aircraft.annualDue, !mic.isEmpty {
-                        Text("Last mic \(mic)")
+                        Text("Last mx: \(mic)")
                             .font(.system(size: 11))
                             .foregroundColor(.white.opacity(0.9))
                     }
                 }
+                // Aircraft time, engine time, prop time, slots — from DB
                 HStack(spacing: 20) {
                     metricBlock(label: "TTSN", value: aircraft.ttsn ?? "—", valueColor: .white)
                     metricBlock(label: "SMOH", value: aircraft.smoh ?? "—", valueColor: colors.amber)
+                    metricBlock(label: "PROP", value: aircraft.propTime ?? "—", valueColor: .white)
                     metricBlock(label: "SLOTS", value: aircraft.slots.map { "\($0)" } ?? "—", valueColor: .white)
                 }
                 .padding(.top, 4)
@@ -91,18 +117,18 @@ struct AircraftDetailView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .padding(.horizontal, 16)
-            .background(colors.aviation)
+            .background(colors.navyMid)
             Picker("", selection: $selectedTab) {
                 Text("Squawks").tag(0)
                 Text("Logbooks").tag(1)
                 Text("ADs").tag(2)
-                Text("STC").tag(3)
+                Text("STC/337").tag(3)
                 Text("Pax").tag(4)
             }
             .pickerStyle(.segmented)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
-            .background(colors.aviation.opacity(0.95))
+            .background(colors.navyMid.opacity(0.95))
         }
     }
 
@@ -420,6 +446,58 @@ struct AircraftLogbookEntryDetailSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done", action: onDismiss)
                         .foregroundColor(colors.amber)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Edit Aircraft (multi-engine and future fields)
+struct EditAircraftSheet: View {
+    let aircraft: Aircraft
+    let onDismiss: () -> Void
+    @Environment(\.mdzColors) private var colors
+    @State private var isMultiEngine: Bool
+
+    init(aircraft: Aircraft, onDismiss: @escaping () -> Void) {
+        self.aircraft = aircraft
+        self.onDismiss = onDismiss
+        _isMultiEngine = State(initialValue: aircraft.isMultiEngine ?? false)
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                colors.background.ignoresSafeArea()
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("When the update-aircraft API is ready, this form will save tail number, times, and multi-engine. Multi-engine aircraft use Left Engine and Right Engine logbook categories.")
+                        .font(.subheadline)
+                        .foregroundColor(colors.muted)
+                        .padding(.horizontal)
+                    Toggle(isOn: $isMultiEngine) {
+                        Text("Multi-engine")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .tint(colors.accent)
+                    .padding(.horizontal, 24)
+                    Spacer()
+                }
+                .padding(.top, 24)
+            }
+            .navigationTitle("Edit Aircraft")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onDismiss)
+                        .foregroundColor(colors.amber)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        // TODO: call API to update aircraft multi_engine
+                        onDismiss()
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundColor(colors.amber)
                 }
             }
         }

@@ -385,18 +385,25 @@ struct AlertBadge: View {
 struct AddAircraftPlaceholderSheet: View {
     let onDismiss: () -> Void
     @Environment(\.mdzColors) private var colors
+    @State private var isMultiEngine = false
 
     var body: some View {
         NavigationStack {
             ZStack {
                 colors.background.ignoresSafeArea()
-                VStack(spacing: 16) {
+                VStack(spacing: 20) {
                     Image(systemName: "airplane.circle")
                         .font(.system(size: 56))
                         .foregroundColor(colors.muted)
                     Text("Add Aircraft")
                         .font(.headline)
-                    Text("Add aircraft form will be wired when the API is ready.")
+                    Toggle(isOn: $isMultiEngine) {
+                        Text("Multi-engine")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .tint(colors.accent)
+                    .padding(.horizontal, 24)
+                    Text("When the add-aircraft API is ready, this form will include tail number, model, TTSN, SMOH, prop time, and multi-engine. Multi-engine aircraft use Left Engine and Right Engine logbooks.")
                         .font(.subheadline)
                         .foregroundColor(colors.muted)
                         .multilineTextAlignment(.center)
