@@ -328,7 +328,8 @@ struct ApiBaseUrlSection: View {
 
     private var currentDisplay: String {
         if let custom = UserDefaults.standard.string(forKey: kApiBaseUrlKey), !custom.isEmpty {
-            return custom
+            let t = custom.trimmingCharacters(in: .whitespacesAndNewlines)
+            return t.hasSuffix("/") ? String(t.dropLast()) : t
         }
         return "https://malfunctiondz.com (default)"
     }
