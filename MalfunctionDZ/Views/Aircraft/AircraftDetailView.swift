@@ -122,7 +122,7 @@ struct AircraftDetailView: View {
             AddStc337Sheet(aircraft: aircraft, vm: vm, onDismiss: { showAddStc337 = false }, onSaved: { Task { await vm.loadDetail(aircraftId: aircraft.id) } })
         }
         .sheet(isPresented: $showAddLogbookEntry) {
-            AddLogbookEntrySheet(aircraft: aircraft, vm: vm, onDismiss: { showAddLogbookEntry = false }, onSaved: { Task { await vm.loadDetail(aircraftId: aircraft.id) } })
+            AddAircraftLogbookEntrySheet(aircraft: aircraft, vm: vm, onDismiss: { showAddLogbookEntry = false }, onSaved: { Task { await vm.loadDetail(aircraftId: aircraft.id) } })
         }
     }
 
@@ -768,8 +768,8 @@ private struct AddAdSheet: View {
     }
 }
 
-// MARK: - Add Logbook Entry (with camera/photo)
-private struct AddLogbookEntrySheet: View {
+// MARK: - Add Logbook Entry (with camera/photo) — aircraft maintenance logbook
+private struct AddAircraftLogbookEntrySheet: View {
     let aircraft: Aircraft
     @ObservedObject var vm: AircraftDetailViewModel
     let onDismiss: () -> Void
