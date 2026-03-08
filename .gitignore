@@ -1,0 +1,13 @@
+# Python venv (e.g. for Pillow / asset scripts)
+.venv_pillow/
+
+# Local one-off scripts (remove this line if you want to track make_logo_transparent.py)
+make_logo_transparent.py
+
+# Xcode
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+
+# macOS
+.DS_Store
