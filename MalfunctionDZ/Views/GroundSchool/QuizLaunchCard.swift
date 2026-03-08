@@ -16,6 +16,7 @@ struct QuizLaunchCard: View {
     let lastAttempt: QuizLastAttempt?
     @State private var showQuiz = false
     @State private var showLockedAlert = false
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -24,10 +25,10 @@ struct QuizLaunchCard: View {
             HStack {
                 Image(systemName: "pencil.and.list.clipboard")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(isUnlocked ? .mdzAmber : .mdzMuted)
+                    .foregroundColor(isUnlocked ? colors.amber : colors.muted)
                 Text("QUIZ")
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(isUnlocked ? .mdzAmber : .mdzMuted)
+                    .foregroundColor(isUnlocked ? colors.amber : colors.muted)
                     .tracking(2)
                 Spacer()
                 if !isUnlocked {
@@ -38,15 +39,15 @@ struct QuizLaunchCard: View {
                             .font(.system(size: 10, weight: .black))
                             .tracking(1)
                     }
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color.mdzBorder.opacity(0.5))
+                    .background(colors.border.opacity(0.5))
                     .clipShape(Capsule())
                 } else if let last = lastAttempt {
                     StatusPill(
                         label: last.passed ? "PASSED" : "FAILED",
-                        color: last.passed ? .mdzGreen : .mdzDanger
+                        color: last.passed ? colors.green : colors.danger
                     )
                 }
             }
@@ -54,23 +55,23 @@ struct QuizLaunchCard: View {
             // ── Title ────────────────────────────────────
             Text(title)
                 .font(.system(size: 15, weight: .bold))
-                .foregroundColor(isUnlocked ? .mdzText : .mdzMuted)
+                .foregroundColor(isUnlocked ? colors.text : colors.muted)
 
             // ── Meta ─────────────────────────────────────
             HStack(spacing: 16) {
                 Label("\(questionCount) questions", systemImage: "questionmark.circle")
                     .font(.system(size: 12))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
                 Label("Pass: \(Int(passPercentage))%", systemImage: "checkmark.shield")
                     .font(.system(size: 12))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
 
             // ── Last score ───────────────────────────────
             if let last = lastAttempt {
                 Text(String(format: "Last score: %.0f%%", last.score))
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(last.passed ? .mdzGreen : .mdzDanger)
+                    .foregroundColor(last.passed ? colors.green : colors.danger)
             }
 
             // ── Lock reason ──────────────────────────────
@@ -81,10 +82,10 @@ struct QuizLaunchCard: View {
                     Text(reason)
                         .font(.system(size: 12, weight: .medium))
                 }
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.mdzBorder.opacity(0.3))
+                .background(colors.border.opacity(0.3))
                 .cornerRadius(8)
             }
 
@@ -102,20 +103,20 @@ struct QuizLaunchCard: View {
                     Text(buttonLabel)
                         .font(.system(size: 14, weight: .bold))
                 }
-                .foregroundColor(isUnlocked ? .white : .mdzMuted)
+                .foregroundColor(isUnlocked ? .white : colors.muted)
                 .frame(maxWidth: .infinity)
                 .frame(height: 44)
-                .background(isUnlocked ? Color.mdzAmber : Color.mdzBorder.opacity(0.4))
+                .background(isUnlocked ? colors.amber : colors.border.opacity(0.4))
                 .cornerRadius(10)
             }
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .strokeBorder(
-                    isUnlocked ? Color.mdzAmber.opacity(0.3) : Color.mdzBorder,
+                    isUnlocked ? colors.amber.opacity(0.3) : colors.border,
                     lineWidth: 1
                 )
         )

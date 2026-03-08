@@ -15,24 +15,26 @@ struct NotificationsView: View {
     @State private var items: [PushNotificationItem] = []
     @State private var loading = true
     @Environment(\.horizontalSizeClass) private var hSizeClass
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
     private var isWide: Bool { hSizeClass == .regular }
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             if loading {
-                ProgressView().tint(.mdzBlue).scaleEffect(1.2)
+                ProgressView().tint(colors.primary).scaleEffect(1.2)
             } else if items.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "bell.slash")
                         .font(.system(size: 44))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                     Text("No notifications yet")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                     Text("Status updates and announcements will appear here")
                         .font(.system(size: 13))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                         .multilineTextAlignment(.center)
                 }
                 .padding(32)
@@ -49,8 +51,8 @@ struct NotificationsView: View {
         }
         .navigationTitle("Notifications")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+        .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+        .toolbarBackground(colors.navyMid, for: .navigationBar)
         .task { await loadNotifications() }
         .refreshable { await loadNotifications() }
     }
@@ -82,13 +84,14 @@ struct NotificationsView: View {
 struct NotificationRow: View {
     let item: PushNotificationItem
     var isWide: Bool = false
+    @Environment(\.mdzColors) private var colors
 
     private var typeColor: Color {
         switch item.type {
-        case "dz_status": return .mdzRed
-        case "new_shift", "shift_unfilled_week", "shift_day_before": return .mdzBlue
-        case "calendar_event": return .mdzAmber
-        default: return .mdzMuted
+        case "dz_status": return colors.accent
+        case "new_shift", "shift_unfilled_week", "shift_day_before": return colors.primary
+        case "calendar_event": return colors.amber
+        default: return colors.muted
         }
     }
 
@@ -123,26 +126,26 @@ struct NotificationRow: View {
                 Spacer()
                 Text(formattedDate)
                     .font(.system(size: 11))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
             Text(item.title)
                 .font(.system(size: isWide ? 16 : 15, weight: .semibold))
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
             if let body = item.body, !body.isEmpty {
                 Text(body)
                     .font(.system(size: isWide ? 14 : 13))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
             if let ann = item.payload?["announcement"] as? String, !ann.isEmpty {
                 Text(ann)
                     .font(.system(size: isWide ? 14 : 13))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
             }
         }
         .padding(isWide ? 16 : 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 }

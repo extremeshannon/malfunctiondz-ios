@@ -26,6 +26,7 @@ struct AviationRootView: View {
 // MARK: - iPad Pilot Aviation: split view
 struct PilotAviationSplitView: View {
     @EnvironmentObject private var auth: AuthManager
+    @Environment(\.mdzColors) private var colors
     @StateObject private var vm = PilotAviationViewModel()
     @State private var selectedFlight: PilotFlight?
 
@@ -33,12 +34,12 @@ struct PilotAviationSplitView: View {
         NavigationSplitView {
             // ── Sidebar: flight list ──────────────────────────
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 VStack(spacing: 0) {
                     sidebarHeader
                     if vm.isLoading && vm.recentFlights.isEmpty {
                         Spacer()
-                        ProgressView().tint(.mdzBlue).scaleEffect(1.2)
+                        ProgressView().tint(colors.primary).scaleEffect(1.2)
                         Spacer()
                     } else {
                         List(selection: $selectedFlight) {
@@ -47,8 +48,8 @@ struct PilotAviationSplitView: View {
                                 Section("ACTIVE") {
                                     OpenFlightRow(flight: open)
                                         .tag(open)
-                                        .listRowBackground(Color.mdzCard)
-                                        .listRowSeparatorTint(Color.mdzBorder)
+                                        .listRowBackground(colors.card)
+                                        .listRowSeparatorTint(colors.border)
                                 }
                             }
 
@@ -57,8 +58,8 @@ struct PilotAviationSplitView: View {
                                 Section("AIRWORTHY AIRCRAFT") {
                                     ForEach(vm.airworthyAircraft) { ac in
                                         PilotAircraftRow(aircraft: ac)
-                                            .listRowBackground(Color.mdzCard)
-                                            .listRowSeparatorTint(Color.mdzBorder)
+                                            .listRowBackground(colors.card)
+                                            .listRowSeparatorTint(colors.border)
                                     }
                                 }
                             }
@@ -69,15 +70,15 @@ struct PilotAviationSplitView: View {
                                     ForEach(vm.recentFlights) { flight in
                                         PilotFlightSidebarRow(flight: flight)
                                             .tag(flight)
-                                            .listRowBackground(Color.mdzCard)
-                                            .listRowSeparatorTint(Color.mdzBorder)
+                                            .listRowBackground(colors.card)
+                                            .listRowSeparatorTint(colors.border)
                                     }
                                 }
                             }
                         }
                         .listStyle(.sidebar)
                         .scrollContentBackground(.hidden)
-                        .background(Color.mdzBackground)
+                        .background(colors.background)
                         .refreshable { await vm.load(pilotId: auth.currentUser?.id ?? 0) }
                     }
                 }
@@ -88,7 +89,7 @@ struct PilotAviationSplitView: View {
         } detail: {
             // ── Detail: today summary or pax entry ───────────
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 if let summary = vm.todaySummary, summary.flightCount > 0 {
                     ScrollView {
                         VStack(spacing: 20) {
@@ -106,7 +107,7 @@ struct PilotAviationSplitView: View {
                                     .foregroundColor(.white)
                                     .frame(maxWidth: 320)
                                     .frame(height: 52)
-                                    .background(Color.mdzRed)
+                                    .background(colors.accent)
                                     .cornerRadius(12)
                                 }
                                 .padding(.horizontal, 32)
@@ -131,7 +132,7 @@ struct PilotAviationSplitView: View {
                                 .foregroundColor(.white)
                                 .frame(maxWidth: 320)
                                 .frame(height: 52)
-                                .background(Color.mdzRed)
+                                .background(colors.accent)
                                 .cornerRadius(12)
                             }
                         }
@@ -144,46 +145,47 @@ struct PilotAviationSplitView: View {
                 await vm.load(pilotId: uid)
             }
         }
-        .accentColor(.mdzRed)
+        .accentColor(colors.accent)
     }
 
     private var sidebarHeader: some View {
         HStack {
             Image(systemName: "airplane")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.mdzBlue)
+                .foregroundColor(colors.primary)
             Text("PILOT OPERATIONS")
                 .font(.system(size: 11, weight: .black))
-                .foregroundColor(.mdzBlue)
+                .foregroundColor(colors.primary)
                 .tracking(2)
             Spacer()
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color.mdzNavyMid)
+        .background(colors.navyMid)
     }
 }
 
 // MARK: - Sidebar flight row (compact)
 struct PilotFlightSidebarRow: View {
     let flight: PilotFlight
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         HStack(spacing: 10) {
             Circle()
-                .fill(flight.status == "open" ? Color.mdzGreen : Color.mdzMuted)
+                .fill(flight.status == "open" ? colors.green : colors.muted)
                 .frame(width: 7, height: 7)
             VStack(alignment: .leading, spacing: 2) {
                 Text(flight.tailNumber)
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
                 Text(flight.flightDate)
                     .font(.system(size: 11))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
             Spacer()
             Text("\(flight.loadCount) loads")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
         }
         .padding(.vertical, 4)
     }
@@ -192,18 +194,19 @@ struct PilotFlightSidebarRow: View {
 // MARK: - Sidebar open flight row
 struct OpenFlightRow: View {
     let flight: PilotFlight
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         HStack(spacing: 10) {
             Circle()
-                .fill(Color.mdzGreen)
+                .fill(colors.green)
                 .frame(width: 9, height: 9)
             VStack(alignment: .leading, spacing: 2) {
                 Text(flight.tailNumber)
                     .font(.system(size: 15, weight: .black))
-                    .foregroundColor(.mdzGreen)
+                    .foregroundColor(colors.green)
                 Text("IN PROGRESS")
                     .font(.system(size: 9, weight: .bold))
-                    .foregroundColor(.mdzGreen)
+                    .foregroundColor(colors.green)
                     .tracking(1)
             }
             Spacer()
@@ -215,18 +218,19 @@ struct OpenFlightRow: View {
 // MARK: - iPhone Pilot Aviation View (unchanged)
 struct PilotAviationView: View {
     @EnvironmentObject private var auth: AuthManager
+    @Environment(\.mdzColors) private var colors
     @StateObject private var vm = PilotAviationViewModel()
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 VStack(spacing: 0) {
-                    moduleHeader(icon: "airplane", label: "MY FLIGHTS", subtitle: "Pilot Operations")
+                    ModuleHeaderView(icon: "airplane", label: "MY FLIGHTS", subtitle: "Pilot Operations")
 
                     if vm.isLoading && vm.recentFlights.isEmpty {
                         Spacer()
-                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzBlue)).scaleEffect(1.4)
+                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.primary)).scaleEffect(1.4)
                         Spacer()
                     } else {
                         ScrollView(showsIndicators: false) {
@@ -293,7 +297,7 @@ struct PilotAviationView: View {
         }) ?? vm.airworthyAircraft.first {
             PaxView(aircraft: aircraft)
         } else {
-            Text("Aircraft unavailable").foregroundColor(.mdzMuted)
+            Text("Aircraft unavailable").foregroundColor(colors.muted)
         }
     }
 
@@ -304,24 +308,24 @@ struct PilotAviationView: View {
         }
         .foregroundColor(.white)
         .frame(maxWidth: .infinity).frame(height: 52)
-        .background(Color.mdzRed).cornerRadius(12)
+        .background(colors.accent).cornerRadius(12)
     }
 
     private var noAircraftWarning: some View {
         HStack {
-            Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.mdzAmber)
+            Image(systemName: "exclamationmark.triangle.fill").foregroundColor(colors.amber)
             Text("No airworthy aircraft available")
-                .font(.system(size: 14, weight: .medium)).foregroundColor(.mdzMuted)
+                .font(.system(size: 14, weight: .medium)).foregroundColor(colors.muted)
         }
         .frame(maxWidth: .infinity).padding(16)
-        .background(Color.mdzCard).cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .background(colors.card).cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private func sectionLabel(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 10, weight: .black))
-            .foregroundColor(.mdzMuted)
+            .foregroundColor(colors.muted)
             .tracking(2)
             .padding(.horizontal, 16)
     }
@@ -330,20 +334,21 @@ struct PilotAviationView: View {
 // MARK: - Open Flight Card
 struct OpenFlightCard: View {
     let flight: PilotFlight
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 HStack(spacing: 6) {
-                    Circle().fill(Color.mdzGreen).frame(width: 8, height: 8)
+                    Circle().fill(colors.green).frame(width: 8, height: 8)
                     Text("FLIGHT IN PROGRESS")
                         .font(.system(size: 10, weight: .black))
-                        .foregroundColor(.mdzGreen).tracking(2)
+                        .foregroundColor(colors.green).tracking(2)
                 }
                 Spacer()
                 Text(flight.tailNumber)
-                    .font(.system(size: 13, weight: .bold)).foregroundColor(.mdzText)
+                    .font(.system(size: 13, weight: .bold)).foregroundColor(colors.text)
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11)).foregroundColor(.mdzMuted)
+                    .font(.system(size: 11)).foregroundColor(colors.muted)
             }
             HStack(spacing: 24) {
                 PilotStatCell(label: "LOADS", value: "\(flight.loadCount)")
@@ -352,31 +357,32 @@ struct OpenFlightCard: View {
                 Spacer()
             }
         }
-        .padding(16).background(Color.mdzCard).cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzGreen.opacity(0.4), lineWidth: 1))
-        .overlay(VStack { Rectangle().fill(Color.mdzGreen).frame(height: 3).cornerRadius(14); Spacer() })
+        .padding(16).background(colors.card).cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.green.opacity(0.4), lineWidth: 1))
+        .overlay(VStack { Rectangle().fill(colors.green).frame(height: 3).cornerRadius(14); Spacer() })
     }
 }
 
 // MARK: - Pilot Aircraft Row
 struct PilotAircraftRow: View {
     let aircraft: Aircraft
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         HStack(spacing: 14) {
             ZStack {
-                RoundedRectangle(cornerRadius: 10).fill(Color.mdzBlue.opacity(0.15)).frame(width: 44, height: 44)
-                Image(systemName: "airplane").foregroundColor(.mdzBlue).font(.system(size: 20))
+                RoundedRectangle(cornerRadius: 10).fill(colors.primary.opacity(0.15)).frame(width: 44, height: 44)
+                Image(systemName: "airplane").foregroundColor(colors.primary).font(.system(size: 20))
             }
             VStack(alignment: .leading, spacing: 3) {
-                Text(aircraft.tailNumber).font(.system(size: 15, weight: .bold)).foregroundColor(.mdzText)
-                Text(aircraft.model).font(.system(size: 12)).foregroundColor(.mdzMuted)
+                Text(aircraft.tailNumber).font(.system(size: 15, weight: .bold)).foregroundColor(colors.text)
+                Text(aircraft.model).font(.system(size: 12)).foregroundColor(colors.muted)
             }
             Spacer()
             StatusPill(label: aircraft.status.capitalized, color: aircraft.statusColor)
-            Image(systemName: "chevron.right").foregroundColor(.mdzMuted).font(.system(size: 12))
+            Image(systemName: "chevron.right").foregroundColor(colors.muted).font(.system(size: 12))
         }
-        .padding(14).background(Color.mdzCard).cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .padding(14).background(colors.card).cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 }
 
@@ -384,54 +390,56 @@ struct PilotAircraftRow: View {
 struct TodayFlightSummaryCard: View {
     let summary: TodaySummary
     @Environment(\.horizontalSizeClass) private var hSizeClass
+    @Environment(\.mdzColors) private var colors
     private var isWide: Bool { hSizeClass == .regular }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("TODAY'S SUMMARY")
                 .font(.system(size: 10, weight: .black))
-                .foregroundColor(.mdzMuted).tracking(2)
+                .foregroundColor(colors.muted).tracking(2)
             HStack(spacing: 0) {
                 PilotStatCell(label: "FLIGHTS", value: "\(summary.flightCount)").frame(maxWidth: .infinity)
-                Divider().background(Color.mdzBorder)
+                Divider().background(colors.border)
                 PilotStatCell(label: "LOADS",   value: "\(summary.totalLoads)").frame(maxWidth: .infinity)
-                Divider().background(Color.mdzBorder)
+                Divider().background(colors.border)
                 PilotStatCell(label: "PAX",     value: "\(summary.totalPax)").frame(maxWidth: .infinity)
-                Divider().background(Color.mdzBorder)
+                Divider().background(colors.border)
                 PilotStatCell(label: "HOBBS Δ", value: String(format: "%.1f", summary.hobbsDelta)).frame(maxWidth: .infinity)
             }
             .frame(height: isWide ? 72 : 56)
         }
-        .padding(isWide ? 20 : 16).background(Color.mdzCard).cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .padding(isWide ? 20 : 16).background(colors.card).cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
     }
 }
 
 // MARK: - Flight History Row
 struct PilotFlightHistoryRow: View {
     let flight: PilotFlight
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         HStack(spacing: 12) {
             Circle()
-                .fill(flight.status == "open" ? Color.mdzGreen : Color.mdzMuted)
+                .fill(flight.status == "open" ? colors.green : colors.muted)
                 .frame(width: 8, height: 8)
             VStack(alignment: .leading, spacing: 3) {
-                Text(flight.tailNumber).font(.system(size: 14, weight: .bold)).foregroundColor(.mdzText)
-                Text(flight.flightDate).font(.system(size: 11)).foregroundColor(.mdzMuted)
+                Text(flight.tailNumber).font(.system(size: 14, weight: .bold)).foregroundColor(colors.text)
+                Text(flight.flightDate).font(.system(size: 11)).foregroundColor(colors.muted)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 3) {
                 Text("\(flight.loadCount) loads · \(flight.totalPax) pax")
-                    .font(.system(size: 12, weight: .semibold)).foregroundColor(.mdzText)
+                    .font(.system(size: 12, weight: .semibold)).foregroundColor(colors.text)
                 if flight.hobbsDelta > 0 {
                     Text(String(format: "Hobbs Δ %.1f", flight.hobbsDelta))
-                        .font(.system(size: 11)).foregroundColor(.mdzMuted)
+                        .font(.system(size: 11)).foregroundColor(colors.muted)
                 }
             }
         }
-        .padding(12).background(Color.mdzCard).cornerRadius(10)
+        .padding(12).background(colors.card).cornerRadius(10)
         .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(
-            flight.status == "open" ? Color.mdzGreen.opacity(0.3) : Color.mdzBorder, lineWidth: 1
+            flight.status == "open" ? colors.green.opacity(0.3) : colors.border, lineWidth: 1
         ))
     }
 }
@@ -519,15 +527,22 @@ class PilotAviationViewModel: ObservableObject {
 }
 
 // MARK: - Shared helper
-private func moduleHeader(icon: String, label: String, subtitle: String) -> some View {
-    VStack(alignment: .leading, spacing: 4) {
-        HStack {
-            Image(systemName: icon).font(.system(size: 16, weight: .semibold)).foregroundColor(.mdzBlue)
-            Text(label).font(.system(size: 11, weight: .black)).foregroundColor(.mdzBlue).tracking(2)
+private struct ModuleHeaderView: View {
+    let icon: String
+    let label: String
+    let subtitle: String
+    @Environment(\.mdzColors) private var colors
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Image(systemName: icon).font(.system(size: 16, weight: .semibold)).foregroundColor(colors.primary)
+                Text(label).font(.system(size: 11, weight: .black)).foregroundColor(colors.primary).tracking(2)
+            }
+            Text(subtitle).font(.system(size: 13, weight: .medium)).foregroundColor(colors.muted)
         }
-        Text(subtitle).font(.system(size: 13, weight: .medium)).foregroundColor(.mdzMuted)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 20).padding(.vertical, 16)
+        .background(colors.navyMid)
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(.horizontal, 20).padding(.vertical, 16)
-    .background(Color.mdzNavyMid)
 }

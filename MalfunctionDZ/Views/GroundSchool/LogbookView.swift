@@ -12,6 +12,8 @@ struct LogbookView: View {
 
     @StateObject private var vm = LogbookViewModel()
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
     @State private var showPriorEditor = false
     @State private var priorEditorValue = ""
     @State private var showStartFreefallEditor = false
@@ -19,6 +21,7 @@ struct LogbookView: View {
     @State private var showHomeDzEditor = false
     @State private var homeDzEditorValue = ""
     @State private var showAddEntry = false
+    @State private var showConfigSheet = false
 
     /// Standalone logbook — all entries, no LMS course (for skydivers without LMS access)
     static func standalone() -> LogbookView {
@@ -35,12 +38,12 @@ struct LogbookView: View {
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
 
             if vm.isLoading && vm.entries.isEmpty {
                 VStack(spacing: 16) {
-                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzAmber)).scaleEffect(1.2)
-                    Text("Loading logbook…").font(.subheadline).foregroundColor(.mdzMuted)
+                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.amber)).scaleEffect(1.2)
+                    Text("Loading logbook…").font(.subheadline).foregroundColor(colors.muted)
                 }
             } else {
                 ScrollView(showsIndicators: false) {
@@ -49,16 +52,15 @@ struct LogbookView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("LOGBOOK")
                                 .font(.system(size: 10, weight: .black))
-                                .foregroundColor(.mdzAmber)
+                                .foregroundColor(colors.amber)
                                 .tracking(2)
                             Text(courseTitle)
                                 .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.mdzText)
+                                .foregroundColor(colors.text)
                         }
 
-                        // Config + Add (standalone only)
+                        // Config + Add (standalone only) — config moved to gear sheet
                         if isStandalone {
-                            configSection
                             if vm.isSkydiver {
                                 addJumpButton
                             } else if vm.isStudent {
@@ -84,7 +86,7 @@ struct LogbookView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("JUMPS")
                                     .font(.system(size: 10, weight: .black))
-                                    .foregroundColor(.mdzMuted)
+                                    .foregroundColor(colors.muted)
                                     .tracking(1)
                                 ForEach(vm.entries.reversed()) { entry in
                                     NavigationLink(destination: LogbookEntryDetailView(entry: entry, vm: vm)) {
@@ -99,15 +101,15 @@ struct LogbookView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Other training / comments")
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                             Text(vm.otherTrainingNotes.isEmpty ? " " : vm.otherTrainingNotes)
                                 .font(.system(size: 14))
-                                .foregroundColor(.mdzText)
+                                .foregroundColor(colors.text)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(12)
-                                .background(Color.mdzCard)
+                                .background(colors.card)
                                 .cornerRadius(8)
-                                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
                         }
                         .padding(.bottom, 32)
                     }
@@ -118,12 +120,23 @@ struct LogbookView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            if isStandalone && isStandaloneRoot {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showConfigSheet = true
+                    } label: {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(colors.muted)
+                    }
+                }
+            }
             if !isStandaloneRoot {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button { dismiss() } label: {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.mdzAmber)
+                            .foregroundColor(colors.amber)
                     }
                 }
             }
@@ -135,6 +148,27 @@ struct LogbookView: View {
         .sheet(isPresented: $showAddEntry) {
             addEntrySheet
         }
+        .sheet(isPresented: $showConfigSheet) {
+            LogbookConfigSheet(
+                vm: vm,
+                onTapPrior: {
+                    showConfigSheet = false
+                    priorEditorValue = "\(vm.priorJumpCount)"
+                    showPriorEditor = true
+                },
+                onTapStartFreefall: {
+                    showConfigSheet = false
+                    startFreefallEditorValue = vm.startFreefallTime
+                    showStartFreefallEditor = true
+                },
+                onTapHomeDz: {
+                    showConfigSheet = false
+                    homeDzEditorValue = vm.homeDropzone
+                    showHomeDzEditor = true
+                },
+                onDismiss: { showConfigSheet = false }
+            )
+        }
         .alert("Error", isPresented: Binding(
             get: { vm.error != nil },
             set: { if !$0 { vm.error = nil } }
@@ -142,26 +176,81 @@ struct LogbookView: View {
             Button("OK", role: .cancel) { vm.error = nil }
         } message: { Text(vm.error ?? "") }
     }
+}
 
-    private var configSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("CONFIG")
-                .font(.system(size: 10, weight: .black))
-                .foregroundColor(.mdzMuted)
-                .tracking(1)
-            configCard("Prior Jumps", subtitle: "Jumps you had before using this system", value: "\(vm.priorJumpCount)") {
-                priorEditorValue = "\(vm.priorJumpCount)"
-                showPriorEditor = true
+// MARK: - Logbook Config (single page, opened from gear icon)
+struct LogbookConfigSheet: View {
+    @ObservedObject var vm: LogbookViewModel
+    let onTapPrior: () -> Void
+    let onTapStartFreefall: () -> Void
+    let onTapHomeDz: () -> Void
+    let onDismiss: () -> Void
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                colors.background.ignoresSafeArea()
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("All logbook settings in one place. Tap to edit.")
+                            .font(.system(size: 13))
+                            .foregroundColor(colors.muted)
+                            .padding(.bottom, 8)
+                        configRow("Prior Jumps", subtitle: "Jumps you had before using this system", value: "\(vm.priorJumpCount)") {
+                            onTapPrior()
+                        }
+                        configRow("Start Freefall Time", subtitle: "Default freefall when adding a jump (e.g. 45 or 1:30)", value: vm.startFreefallTime.isEmpty ? "Not set" : vm.startFreefallTime) {
+                            onTapStartFreefall()
+                        }
+                        configRow("Home Dropzone", subtitle: "Your home DZ, prefills when adding a jump", value: vm.homeDropzone.isEmpty ? "Not set" : vm.homeDropzone) {
+                            onTapHomeDz()
+                        }
+                    }
+                    .padding(20)
+                }
             }
-            configCard("Start Freefall Time", subtitle: "Default freefall when adding a jump (e.g. 45 or 1:30)", value: vm.startFreefallTime.isEmpty ? "Not set" : vm.startFreefallTime) {
-                startFreefallEditorValue = vm.startFreefallTime
-                showStartFreefallEditor = true
-            }
-            configCard("Home Dropzone", subtitle: "Your home DZ, prefills when adding a jump", value: vm.homeDropzone.isEmpty ? "Not set" : vm.homeDropzone) {
-                homeDzEditorValue = vm.homeDropzone
-                showHomeDzEditor = true
+            .navigationTitle("Logbook Config")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done", action: onDismiss)
+                        .foregroundColor(colors.amber)
+                }
             }
         }
+    }
+
+    private func configRow(_ label: String, subtitle: String, value: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(label.uppercased())
+                        .font(.system(size: 9, weight: .black))
+                        .foregroundColor(colors.muted)
+                        .tracking(1)
+                    Text(subtitle)
+                        .font(.system(size: 12))
+                        .foregroundColor(colors.muted)
+                }
+                Spacer()
+                Text(value)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(colors.amber)
+                    .lineLimit(1)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(colors.muted)
+            }
+            .padding(14)
+            .background(colors.card)
+            .cornerRadius(12)
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
     }
 
     private func configCard(_ label: String, subtitle: String, value: String, action: @escaping () -> Void) -> some View {
@@ -170,25 +259,25 @@ struct LogbookView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(label.uppercased())
                         .font(.system(size: 9, weight: .black))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                         .tracking(1)
                     Text(subtitle)
                         .font(.system(size: 12))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                 }
                 Spacer()
                 Text(value)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                     .lineLimit(1)
                 Image(systemName: "pencil.circle.fill")
                     .font(.system(size: 18))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
             .padding(14)
-            .background(Color.mdzCard)
+            .background(colors.card)
             .cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
@@ -200,19 +289,19 @@ struct LogbookView: View {
             HStack(spacing: 10) {
                 Image(systemName: "plus.circle.fill")
                     .font(.system(size: 18))
-                    .foregroundColor(.mdzGreen)
+                    .foregroundColor(colors.green)
                 Text("Add Jump #\(vm.nextJumpNumber)")
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
             .padding(14)
-            .background(Color.mdzCard)
+            .background(colors.card)
             .cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzGreen.opacity(0.4), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.green.opacity(0.4), lineWidth: 1))
         }
         .buttonStyle(.plain)
         .disabled(vm.isSaving)
@@ -235,65 +324,65 @@ struct LogbookView: View {
         } ?? "—"
         return HStack(spacing: 0) {
             StatCell(label: "JUMPS", value: "\(vm.totalJumps)")
-            Divider().frame(height: 36).background(Color.mdzBorder)
+            Divider().frame(height: 36).background(colors.border)
             StatCell(label: "FREEFALL", value: latest?.delay ?? "—")
-            Divider().frame(height: 36).background(Color.mdzBorder)
+            Divider().frame(height: 36).background(colors.border)
             StatCell(label: "LAST JUMP", value: timeSinceLast)
         }
         .padding(14)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private var studentNoteCard: some View {
         HStack(spacing: 10) {
             Image(systemName: "person.fill.checkmark")
                 .font(.system(size: 16))
-                .foregroundColor(.mdzAmber)
+                .foregroundColor(colors.amber)
             Text("Students need instructor sign-offs for logbook entries. At 25 jumps you'll become a skydiver and can add your own.")
                 .font(.system(size: 12))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
         }
         .padding(12)
-        .background(Color.mdzAmber.opacity(0.08))
+        .background(colors.amber.opacity(0.08))
         .cornerRadius(10)
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzAmber.opacity(0.3), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.amber.opacity(0.3), lineWidth: 1))
     }
 
     private var priorJumpEditorSheet: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Enter the number of jumps you had before using this system. New entries will continue from there.")
                         .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                     Text("JUMP COUNT")
                         .font(.system(size: 10, weight: .black))
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                         .tracking(1)
                     TextField("0", text: $priorEditorValue)
                         .keyboardType(.numberPad)
                         .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                         .padding(14)
-                        .background(Color.mdzCard)
+                        .background(colors.card)
                         .cornerRadius(10)
-                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
                     Spacer()
                 }
                 .padding(20)
             }
             .navigationTitle("Prior Jumps")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { showPriorEditor = false }
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
@@ -306,7 +395,7 @@ struct LogbookView: View {
                         }
                     }
                     .fontWeight(.semibold)
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                     .disabled(vm.isSaving || (Int(priorEditorValue) ?? -1) < 0)
                 }
             }
@@ -355,40 +444,40 @@ struct LogbookView: View {
     ) -> some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 VStack(alignment: .leading, spacing: 16) {
                     Text(hint)
                         .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                     Text(label)
                         .font(.system(size: 10, weight: .black))
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                         .tracking(1)
                     TextField("", text: value)
                         .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                         .padding(14)
-                        .background(Color.mdzCard)
+                        .background(colors.card)
                         .cornerRadius(10)
-                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
                     Spacer()
                 }
                 .padding(20)
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel", action: onCancel)
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save", action: onSave)
                         .fontWeight(.semibold)
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                         .disabled(vm.isSaving)
                 }
             }
@@ -418,15 +507,16 @@ struct LogbookView: View {
 struct StatCell: View {
     let label: String
     let value: String
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         VStack(spacing: 2) {
             Text(label)
                 .font(.system(size: 9, weight: .black))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(0.5)
             Text(value)
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
         }
         .frame(maxWidth: .infinity)
     }
@@ -435,34 +525,35 @@ struct StatCell: View {
 // MARK: - Compact list row (clickable)
 struct LogbookEntryRow: View {
     let entry: SkydiverLogbookEntry
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         HStack(spacing: 12) {
             Text("#\(entry.jumpNumber)")
                 .font(.system(size: 15, weight: .bold))
-                .foregroundColor(.mdzAmber)
+                .foregroundColor(colors.amber)
                 .frame(width: 44, alignment: .leading)
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.date ?? "—")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
                 Text([entry.jumpType, entry.dz].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
                     .font(.system(size: 12))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
             Spacer()
             if entry.isSigned {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 16))
-                    .foregroundColor(.mdzGreen)
+                    .foregroundColor(colors.green)
             }
             Image(systemName: "chevron.right")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
         }
         .padding(14)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(10)
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
     }
 }
 
@@ -472,9 +563,10 @@ struct LogbookEntryDetailView: View {
     @ObservedObject var vm: LogbookViewModel
     @State private var showSignaturePad = false
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
                     LogbookEntryCard(entry: entry)
@@ -488,12 +580,12 @@ struct LogbookEntryDetailView: View {
                                 Text("Sign to lock this record")
                                     .font(.system(size: 15, weight: .semibold))
                             }
-                            .foregroundColor(.mdzAmber)
+                            .foregroundColor(colors.amber)
                             .frame(maxWidth: .infinity)
                             .padding(14)
-                            .background(Color.mdzAmber.opacity(0.12))
+                            .background(colors.amber.opacity(0.12))
                             .cornerRadius(10)
-                            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzAmber.opacity(0.4), lineWidth: 1))
+                            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.amber.opacity(0.4), lineWidth: 1))
                         }
                         .buttonStyle(.plain)
                     }
@@ -517,31 +609,31 @@ struct LogbookEntryDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("SIGNATURE")
                 .font(.system(size: 10, weight: .black))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(1)
             VStack(alignment: .leading, spacing: 8) {
                 if entry.isSigned {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.mdzGreen)
+                            .foregroundColor(colors.green)
                         Text("Signed and locked")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.mdzText)
+                            .foregroundColor(colors.text)
                     }
                 } else {
                     Text("Phone-to-phone signing")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                     Text("Sign from another device — coming soon")
                         .font(.system(size: 12))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(14)
-            .background(Color.mdzCard2)
+            .background(colors.card2)
             .cornerRadius(10)
-            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
         }
     }
 }
@@ -553,19 +645,20 @@ struct SignaturePadSheet: View {
     let onComplete: () -> Void
     @State private var canvasView = PKCanvasView()
     @State private var errorMsg: String?
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 VStack(spacing: 20) {
                     Text("Draw your signature below")
                         .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                     SignatureCanvasRepresentable(canvas: $canvasView)
                         .frame(height: 200)
                         .background(Color(red: 12/255, green: 29/255, blue: 53/255))
                         .cornerRadius(10)
-                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
                     if let err = errorMsg {
                         Text(err).font(.caption).foregroundColor(.red)
                     }
@@ -578,7 +671,7 @@ struct SignaturePadSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { onComplete() }
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
@@ -603,7 +696,7 @@ struct SignaturePadSheet: View {
                         }
                     }
                     .fontWeight(.semibold)
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                     .disabled(vm.isSaving)
                 }
             }
@@ -628,6 +721,7 @@ struct SignatureCanvasRepresentable: UIViewRepresentable {
 
 struct LogbookEntryCard: View {
     let entry: SkydiverLogbookEntry
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -646,16 +740,16 @@ struct LogbookEntryCard: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Comments")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
                 Text(entry.comments?.isEmpty == false ? entry.comments! : " ")
                     .font(.system(size: 14))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .frame(minHeight: 60)
                     .padding(10)
-                    .background(Color.mdzCard2)
+                    .background(colors.card2)
                     .cornerRadius(8)
-                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
             }
 
             // Result (pass/repeat)
@@ -663,10 +757,10 @@ struct LogbookEntryCard: View {
                 HStack(spacing: 6) {
                     Text("Result")
                         .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                     Text(entry.resultDisplay)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(entry.result?.lowercased() == "pass" ? .mdzGreen : .mdzAmber)
+                        .foregroundColor(entry.result?.lowercased() == "pass" ? colors.green : colors.amber)
                 }
             }
 
@@ -674,35 +768,35 @@ struct LogbookEntryCard: View {
             HStack(spacing: 8) {
                 Text("Signature")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
                 if entry.isSigned, let signedBy = entry.signedBy, !signedBy.isEmpty {
                     Text(signedBy)
                         .font(.system(size: 13))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                     if let lic = entry.instructorLicenseNumber, !lic.isEmpty {
                         Text("(\(lic))")
                             .font(.system(size: 11))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                     }
                     if let at = entry.signedAt {
                         Text("· \(at)")
                             .font(.system(size: 11))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                     }
                 } else {
                     Text(" ")
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 8)
-                        .background(Color.mdzCard2)
+                        .background(colors.card2)
                         .cornerRadius(6)
-                        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(colors.border, lineWidth: 1))
                 }
             }
         }
         .padding(14)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 }
 
@@ -711,6 +805,7 @@ struct LogbookEntryCard: View {
 struct LogbookGridRow: View {
     let labels: [String]
     let values: [String]
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(spacing: 4) {
@@ -718,7 +813,7 @@ struct LogbookGridRow: View {
                 ForEach(Array(labels.enumerated()), id: \.offset) { item in
                     Text(item.element.uppercased())
                         .font(.system(size: 9, weight: .black))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                         .tracking(0.5)
                     if item.offset < 3 { Spacer(minLength: 4) }
                 }
@@ -727,15 +822,15 @@ struct LogbookGridRow: View {
                 ForEach(Array(values.enumerated()), id: \.offset) { item in
                     Text(item.element.isEmpty ? " " : item.element)
                         .font(.system(size: 13))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                     if item.offset < 3 { Spacer(minLength: 4) }
                 }
             }
             .padding(.vertical, 6)
             .padding(.horizontal, 10)
-            .background(Color.mdzCard2)
+            .background(colors.card2)
             .cornerRadius(6)
-            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.mdzBorder, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(colors.border, lineWidth: 1))
         }
     }
 }
@@ -761,6 +856,8 @@ struct AddLogbookEntrySheet: View {
     @State private var jumpType = ""
     @State private var comments = ""
     @State private var showCreateRig = false
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     private static var dateFormatter: DateFormatter {
         let f = DateFormatter()
@@ -771,12 +868,12 @@ struct AddLogbookEntrySheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 14) {
                         Text("Jump #\(nextJumpNumber)")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.mdzAmber)
+                            .foregroundColor(colors.amber)
 
                         addEntryField("DZ", text: $dz, hint: "Drop zone name")
                         addEntryField("Altitude", text: $altitude, hint: "Exit altitude (e.g. 13500)")
@@ -802,13 +899,13 @@ struct AddLogbookEntrySheet: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { onCancel() }
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
@@ -816,7 +913,7 @@ struct AddLogbookEntrySheet: View {
                         onSave(dz, altitude, delay, dateStr, aircraft, equipment, selectedRigId, jumpType, comments)
                     }
                     .fontWeight(.semibold)
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                 }
             }
         }
@@ -826,11 +923,11 @@ struct AddLogbookEntrySheet: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("RIG")
                 .font(.system(size: 10, weight: .black))
-                .foregroundColor(.mdzAmber)
+                .foregroundColor(colors.amber)
                 .tracking(1)
             Text("Select a saved rig or add one")
                 .font(.system(size: 12))
-                .foregroundColor(Color.mdzText.opacity(0.9))
+                .foregroundColor(colors.text.opacity(0.9))
             HStack(spacing: 10) {
                 Picker("", selection: $selectedRigId) {
                     Text("None").tag(nil as Int?)
@@ -839,21 +936,21 @@ struct AddLogbookEntrySheet: View {
                     }
                 }
                 .pickerStyle(.menu)
-                .tint(Color.mdzAmber)
+                .tint(colors.amber)
                 .colorScheme(.dark)
                 Button {
                     showCreateRig = true
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: 22))
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                 }
                 .buttonStyle(.plain)
             }
             .padding(14)
-            .background(Color.mdzCard)
+            .background(colors.card)
             .cornerRadius(8)
-            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.mdzBorder, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
         }
     }
 
@@ -873,18 +970,18 @@ struct AddLogbookEntrySheet: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("DATE")
                 .font(.system(size: 10, weight: .black))
-                .foregroundColor(.mdzAmber)
+                .foregroundColor(colors.amber)
                 .tracking(1)
             DatePicker("", selection: $jumpDate, displayedComponents: .date)
                 .datePickerStyle(.compact)
                 .labelsHidden()
-                .tint(Color.mdzAmber)
+                .tint(colors.amber)
                 .colorScheme(.dark)
         }
         .padding(14)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(8)
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private func addEntryField(_ label: String, text: Binding<String>, hint: String? = nil, multiline: Bool = false) -> some View {
@@ -892,31 +989,31 @@ struct AddLogbookEntrySheet: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(label.uppercased())
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                     .tracking(1)
                 if let h = hint, !h.isEmpty {
                     Text(h)
                         .font(.system(size: 12))
-                        .foregroundColor(Color.mdzText.opacity(0.9))
+                        .foregroundColor(colors.text.opacity(0.9))
                 }
             }
             if multiline {
                 TextField(label, text: text, axis: .vertical)
                     .lineLimit(3...6)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.mdzText)
-                    .tint(Color.mdzAmber)
+                    .foregroundColor(colors.text)
+                    .tint(colors.amber)
             } else {
                 TextField(label, text: text)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.mdzText)
-                    .tint(Color.mdzAmber)
+                    .foregroundColor(colors.text)
+                    .tint(colors.amber)
             }
         }
         .padding(14)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(8)
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
     }
 }
 
@@ -942,6 +1039,8 @@ struct CreateRigSheet: View {
     @State private var aadDom = ""
     @State private var notes = ""
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     private var cat: RigCatalogResponse? { vm.rigCatalog }
     private var reserveMfrs: [String] { cat?.reserveMfrs ?? [] }
@@ -956,12 +1055,12 @@ struct CreateRigSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 14) {
                         Text("Add a rig to select when logging jumps. Same fields as the loft rig form.")
                             .font(.system(size: 13))
-                            .foregroundColor(Color.mdzText.opacity(0.9))
+                            .foregroundColor(colors.text.opacity(0.9))
                             .padding(.bottom, 4)
 
                         sectionTitle("Rig")
@@ -994,8 +1093,8 @@ struct CreateRigSheet: View {
             }
             .navigationTitle("Add Rig")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -1003,7 +1102,7 @@ struct CreateRigSheet: View {
                         onComplete()
                         dismiss()
                     }
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
@@ -1033,7 +1132,7 @@ struct CreateRigSheet: View {
                         }
                     }
                     .fontWeight(.semibold)
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                     .disabled(rigLabel.trimmingCharacters(in: .whitespaces).isEmpty || vm.isSaving)
                 }
             }
@@ -1044,7 +1143,7 @@ struct CreateRigSheet: View {
     private func sectionTitle(_ t: String) -> some View {
         Text(t.uppercased())
             .font(.system(size: 11, weight: .black))
-            .foregroundColor(.mdzMuted)
+            .foregroundColor(colors.muted)
             .tracking(1.2)
             .padding(.top, 8)
     }
@@ -1054,30 +1153,30 @@ struct CreateRigSheet: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(label.uppercased())
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                     .tracking(1)
                 if let h = hint, !h.isEmpty {
                     Text(h)
                         .font(.system(size: 12))
-                        .foregroundColor(Color.mdzText.opacity(0.9))
+                        .foregroundColor(colors.text.opacity(0.9))
                 }
             }
             TextField(label, text: text)
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.mdzText)
-                .tint(Color.mdzAmber)
+                .foregroundColor(colors.text)
+                .tint(colors.amber)
         }
         .padding(14)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(8)
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private func pickerField(_ label: String, selection: Binding<String>, options: [String], onChange: (() -> Void)? = nil) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label.uppercased())
                 .font(.system(size: 10, weight: .black))
-                .foregroundColor(.mdzAmber)
+                .foregroundColor(colors.amber)
                 .tracking(1)
             Picker(label, selection: selection) {
                 Text("— Select —").tag("")
@@ -1086,13 +1185,13 @@ struct CreateRigSheet: View {
                 }
             }
             .pickerStyle(.menu)
-            .tint(.mdzAmber)
+            .tint(colors.amber)
             .onChange(of: selection.wrappedValue) { _, _ in onChange?() }
         }
         .padding(14)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(8)
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
     }
 }
 
@@ -1101,22 +1200,23 @@ struct CreateRigSheet: View {
 struct LogbookFieldRow: View {
     let label: String
     let value: String
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label.uppercased())
                 .font(.system(size: 9, weight: .black))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(0.5)
             Text(value.isEmpty ? " " : value)
                 .font(.system(size: 13))
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, 6)
                 .padding(.horizontal, 10)
-                .background(Color.mdzCard2)
+                .background(colors.card2)
                 .cornerRadius(6)
-                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(colors.border, lineWidth: 1))
         }
     }
 }

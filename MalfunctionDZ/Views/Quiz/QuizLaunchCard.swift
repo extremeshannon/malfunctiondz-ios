@@ -9,44 +9,45 @@ struct QuizLaunchCard: View {
     let questionCount: Int
     let lastAttempt: QuizLastAttempt?
     @State private var showQuiz = false
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Image(systemName: "pencil.and.list.clipboard")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                 Text("QUIZ")
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                     .tracking(2)
                 Spacer()
                 if let last = lastAttempt {
                     StatusPill(
                         label: last.passed ? "PASSED" : "FAILED",
-                        color: last.passed ? .mdzGreen : .mdzDanger
+                        color: last.passed ? colors.green : colors.danger
                     )
                 }
             }
 
             Text(title)
                 .font(.system(size: 15, weight: .bold))
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
 
             HStack(spacing: 16) {
                 Label("\(questionCount) questions", systemImage: "questionmark.circle")
                     .font(.system(size: 12))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
                 Label("Pass: \(Int(passPercentage))%", systemImage: "checkmark.shield")
                     .font(.system(size: 12))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
 
             if let last = lastAttempt {
                 HStack {
                     Text(String(format: "Last score: %.0f%%", last.score))
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(last.passed ? .mdzGreen : .mdzDanger)
+                        .foregroundColor(last.passed ? colors.green : colors.danger)
                     Spacer()
                 }
             }
@@ -59,16 +60,16 @@ struct QuizLaunchCard: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
-                    .background(Color.mdzAmber)
+                    .background(colors.amber)
                     .cornerRadius(10)
             }
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(Color.mdzAmber.opacity(0.3), lineWidth: 1)
+                .strokeBorder(colors.amber.opacity(0.3), lineWidth: 1)
         )
         .fullScreenCover(isPresented: $showQuiz) {
             NavigationView {

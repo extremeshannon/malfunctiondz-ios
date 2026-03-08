@@ -4,6 +4,7 @@ import SwiftUI
 struct QuizAttemptView: View {
     @StateObject private var vm: QuizViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.mdzColors) private var colors
     @State private var showQuestionList = false
     @State private var showSubmitConfirm = false
     @State private var enlargedQuizImageURL: URL?
@@ -14,16 +15,16 @@ struct QuizAttemptView: View {
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
 
             if vm.isLoading {
                 VStack(spacing: 16) {
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .mdzAmber))
+                        .progressViewStyle(CircularProgressViewStyle(tint: colors.amber))
                         .scaleEffect(1.4)
                     Text("Loading quiz...")
                         .font(.subheadline)
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                 }
             } else if let quiz = vm.quiz {
                 VStack(spacing: 0) {
@@ -33,9 +34,9 @@ struct QuizAttemptView: View {
                     // ── Progress bar ─────────────────────────
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
-                            Rectangle().fill(Color.mdzBorder).frame(height: 3)
+                            Rectangle().fill(colors.border).frame(height: 3)
                             Rectangle()
-                                .fill(Color.mdzAmber)
+                                .fill(colors.amber)
                                 .frame(width: geo.size.width * vm.progress, height: 3)
                                 .animation(.easeInOut(duration: 0.3), value: vm.progress)
                         }
@@ -100,17 +101,17 @@ struct QuizAttemptView: View {
             Button { dismiss() } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(quiz.title)
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
                     .lineLimit(1)
                 Text("Question \(vm.currentIndex + 1) of \(vm.totalQuestions) · \(vm.answeredCount) answered")
                     .font(.system(size: 11))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
 
             Spacer()
@@ -130,12 +131,12 @@ struct QuizAttemptView: View {
             Button { showQuestionList = true } label: {
                 Image(systemName: "list.bullet")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color.mdzNavyMid)
+        .background(colors.navyMid)
     }
 
     // MARK: - Question Card
@@ -154,8 +155,8 @@ struct QuizAttemptView: View {
                             AsyncImage(url: url) { phase in
                                 switch phase {
                                 case .success(let img): img.resizable().scaledToFit()
-                                case .failure: Image(systemName: "photo").font(.largeTitle).foregroundColor(.mdzMuted)
-                                default: ProgressView().tint(.mdzAmber)
+                                case .failure: Image(systemName: "photo").font(.largeTitle).foregroundColor(colors.muted)
+                                default: ProgressView().tint(colors.amber)
                                 }
                             }
                             .frame(maxWidth: .infinity, maxHeight: 200)
@@ -163,10 +164,10 @@ struct QuizAttemptView: View {
                             .cornerRadius(10)
                             Text("Tap to enlarge")
                                 .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                                 .padding(6)
                         }
-                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
                     }
                     .buttonStyle(.plain)
                 }
@@ -177,21 +178,21 @@ struct QuizAttemptView: View {
                         HStack(spacing: 8) {
                             Text("Q\(vm.currentIndex + 1)")
                                 .font(.system(size: 11, weight: .black))
-                                .foregroundColor(.mdzAmber)
+                                .foregroundColor(colors.amber)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
-                                .background(Color.mdzAmber.opacity(0.15))
+                                .background(colors.amber.opacity(0.15))
                                 .clipShape(Capsule())
 
                             Text(question.type == "true_false" ? "TRUE / FALSE" : "MULTIPLE CHOICE")
                                 .font(.system(size: 10, weight: .black))
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                                 .tracking(1)
                         }
 
                         Text(question.text)
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.mdzText)
+                            .foregroundColor(colors.text)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
@@ -203,7 +204,7 @@ struct QuizAttemptView: View {
                     } label: {
                         Image(systemName: vm.isFlagged(question) ? "flag.fill" : "flag")
                             .font(.system(size: 18))
-                            .foregroundColor(vm.isFlagged(question) ? .mdzAmber : .mdzBorder)
+                            .foregroundColor(vm.isFlagged(question) ? colors.amber : colors.border)
                     }
                 }
 
@@ -238,10 +239,10 @@ struct QuizAttemptView: View {
                     Text("Back")
                 }
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(vm.canGoBack ? .mdzText : .mdzBorder)
+                .foregroundColor(vm.canGoBack ? colors.text : colors.border)
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
-                .background(Color.mdzCard)
+                .background(colors.card)
                 .cornerRadius(10)
             }
             .disabled(!vm.canGoBack)
@@ -263,7 +264,7 @@ struct QuizAttemptView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 48)
-                    .background(Color.mdzGreen)
+                    .background(colors.green)
                     .cornerRadius(10)
                 }
                 .disabled(vm.isSubmitting)
@@ -279,14 +280,14 @@ struct QuizAttemptView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 48)
-                    .background(Color.mdzAmber)
+                    .background(colors.amber)
                     .cornerRadius(10)
                 }
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color.mdzNavyMid)
+        .background(colors.navyMid)
     }
 }
 
@@ -295,35 +296,36 @@ struct ChoiceButton: View {
     let choice: QuizChoice
     let isSelected: Bool
     let onTap: () -> Void
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 14) {
                 ZStack {
                     Circle()
-                        .strokeBorder(isSelected ? Color.mdzAmber : Color.mdzBorder, lineWidth: 2)
+                        .strokeBorder(isSelected ? colors.amber : colors.border, lineWidth: 2)
                         .frame(width: 24, height: 24)
                     if isSelected {
                         Circle()
-                            .fill(Color.mdzAmber)
+                            .fill(colors.amber)
                             .frame(width: 14, height: 14)
                     }
                 }
 
                 Text(choice.text)
                     .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
-                    .foregroundColor(isSelected ? .mdzText : .mdzText.opacity(0.85))
+                    .foregroundColor(isSelected ? colors.text : colors.text.opacity(0.85))
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Spacer()
             }
             .padding(14)
-            .background(isSelected ? Color.mdzAmber.opacity(0.1) : Color.mdzCard)
+            .background(isSelected ? colors.amber.opacity(0.1) : colors.card)
             .cornerRadius(10)
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .strokeBorder(isSelected ? Color.mdzAmber : Color.mdzBorder, lineWidth: isSelected ? 2 : 1)
+                    .strokeBorder(isSelected ? colors.amber : colors.border, lineWidth: isSelected ? 2 : 1)
             )
         }
         .buttonStyle(.plain)
@@ -335,29 +337,30 @@ struct QuestionListSheet: View {
     @ObservedObject var vm: QuizViewModel
     let onSelect: () -> Void
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             VStack(spacing: 0) {
                 HStack {
                     Text("QUESTIONS")
                         .font(.system(size: 11, weight: .black))
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                         .tracking(2)
                     Spacer()
                     Text("\(vm.answeredCount)/\(vm.totalQuestions) answered")
                         .font(.system(size: 12))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                     Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 20))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                     }
                     .padding(.leading, 12)
                 }
                 .padding(16)
-                .background(Color.mdzNavyMid)
+                .background(colors.navyMid)
 
                 ScrollView {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 10) {
@@ -379,7 +382,7 @@ struct QuestionListSheet: View {
                                                     Spacer()
                                                     Image(systemName: "flag.fill")
                                                         .font(.system(size: 8))
-                                                        .foregroundColor(.mdzAmber)
+                                                        .foregroundColor(colors.amber)
                                                         .padding(3)
                                                 }
                                                 Spacer()
@@ -397,26 +400,27 @@ struct QuestionListSheet: View {
 
                 // Legend
                 HStack(spacing: 16) {
-                    LegendItem(color: .mdzGreen, label: "Answered")
-                    LegendItem(color: Color.mdzCard, label: "Unanswered")
-                    LegendItem(color: .mdzAmber, label: "Current")
+                    LegendItem(color: colors.green, label: "Answered")
+                    LegendItem(color: colors.card, label: "Unanswered")
+                    LegendItem(color: colors.amber, label: "Current")
                 }
                 .padding(16)
-                .background(Color.mdzNavyMid)
+                .background(colors.navyMid)
             }
         }
     }
 
     private func buttonColor(for question: QuizQuestion, idx: Int) -> Color {
-        if idx == vm.currentIndex { return .mdzAmber }
-        if vm.answers[question.id] != nil { return .mdzGreen }
-        return Color.mdzCard
+        if idx == vm.currentIndex { return colors.amber }
+        if vm.answers[question.id] != nil { return colors.green }
+        return colors.card
     }
 }
 
 struct LegendItem: View {
     let color: Color
     let label: String
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         HStack(spacing: 6) {
             RoundedRectangle(cornerRadius: 4)
@@ -424,7 +428,7 @@ struct LegendItem: View {
                 .frame(width: 16, height: 16)
             Text(label)
                 .font(.system(size: 11))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
         }
     }
 }

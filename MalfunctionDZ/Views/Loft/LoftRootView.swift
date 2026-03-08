@@ -34,6 +34,8 @@ struct LoftRootView: View {
 // MARK: - iPad: Split (rig list | rig detail)
 struct LoftSplitView: View {
     @ObservedObject var vm: LoftViewModel
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
     @State private var selectedRig: LoftRig?
 
     private var dateString: String { LoftRootView.dateString }
@@ -41,12 +43,12 @@ struct LoftSplitView: View {
     var body: some View {
         NavigationSplitView {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 VStack(spacing: 0) {
                     loftHeader
                     if vm.isLoading && vm.rigs.isEmpty {
                         Spacer()
-                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzGreen)).scaleEffect(1.4)
+                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.green)).scaleEffect(1.4)
                         Spacer()
                     } else if vm.rigs.isEmpty {
                         Spacer()
@@ -55,16 +57,16 @@ struct LoftSplitView: View {
                     } else {
                         if let s = vm.summary {
                             HStack(spacing: 0) {
-                                SummaryStatBox(value: s.overdue, label: "OVERDUE", color: .mdzDanger)
-                                Divider().background(Color.mdzBorder).frame(height: 40)
-                                SummaryStatBox(value: s.dueSoon, label: "DUE SOON", color: .mdzAmber)
-                                Divider().background(Color.mdzBorder).frame(height: 40)
-                                SummaryStatBox(value: s.current, label: "CURRENT", color: .mdzGreen)
+                                SummaryStatBox(value: s.overdue, label: "OVERDUE", color: colors.danger)
+                                Divider().background(colors.border).frame(height: 40)
+                                SummaryStatBox(value: s.dueSoon, label: "DUE SOON", color: colors.amber)
+                                Divider().background(colors.border).frame(height: 40)
+                                SummaryStatBox(value: s.current, label: "CURRENT", color: colors.green)
                             }
                             .padding(.vertical, 12)
-                            .background(Color.mdzCard)
+                            .background(colors.card)
                             .cornerRadius(12)
-                            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
                         }
@@ -72,18 +74,18 @@ struct LoftSplitView: View {
                             ForEach(combinedRigs) { rig in
                                 LoftRigRow(rig: rig)
                                     .tag(rig)
-                                    .listRowBackground(Color.mdzCard)
+                                    .listRowBackground(colors.card)
                             }
                         }
                         .listStyle(.sidebar)
                         .scrollContentBackground(.hidden)
-                        .background(Color.mdzBackground)
+                        .background(colors.background)
                     }
                 }
             }
             .navigationTitle("Rigs")
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .onAppear { if selectedRig == nil, let first = vm.rigs.first { selectedRig = first } }
             .onChange(of: vm.rigs.count) { _, _ in
                 if selectedRig == nil, let first = vm.rigs.first { selectedRig = first }
@@ -95,14 +97,14 @@ struct LoftSplitView: View {
                 }
             } else {
                 ZStack {
-                    Color.mdzBackground.ignoresSafeArea()
+                    colors.background.ignoresSafeArea()
                     VStack(spacing: 12) {
                         Image(systemName: "backpack.fill")
                             .font(.system(size: 48))
-                            .foregroundColor(.mdzMuted.opacity(0.5))
+                            .foregroundColor(colors.muted.opacity(0.5))
                         Text("Select a rig")
                             .font(.headline)
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                     }
                 }
             }
@@ -114,27 +116,27 @@ struct LoftSplitView: View {
             HStack {
                 Image(systemName: "backpack.fill")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.mdzGreen)
-                Text("LOFT")
+                    .foregroundColor(colors.loft)
+                Text("RIGS")
                     .font(.system(size: 11, weight: .black))
-                    .foregroundColor(.mdzGreen)
+                    .foregroundColor(colors.loft)
                     .tracking(2)
                 Spacer()
                 if let s = vm.summary {
                     Text("\(s.total) RIGS")
                         .font(.system(size: 10, weight: .black))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                         .tracking(1)
                 }
             }
             Text(dateString)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
-        .background(Color.mdzNavyMid)
+        .background(colors.navyMid)
     }
 
     private var combinedRigs: [LoftRig] {
@@ -145,74 +147,75 @@ struct LoftSplitView: View {
 // MARK: - iPhone: Stack (original behavior)
 struct LoftStackView: View {
     @ObservedObject var vm: LoftViewModel
+    @Environment(\.mdzColors) private var colors
 
     private var dateString: String { LoftRootView.dateString }
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 VStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Image(systemName: "backpack.fill")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.mdzGreen)
+                                .foregroundColor(colors.green)
                             Text("LOFT")
                                 .font(.system(size: 11, weight: .black))
-                                .foregroundColor(.mdzGreen)
+                                .foregroundColor(colors.green)
                                 .tracking(2)
                             Spacer()
                             if let s = vm.summary {
                                 Text("\(s.total) RIGS")
                                     .font(.system(size: 10, weight: .black))
-                                    .foregroundColor(.mdzMuted)
+                                    .foregroundColor(colors.muted)
                                     .tracking(1)
                             }
                         }
                         Text(dateString)
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 16)
-                    .background(Color.mdzNavyMid)
+                    .background(colors.navyMid)
 
                     if vm.isLoading && vm.rigs.isEmpty {
                         Spacer()
-                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzGreen)).scaleEffect(1.4)
+                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.green)).scaleEffect(1.4)
                         Spacer()
                     } else {
                         ScrollView(showsIndicators: false) {
                             VStack(spacing: 12) {
                                 if let s = vm.summary {
                                     HStack(spacing: 0) {
-                                        SummaryStatBox(value: s.overdue, label: "OVERDUE", color: .mdzDanger)
-                                        Divider().background(Color.mdzBorder).frame(height: 40)
-                                        SummaryStatBox(value: s.dueSoon, label: "DUE SOON", color: .mdzAmber)
-                                        Divider().background(Color.mdzBorder).frame(height: 40)
-                                        SummaryStatBox(value: s.current, label: "CURRENT", color: .mdzGreen)
+                                        SummaryStatBox(value: s.overdue, label: "OVERDUE", color: colors.danger)
+                                        Divider().background(colors.border).frame(height: 40)
+                                        SummaryStatBox(value: s.dueSoon, label: "DUE SOON", color: colors.amber)
+                                        Divider().background(colors.border).frame(height: 40)
+                                        SummaryStatBox(value: s.current, label: "CURRENT", color: colors.green)
                                     }
                                     .padding(.vertical, 12)
-                                    .background(Color.mdzCard)
+                                    .background(colors.card)
                                     .cornerRadius(12)
-                                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
                                 }
                                 if !vm.overdueRigs.isEmpty {
-                                    LoftSection(title: "OVERDUE — \(vm.overdueRigs.count) RIGS", color: .mdzDanger,
+                                    LoftSection(title: "OVERDUE — \(vm.overdueRigs.count) RIGS", color: colors.danger,
                                                 icon: "exclamationmark.circle.fill", rigs: vm.overdueRigs)
                                 }
                                 if !vm.dueSoonRigs.isEmpty {
-                                    LoftSection(title: "DUE SOON — \(vm.dueSoonRigs.count) RIGS", color: .mdzAmber,
+                                    LoftSection(title: "DUE SOON — \(vm.dueSoonRigs.count) RIGS", color: colors.amber,
                                                 icon: "clock.fill", rigs: vm.dueSoonRigs)
                                 }
                                 if !vm.currentRigs.isEmpty {
-                                    LoftSection(title: "CURRENT — \(vm.currentRigs.count) RIGS", color: .mdzGreen,
+                                    LoftSection(title: "CURRENT — \(vm.currentRigs.count) RIGS", color: colors.green,
                                                 icon: "checkmark.circle.fill", rigs: vm.currentRigs)
                                 }
                                 if !vm.unknownRigs.isEmpty {
-                                    LoftSection(title: "NO PACK RECORD — \(vm.unknownRigs.count) RIGS", color: .mdzMuted,
+                                    LoftSection(title: "NO PACK RECORD — \(vm.unknownRigs.count) RIGS", color: colors.muted,
                                                 icon: "questionmark.circle.fill", rigs: vm.unknownRigs)
                                 }
                             }
@@ -233,15 +236,16 @@ struct SummaryStatBox: View {
     let value: Int
     let label: String
     let color: Color
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(spacing: 2) {
             Text("\(value)")
                 .font(.system(size: 28, weight: .black))
-                .foregroundColor(value > 0 ? color : .mdzMuted)
+                .foregroundColor(value > 0 ? color : colors.muted)
             Text(label)
                 .font(.system(size: 9, weight: .black))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(1)
         }
         .frame(maxWidth: .infinity)
@@ -254,6 +258,7 @@ struct LoftSection: View {
     let color: Color
     let icon: String
     let rigs: [LoftRig]
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -278,14 +283,14 @@ struct LoftSection: View {
                     }
                     .buttonStyle(.plain)
                     if rig.id != rigs.last?.id {
-                        Divider().background(Color.mdzBorder)
+                        Divider().background(colors.border)
                             .padding(.horizontal, 14)
                     }
                 }
             }
             .padding(.bottom, 8)
         }
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -297,6 +302,7 @@ struct LoftSection: View {
 // MARK: - Rig Row
 struct LoftRigRow: View {
     let rig: LoftRig
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         HStack(spacing: 12) {
@@ -308,19 +314,19 @@ struct LoftRigRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(rig.label)
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
 
                 HStack(spacing: 6) {
                     if let mfr = rig.harness.mfr {
                         Text(mfr)
                             .font(.system(size: 11))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                             .lineLimit(1)
                     }
                     if let sn = rig.reserve.sn {
                         Text("· \(sn)")
                             .font(.system(size: 11))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                     }
                 }
             }
@@ -333,12 +339,12 @@ struct LoftRigRow: View {
                     .foregroundColor(rig.statusColor)
                 Text(rig.daysLeftText)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(.mdzBorder)
+                .foregroundColor(colors.border)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -348,10 +354,11 @@ struct LoftRigRow: View {
 // MARK: - Rig Detail
 struct RigDetailView: View {
     let rig: LoftRig
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
 
@@ -360,7 +367,7 @@ struct RigDetailView: View {
                         HStack {
                             Text(rig.label)
                                 .font(.system(size: 22, weight: .black))
-                                .foregroundColor(.mdzText)
+                                .foregroundColor(colors.text)
                             Spacer()
                             StatusPill(label: rig.statusLabel, color: rig.statusColor)
                         }
@@ -376,7 +383,7 @@ struct RigDetailView: View {
                         }
                     }
                     .padding(16)
-                    .background(Color.mdzCard)
+                    .background(colors.card)
                     .cornerRadius(12)
 
                     // Harness
@@ -404,14 +411,14 @@ struct RigDetailView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("NOTES")
                                 .font(.system(size: 10, weight: .black))
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                                 .tracking(1)
                             Text(notes)
                                 .font(.subheadline)
-                                .foregroundColor(.mdzText)
+                                .foregroundColor(colors.text)
                         }
                         .padding(16)
-                        .background(Color.mdzCard)
+                        .background(colors.card)
                         .cornerRadius(12)
                     }
                 }
@@ -429,12 +436,13 @@ struct ComponentCard: View {
     let model: String?
     let sn: String?
     let dom: String?
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(.system(size: 10, weight: .black))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(1)
             if let m = mfr   { InfoRow(label: "Manufacturer", value: m) }
             if let m = model  { InfoRow(label: "Model",        value: m) }
@@ -443,13 +451,13 @@ struct ComponentCard: View {
             if mfr == nil && model == nil && sn == nil && dom == nil {
                 Text("No data on file")
                     .font(.subheadline)
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
         .overlay(RoundedRectangle(cornerRadius: 12)
-            .strokeBorder(Color.mdzBorder, lineWidth: 1))
+            .strokeBorder(colors.border, lineWidth: 1))
     }
 }

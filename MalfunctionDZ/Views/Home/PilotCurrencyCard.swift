@@ -106,7 +106,17 @@ struct PilotCurrencyCard: View {
     @State private var showImagePicker  = false
     @State private var pickerItem:      PhotosPickerItem?
     @Environment(\.horizontalSizeClass) private var hSizeClass
+    @Environment(\.mdzColors) private var colors
     private var isWide: Bool { hSizeClass == .regular }
+
+    private func statusColor(for status: String) -> Color {
+        switch status {
+        case "current":       return colors.green
+        case "expiring_soon": return colors.amber
+        case "expired":       return colors.danger
+        default:              return colors.muted
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -115,58 +125,59 @@ struct PilotCurrencyCard: View {
             HStack {
                 HStack(spacing: 6) {
                     Image(systemName: "person.text.rectangle.fill")
-                        .font(.system(size: 11, weight: .black)).foregroundColor(.mdzBlue)
+                        .font(.system(size: 11, weight: .black)).foregroundColor(colors.primary)
                     Text("PILOT CURRENCY")
-                        .font(.system(size: 11, weight: .black)).foregroundColor(.mdzBlue).tracking(1.5)
+                        .font(.system(size: 11, weight: .black)).foregroundColor(colors.primary).tracking(1.5)
                 }
                 Spacer()
                 if let p = vm.profile {
                     HStack(spacing: 5) {
                         Circle()
-                            .fill(p.overallStatus == "ready" ? Color.mdzGreen : Color.mdzDanger)
+                            .fill(p.overallStatus == "ready" ? colors.green : colors.danger)
                             .frame(width: 7, height: 7)
                         Text(p.overallStatus == "ready" ? "Ready" : "Not Ready")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(p.overallStatus == "ready" ? .mdzGreen : .mdzDanger)
+                            .foregroundColor(p.overallStatus == "ready" ? colors.green : colors.danger)
                     }
                 }
             }
 
             if vm.isLoading {
                 HStack {
-                    ProgressView().tint(.mdzBlue).scaleEffect(0.8)
-                    Text("Loading currency…").font(.system(size: 12)).foregroundColor(.mdzMuted)
+                    ProgressView().tint(colors.primary).scaleEffect(0.8)
+                    Text("Loading currency…").font(.system(size: 12)).foregroundColor(colors.muted)
                 }
             } else if let p = vm.profile {
                 let name = [p.firstName, p.lastName].compactMap { $0 }.joined(separator: " ")
                 if !name.isEmpty {
-                    Text(name).font(.system(size: isWide ? 17 : 15, weight: .bold)).foregroundColor(.mdzText)
+                    Text(name).font(.system(size: isWide ? 17 : 15, weight: .bold)).foregroundColor(colors.text)
                 }
 
-                Divider().background(Color.mdzBorder)
+                Divider().background(colors.border)
 
                 if isWide {
                     // ── iPad: table header row ──────────────────────
                     HStack {
-                        Text("DOCUMENT").font(.system(size: 9, weight: .black)).foregroundColor(.mdzMuted).tracking(1).frame(maxWidth: .infinity, alignment: .leading)
-                        Text("STATUS").font(.system(size: 9, weight: .black)).foregroundColor(.mdzMuted).tracking(1).frame(width: 110)
-                        Text("DATE").font(.system(size: 9, weight: .black)).foregroundColor(.mdzMuted).tracking(1).frame(width: 140)
-                        Text("ACTION").font(.system(size: 9, weight: .black)).foregroundColor(.mdzMuted).tracking(1).frame(width: 90)
+                        Text("DOCUMENT").font(.system(size: 9, weight: .black)).foregroundColor(colors.muted).tracking(1).frame(maxWidth: .infinity, alignment: .leading)
+                        Text("STATUS").font(.system(size: 9, weight: .black)).foregroundColor(colors.muted).tracking(1).frame(width: 110)
+                        Text("DATE").font(.system(size: 9, weight: .black)).foregroundColor(colors.muted).tracking(1).frame(width: 140)
+                        Text("ACTION").font(.system(size: 9, weight: .black)).foregroundColor(colors.muted).tracking(1).frame(width: 90)
                     }
                     .padding(.horizontal, 4)
 
-                    Divider().background(Color.mdzBorder)
+                    Divider().background(colors.border)
 
                     VStack(spacing: 0) {
                         ForEach(p.items) { item in
                             WideCurrencyRow(
                                 item:        item,
-                                isUploading: vm.uploading == item.key
+                                isUploading: vm.uploading == item.key,
+                                statusColor: statusColor(for: item.status)
                             ) { key in
                                 activeUploadKey = key; showImagePicker = true
                             }
                             if item.id != p.items.last?.id {
-                                Divider().background(Color.mdzBorder)
+                                Divider().background(colors.border)
                             }
                         }
                     }
@@ -177,10 +188,11 @@ struct PilotCurrencyCard: View {
                             CurrencyRow(
                                 item:        item,
                                 canEdit:     vm.canEditDates,
-                                isUploading: vm.uploading == item.key
+                                isUploading: vm.uploading == item.key,
+                                statusColor: statusColor(for: item.status)
                             ) { key in activeUploadKey = key; showImagePicker = true }
                             if item.id != p.items.last?.id {
-                                Divider().background(Color.mdzBorder).padding(.vertical, 4)
+                                Divider().background(colors.border).padding(.vertical, 4)
                             }
                         }
                     }
@@ -188,17 +200,17 @@ struct PilotCurrencyCard: View {
 
                 if let err = vm.uploadError {
                     Label(err, systemImage: "exclamationmark.triangle.fill")
-                        .font(.system(size: 11)).foregroundColor(.mdzDanger)
+                        .font(.system(size: 11)).foregroundColor(colors.danger)
                 }
                 if let ok = vm.uploadSuccess {
                     Label(ok, systemImage: "checkmark.circle.fill")
-                        .font(.system(size: 11)).foregroundColor(.mdzGreen)
+                        .font(.system(size: 11)).foregroundColor(colors.green)
                 }
             }
         }
         .padding(isWide ? 20 : 14)
-        .background(Color.mdzCard).cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .background(colors.card).cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
         .task { await vm.load() }
         .photosPicker(isPresented: $showImagePicker, selection: $pickerItem, matching: .images)
         .onChange(of: pickerItem) { newItem in
@@ -217,27 +229,29 @@ struct PilotCurrencyCard: View {
 struct WideCurrencyRow: View {
     let item:        PilotCurrencyItem
     let isUploading: Bool
+    let statusColor: Color
     let onUpload:    (String) -> Void
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         HStack(alignment: .center, spacing: 0) {
             // Document name
             HStack(spacing: 8) {
                 Image(systemName: item.statusIcon)
-                    .foregroundColor(item.statusColor)
+                    .foregroundColor(statusColor)
                     .font(.system(size: 15))
                 Text(item.label)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
             // Status pill
             Text(item.statusLabel)
                 .font(.system(size: 11, weight: .bold))
-                .foregroundColor(item.statusColor)
+                .foregroundColor(statusColor)
                 .padding(.horizontal, 8).padding(.vertical, 4)
-                .background(item.statusColor.opacity(0.15))
+                .background(statusColor.opacity(0.15))
                 .clipShape(Capsule())
                 .frame(width: 110)
 
@@ -245,16 +259,16 @@ struct WideCurrencyRow: View {
             Group {
                 if let date = item.formattedDate {
                     Text("\(item.dateLabel): \(date)")
-                        .font(.system(size: 12)).foregroundColor(.mdzMuted)
+                        .font(.system(size: 12)).foregroundColor(colors.muted)
                 } else {
-                    Text("—").font(.system(size: 12)).foregroundColor(.mdzMuted)
+                    Text("—").font(.system(size: 12)).foregroundColor(colors.muted)
                 }
             }
             .frame(width: 140, alignment: .leading)
 
             // Upload button
             if isUploading {
-                ProgressView().tint(.mdzBlue).scaleEffect(0.8).frame(width: 90)
+                ProgressView().tint(colors.primary).scaleEffect(0.8).frame(width: 90)
             } else {
                 Button { onUpload(item.key) } label: {
                     HStack(spacing: 4) {
@@ -265,7 +279,7 @@ struct WideCurrencyRow: View {
                     }
                     .foregroundColor(.white)
                     .padding(.horizontal, 10).padding(.vertical, 6)
-                    .background(item.file != nil ? Color.mdzNavyLift : Color.mdzRed)
+                    .background(item.file != nil ? colors.primary : colors.accent)
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
@@ -282,24 +296,26 @@ struct CurrencyRow: View {
     let item:        PilotCurrencyItem
     let canEdit:     Bool
     let isUploading: Bool
+    let statusColor: Color
     let onUpload:    (String) -> Void
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: item.statusIcon)
-                .foregroundColor(item.statusColor)
+                .foregroundColor(statusColor)
                 .font(.system(size: 16)).frame(width: 22)
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.label).font(.system(size: 13, weight: .semibold)).foregroundColor(.mdzText)
+                Text(item.label).font(.system(size: 13, weight: .semibold)).foregroundColor(colors.text)
                 if let date = item.formattedDate {
-                    Text("\(item.dateLabel): \(date)").font(.system(size: 10)).foregroundColor(.mdzMuted)
+                    Text("\(item.dateLabel): \(date)").font(.system(size: 10)).foregroundColor(colors.muted)
                 } else {
-                    Text(item.statusLabel).font(.system(size: 10, weight: .medium)).foregroundColor(item.statusColor)
+                    Text(item.statusLabel).font(.system(size: 10, weight: .medium)).foregroundColor(statusColor)
                 }
             }
             Spacer()
             if isUploading {
-                ProgressView().tint(.mdzBlue).scaleEffect(0.7).frame(width: 70)
+                ProgressView().tint(colors.primary).scaleEffect(0.7).frame(width: 70)
             } else {
                 Button { onUpload(item.key) } label: {
                     HStack(spacing: 4) {
@@ -310,7 +326,7 @@ struct CurrencyRow: View {
                     }
                     .foregroundColor(.white)
                     .padding(.horizontal, 10).padding(.vertical, 6)
-                    .background(item.file != nil ? Color.mdzNavyLift : Color.mdzRed)
+                    .background(item.file != nil ? colors.primary : colors.accent)
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)

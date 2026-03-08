@@ -286,6 +286,7 @@ struct LessonDetailView: View {
 
     @StateObject private var vm: LessonDetailViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.mdzColors) private var colors
     @State private var safariVideoURL: IdentifiableURL?
     @State private var enlargedImageURL: URL?
     @State private var htmlContentHeight: CGFloat = 300
@@ -310,7 +311,7 @@ struct LessonDetailView: View {
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             VStack(spacing: 0) {
 
                 // ── Top bar ──────────────────────────────────
@@ -318,34 +319,34 @@ struct LessonDetailView: View {
                     Button { dismiss() } label: {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.mdzAmber)
+                            .foregroundColor(colors.amber)
                     }
                     VStack(alignment: .leading, spacing: 2) {
                         Text(vm.lesson?.title ?? lessonTitle)
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.mdzText)
+                            .foregroundColor(colors.text)
                             .lineLimit(1)
                         if let idx = currentIndex {
                             Text("Lesson \(idx + 1) of \(allLessons.count)")
                                 .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                         }
                     }
                     Spacer()
                     if vm.completed {
                         HStack(spacing: 4) {
-                            Image(systemName: "checkmark.circle.fill").foregroundColor(.mdzGreen)
-                            Text("Done").font(.system(size: 12, weight: .semibold)).foregroundColor(.mdzGreen)
+                            Image(systemName: "checkmark.circle.fill").foregroundColor(colors.green)
+                            Text("Done").font(.system(size: 12, weight: .semibold)).foregroundColor(colors.green)
                         }
                     }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
-                .background(Color.mdzNavyMid)
+                .background(colors.navyMid)
 
                 if vm.isLoading {
                     Spacer()
-                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzAmber))
+                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.amber))
                     Spacer()
                 } else if let lesson = vm.lesson {
                     let youtubeId = extractYouTubeId(from: lesson.content ?? "")
@@ -355,7 +356,7 @@ struct LessonDetailView: View {
 
                             Text(lesson.title)
                                 .font(.system(size: 22, weight: .black))
-                                .foregroundColor(.mdzText)
+                                .foregroundColor(colors.text)
 
                             // ── YouTube embed ─────────────────
                             if let ytId = youtubeId {
@@ -372,20 +373,20 @@ struct LessonDetailView: View {
                                             VStack(alignment: .leading, spacing: 2) {
                                                 Text("Play video")
                                                     .font(.system(size: 16, weight: .bold))
-                                                    .foregroundColor(.mdzText)
+                                                    .foregroundColor(colors.text)
                                                 Text("Opens in Safari for reliable playback")
                                                     .font(.system(size: 11))
-                                                    .foregroundColor(.mdzMuted)
+                                                    .foregroundColor(colors.muted)
                                             }
                                             Spacer()
                                             Image(systemName: "arrow.up.right")
                                                 .font(.system(size: 14, weight: .semibold))
-                                                .foregroundColor(.mdzAmber)
+                                                .foregroundColor(colors.amber)
                                         }
                                         .padding(14)
-                                        .background(Color.mdzCard)
+                                        .background(colors.card)
                                         .cornerRadius(12)
-                                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
                                     }
                                     .buttonStyle(.plain)
 
@@ -406,7 +407,7 @@ struct LessonDetailView: View {
                                                 Text("Open in YouTube app")
                                                     .font(.system(size: 12, weight: .medium))
                                             }
-                                            .foregroundColor(.mdzMuted)
+                                            .foregroundColor(colors.muted)
                                         }
                                     }
 
@@ -415,7 +416,7 @@ struct LessonDetailView: View {
                                         Text("Tap fullscreen for best view. Rotate for landscape.")
                                             .font(.system(size: 12))
                                     }
-                                    .foregroundColor(.mdzMuted)
+                                    .foregroundColor(colors.muted)
 
                                     Button {
                                         vm.videoFinished = true
@@ -425,7 +426,7 @@ struct LessonDetailView: View {
                                             Text(vm.videoFinished ? "Video watched" : "I've watched the video")
                                                 .font(.system(size: 13, weight: .semibold))
                                         }
-                                        .foregroundColor(vm.videoFinished ? .mdzGreen : .mdzAmber)
+                                        .foregroundColor(vm.videoFinished ? colors.green : colors.amber)
                                     }
                                     .disabled(vm.videoFinished)
                                 }
@@ -457,7 +458,7 @@ struct LessonDetailView: View {
 
                     // ── Bottom bar ────────────────────────────
                     VStack(spacing: 0) {
-                        Divider().background(Color.mdzBorder)
+                        Divider().background(colors.border)
                         VStack(spacing: 10) {
 
                             Button {
@@ -472,13 +473,13 @@ struct LessonDetailView: View {
                                     Text(completeButtonLabel(lesson: lesson, youtubeId: youtubeId))
                                         .font(.system(size: 15, weight: .bold))
                                 }
-                                .foregroundColor(vm.canComplete || vm.completed ? .white : .mdzMuted)
+                                .foregroundColor(vm.canComplete || vm.completed ? .white : colors.muted)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 48)
                                 .background(
-                                    vm.completed ? Color.mdzGreen :
-                                    vm.canComplete ? Color.mdzAmber :
-                                    Color.mdzBorder.opacity(0.5)
+                                    vm.completed ? colors.green :
+                                    vm.canComplete ? colors.amber :
+                                    colors.border.opacity(0.5)
                                 )
                                 .cornerRadius(10)
                             }
@@ -493,7 +494,7 @@ struct LessonDetailView: View {
                             }
                         }
                         .padding(16)
-                        .background(Color.mdzNavyMid)
+                        .background(colors.navyMid)
                     }
                 }
             }
@@ -540,12 +541,12 @@ struct LessonDetailView: View {
                     Text(label).font(.system(size: 13, weight: .semibold))
                     if !isLeft { Image(systemName: icon).font(.system(size: 12)) }
                 }
-                .foregroundColor(.mdzAmber)
+                .foregroundColor(colors.amber)
                 .frame(maxWidth: .infinity)
                 .frame(height: 40)
-                .background(Color.mdzCard)
+                .background(colors.card)
                 .cornerRadius(8)
-                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
             }
         } else {
             Color.clear.frame(maxWidth: .infinity, maxHeight: 40)

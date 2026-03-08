@@ -4,10 +4,12 @@
 import SwiftUI
 
 struct LMSEditRootView: View {
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 12) {
                         LMSEditCard(icon: "book.fill", title: "Courses", subtitle: "Create and manage courses") {
@@ -30,8 +32,8 @@ struct LMSEditRootView: View {
                 }
             }
             .navigationTitle("Manage LMS")
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbarTitleDisplayMode(.inline)
         }
     }
@@ -44,31 +46,32 @@ private struct LMSEditCard<Destination: View>: View {
     let title: String
     let subtitle: String
     @ViewBuilder let destination: () -> Destination
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         NavigationLink(destination: destination()) {
             HStack(spacing: 14) {
                 Image(systemName: icon)
                     .font(.system(size: 22))
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                     .frame(width: 36)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                     Text(subtitle)
                         .font(.system(size: 12))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
             .padding(14)
-            .background(Color.mdzCard)
+            .background(colors.card)
             .cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
@@ -79,34 +82,36 @@ private struct LMSEditCard<Destination: View>: View {
 struct LMSCoursesListView: View {
     @StateObject private var vm = LMSCoursesEditViewModel()
     @State private var showAdd = false
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             Group {
                 if vm.isLoading && vm.courses.isEmpty {
-                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzAmber)).scaleEffect(1.4)
+                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.amber)).scaleEffect(1.4)
                 } else if let err = vm.error {
                     VStack(spacing: 12) {
-                        Text(err).font(.subheadline).foregroundColor(.mdzMuted).multilineTextAlignment(.center)
+                        Text(err).font(.subheadline).foregroundColor(colors.muted).multilineTextAlignment(.center)
                         Button("Retry") { Task { await vm.load() } }
-                            .foregroundColor(.mdzAmber)
+                            .foregroundColor(colors.amber)
                     }
                 } else {
                     List {
                         ForEach(vm.courses) { c in
                             NavigationLink(destination: LMSCourseEditView(courseId: c.id, existing: c)) {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(c.title).font(.headline).foregroundColor(.mdzText)
+                                    Text(c.title).font(.headline).foregroundColor(colors.text)
                                     HStack(spacing: 6) {
-                                        Text(c.slug).font(.caption).foregroundColor(.mdzMuted)
-                                        Text("•").foregroundColor(.mdzMuted)
+                                        Text(c.slug).font(.caption).foregroundColor(colors.muted)
+                                        Text("•").foregroundColor(colors.muted)
                                         Text(c.is_active == 1 ? "Active" : "Inactive")
-                                            .font(.caption).foregroundColor(c.is_active == 1 ? .mdzGreen : .mdzMuted)
+                                            .font(.caption).foregroundColor(c.is_active == 1 ? colors.green : colors.muted)
                                     }
                                 }
                             }
-                            .listRowBackground(Color.mdzCard)
+                            .listRowBackground(colors.card)
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) { Task { await vm.delete(id: c.id) } } label: {
                                     Label("Delete", systemImage: "trash")
@@ -120,8 +125,8 @@ struct LMSCoursesListView: View {
             }
         }
         .navigationTitle("Courses")
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+        .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+        .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -160,12 +165,14 @@ struct LMSCourseEditView: View {
     @State private var isSaving = false
     @State private var error: String?
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     private var isNew: Bool { courseId == 0 }
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             Form {
                 Section("Course Details") {
                     TextField("Slug", text: $slug).textInputAutocapitalization(.never).autocorrectionDisabled()
@@ -184,13 +191,13 @@ struct LMSCourseEditView: View {
                     }
                 }
                 if let error {
-                    Section { Text(error).foregroundColor(.mdzDanger).font(.caption) }
+                    Section { Text(error).foregroundColor(colors.danger).font(.caption) }
                 }
             }
         }
         .navigationTitle(isNew ? "New Course" : "Edit Course")
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+        .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+        .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbarTitleDisplayMode(.inline)
         .disabled(isSaving)
         .onAppear {
@@ -232,29 +239,31 @@ struct LMSCourseModuleOrderView: View {
     let courseId: Int
     let courseTitle: String
     @StateObject private var vm = LMSCourseModuleOrderViewModel()
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             Group {
                 if vm.isLoading && vm.modules.isEmpty {
-                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzAmber))
+                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.amber))
                 } else if let err = vm.error {
                     VStack(spacing: 12) {
-                        Text(err).font(.subheadline).foregroundColor(.mdzMuted)
-                        Button("Retry") { Task { await vm.load(courseId: courseId) } }.foregroundColor(.mdzAmber)
+                        Text(err).font(.subheadline).foregroundColor(colors.muted)
+                        Button("Retry") { Task { await vm.load(courseId: courseId) } }.foregroundColor(colors.amber)
                     }
                 } else if vm.modules.isEmpty {
                     Text("No modules in this course.\nAdd modules via the Modules list and link them to this course.")
-                        .font(.subheadline).foregroundColor(.mdzMuted).multilineTextAlignment(.center).padding()
+                        .font(.subheadline).foregroundColor(colors.muted).multilineTextAlignment(.center).padding()
                 } else {
                     List {
                         ForEach(vm.modules) { m in
                             HStack {
-                                Image(systemName: "line.3.horizontal").foregroundColor(.mdzMuted)
-                                Text(m.title ?? "Module").foregroundColor(.mdzText)
+                                Image(systemName: "line.3.horizontal").foregroundColor(colors.muted)
+                                Text(m.title ?? "Module").foregroundColor(colors.text)
                             }
-                            .listRowBackground(Color.mdzCard)
+                            .listRowBackground(colors.card)
                         }
                         .onMove(perform: vm.move)
                     }
@@ -264,8 +273,8 @@ struct LMSCourseModuleOrderView: View {
             }
         }
         .navigationTitle("Module Order")
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+        .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+        .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbarTitleDisplayMode(.inline)
         .toolbar { EditButton() }
         .task { await vm.load(courseId: courseId) }
@@ -315,29 +324,31 @@ struct LMSCourseQuizOrderView: View {
     let courseId: Int
     let courseTitle: String
     @StateObject private var vm = LMSCourseQuizOrderViewModel()
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             Group {
                 if vm.isLoading && vm.quizzes.isEmpty {
-                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzAmber))
+                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.amber))
                 } else if let err = vm.error {
                     VStack(spacing: 12) {
-                        Text(err).font(.subheadline).foregroundColor(.mdzMuted)
-                        Button("Retry") { Task { await vm.load(courseId: courseId) } }.foregroundColor(.mdzAmber)
+                        Text(err).font(.subheadline).foregroundColor(colors.muted)
+                        Button("Retry") { Task { await vm.load(courseId: courseId) } }.foregroundColor(colors.amber)
                     }
                 } else if vm.quizzes.isEmpty {
                     Text("No quizzes assigned to this course.\nAssign quizzes via the web platform.")
-                        .font(.subheadline).foregroundColor(.mdzMuted).multilineTextAlignment(.center).padding()
+                        .font(.subheadline).foregroundColor(colors.muted).multilineTextAlignment(.center).padding()
                 } else {
                     List {
                         ForEach(vm.quizzes) { q in
                             HStack {
-                                Image(systemName: "line.3.horizontal").foregroundColor(.mdzMuted)
-                                Text(q.title ?? "Quiz").foregroundColor(.mdzText)
+                                Image(systemName: "line.3.horizontal").foregroundColor(colors.muted)
+                                Text(q.title ?? "Quiz").foregroundColor(colors.text)
                             }
-                            .listRowBackground(Color.mdzCard)
+                            .listRowBackground(colors.card)
                         }
                         .onMove(perform: vm.move)
                     }
@@ -347,8 +358,8 @@ struct LMSCourseQuizOrderView: View {
             }
         }
         .navigationTitle("Quiz Order")
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+        .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+        .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbarTitleDisplayMode(.inline)
         .toolbar { EditButton() }
         .task { await vm.load(courseId: courseId) }
@@ -424,28 +435,30 @@ final class LMSCoursesEditViewModel: ObservableObject {
 struct LMSModulesListView: View {
     @StateObject private var vm = LMSModulesEditViewModel()
     @State private var showAdd = false
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             Group {
                 if vm.isLoading && vm.modules.isEmpty {
-                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzAmber))
+                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.amber))
                 } else if let err = vm.error {
                     VStack(spacing: 12) {
-                        Text(err).font(.subheadline).foregroundColor(.mdzMuted)
-                        Button("Retry") { Task { await vm.load() } }.foregroundColor(.mdzAmber)
+                        Text(err).font(.subheadline).foregroundColor(colors.muted)
+                        Button("Retry") { Task { await vm.load() } }.foregroundColor(colors.amber)
                     }
                 } else {
                     List {
                         ForEach(vm.modules) { m in
                             NavigationLink(destination: LMSModuleEditView(moduleId: m.id, existing: m)) {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(m.title).font(.headline).foregroundColor(.mdzText)
-                                    Text("Sort: \(m.sort_order)").font(.caption).foregroundColor(.mdzMuted)
+                                    Text(m.title).font(.headline).foregroundColor(colors.text)
+                                    Text("Sort: \(m.sort_order)").font(.caption).foregroundColor(colors.muted)
                                 }
                             }
-                            .listRowBackground(Color.mdzCard)
+                            .listRowBackground(colors.card)
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) { Task { await vm.delete(id: m.id) } } label: {
                                     Label("Delete", systemImage: "trash")
@@ -459,8 +472,8 @@ struct LMSModulesListView: View {
             }
         }
         .navigationTitle("Modules")
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+        .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+        .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -491,12 +504,14 @@ struct LMSModuleEditView: View {
     @State private var isSaving = false
     @State private var error: String?
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     private var isNew: Bool { moduleId == 0 }
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             Form {
                 Section("Module") {
                     TextField("Title", text: $title)
@@ -509,12 +524,12 @@ struct LMSModuleEditView: View {
                         }
                     }
                 }
-                if let error { Section { Text(error).foregroundColor(.mdzDanger).font(.caption) } }
+                if let error { Section { Text(error).foregroundColor(colors.danger).font(.caption) } }
             }
         }
         .navigationTitle(isNew ? "New Module" : "Edit Module")
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+        .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+        .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbarTitleDisplayMode(.inline)
         .disabled(isSaving)
         .onAppear {
@@ -569,29 +584,31 @@ struct LMSModuleLessonOrderView: View {
     let moduleId: Int
     let moduleTitle: String
     @StateObject private var vm = LMSModuleLessonOrderViewModel()
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             Group {
                 if vm.isLoading && vm.lessons.isEmpty {
-                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzAmber))
+                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.amber))
                 } else if let err = vm.error {
                     VStack(spacing: 12) {
-                        Text(err).font(.subheadline).foregroundColor(.mdzMuted)
-                        Button("Retry") { Task { await vm.load(moduleId: moduleId) } }.foregroundColor(.mdzAmber)
+                        Text(err).font(.subheadline).foregroundColor(colors.muted)
+                        Button("Retry") { Task { await vm.load(moduleId: moduleId) } }.foregroundColor(colors.amber)
                     }
                 } else if vm.lessons.isEmpty {
                     Text("No lessons in this module.\nAssign lessons to this module from the Lessons list.")
-                        .font(.subheadline).foregroundColor(.mdzMuted).multilineTextAlignment(.center).padding()
+                        .font(.subheadline).foregroundColor(colors.muted).multilineTextAlignment(.center).padding()
                 } else {
                     List {
                         ForEach(vm.lessons) { l in
                             HStack {
-                                Image(systemName: "line.3.horizontal").foregroundColor(.mdzMuted)
-                                Text(l.title).foregroundColor(.mdzText)
+                                Image(systemName: "line.3.horizontal").foregroundColor(colors.muted)
+                                Text(l.title).foregroundColor(colors.text)
                             }
-                            .listRowBackground(Color.mdzCard)
+                            .listRowBackground(colors.card)
                         }
                         .onMove(perform: vm.move)
                     }
@@ -601,8 +618,8 @@ struct LMSModuleLessonOrderView: View {
             }
         }
         .navigationTitle("Lesson Order")
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+        .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+        .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbarTitleDisplayMode(.inline)
         .toolbar { EditButton() }
         .task { await vm.load(moduleId: moduleId) }
@@ -647,34 +664,36 @@ final class LMSModuleLessonOrderViewModel: ObservableObject {
 
 struct LMSLessonsListView: View {
     @StateObject private var vm = LMSLessonsEditViewModel()
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             Group {
                 if vm.isLoading && vm.lessons.isEmpty {
-                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzAmber))
+                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.amber))
                 } else if let err = vm.error {
                     VStack(spacing: 12) {
-                        Text(err).font(.subheadline).foregroundColor(.mdzMuted)
-                        Button("Retry") { Task { await vm.load() } }.foregroundColor(.mdzAmber)
+                        Text(err).font(.subheadline).foregroundColor(colors.muted)
+                        Button("Retry") { Task { await vm.load() } }.foregroundColor(colors.amber)
                     }
                 } else {
                     List {
                         ForEach(vm.lessons) { l in
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(l.title).font(.headline).foregroundColor(.mdzText)
+                                Text(l.title).font(.headline).foregroundColor(colors.text)
                                 HStack(spacing: 6) {
                                     if let ct = l.course_title, !ct.isEmpty {
-                                        Text(ct).font(.caption).foregroundColor(.mdzMuted)
+                                        Text(ct).font(.caption).foregroundColor(colors.muted)
                                     }
                                     if let mt = l.module_title, !mt.isEmpty {
-                                        Text("•").foregroundColor(.mdzMuted)
-                                        Text(mt).font(.caption).foregroundColor(.mdzMuted)
+                                        Text("•").foregroundColor(colors.muted)
+                                        Text(mt).font(.caption).foregroundColor(colors.muted)
                                     }
                                 }
                             }
-                            .listRowBackground(Color.mdzCard)
+                            .listRowBackground(colors.card)
                         }
                     }
                     .listStyle(.plain)
@@ -683,8 +702,8 @@ struct LMSLessonsListView: View {
             }
         }
         .navigationTitle("Lessons")
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+        .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+        .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbarTitleDisplayMode(.inline)
         .task { await vm.load() }
         .refreshable { await vm.load() }
@@ -710,28 +729,30 @@ final class LMSLessonsEditViewModel: ObservableObject {
 
 struct LMSQuizzesListView: View {
     @StateObject private var vm = LMSQuizzesEditViewModel()
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             Group {
                 if vm.isLoading && vm.quizzes.isEmpty {
-                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzAmber))
+                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.amber))
                 } else if let err = vm.error {
                     VStack(spacing: 12) {
-                        Text(err).font(.subheadline).foregroundColor(.mdzMuted)
-                        Button("Retry") { Task { await vm.load() } }.foregroundColor(.mdzAmber)
+                        Text(err).font(.subheadline).foregroundColor(colors.muted)
+                        Button("Retry") { Task { await vm.load() } }.foregroundColor(colors.amber)
                     }
                 } else {
                     List {
                         ForEach(vm.quizzes) { q in
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(q.title).font(.headline).foregroundColor(.mdzText)
+                                Text(q.title).font(.headline).foregroundColor(colors.text)
                                 if let pct = q.pass_percentage {
-                                    Text("Pass: \(Int(pct))%").font(.caption).foregroundColor(.mdzMuted)
+                                    Text("Pass: \(Int(pct))%").font(.caption).foregroundColor(colors.muted)
                                 }
                             }
-                            .listRowBackground(Color.mdzCard)
+                            .listRowBackground(colors.card)
                         }
                     }
                     .listStyle(.plain)
@@ -740,8 +761,8 @@ struct LMSQuizzesListView: View {
             }
         }
         .navigationTitle("Quizzes")
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+        .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+        .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbarTitleDisplayMode(.inline)
         .task { await vm.load() }
         .refreshable { await vm.load() }
@@ -767,34 +788,36 @@ final class LMSQuizzesEditViewModel: ObservableObject {
 
 struct LMSQuestionBankView: View {
     @StateObject private var vm = LMSQuestionBankEditViewModel()
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             Group {
                 if vm.isLoading && vm.questions.isEmpty {
-                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzAmber))
+                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.amber))
                 } else if let err = vm.error {
                     VStack(spacing: 12) {
-                        Text(err).font(.subheadline).foregroundColor(.mdzMuted)
-                        Button("Retry") { Task { await vm.load() } }.foregroundColor(.mdzAmber)
+                        Text(err).font(.subheadline).foregroundColor(colors.muted)
+                        Button("Retry") { Task { await vm.load() } }.foregroundColor(colors.amber)
                     }
                 } else {
                     List {
                         ForEach(vm.questions) { q in
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(q.text).font(.subheadline).foregroundColor(.mdzText)
+                                Text(q.text).font(.subheadline).foregroundColor(colors.text)
                                 HStack(spacing: 6) {
                                     if let t = q.type, !t.isEmpty {
-                                        Text(t).font(.caption2).foregroundColor(.mdzMuted)
+                                        Text(t).font(.caption2).foregroundColor(colors.muted)
                                     }
                                     if let c = q.categories, !c.isEmpty {
-                                        Text("•").foregroundColor(.mdzMuted)
-                                        Text(c).font(.caption2).foregroundColor(.mdzMuted).lineLimit(1)
+                                        Text("•").foregroundColor(colors.muted)
+                                        Text(c).font(.caption2).foregroundColor(colors.muted).lineLimit(1)
                                     }
                                 }
                             }
-                            .listRowBackground(Color.mdzCard)
+                            .listRowBackground(colors.card)
                             .padding(.vertical, 4)
                         }
                     }
@@ -804,13 +827,13 @@ struct LMSQuestionBankView: View {
             }
         }
         .navigationTitle("Question Bank")
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+        .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+        .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbarTitleDisplayMode(.inline)
         .overlay(alignment: .bottom) {
             if !vm.questions.isEmpty {
                 Text("Create and edit questions on the web.")
-                    .font(.caption).foregroundColor(.mdzMuted).padding(8)
+                    .font(.caption).foregroundColor(colors.muted).padding(8)
             }
         }
         .task { await vm.load() }

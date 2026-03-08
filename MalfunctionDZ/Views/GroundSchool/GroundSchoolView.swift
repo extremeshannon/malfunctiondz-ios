@@ -34,16 +34,18 @@ struct GroundSchoolSplitView: View {
     @EnvironmentObject private var auth: AuthManager
     @ObservedObject var vm: GroundSchoolViewModel
     @Binding var selectedCourse: LMSCourse?
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     var body: some View {
         NavigationSplitView {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 VStack(spacing: 0) {
                     groundSchoolHeader
                     if vm.isLoading && vm.courses.isEmpty {
                         Spacer()
-                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzAmber)).scaleEffect(1.4)
+                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.amber)).scaleEffect(1.4)
                         Spacer()
                     } else if vm.courses.isEmpty {
                         Spacer()
@@ -54,18 +56,18 @@ struct GroundSchoolSplitView: View {
                             ForEach(vm.courses) { course in
                                 GroundSchoolCourseRow(course: course)
                                     .tag(course)
-                                    .listRowBackground(Color.mdzCard)
+                                    .listRowBackground(colors.card)
                             }
                         }
                         .listStyle(.sidebar)
                         .scrollContentBackground(.hidden)
-                        .background(Color.mdzBackground)
+                        .background(colors.background)
                     }
                 }
             }
             .navigationTitle("Courses")
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .onAppear { if selectedCourse == nil, let first = vm.courses.first { selectedCourse = first } }
             .onChange(of: vm.courses.count) { _, _ in
                 if selectedCourse == nil, let first = vm.courses.first { selectedCourse = first }
@@ -86,14 +88,14 @@ struct GroundSchoolSplitView: View {
                 }
             } else {
                 ZStack {
-                    Color.mdzBackground.ignoresSafeArea()
+                    colors.background.ignoresSafeArea()
                     VStack(spacing: 12) {
                         Image(systemName: "graduationcap.fill")
                             .font(.system(size: 48))
-                            .foregroundColor(.mdzMuted.opacity(0.5))
+                            .foregroundColor(colors.muted.opacity(0.5))
                         Text("Select a course")
                             .font(.headline)
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                     }
                 }
             }
@@ -105,45 +107,46 @@ struct GroundSchoolSplitView: View {
             HStack {
                 Image(systemName: "graduationcap.fill")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                 Text("GROUND SCHOOL")
                     .font(.system(size: 11, weight: .black))
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                     .tracking(2)
                 Spacer()
                 Text("\(vm.courses.count) COURSES")
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
                     .tracking(1)
             }
             Text("Training & LMS")
                 .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
-        .background(Color.mdzNavyMid)
+        .background(colors.navyMid)
     }
 }
 
 // Compact row for iPad sidebar
 struct GroundSchoolCourseRow: View {
     let course: LMSCourse
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(course.title)
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
                     .lineLimit(2)
                 Spacer()
-                StatusPill(label: course.enrollmentStatus.label, color: enrollmentColor(course))
+                StatusPill(label: course.enrollmentStatus.label, color: enrollmentColor(course, colors))
             }
             Text("\(course.completedLessons)/\(course.totalLessons) lessons")
                 .font(.system(size: 12))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
         }
         .padding(.vertical, 4)
     }
@@ -153,40 +156,41 @@ struct GroundSchoolCourseRow: View {
 struct GroundSchoolStackView: View {
     @EnvironmentObject private var auth: AuthManager
     @ObservedObject var vm: GroundSchoolViewModel
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 VStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Image(systemName: "graduationcap.fill")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.mdzAmber)
+                                .foregroundColor(colors.amber)
                             Text("GROUND SCHOOL")
                                 .font(.system(size: 11, weight: .black))
-                                .foregroundColor(.mdzAmber)
+                                .foregroundColor(colors.amber)
                                 .tracking(2)
                             Spacer()
                             Text("\(vm.courses.count) COURSES")
                                 .font(.system(size: 10, weight: .black))
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                                 .tracking(1)
                         }
                         Text("Training & LMS")
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 16)
-                    .background(Color.mdzNavyMid)
+                    .background(colors.navyMid)
 
                     if vm.isLoading && vm.courses.isEmpty {
                         Spacer()
                         ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .mdzAmber))
+                            .progressViewStyle(CircularProgressViewStyle(tint: colors.amber))
                             .scaleEffect(1.4)
                         Spacer()
                     } else if vm.courses.isEmpty {
@@ -202,24 +206,24 @@ struct GroundSchoolStackView: View {
                                         HStack(spacing: 12) {
                                             Image(systemName: "pencil.and.list.clipboard")
                                                 .font(.system(size: 22))
-                                                .foregroundColor(.mdzRed)
+                                                .foregroundColor(colors.accent)
                                             VStack(alignment: .leading, spacing: 2) {
                                                 Text("Manage LMS")
                                                     .font(.system(size: 16, weight: .bold))
-                                                    .foregroundColor(.mdzText)
+                                                    .foregroundColor(colors.text)
                                                 Text("Edit courses, modules, lessons & quizzes")
                                                     .font(.system(size: 12))
-                                                    .foregroundColor(.mdzMuted)
+                                                    .foregroundColor(colors.muted)
                                             }
                                             Spacer()
                                             Image(systemName: "chevron.right")
                                                 .font(.system(size: 13, weight: .semibold))
-                                                .foregroundColor(.mdzMuted)
+                                                .foregroundColor(colors.muted)
                                         }
                                         .padding(14)
-                                        .background(Color.mdzCard)
+                                        .background(colors.card)
                                         .cornerRadius(12)
-                                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzRed.opacity(0.5), lineWidth: 1))
+                                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.accent.opacity(0.5), lineWidth: 1))
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -243,6 +247,7 @@ struct GroundSchoolStackView: View {
 // MARK: - Course Card
 struct CourseCard: View {
     let course: LMSCourse
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -250,13 +255,13 @@ struct CourseCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(course.title)
                         .font(.system(size: 16, weight: .black))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                         .multilineTextAlignment(.leading)
 
                     if let desc = course.description {
                         Text(desc)
                             .font(.system(size: 12))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                             .lineLimit(2)
                     }
                 }
@@ -264,9 +269,9 @@ struct CourseCard: View {
                 Spacer()
 
                 if !course.isActive {
-                    StatusPill(label: "INACTIVE", color: .mdzMuted)
+                    StatusPill(label: "INACTIVE", color: colors.muted)
                 }
-                StatusPill(label: course.enrollmentStatus.label, color: enrollmentColor(course))
+                StatusPill(label: course.enrollmentStatus.label, color: enrollmentColor(course, colors))
             }
 
             // Progress bar
@@ -275,21 +280,21 @@ struct CourseCard: View {
                     HStack {
                         Text("\(course.completedLessons) of \(course.totalLessons) lessons")
                             .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                         Spacer()
                         Text("\(Int(course.progressPct))%")
                             .font(.system(size: 11, weight: .black))
-                            .foregroundColor(enrollmentColor(course))
+                            .foregroundColor(enrollmentColor(course, colors))
                     }
 
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             RoundedRectangle(cornerRadius: 3)
-                                .fill(Color.mdzBorder)
+                                .fill(colors.border)
                                 .frame(height: 6)
 
                             RoundedRectangle(cornerRadius: 3)
-                                .fill(enrollmentColor(course))
+                                .fill(enrollmentColor(course, colors))
                                 .frame(
                                     width: geo.size.width * CGFloat(course.progressPct) / 100,
                                     height: 6
@@ -304,27 +309,27 @@ struct CourseCard: View {
             HStack(spacing: 12) {
                 Label("\(course.modules.count) modules", systemImage: "square.stack.fill")
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
 
                 Label("\(course.totalLessons) lessons", systemImage: "doc.text.fill")
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .strokeBorder(
-                    course.progressPct == 100 ? Color.mdzGreen.opacity(0.4) : Color.mdzBorder,
+                    course.progressPct == 100 ? colors.green.opacity(0.4) : colors.border,
                     lineWidth: 1
                 )
         )
         .overlay(
             VStack {
                 Rectangle()
-                    .fill(enrollmentColor(course))
+                    .fill(enrollmentColor(course, colors))
                     .frame(height: 3)
                     .cornerRadius(14)
                 Spacer()
@@ -338,10 +343,12 @@ struct CourseDetailView: View {
     let course: LMSCourse
     @ObservedObject var vm: GroundSchoolViewModel
     @State private var expandedModules: Set<Int> = []
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
@@ -350,19 +357,19 @@ struct CourseDetailView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             if !course.isActive {
-                                StatusPill(label: "INACTIVE", color: .mdzMuted)
+                                StatusPill(label: "INACTIVE", color: colors.muted)
                             }
-                            StatusPill(label: course.enrollmentStatus.label, color: enrollmentColor(course))
+                            StatusPill(label: course.enrollmentStatus.label, color: enrollmentColor(course, colors))
                             Spacer()
                             Text("\(Int(course.progressPct))% complete")
                                 .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(enrollmentColor(course))
+                                .foregroundColor(enrollmentColor(course, colors))
                         }
 
                         if let desc = course.description {
                             Text(desc)
                                 .font(.subheadline)
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                         }
 
                         // Progress bar
@@ -370,11 +377,11 @@ struct CourseDetailView: View {
                             GeometryReader { geo in
                                 ZStack(alignment: .leading) {
                                     RoundedRectangle(cornerRadius: 4)
-                                        .fill(Color.mdzBorder)
+                                        .fill(colors.border)
                                         .frame(height: 8)
 
                                     RoundedRectangle(cornerRadius: 4)
-                                        .fill(enrollmentColor(course))
+                                        .fill(enrollmentColor(course, colors))
                                         .frame(
                                             width: geo.size.width * CGFloat(course.progressPct) / 100,
                                             height: 8
@@ -386,13 +393,13 @@ struct CourseDetailView: View {
                             HStack {
                                 Text("\(course.completedLessons) of \(course.totalLessons) lessons completed")
                                     .font(.caption)
-                                    .foregroundColor(.mdzMuted)
+                                    .foregroundColor(colors.muted)
                                 Spacer()
                             }
                         }
                     }
                     .padding(16)
-                    .background(Color.mdzCard)
+                    .background(colors.card)
                     .cornerRadius(12)
 
                     // Quizzes for this course
@@ -400,7 +407,7 @@ struct CourseDetailView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("ASSESSMENTS")
                                 .font(.system(size: 10, weight: .black))
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                                 .tracking(2)
 
                             ForEach(course.quizzes ?? []) { quiz in
@@ -444,8 +451,8 @@ struct CourseDetailView: View {
         }
         .navigationTitle(course.title)
         .navigationBarTitleDisplayMode(.large)
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+        .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+        .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .onAppear {
             // Auto-expand first incomplete module
@@ -465,6 +472,7 @@ struct ModuleSection: View {
     let isExpanded: Bool
     @ObservedObject var vm: GroundSchoolViewModel
     let onToggle: () -> Void
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(spacing: 0) {
@@ -485,18 +493,18 @@ struct ModuleSection: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(module.title)
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(module.isLocked ? .mdzMuted : .mdzText)
+                            .foregroundColor(module.isLocked ? colors.muted : colors.text)
                             .multilineTextAlignment(.leading)
 
                         HStack(spacing: 8) {
                             if module.isLocked {
                                 Label("Locked", systemImage: "lock.fill")
                                     .font(.system(size: 11, weight: .medium))
-                                    .foregroundColor(.mdzMuted)
+                                    .foregroundColor(colors.muted)
                             } else {
                                 Text("\(module.completedCount)/\(module.lessonCount) lessons")
                                     .font(.system(size: 11))
-                                    .foregroundColor(.mdzMuted)
+                                    .foregroundColor(colors.muted)
 
                                 if module.signoffType != "none" {
                                     Text(module.unlockStatusEnum.label)
@@ -513,7 +521,7 @@ struct ModuleSection: View {
                     if !module.isLocked {
                         Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                     }
                 }
                 .padding(.horizontal, 14)
@@ -524,7 +532,7 @@ struct ModuleSection: View {
             // ── Expanded content ──────────────────────────
             if isExpanded && !module.isLocked {
                 VStack(spacing: 0) {
-                    Divider().background(Color.mdzBorder)
+                    Divider().background(colors.border)
 
                     // Lessons
                     if !module.lessons.isEmpty {
@@ -544,7 +552,7 @@ struct ModuleSection: View {
 
                                 if lesson.id != module.lessons.last?.id {
                                     Divider()
-                                        .background(Color.mdzBorder)
+                                        .background(colors.border)
                                         .padding(.leading, 48)
                                 }
                             }
@@ -553,7 +561,7 @@ struct ModuleSection: View {
 
                     // Sign-off block
                     if let signoffBlock = module.signoffBlock {
-                        Divider().background(Color.mdzBorder)
+                        Divider().background(colors.border)
 
                         ModuleSignoffBlock(
                             courseId: courseId,
@@ -575,12 +583,12 @@ struct ModuleSection: View {
                     Text(reason)
                         .font(.system(size: 11, weight: .medium))
                 }
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .padding(.horizontal, 14)
                 .padding(.bottom, 10)
             }
         }
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -590,12 +598,12 @@ struct ModuleSection: View {
     }
 
     private var headerCircleColor: Color {
-        if module.isLocked { return Color.mdzBorder }
-        if module.isComplete { return Color.mdzGreen }
+        if module.isLocked { return colors.border }
+        if module.isComplete { return colors.green }
         switch module.unlockStatusEnum {
-        case .awaitingInstructor, .awaitingJump: return Color.mdzAmber
-        case .jumpFailed: return Color.mdzDanger
-        default: return Color.mdzBlue
+        case .awaitingInstructor, .awaitingJump: return colors.amber
+        case .jumpFailed: return colors.danger
+        default: return colors.primary
         }
     }
 
@@ -612,20 +620,20 @@ struct ModuleSection: View {
 
     private var statusBadgeColor: Color {
         switch module.unlockStatusEnum {
-        case .awaitingInstructor, .awaitingJump: return .mdzAmber
-        case .jumpFailed: return .mdzDanger
-        case .complete: return .mdzGreen
-        default: return .mdzMuted
+        case .awaitingInstructor, .awaitingJump: return colors.amber
+        case .jumpFailed: return colors.danger
+        case .complete: return colors.green
+        default: return colors.muted
         }
     }
 
     private var borderColor: Color {
-        if module.isLocked { return Color.mdzBorder }
-        if module.isComplete { return Color.mdzGreen.opacity(0.3) }
+        if module.isLocked { return colors.border }
+        if module.isComplete { return colors.green.opacity(0.3) }
         switch module.unlockStatusEnum {
-        case .awaitingInstructor, .awaitingJump: return Color.mdzAmber.opacity(0.4)
-        case .jumpFailed: return Color.mdzDanger.opacity(0.4)
-        default: return Color.mdzBorder
+        case .awaitingInstructor, .awaitingJump: return colors.amber.opacity(0.4)
+        case .jumpFailed: return colors.danger.opacity(0.4)
+        default: return colors.border
         }
     }
 }
@@ -634,43 +642,44 @@ struct LessonRow: View {
     let lesson: LMSLesson
     let courseId: Int
     @ObservedObject var vm: GroundSchoolViewModel
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         HStack(spacing: 12) {
             // Visual indicator only — not tappable
             ZStack {
                 Circle()
-                    .strokeBorder(lesson.completed ? Color.mdzGreen : Color.mdzBorder, lineWidth: 2)
+                    .strokeBorder(lesson.completed ? colors.green : colors.border, lineWidth: 2)
                     .frame(width: 24, height: 24)
 
                 if lesson.completed {
                     Image(systemName: "checkmark")
                         .font(.system(size: 11, weight: .black))
-                        .foregroundColor(.mdzGreen)
+                        .foregroundColor(colors.green)
                 }
             }
 
             Text(lesson.title)
                 .font(.system(size: 13, weight: lesson.completed ? .medium : .regular))
-                .foregroundColor(lesson.completed ? .mdzMuted : .mdzText)
-                .strikethrough(lesson.completed, color: .mdzMuted)
+                .foregroundColor(lesson.completed ? colors.muted : colors.text)
+                .strikethrough(lesson.completed, color: colors.muted)
                 .multilineTextAlignment(.leading)
 
             Spacer()
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 11))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
     }
 }
 
-private func enrollmentColor(_ course: LMSCourse) -> Color {
+private func enrollmentColor(_ course: LMSCourse, _ colors: MDZColorSet) -> Color {
     switch course.enrollmentStatus {
-    case .notEnrolled: return .mdzMuted
-    case .enrolled: return .mdzBlue
-    case .completed: return .mdzGreen
+    case .notEnrolled: return colors.muted
+    case .enrolled: return colors.primary
+    case .completed: return colors.green
     }
 }

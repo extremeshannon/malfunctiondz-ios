@@ -66,6 +66,7 @@ struct ContentRootView: View {
             }
         }
         .environment(\.mdzColors, MDZColorSet.for(config.theme))
+        .environment(\.mdzColorScheme, config.theme == "slate_fire" ? .light : .dark)
         .task { await config.loadConfig() }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active, auth.isAuthenticated {
@@ -135,10 +136,10 @@ struct MDZSplitView: View {
                 Section("OPERATIONS") {
                     SidebarButton(icon: "house.fill",         title: "Home",                  selected: selectedModule == .home)        { selectedModule = .home }
                     if auth.currentUser?.canAccessAviation == true {
-                        SidebarButton(icon: "airplane",       title: config.moduleAviation,   selected: selectedModule == .aviation)    { selectedModule = .aviation }
+                        SidebarButton(icon: "airplane",       title: config.moduleAviation,   selected: selectedModule == .aviation,    moduleAccent: colors.aviation)    { selectedModule = .aviation }
                     }
                     if auth.currentUser?.canAccessLoft == true {
-                        SidebarButton(icon: "backpack.fill",  title: config.moduleLoft,       selected: selectedModule == .loft)        { selectedModule = .loft }
+                        SidebarButton(icon: "backpack.fill",  title: config.moduleLoft,       selected: selectedModule == .loft,        moduleAccent: colors.loft)        { selectedModule = .loft }
                     }
                     if auth.currentUser?.canAccessRigs == true {
                         SidebarButton(icon: "briefcase.fill", title: "Rigs",                  selected: selectedModule == .rigs)        { selectedModule = .rigs }
@@ -147,11 +148,11 @@ struct MDZSplitView: View {
                             SidebarButton(icon: "briefcase.fill", title: "My Rigs",            selected: selectedModule == .myRigs)     { selectedModule = .myRigs }
                         }
                         if auth.currentUser?.canAccessDzRigs == true {
-                            SidebarButton(icon: "square.stack.3d.up.fill", title: "DZ Rigs",   selected: selectedModule == .dzRigs)     { selectedModule = .dzRigs }
+                            SidebarButton(icon: "square.stack.3d.up.fill", title: "DZ Rigs",   selected: selectedModule == .dzRigs,     moduleAccent: colors.dz)     { selectedModule = .dzRigs }
                         }
                     }
                     if auth.currentUser?.canAccessGroundSchool == true {
-                        SidebarButton(icon: "graduationcap.fill", title: config.moduleGroundSchool, selected: selectedModule == .groundSchool) { selectedModule = .groundSchool }
+                        SidebarButton(icon: "graduationcap.fill", title: config.moduleGroundSchool, selected: selectedModule == .groundSchool, moduleAccent: colors.groundSchool) { selectedModule = .groundSchool }
                     }
                     if auth.currentUser?.canAccessLogbook == true {
                         SidebarButton(icon: "book.closed.fill", title: "Logbook", selected: selectedModule == .logbook) { selectedModule = .logbook }
@@ -231,15 +232,18 @@ struct SidebarButton: View {
     let icon:     String
     let title:    String
     let selected: Bool
+    var moduleAccent: Color? = nil  // When set, use for selected state (aviation=blue, loft=teal, etc.)
     let action:   () -> Void
     @Environment(\.mdzColors) private var colors
+
+    private var effectiveAccent: Color { moduleAccent ?? colors.accent }
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(selected ? colors.accent : colors.muted)
+                    .foregroundColor(selected ? effectiveAccent : colors.muted)
                     .frame(width: 22)
                 Text(title)
                     .font(.system(size: 15, weight: selected ? .bold : .regular))
@@ -248,7 +252,7 @@ struct SidebarButton: View {
             }
             .padding(.vertical, 6)
             .padding(.horizontal, 8)
-            .background(selected ? colors.accent.opacity(0.12) : Color.clear)
+            .background(selected ? effectiveAccent.opacity(0.12) : Color.clear)
             .cornerRadius(8)
         }
         .buttonStyle(.plain)
@@ -455,6 +459,7 @@ struct NotificationDetailSheet: View {
     let tap: PendingPushTap
     let onDismiss: () -> Void
     @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     var body: some View {
         NavigationStack {
@@ -483,7 +488,7 @@ struct NotificationDetailSheet: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
             .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

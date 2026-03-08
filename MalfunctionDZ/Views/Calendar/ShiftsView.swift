@@ -5,6 +5,7 @@ import SwiftUI
 
 struct ShiftsView: View {
     @EnvironmentObject private var auth: AuthManager
+    @Environment(\.mdzColors) private var colors
     @StateObject private var vm = CalendarViewModel()
     @State private var showDatePicker = false
 
@@ -26,14 +27,14 @@ struct ShiftsView: View {
             if let msg = vm.feedbackMessage {
                 HStack(spacing: 8) {
                     Image(systemName: vm.feedbackIsError ? "exclamationmark.circle.fill" : "checkmark.circle.fill")
-                        .foregroundColor(vm.feedbackIsError ? .mdzDanger : .mdzGreen)
+                        .foregroundColor(vm.feedbackIsError ? colors.danger : colors.green)
                     Text(msg)
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                 }
                 .padding(12)
                 .frame(maxWidth: .infinity)
-                .background((vm.feedbackIsError ? Color.mdzDanger : Color.mdzGreen).opacity(0.15))
+                .background((vm.feedbackIsError ? colors.danger : colors.green).opacity(0.15))
             }
 
             weekPickerHeader
@@ -63,7 +64,7 @@ struct ShiftsView: View {
                 } label: {
                     Image(systemName: "chevron.left.circle.fill")
                         .font(.system(size: 24))
-                        .foregroundColor(.mdzBlue)
+                        .foregroundColor(colors.primary)
                 }
                 .buttonStyle(.plain)
 
@@ -84,12 +85,12 @@ struct ShiftsView: View {
                 } label: {
                     Image(systemName: "chevron.right.circle.fill")
                         .font(.system(size: 24))
-                        .foregroundColor(.mdzBlue)
+                        .foregroundColor(colors.primary)
                 }
                 .buttonStyle(.plain)
             }
             .padding(.vertical, 12)
-            .background(Color.mdzCard)
+            .background(colors.card)
 
             Button {
                 showDatePicker = true
@@ -97,17 +98,17 @@ struct ShiftsView: View {
                 HStack(spacing: 8) {
                     Text(weekRangeText)
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                     Image(systemName: "chevron.down.circle.fill")
                         .font(.system(size: 14))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
             }
             .buttonStyle(.plain)
-            .background(Color.mdzCard)
-            .overlay(RoundedRectangle(cornerRadius: 0).strokeBorder(Color.mdzBorder, lineWidth: 0.5))
+            .background(colors.card)
+            .overlay(RoundedRectangle(cornerRadius: 0).strokeBorder(colors.border, lineWidth: 0.5))
         }
         .sheet(isPresented: $showDatePicker) {
             datePickerSheet
@@ -124,9 +125,9 @@ struct ShiftsView: View {
         } label: {
             Text("\(dayNum)")
                 .font(.system(size: 16, weight: isSelected ? .bold : .medium))
-                .foregroundColor(isSelected ? .mdzBackground : .mdzText)
+                .foregroundColor(isSelected ? colors.background : colors.text)
                 .frame(width: 36, height: 36)
-                .background(isSelected ? Color.mdzRed : Color.clear)
+                .background(isSelected ? colors.accent : Color.clear)
                 .clipShape(Circle())
         }
         .buttonStyle(.plain)
@@ -145,7 +146,7 @@ struct ShiftsView: View {
                     displayedComponents: .date
                 )
                 .datePickerStyle(.graphical)
-                .tint(.mdzRed)
+                .tint(colors.accent)
                 .padding()
             }
             .preferredColorScheme(.light)
@@ -156,7 +157,7 @@ struct ShiftsView: View {
                     Button("Done") {
                         showDatePicker = false
                     }
-                    .foregroundColor(.mdzRed)
+                    .foregroundColor(colors.accent)
                     .fontWeight(.semibold)
                 }
             }
@@ -191,10 +192,10 @@ struct ShiftsView: View {
         VStack(spacing: 20) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 44))
-                .foregroundColor(.mdzAmber)
+                .foregroundColor(colors.amber)
             Text(message)
                 .font(.subheadline)
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
             Button {
@@ -208,7 +209,7 @@ struct ShiftsView: View {
                 .foregroundColor(.white)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
-                .background(Color.mdzRed)
+                .background(colors.accent)
                 .cornerRadius(10)
             }
             .buttonStyle(.plain)
@@ -224,6 +225,7 @@ struct ShiftDayRow: View {
     let canPick: (StaffShift) -> Bool
     let onClaim: (StaffShift) -> Void
     let onRequestRelease: (StaffShift) -> Void
+    @Environment(\.mdzColors) private var colors
 
     private var dayLabel: String {
         let f = DateFormatter()
@@ -236,13 +238,13 @@ struct ShiftDayRow: View {
             HStack(alignment: .top, spacing: 12) {
                 Text(dayLabel)
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
                     .frame(width: 70, alignment: .leading)
 
                 if shifts.isEmpty {
                     Text("No shift scheduled.")
                         .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(shifts) { shift in
@@ -260,8 +262,8 @@ struct ShiftDayRow: View {
             }
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.mdzCard)
-            .overlay(RoundedRectangle(cornerRadius: 0).strokeBorder(Color.mdzBorder, lineWidth: 0.5))
+            .background(colors.card)
+            .overlay(RoundedRectangle(cornerRadius: 0).strokeBorder(colors.border, lineWidth: 0.5))
         }
         .padding(.vertical, 4)
     }
@@ -274,23 +276,24 @@ struct ShiftRow: View {
     let showRequestRelease: Bool
     let onPick: () -> Void
     let onRequestRelease: () -> Void
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(shift.positionLabel)
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
                 Text(shift.slotLabel)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
             .frame(width: 120, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(shift.displayAssignee)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(shift.status == "available" ? .mdzGreen : .mdzText)
+                    .foregroundColor(shift.status == "available" ? colors.green : colors.text)
 
                 if showPick {
                     Button(action: onPick) {
@@ -299,7 +302,7 @@ struct ShiftRow: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 9)
-                            .background(Color.mdzGreen)
+                            .background(colors.green)
                             .cornerRadius(8)
                     }
                     .buttonStyle(.plain)
@@ -308,10 +311,10 @@ struct ShiftRow: View {
                     Button(action: onRequestRelease) {
                         Text("Request Release")
                             .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(.mdzBackground)
+                            .foregroundColor(colors.background)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 9)
-                            .background(Color.mdzAmber)
+                            .background(colors.amber)
                             .cornerRadius(8)
                     }
                     .buttonStyle(.plain)
@@ -323,16 +326,16 @@ struct ShiftRow: View {
             if isCurrentUser {
                 Text("You")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.mdzBlue)
+                    .foregroundColor(colors.primary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color.mdzBlue.opacity(0.15))
+                    .background(colors.primary.opacity(0.15))
                     .clipShape(Capsule())
             }
         }
         .padding(14)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 }

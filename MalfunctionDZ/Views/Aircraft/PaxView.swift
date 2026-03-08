@@ -10,6 +10,7 @@ import SwiftUI
 struct PaxView: View {
     @StateObject private var vm: PaxViewModel
     @EnvironmentObject private var auth: AuthManager
+    @Environment(\.mdzColors) private var colors
     var isReadOnly: Bool = false
 
     init(aircraft: Aircraft, isReadOnly: Bool = false) {
@@ -39,7 +40,7 @@ struct PaxView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
-        .background(Color.mdzBackground)
+        .background(colors.background)
         .task { await vm.loadState() }
         .refreshable { await vm.loadState() }
     }
@@ -49,11 +50,11 @@ struct PaxView: View {
         VStack(spacing: 16) {
             Spacer(minLength: 40)
             ProgressView()
-                .progressViewStyle(CircularProgressViewStyle(tint: .mdzBlue))
+                .progressViewStyle(CircularProgressViewStyle(tint: colors.primary))
                 .scaleEffect(1.3)
             Text("Loading flight state…")
                 .font(.subheadline)
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
             Spacer(minLength: 40)
         }
     }
@@ -63,10 +64,10 @@ struct PaxView: View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 36))
-                .foregroundColor(.mdzAmber)
-            Text(msg).foregroundColor(.mdzMuted)
+                .foregroundColor(colors.amber)
+            Text(msg).foregroundColor(colors.muted)
             Button("Retry") { Task { await vm.loadState() } }
-                .buttonStyle(PaxButtonStyle())
+                .buttonStyle(PaxButtonStyle(color: colors.primary))
         }
         .padding(32)
     }
@@ -90,12 +91,12 @@ struct PaxView: View {
                     }
                 }
                 .pickerStyle(.menu)
-                .tint(.mdzBlue)
+                .tint(colors.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(10)
-                .background(Color.mdzCard2)
+                .background(colors.card2)
                 .cornerRadius(8)
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.mdzBorder, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(colors.border, lineWidth: 1))
                 .onChange(of: vm.selectedAircraftId) { id in
                     if let ac = vm.availableAircraft.first(where: { $0.id == id }) {
                         vm.autoFillFromAircraft(ac)
@@ -137,7 +138,7 @@ struct PaxView: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-            .buttonStyle(PaxButtonStyle(color: .mdzGreen))
+            .buttonStyle(PaxButtonStyle(color: colors.green))
             .disabled(vm.isSaving)
         }
         .paxCard()
@@ -168,7 +169,7 @@ struct PaxView: View {
             PaxSectionHeader(icon: "airplane", title: "PAX")
             Text("No active flight for this aircraft.")
                 .font(.subheadline)
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
         }
         .frame(maxWidth: .infinity)
         .padding(24)
@@ -180,16 +181,16 @@ struct PaxView: View {
             PaxSectionHeader(icon: "airplane", title: "ACTIVE FLIGHT")
             HStack(spacing: 16) {
                 if let tn = f.tailNumber {
-                    PaxPill(label: tn, color: .mdzBlue)
+                    PaxPill(label: tn, color: colors.primary)
                 }
                 if let d = f.flightDateOnly {
-                    PaxPill(label: d, color: .mdzMuted)
+                    PaxPill(label: d, color: colors.muted)
                 }
                 if let h = f.hobbsStart?.value {
-                    PaxPill(label: "H: \(String(format: "%.1f", h))", color: .mdzMuted)
+                    PaxPill(label: "H: \(String(format: "%.1f", h))", color: colors.muted)
                 }
                 if let t = f.tachStart?.value {
-                    PaxPill(label: "T: \(String(format: "%.2f", t))", color: .mdzMuted)
+                    PaxPill(label: "T: \(String(format: "%.2f", t))", color: colors.muted)
                 }
             }
             .flexWrapped()
@@ -205,13 +206,13 @@ struct PaxView: View {
                 Spacer()
                 Text("Total: \(vm.totalPax) pax")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.mdzGreen)
+                    .foregroundColor(colors.green)
             }
 
             if vm.loads.isEmpty {
                 Text("No loads yet — add the first one below.")
                     .font(.subheadline)
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
                     .padding(.vertical, 8)
             } else {
                 VStack(spacing: 1) {
@@ -228,7 +229,7 @@ struct PaxView: View {
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 6)
-                    .background(Color.mdzNavyMid)
+                    .background(colors.navyMid)
 
                     ForEach(vm.loads) { load in
                         LoadRow(load: load, onDelete: isReadOnly ? nil : {
@@ -237,7 +238,7 @@ struct PaxView: View {
                     }
                 }
                 .cornerRadius(8)
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.mdzBorder, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(colors.border, lineWidth: 1))
             }
         }
         .paxCard()
@@ -314,7 +315,7 @@ struct PaxView: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-            .buttonStyle(PaxButtonStyle(color: .mdzBlue))
+            .buttonStyle(PaxButtonStyle(color: colors.primary))
             .disabled(vm.isSaving)
         }
         .paxCard()
@@ -343,12 +344,12 @@ struct PaxView: View {
             // Live elapsed
             if let hobbs = vm.hobbsElapsed, let tach = vm.tachElapsed {
                 HStack(spacing: 16) {
-                    HStack(spacing:4){Image(systemName:"clock").font(.caption).foregroundColor(.mdzGreen);Text("Hobbs: \(hobbs)")}
+                    HStack(spacing:4){Image(systemName:"clock").font(.caption).foregroundColor(colors.green);Text("Hobbs: \(hobbs)")}
                         .font(.caption)
-                        .foregroundColor(.mdzGreen)
-                    HStack(spacing:4){Image(systemName:"clock").font(.caption).foregroundColor(.mdzGreen);Text("Tach: \(tach)")}
+                        .foregroundColor(colors.green)
+                    HStack(spacing:4){Image(systemName:"clock").font(.caption).foregroundColor(colors.green);Text("Tach: \(tach)")}
                         .font(.caption)
-                        .foregroundColor(.mdzGreen)
+                        .foregroundColor(colors.green)
                 }
             }
 
@@ -363,7 +364,7 @@ struct PaxView: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-            .buttonStyle(PaxButtonStyle(color: .mdzDanger))
+            .buttonStyle(PaxButtonStyle(color: colors.danger))
             .disabled(vm.isSaving)
         }
         .paxCard()
@@ -389,7 +390,7 @@ struct PaxView: View {
                     }
                 }
                 .cornerRadius(8)
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.mdzBorder, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(colors.border, lineWidth: 1))
             }
 
             // Loads recap
@@ -400,7 +401,7 @@ struct PaxView: View {
                     }
                 }
                 .cornerRadius(8)
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.mdzBorder, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(colors.border, lineWidth: 1))
             }
         }
         .paxCard()
@@ -412,11 +413,12 @@ struct PaxView: View {
 struct LoadRow: View {
     let load: FlightLoad
     let onDelete: (() -> Void)?
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         HStack {
             Text("\(load.loadNumber)").paxTableCell().frame(width: 28)
-            Text("\(load.paxCount)").paxTableCell(color: .mdzGreen).frame(width: 36)
+            Text("\(load.paxCount)").paxTableCell(color: colors.green).frame(width: 36)
             Text(load.altitude.map { "\($0 / 1000)k" } ?? "—").paxTableCell().frame(minWidth: 50, alignment: .trailing)
             Text(load.hobbsTime?.value.map { String(format: "%.1f", $0) } ?? "—").paxTableCell().frame(minWidth: 52, alignment: .trailing)
             Text(load.tachTime?.value.map { String(format: "%.2f", $0) } ?? "—").paxTableCell().frame(minWidth: 52, alignment: .trailing)
@@ -426,7 +428,7 @@ struct LoadRow: View {
             if let del = onDelete {
                 Button(action: del) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.mdzDanger.opacity(0.6))
+                        .foregroundColor(colors.danger.opacity(0.6))
                         .font(.system(size: 14))
                 }
                 .buttonStyle(.plain)
@@ -434,41 +436,43 @@ struct LoadRow: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 7)
-        .background(Color.mdzCard)
+        .background(colors.card)
     }
 }
 
 struct SummaryRow: View {
     let label: String
     let value: String
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         HStack {
             Text(label)
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .frame(width: 100, alignment: .leading)
             Text(value)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
             Spacer()
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(Color.mdzCard)
+        .background(colors.card)
     }
 }
 
 struct PaxSectionHeader: View {
     let icon: String
     let title: String
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.system(size: 11, weight: .black))
-                .foregroundColor(.mdzBlue)
+                .foregroundColor(colors.primary)
             Text(title)
                 .font(.system(size: 11, weight: .black))
-                .foregroundColor(.mdzBlue)
+                .foregroundColor(colors.primary)
                 .tracking(1.5)
         }
     }
@@ -490,34 +494,36 @@ struct PaxPill: View {
 
 struct PaxErrorBanner: View {
     let message: String
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "exclamationmark.circle.fill")
-                .foregroundColor(.mdzDanger)
+                .foregroundColor(colors.danger)
             Text(message)
                 .font(.caption)
-                .foregroundColor(.mdzDanger)
+                .foregroundColor(colors.danger)
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.mdzDanger.opacity(0.1))
+        .background(colors.danger.opacity(0.1))
         .cornerRadius(8)
     }
 }
 
 struct PaxFieldLabel: View {
     let text: String
+    @Environment(\.mdzColors) private var colors
     init(_ text: String) { self.text = text }
     var body: some View {
         Text(text)
             .font(.system(size: 10, weight: .black))
-            .foregroundColor(.mdzMuted)
+            .foregroundColor(colors.muted)
             .tracking(0.8)
     }
 }
 
 struct PaxButtonStyle: ButtonStyle {
-    var color: Color = .mdzBlue
+    var color: Color
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundColor(.white)
@@ -528,36 +534,40 @@ struct PaxButtonStyle: ButtonStyle {
     }
 }
 
-// MARK: - View extensions
-extension View {
-    func paxCard() -> some View {
-        self.padding(16)
-            .background(Color.mdzCard)
+// MARK: - View extensions (themed via modifiers)
+struct PaxCardModifier: ViewModifier {
+    @Environment(\.mdzColors) private var colors
+    func body(content: Content) -> some View {
+        content.padding(16)
+            .background(colors.card)
             .cornerRadius(14)
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.mdzBorder, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(colors.border, lineWidth: 1))
             .padding(.bottom, 12)
     }
+}
 
-    func mdzInputStyle() -> some View {
-        self.padding(10)
-            .background(Color.mdzNavyMid)
-            .cornerRadius(8)
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.mdzBorder, lineWidth: 1))
-            .foregroundColor(.mdzText)
-            .font(.system(size: 15))
-    }
-
-    func paxTableHeader() -> some View {
-        self.font(.system(size: 9, weight: .black))
-            .foregroundColor(.mdzMuted)
+struct PaxTableHeaderModifier: ViewModifier {
+    @Environment(\.mdzColors) private var colors
+    func body(content: Content) -> some View {
+        content.font(.system(size: 9, weight: .black))
+            .foregroundColor(colors.muted)
             .tracking(0.5)
     }
+}
 
-    func paxTableCell(color: Color = .mdzText) -> some View {
-        self.font(.system(size: 12, weight: .medium))
-            .foregroundColor(color)
+struct PaxTableCellModifier: ViewModifier {
+    var color: Color?
+    @Environment(\.mdzColors) private var colors
+    func body(content: Content) -> some View {
+        content.font(.system(size: 12, weight: .medium))
+            .foregroundColor(color ?? colors.text)
     }
+}
 
+extension View {
+    func paxCard() -> some View { modifier(PaxCardModifier()) }
+    func paxTableHeader() -> some View { modifier(PaxTableHeaderModifier()) }
+    func paxTableCell(color: Color? = nil) -> some View { modifier(PaxTableCellModifier(color: color)) }
     func flexWrapped() -> some View {
         self // SwiftUI doesn't do flex-wrap natively — HStack is close enough for pills
     }

@@ -5,6 +5,7 @@ import SwiftUI
 struct JumpCheckView: View {
     @ObservedObject var vm: DzRigsViewModel
     @State private var searchQuery = ""
+    @Environment(\.mdzColors) private var colors
 
     private var filteredRigs: [LoftRig] {
         let q = searchQuery.trimmingCharacters(in: .whitespaces).lowercased()
@@ -25,42 +26,42 @@ struct JumpCheckView: View {
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             VStack(spacing: 0) {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Image(systemName: "square.stack.3d.up.fill")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.mdzAmber)
+                            .foregroundColor(colors.amber)
                         Text("25 JUMP CHECK")
                             .font(.system(size: 11, weight: .black))
-                            .foregroundColor(.mdzAmber)
+                            .foregroundColor(colors.amber)
                             .tracking(2)
                         Spacer()
                         Text("\(filteredRigs.count) RIGS")
                             .font(.system(size: 10, weight: .black))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                             .tracking(1)
                     }
                     Text("DZ rigs — pack jobs X/25. At 25 pack jobs rig is out of service. Expired rigs (reserve overdue) are read-only.")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
-                .background(Color.mdzNavyMid)
+                .background(colors.navyMid)
 
                 TextField("Search rig label, mfr, model, serial", text: $searchQuery)
                     .mdzInputStyle()
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
-                    .background(Color.mdzNavyMid)
+                    .background(colors.navyMid)
                     .autocorrectionDisabled()
 
                 if vm.isLoading && vm.rigs.isEmpty {
                     Spacer()
-                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzAmber)).scaleEffect(1.4)
+                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.amber)).scaleEffect(1.4)
                     Spacer()
                 } else if filteredRigs.isEmpty {
                     Spacer()
@@ -83,24 +84,24 @@ struct JumpCheckView: View {
                                 .buttonStyle(.plain)
                                 .contentShape(Rectangle())
                                 if rig.id != eligibleRigs.last?.id {
-                                    Divider().background(Color.mdzBorder).padding(.horizontal, 14)
+                                    Divider().background(colors.border).padding(.horizontal, 14)
                                 }
                             }
                             // Overdue / no pack data — read-only at bottom
                             if !ineligibleRigs.isEmpty {
                                 if !eligibleRigs.isEmpty {
-                                    Divider().background(Color.mdzBorder).padding(.horizontal, 14)
+                                    Divider().background(colors.border).padding(.horizontal, 14)
                                 }
                                 HStack {
                                     Text("EXPIRED / NO PACK DATA — READ ONLY")
                                         .font(.system(size: 10, weight: .black))
-                                        .foregroundColor(.mdzMuted)
+                                        .foregroundColor(colors.muted)
                                         .tracking(1)
                                     Spacer()
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 10)
-                                .background(Color.mdzDanger.opacity(0.08))
+                                .background(colors.danger.opacity(0.08))
                                 ForEach(ineligibleRigs) { rig in
                                     NavigationLink {
                                         DzRigDetailView(rigId: rig.id, vm: vm)
@@ -110,14 +111,14 @@ struct JumpCheckView: View {
                                     .buttonStyle(.plain)
                                     .contentShape(Rectangle())
                                     if rig.id != ineligibleRigs.last?.id {
-                                        Divider().background(Color.mdzBorder).padding(.horizontal, 14)
+                                        Divider().background(colors.border).padding(.horizontal, 14)
                                     }
                                 }
                             }
                         }
-                        .background(Color.mdzCard)
+                        .background(colors.card)
                         .cornerRadius(12)
-                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzAmber.opacity(0.3), lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.amber.opacity(0.3), lineWidth: 1))
                         .padding(16)
                         .padding(.bottom, 20)
                     }

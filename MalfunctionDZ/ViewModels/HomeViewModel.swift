@@ -7,6 +7,13 @@ struct DashBadge: Identifiable {
     let id    = UUID()
     let label: String
     let color: Color
+    /// When set, views should use theme colors (e.g. colors.green) instead of color
+    let semanticKey: String?  // "green" | "danger" | "amber" | "muted" | "primary"
+    init(label: String, color: Color, semanticKey: String? = nil) {
+        self.label = label
+        self.color = color
+        self.semanticKey = semanticKey
+    }
 }
 
 struct DashAlert: Identifiable {
@@ -14,6 +21,13 @@ struct DashAlert: Identifiable {
     let message:  String
     let category: String
     let color:    Color
+    let semanticKey: String?
+    init(message: String, category: String, color: Color, semanticKey: String? = nil) {
+        self.message = message
+        self.category = category
+        self.color = color
+        self.semanticKey = semanticKey
+    }
 }
 
 // MARK: - METAR Model
@@ -418,13 +432,13 @@ class HomeViewModel: ObservableObject {
 
         aviationSummary = "\(s.aircraft.total) Aircraft · \(s.pilots.current) Pilots Current"
         var b: [DashBadge] = []
-        if s.aircraft.airworthy > 0 { b.append(.init(label: "\(s.aircraft.airworthy) Active",   color: .mdzGreen))  }
-        if s.aircraft.grounded  > 0 { b.append(.init(label: "\(s.aircraft.grounded) Grounded", color: .mdzDanger)) }
+        if s.aircraft.airworthy > 0 { b.append(.init(label: "\(s.aircraft.airworthy) Active",   color: .mdzGreen, semanticKey: "green"))  }
+        if s.aircraft.grounded  > 0 { b.append(.init(label: "\(s.aircraft.grounded) Grounded", color: .mdzDanger, semanticKey: "danger")) }
         aviationBadges = b
-        if s.maintenance.overdue  > 0 { alerts.append(.init(message: "\(s.maintenance.overdue) maintenance item\(s.maintenance.overdue == 1 ? "" : "s") overdue",   category: "Aviation", color: .mdzDanger)) }
-        if s.maintenance.due_soon > 0 { alerts.append(.init(message: "\(s.maintenance.due_soon) maintenance item\(s.maintenance.due_soon == 1 ? "" : "s") due soon", category: "Aviation", color: .mdzAmber)) }
+        if s.maintenance.overdue  > 0 { alerts.append(.init(message: "\(s.maintenance.overdue) maintenance item\(s.maintenance.overdue == 1 ? "" : "s") overdue",   category: "Aviation", color: .mdzDanger, semanticKey: "danger")) }
+        if s.maintenance.due_soon > 0 { alerts.append(.init(message: "\(s.maintenance.due_soon) maintenance item\(s.maintenance.due_soon == 1 ? "" : "s") due soon", category: "Aviation", color: .mdzAmber, semanticKey: "amber")) }
         let lapsed = s.pilots.total - s.pilots.current
-        if lapsed > 0 { alerts.append(.init(message: "\(lapsed) pilot\(lapsed == 1 ? "" : "s") with lapsed currency", category: "Pilots", color: .mdzAmber)) }
+        if lapsed > 0 { alerts.append(.init(message: "\(lapsed) pilot\(lapsed == 1 ? "" : "s") with lapsed currency", category: "Pilots", color: .mdzAmber, semanticKey: "amber")) }
     }
 
     // MARK: - Admin/Instructor: Loft
@@ -439,11 +453,11 @@ class HomeViewModel: ObservableObject {
 
         loftSummary = "\(s.total) Rigs"
         var b: [DashBadge] = []
-        if s.overdue > 0 { b.append(.init(label: "\(s.overdue) Overdue", color: .mdzDanger)) }
-        if s.dueSoon > 0 { b.append(.init(label: "\(s.dueSoon) Due Soon", color: .mdzAmber)) }
-        if s.current > 0 { b.append(.init(label: "\(s.current) Current",  color: .mdzGreen)) }
+        if s.overdue > 0 { b.append(.init(label: "\(s.overdue) Overdue", color: .mdzDanger, semanticKey: "danger")) }
+        if s.dueSoon > 0 { b.append(.init(label: "\(s.dueSoon) Due Soon", color: .mdzAmber, semanticKey: "amber")) }
+        if s.current > 0 { b.append(.init(label: "\(s.current) Current",  color: .mdzGreen, semanticKey: "green")) }
         loftBadges = b
-        if s.overdue > 0 { alerts.append(.init(message: "\(s.overdue) reserve\(s.overdue == 1 ? "" : "s") overdue for repack", category: "Loft", color: .mdzDanger)) }
+        if s.overdue > 0 { alerts.append(.init(message: "\(s.overdue) reserve\(s.overdue == 1 ? "" : "s") overdue for repack", category: "Loft", color: .mdzDanger, semanticKey: "danger")) }
     }
 
     // MARK: - Pilot dashboard
@@ -477,7 +491,7 @@ class HomeViewModel: ObservableObject {
 
         if let p = pilotData, p.flightCount > 0 {
             aviationSummary = "\(p.flightCount) flight\(p.flightCount == 1 ? "" : "s") · \(p.totalPax) pax today"
-            aviationBadges  = [.init(label: "Hobbs Δ \(String(format: "%.1f", p.hobbsDelta))", color: .mdzBlue)]
+            aviationBadges  = [.init(label: "Hobbs Δ \(String(format: "%.1f", p.hobbsDelta))", color: .mdzBlue, semanticKey: "primary")]
         } else {
             aviationSummary = "No flights today"
             aviationBadges  = []
@@ -506,11 +520,11 @@ class HomeViewModel: ObservableObject {
         groundSchoolSummary = course.title
         let pct = Int(course.progressPct)
         groundSchoolBadges = [
-            .init(label: "Level \(studentData!.currentLevel)", color: .mdzBlue),
-            .init(label: "\(pct)%", color: pct == 100 ? .mdzGreen : .mdzAmber)
+            .init(label: "Level \(studentData!.currentLevel)", color: .mdzBlue, semanticKey: "primary"),
+            .init(label: "\(pct)%", color: pct == 100 ? .mdzGreen : .mdzAmber, semanticKey: pct == 100 ? "green" : "amber")
         ]
         if let next = studentData?.nextModuleTitle {
-            alerts.append(.init(message: "Up next: \(next)", category: "Ground School", color: .mdzAmber))
+            alerts.append(.init(message: "Up next: \(next)", category: "Ground School", color: .mdzAmber, semanticKey: "amber"))
         }
     }
 
@@ -527,10 +541,10 @@ class HomeViewModel: ObservableObject {
         instructorData      = InstructorDashData(pendingSignoffs: d.pending_count, activeStudents: d.student_count)
         groundSchoolSummary = "\(d.student_count) Active Students"
         groundSchoolBadges  = d.pending_count > 0
-            ? [.init(label: "\(d.pending_count) Pending Sign-off", color: .mdzAmber)]
-            : [.init(label: "All Clear", color: .mdzGreen)]
+            ? [.init(label: "\(d.pending_count) Pending Sign-off", color: .mdzAmber, semanticKey: "amber")]
+            : [.init(label: "All Clear", color: .mdzGreen, semanticKey: "green")]
         if d.pending_count > 0 {
-            alerts.append(.init(message: "\(d.pending_count) student\(d.pending_count == 1 ? "" : "s") awaiting sign-off", category: "Ground School", color: .mdzAmber))
+            alerts.append(.init(message: "\(d.pending_count) student\(d.pending_count == 1 ? "" : "s") awaiting sign-off", category: "Ground School", color: .mdzAmber, semanticKey: "amber"))
         }
     }
 
@@ -573,7 +587,7 @@ class HomeViewModel: ObservableObject {
         groundSchoolSummary = course.title
         let pct = Int(course.progressPct)
         groundSchoolBadges = [
-            .init(label: "\(pct)% Complete", color: pct == 100 ? .mdzGreen : .mdzAmber)
+            .init(label: "\(pct)% Complete", color: pct == 100 ? .mdzGreen : .mdzAmber, semanticKey: pct == 100 ? "green" : "amber")
         ]
     }
 }

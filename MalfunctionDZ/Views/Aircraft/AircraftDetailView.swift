@@ -5,6 +5,8 @@ import SwiftUI
 struct AircraftDetailView: View {
     let aircraft: Aircraft
     var isReadOnly: Bool = false
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
     @StateObject private var vm = AircraftDetailViewModel()
     @State private var selectedTab = 0
     @State private var logbookFilter = "all"
@@ -15,56 +17,22 @@ struct AircraftDetailView: View {
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             VStack(spacing: 0) {
-                // Header card
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text(aircraft.tailNumber)
-                            .font(.title.bold().monospaced())
-                            .foregroundColor(.mdzText)
-                        Spacer()
-                        StatusPill(label: aircraft.status.uppercased(), color: aircraft.statusColor)
-                    }
-                    Text(aircraft.model)
-                        .font(.subheadline)
-                        .foregroundColor(.mdzMuted)
-                    if let annual = aircraft.annualDue {
-                        InfoRow(label: "Annual Due", value: annual)
-                    }
-                    if let next100 = aircraft.next100hrDue {
-                        InfoRow(label: "100hr Due", value: next100)
-                    }
-                    if let oil = aircraft.lastOilChange {
-                        InfoRow(label: "Last Oil Change", value: oil)
-                    }
-                }
-                .padding()
-                .background(Color.mdzCard)
-
-                // Tab picker — now 4 tabs
-                Picker("", selection: $selectedTab) {
-                    Text("Squawks").tag(0)
-                    Text("Logbook").tag(1)
-                    Text("ADs").tag(2)
-                    Text("PAX").tag(3)
-                }
-                .pickerStyle(.segmented)
-                .padding()
-                .background(Color.mdzNavyMid)
-
-                // Tab content — frame so all tabs (Squawks, Logbook, ADs, PAX) use full width on iPad
+                // Pic 1 style: blue header
+                aircraftHeaderBlock
                 Group {
                     switch selectedTab {
                     case 0: squawksTab
                     case 1: logbookTab
                     case 2: adsTab
-                    case 3: PaxView(aircraft: aircraft, isReadOnly: isReadOnly)
+                    case 3: stcTab
+                    case 4: PaxView(aircraft: aircraft, isReadOnly: isReadOnly)
                     default: squawksTab
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.mdzBackground)
+                .background(colors.background)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -90,6 +58,65 @@ struct AircraftDetailView: View {
         }
     }
 
+    private var aircraftHeaderBlock: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 10) {
+                Text(aircraft.model.uppercased() + " · TURBINE")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.9))
+                Text(aircraft.tailNumber)
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                HStack(spacing: 10) {
+                    Text(aircraft.status == "airworthy" || aircraft.status == "active" ? "AIRWORTHY" : aircraft.status.uppercased())
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(aircraft.status == "airworthy" || aircraft.status == "active" ? colors.aviation : colors.amber)
+                        .cornerRadius(8)
+                    if let mic = aircraft.lastMic ?? aircraft.lastOilChange ?? aircraft.annualDue, !mic.isEmpty {
+                        Text("Last mic \(mic)")
+                            .font(.system(size: 11))
+                            .foregroundColor(.white.opacity(0.9))
+                    }
+                }
+                HStack(spacing: 20) {
+                    metricBlock(label: "TTSN", value: aircraft.ttsn ?? "—", valueColor: .white)
+                    metricBlock(label: "SMOH", value: aircraft.smoh ?? "—", valueColor: colors.amber)
+                    metricBlock(label: "SLOTS", value: aircraft.slots.map { "\($0)" } ?? "—", valueColor: .white)
+                }
+                .padding(.top, 4)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .padding(.horizontal, 16)
+            .background(colors.aviation)
+            Picker("", selection: $selectedTab) {
+                Text("Squawks").tag(0)
+                Text("Logbooks").tag(1)
+                Text("ADs").tag(2)
+                Text("STC").tag(3)
+                Text("Pax").tag(4)
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(colors.aviation.opacity(0.95))
+        }
+    }
+
+    private func metricBlock(label: String, value: String, valueColor: Color) -> some View {
+        VStack(spacing: 2) {
+            Text(label)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(.white.opacity(0.85))
+            Text(value)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(valueColor)
+        }
+    }
+
     private var squawksTab: some View {
         Group {
             if vm.isLoading {
@@ -102,19 +129,19 @@ struct AircraftDetailView: View {
                         HStack {
                             Text(squawk.description)
                                 .font(.subheadline)
-                                .foregroundColor(.mdzText)
+                                .foregroundColor(colors.text)
                             Spacer()
                             StatusPill(label: squawk.status.uppercased(), color: squawk.statusColor)
                         }
                         if let by = squawk.reportedBy, let at = squawk.reportedAt {
                             Text("Reported \(at) · \(by)")
                                 .font(.caption)
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                         }
                     }
                     .padding(.vertical, 4)
-                    .listRowBackground(Color.mdzCard)
-                    .listRowSeparatorTint(Color.mdzBorder)
+                    .listRowBackground(colors.card)
+                    .listRowSeparatorTint(colors.border)
                 }
                 .listStyle(.plain)
                 .refreshable { await vm.loadDetail(aircraftId: aircraft.id) }
@@ -135,10 +162,10 @@ struct AircraftDetailView: View {
                             } label: {
                                 Text(label)
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(logbookFilter == key ? .mdzBackground : .mdzText)
+                                    .foregroundColor(logbookFilter == key ? colors.background : colors.text)
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 8)
-                                    .background(logbookFilter == key ? Color.mdzBlue : Color.mdzCard)
+                                    .background(logbookFilter == key ? colors.primary : colors.card)
                                     .cornerRadius(8)
                             }
                             .buttonStyle(.plain)
@@ -147,7 +174,7 @@ struct AircraftDetailView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
                 }
-                .background(Color.mdzNavyMid)
+                .background(colors.navyMid)
 
                 if vm.logbook.isEmpty {
                     Spacer()
@@ -162,8 +189,8 @@ struct AircraftDetailView: View {
                             AircraftLogbookEntryRow(entry: entry)
                         }
                         .buttonStyle(.plain)
-                        .listRowBackground(Color.mdzCard)
-                        .listRowSeparatorTint(Color.mdzBorder)
+                        .listRowBackground(colors.card)
+                        .listRowSeparatorTint(colors.border)
                     }
                     .listStyle(.plain)
                     .refreshable {
@@ -174,6 +201,14 @@ struct AircraftDetailView: View {
         }
     }
 
+    private var stcTab: some View {
+        EmptyStateView(
+            icon: "doc.badge.clock",
+            title: "STC / 337",
+            subtitle: "Supplemental Type Certificates and Form 337s for this aircraft. Data will appear here when available."
+        )
+    }
+
     private var adsTab: some View {
         Group {
             if vm.ads.isEmpty {
@@ -182,21 +217,21 @@ struct AircraftDetailView: View {
                 List(vm.ads) { ad in
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
-                            Text(ad.adNumber).font(.caption.monospaced()).foregroundColor(.mdzBlue)
+                            Text(ad.adNumber).font(.caption.monospaced()).foregroundColor(colors.primary)
                             Spacer()
                             StatusPill(
                                 label: ad.status.uppercased(),
-                                color: ad.status == "complied" ? .mdzGreen : .mdzAmber
+                                color: ad.status == "complied" ? colors.green : colors.amber
                             )
                         }
-                        Text(ad.description).font(.subheadline).foregroundColor(.mdzText)
+                        Text(ad.description).font(.subheadline).foregroundColor(colors.text)
                         if let due = ad.dueDate {
-                            Text("Due: \(due)").font(.caption).foregroundColor(.mdzAmber)
+                            Text("Due: \(due)").font(.caption).foregroundColor(colors.amber)
                         }
                     }
                     .padding(.vertical, 4)
-                    .listRowBackground(Color.mdzCard)
-                    .listRowSeparatorTint(Color.mdzBorder)
+                    .listRowBackground(colors.card)
+                    .listRowSeparatorTint(colors.border)
                 }
                 .listStyle(.plain)
                 .refreshable { await vm.loadDetail(aircraftId: aircraft.id) }
@@ -208,6 +243,7 @@ struct AircraftDetailView: View {
 // MARK: - Logbook Entry Row (list row with thumbnail)
 struct AircraftLogbookEntryRow: View {
     let entry: LogbookEntry
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -215,7 +251,7 @@ struct AircraftLogbookEntryRow: View {
                 AsyncImage(url: url) { phase in
                     switch phase {
                     case .success(let img): img.resizable().scaledToFill()
-                    case .failure: Image(systemName: "photo").foregroundColor(.mdzMuted)
+                    case .failure: Image(systemName: "photo").foregroundColor(colors.muted)
                     default: ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
@@ -224,37 +260,37 @@ struct AircraftLogbookEntryRow: View {
                 .cornerRadius(6)
             } else {
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.mdzBorder.opacity(0.5))
+                    .fill(colors.border.opacity(0.5))
                     .frame(width: 56, height: 40)
-                    .overlay(Image(systemName: "doc").foregroundColor(.mdzMuted).font(.system(size: 18)))
+                    .overlay(Image(systemName: "doc").foregroundColor(colors.muted).font(.system(size: 18)))
             }
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(entry.date).font(.caption).foregroundColor(.mdzMuted)
+                    Text(entry.date).font(.caption).foregroundColor(colors.muted)
                     Spacer()
                     Text(entry.bookTypeLabel)
                         .font(.system(size: 9, weight: .bold))
-                        .foregroundColor(.mdzBlue)
+                        .foregroundColor(colors.primary)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(Color.mdzBlue.opacity(0.2))
+                        .background(colors.primary.opacity(0.2))
                         .cornerRadius(4)
                 }
                 if let t = entry.tachTime {
-                    Text(String(format: "Tach %.1f", t)).font(.caption2).foregroundColor(.mdzBlue)
+                    Text(String(format: "Tach %.1f", t)).font(.caption2).foregroundColor(colors.primary)
                 }
                 Text(entry.description)
                     .font(.subheadline)
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
                     .lineLimit(2)
                 if let by = entry.performedBy {
-                    Text(by).font(.caption).foregroundColor(.mdzMuted)
+                    Text(by).font(.caption).foregroundColor(colors.muted)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Image(systemName: "chevron.right")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
         }
         .padding(.vertical, 8)
     }
@@ -267,15 +303,17 @@ struct AircraftLogbookEntryDetailSheet: View {
     @ObservedObject var vm: AircraftDetailViewModel
     @Binding var enlargedImageURL: URL?
     let onDismiss: () -> Void
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 if vm.logbookDetailLoading && vm.logbookDetail == nil {
                     VStack(spacing: 16) {
-                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzBlue)).scaleEffect(1.2)
-                        Text("Loading entry…").font(.subheadline).foregroundColor(.mdzMuted)
+                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.primary)).scaleEffect(1.2)
+                        Text("Loading entry…").font(.subheadline).foregroundColor(colors.muted)
                     }
                 } else if let detail = vm.logbookDetail {
                     ScrollView(showsIndicators: false) {
@@ -285,11 +323,11 @@ struct AircraftLogbookEntryDetailSheet: View {
                                 HStack {
                                     Text(detail.bookTypeLabel)
                                         .font(.system(size: 10, weight: .black))
-                                        .foregroundColor(.mdzBlue)
+                                        .foregroundColor(colors.primary)
                                         .tracking(1)
                                         .padding(.horizontal, 8)
                                         .padding(.vertical, 4)
-                                        .background(Color.mdzBlue.opacity(0.2))
+                                        .background(colors.primary.opacity(0.2))
                                         .cornerRadius(6)
                                     Spacer()
                                 }
@@ -306,25 +344,25 @@ struct AircraftLogbookEntryDetailSheet: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("DESCRIPTION")
                                         .font(.system(size: 9, weight: .black))
-                                        .foregroundColor(.mdzMuted)
+                                        .foregroundColor(colors.muted)
                                         .tracking(1)
                                     Text(detail.description)
                                         .font(.system(size: 15))
-                                        .foregroundColor(.mdzText)
+                                        .foregroundColor(colors.text)
                                 }
                             }
                             .padding(20)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.mdzCard)
+                            .background(colors.card)
                             .cornerRadius(14)
-                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
 
                             // Images
                             if !detail.images.isEmpty {
                                 VStack(alignment: .leading, spacing: 10) {
                                     Text("ATTACHMENTS")
                                         .font(.system(size: 10, weight: .black))
-                                        .foregroundColor(.mdzMuted)
+                                        .foregroundColor(colors.muted)
                                         .tracking(1)
                                     LazyVGrid(columns: [
                                         GridItem(.flexible(), spacing: 10),
@@ -338,7 +376,7 @@ struct AircraftLogbookEntryDetailSheet: View {
                                                 AsyncImage(url: url) { phase in
                                                     switch phase {
                                                     case .success(let img): img.resizable().scaledToFill()
-                                                    case .failure: Image(systemName: "photo").foregroundColor(.mdzMuted)
+                                                    case .failure: Image(systemName: "photo").foregroundColor(colors.muted)
                                                     default: ProgressView()
                                                     }
                                                 }
@@ -346,7 +384,7 @@ struct AircraftLogbookEntryDetailSheet: View {
                                                 .aspectRatio(4/3, contentMode: .fill)
                                                 .clipped()
                                                 .cornerRadius(10)
-                                                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                                                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
                                             }
                                             .buttonStyle(.plain)
                                         }
@@ -376,12 +414,12 @@ struct AircraftLogbookEntryDetailSheet: View {
             }
             .navigationTitle("Logbook Entry")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done", action: onDismiss)
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                 }
             }
         }

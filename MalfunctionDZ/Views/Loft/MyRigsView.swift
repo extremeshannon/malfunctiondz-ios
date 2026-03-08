@@ -5,15 +5,16 @@ import SwiftUI
 struct MyRigsView: View {
     @StateObject private var vm = MyRigsViewModel()
     @Environment(\.horizontalSizeClass) private var hSizeClass
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             VStack(spacing: 0) {
                 headerSection
                 if vm.isLoading && vm.rigs.isEmpty {
                     Spacer()
-                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzGreen)).scaleEffect(1.4)
+                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.green)).scaleEffect(1.4)
                     Spacer()
                 } else if vm.rigs.isEmpty {
                     Spacer()
@@ -46,25 +47,25 @@ struct MyRigsView: View {
             HStack {
                 Image(systemName: "briefcase.fill")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.mdzGreen)
+                    .foregroundColor(colors.green)
                 Text("MY RIGS")
                     .font(.system(size: 11, weight: .black))
-                    .foregroundColor(.mdzGreen)
+                    .foregroundColor(colors.green)
                     .tracking(2)
                 Spacer()
                 Text("\(vm.rigs.count) RIG\(vm.rigs.count == 1 ? "" : "S")")
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
                     .tracking(1)
             }
             Text(myRigsDateString)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
-        .background(Color.mdzNavyMid)
+        .background(colors.navyMid)
     }
 
     private var myRigsDateString: String {
@@ -77,12 +78,13 @@ struct MyRigsView: View {
 // MARK: - MyRigRow (read-only detail, no navigation to edit)
 struct MyRigRow: View {
     let rig: JumperRig
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(rig.rigLabel)
                 .font(.system(size: 16, weight: .bold))
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
             HStack(spacing: 20) {
                 if let mfr = rig.harness?.mfr, !mfr.isEmpty {
                     labelVal("Harness", mfr)
@@ -101,25 +103,25 @@ struct MyRigRow: View {
                (rig.harness?.mfr ?? "").isEmpty && (rig.reserve?.mfr ?? "").isEmpty {
                 Text("Add equipment details in Logbook")
                     .font(.system(size: 12))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private func labelVal(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label.uppercased())
                 .font(.system(size: 9, weight: .black))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(0.5)
             Text(value)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
         }
     }
 }

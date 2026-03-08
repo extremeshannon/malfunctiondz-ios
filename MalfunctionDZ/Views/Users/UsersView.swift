@@ -178,6 +178,8 @@ final class UsersViewModel: ObservableObject {
 struct UsersView: View {
     @StateObject private var vm = UsersViewModel()
     @EnvironmentObject private var auth: AuthManager
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
     @State private var showAddUser = false
     @State private var userToDelete: PlatformUser?
     @State private var deletedUserName: String?
@@ -185,7 +187,7 @@ struct UsersView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 VStack(spacing: 0) {
                     // Search + filters toolbar
                     toolbarSection
@@ -193,10 +195,10 @@ struct UsersView: View {
                     if vm.isLoading && vm.users.isEmpty {
                         Spacer()
                         VStack {
-                            ProgressView().tint(.mdzRed).scaleEffect(1.2)
+                            ProgressView().tint(colors.accent).scaleEffect(1.2)
                             Text("Loading users…")
                                 .font(.system(size: 14))
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                                 .padding(.top, 12)
                         }
                     } else if let err = vm.error {
@@ -204,25 +206,25 @@ struct UsersView: View {
                         VStack(spacing: 16) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.system(size: 40))
-                                .foregroundColor(.mdzAmber)
+                                .foregroundColor(colors.amber)
                             Text(err)
                                 .font(.system(size: 15))
-                                .foregroundColor(.mdzText)
+                                .foregroundColor(colors.text)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 32)
                             Button("Retry") { Task { await vm.load() } }
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.mdzRed)
+                                .foregroundColor(colors.accent)
                         }
                     } else if vm.users.isEmpty {
                         Spacer()
                         VStack(spacing: 12) {
                             Image(systemName: "person.2.fill")
                                 .font(.system(size: 48))
-                                .foregroundColor(.mdzMuted.opacity(0.5))
+                                .foregroundColor(colors.muted.opacity(0.5))
                             Text("No users found")
                                 .font(.headline)
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                         }
                     } else {
                         List {
@@ -230,8 +232,8 @@ struct UsersView: View {
                                 NavigationLink(value: u) {
                                     UserRow(user: u)
                                 }
-                                .listRowBackground(Color.mdzCard)
-                                .listRowSeparatorTint(Color.mdzBorder)
+                                .listRowBackground(colors.card)
+                                .listRowSeparatorTint(colors.border)
                                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                     Button(role: .destructive) {
                                         userToDelete = u
@@ -248,8 +250,8 @@ struct UsersView: View {
             }
             .navigationTitle("Users")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -262,7 +264,7 @@ struct UsersView: View {
                     if vm.total > 0 {
                         Text("Total: \(vm.total)")
                             .font(.system(size: 12))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                     }
                 }
             }
@@ -303,16 +305,16 @@ struct UsersView: View {
                 if let name = deletedUserName {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.mdzGreen)
+                            .foregroundColor(colors.green)
                         Text("\(name) was deleted")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.mdzText)
+                            .foregroundColor(colors.text)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
-                    .background(Color.mdzCard)
+                    .background(colors.card)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzGreen, lineWidth: 2))
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.green, lineWidth: 2))
                     .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
                     .padding(.top, 20)
                     .transition(.move(edge: .top).combined(with: .opacity))
@@ -327,18 +329,18 @@ struct UsersView: View {
         VStack(spacing: 12) {
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
                 TextField("username, name, email, phone", text: $vm.searchQuery)
                     .font(.system(size: 15))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
                     .textFieldStyle(.plain)
                     .autocapitalization(.none)
                     .autocorrectionDisabled()
             }
             .padding(12)
-            .background(Color.mdzCard)
+            .background(colors.card)
             .cornerRadius(10)
-            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
 
             HStack(spacing: 10) {
                 Picker("Domain", selection: $vm.domainFilter) {
@@ -364,58 +366,62 @@ struct UsersView: View {
                 .foregroundColor(.white)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(Color.mdzRed)
+                .background(colors.accent)
                 .cornerRadius(8)
             }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
-        .background(Color.mdzNavyMid)
+        .background(colors.navyMid)
     }
 }
 
 struct UserRow: View {
     let user: PlatformUser
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         HStack(spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(Color.mdzRed.opacity(0.15))
+                    .fill(colors.accent.opacity(0.15))
                     .frame(width: 44, height: 44)
                 Text(user.displayInitials)
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.mdzRed)
+                    .foregroundColor(colors.accent)
             }
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
                     Text(user.fullName?.isEmpty == false ? user.fullName! : user.username)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                     if user.isActive != 1 {
                         Text("Inactive")
                             .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.mdzMuted.opacity(0.3))
+                            .background(colors.muted.opacity(0.3))
                             .clipShape(Capsule())
                     }
                 }
                 Text(user.username)
                     .font(.system(size: 12))
-                    .foregroundColor(.mdzMuted)
-                if !roleLabels.isEmpty {
-                    HStack(spacing: 4) {
-                        ForEach(roleLabels, id: \.self) { r in
-                            Text(r)
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundColor(.mdzBlue)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.mdzBlue.opacity(0.12))
-                                .clipShape(Capsule())
-                        }
+                    .foregroundColor(colors.muted)
+                HStack(spacing: 4) {
+                    ForEach(roleLabels, id: \.self) { r in
+                        Text(r)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(colors.primary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(colors.primary.opacity(0.12))
+                            .clipShape(Capsule())
+                    }
+                    if roleLabels.isEmpty {
+                        Text("No roles")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(colors.muted)
                     }
                 }
             }
@@ -426,7 +432,7 @@ struct UserRow: View {
 
     private var roleLabels: [String] {
         let roles = user.roles ?? (user.role.map { [$0] } ?? [])
-        return roles.prefix(3).map { roleLabel($0) }
+        return roles.prefix(5).map { roleLabel($0) }
     }
 
     private func roleLabel(_ r: String) -> String {
@@ -438,7 +444,7 @@ struct UserRow: View {
         case "instructor", "lms_instructor": return "Instructor"
         case "student", "lms_student": return "Student"
         case "manifest": return "Manifest"
-        case "loft", "rigger": return "Loft"
+        case "loft", "rigger", "rigs": return "Rigs"
         case "loft_customer": return "Loft Customer"
         default: return r.replacingOccurrences(of: "_", with: " ").capitalized
         }

@@ -17,6 +17,12 @@ struct Aircraft: Codable, Identifiable, Hashable {
     let next100hrDue: String?
     let annualDue: String?
     let lastOilChange: String?
+    let ttsn: String?
+    let smoh: String?
+    let slots: Int?
+    let lastMic: String?
+    /// Multi-engine (optional from API); used for "Multi only" filter.
+    var isMultiEngine: Bool?
 
     enum CodingKeys: String, CodingKey {
         case id, model, status, make, year
@@ -27,6 +33,9 @@ struct Aircraft: Codable, Identifiable, Hashable {
         case next100hrDue  = "next_100hr_due"
         case annualDue     = "annual_due"
         case lastOilChange = "last_oil_change"
+        case ttsn, smoh, slots
+        case lastMic       = "last_mic"
+        case isMultiEngine = "multi_engine"
     }
 
     init(from decoder: Decoder) throws {
@@ -45,6 +54,11 @@ struct Aircraft: Codable, Identifiable, Hashable {
         next100hrDue = try? c.decodeIfPresent(String.self, forKey: .next100hrDue)
         annualDue = try? c.decodeIfPresent(String.self, forKey: .annualDue)
         lastOilChange = try? c.decodeIfPresent(String.self, forKey: .lastOilChange)
+        ttsn = try? c.decodeIfPresent(String.self, forKey: .ttsn)
+        smoh = try? c.decodeIfPresent(String.self, forKey: .smoh)
+        slots = try? c.decodeIfPresent(Int.self, forKey: .slots)
+        lastMic = try? c.decodeIfPresent(String.self, forKey: .lastMic)
+        isMultiEngine = try? c.decodeIfPresent(Bool.self, forKey: .isMultiEngine)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -59,11 +73,16 @@ struct Aircraft: Codable, Identifiable, Hashable {
         try c.encodeIfPresent(next100hrDue, forKey: .next100hrDue)
         try c.encodeIfPresent(annualDue, forKey: .annualDue)
         try c.encodeIfPresent(lastOilChange, forKey: .lastOilChange)
+        try c.encodeIfPresent(ttsn, forKey: .ttsn)
+        try c.encodeIfPresent(smoh, forKey: .smoh)
+        try c.encodeIfPresent(slots, forKey: .slots)
+        try c.encodeIfPresent(lastMic, forKey: .lastMic)
+        try c.encodeIfPresent(isMultiEngine, forKey: .isMultiEngine)
     }
 
     var statusColor: Color {
         switch status.lowercased() {
-        case "airworthy", "active": return .mdzGreen
+        case "airworthy", "active": return .mdzBlue
         case "grounded", "inactive": return .mdzDanger
         case "maintenance": return .mdzAmber
         default: return .mdzMuted

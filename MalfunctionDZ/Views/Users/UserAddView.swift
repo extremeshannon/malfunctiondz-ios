@@ -5,6 +5,8 @@ import SwiftUI
 struct UserAddView: View {
     let onDismiss: () -> Void
     @EnvironmentObject private var auth: AuthManager
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
     @State private var username = ""
     @State private var email = ""
     @State private var password = ""
@@ -27,22 +29,22 @@ struct UserAddView: View {
                 }
                 .padding(20)
             }
-            .background(Color.mdzBackground)
+            .background(colors.background)
             .navigationTitle("Add User")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel", action: onDismiss)
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
                         Task { await createUser() }
                     }
                     .fontWeight(.semibold)
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                     .disabled(saving || selectedRoles.isEmpty)
                 }
             }
@@ -76,24 +78,24 @@ struct UserAddView: View {
                 .keyboardType(.phonePad)
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private func fieldRow(_ label: String, _ binding: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label.uppercased())
                 .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(1)
             TextField("", text: binding)
                 .font(.system(size: 16))
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
                 .padding(12)
-                .background(Color.mdzBackground)
+                .background(colors.background)
                 .cornerRadius(8)
-                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
         }
     }
 
@@ -101,7 +103,7 @@ struct UserAddView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("ROLES (at least one required)")
                 .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(1)
             let allowed = availableRoles.filter { r in
                 guard (auth.currentUser?.canEditAdminUsers ?? false) else {
@@ -118,11 +120,11 @@ struct UserAddView: View {
                     } label: {
                         Text(r.label)
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(isSel ? .white : .mdzText)
+                            .foregroundColor(isSel ? .white : colors.text)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .background(isSel ? Color.mdzRed : Color.mdzNavyMid)
-                            .overlay(Capsule().strokeBorder(isSel ? Color.mdzRed : Color.mdzBorder, lineWidth: isSel ? 2 : 1))
+                            .background(isSel ? colors.accent : colors.navyMid)
+                            .overlay(Capsule().strokeBorder(isSel ? colors.accent : colors.border, lineWidth: isSel ? 2 : 1))
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
@@ -130,9 +132,9 @@ struct UserAddView: View {
             }
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private func loadRoles() async {

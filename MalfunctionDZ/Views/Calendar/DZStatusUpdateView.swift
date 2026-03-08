@@ -6,6 +6,8 @@ import SwiftUI
 // MARK: - Status modal (Open / Closed only)
 struct DZStatusModalView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
     var onSaved: (() -> Void)?
     @State private var status: String = "open"
     @State private var saving = false
@@ -16,16 +18,16 @@ struct DZStatusModalView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 VStack(alignment: .leading, spacing: 20) {
                     Text("Set drop zone status. App users with notifications on will receive a push when their device is locked.")
                         .font(.system(size: isWide ? 14 : 13))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
 
                     VStack(alignment: .leading, spacing: 12) {
                         Text("STATUS")
                             .font(.system(size: 10, weight: .black))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                             .tracking(1.5)
                         Picker("Status", selection: $status) {
                             Text("DZ Open").tag("open")
@@ -37,7 +39,7 @@ struct DZStatusModalView: View {
                     if let err = lastError {
                         Text(err)
                             .font(.system(size: 13))
-                            .foregroundColor(.mdzDanger)
+                            .foregroundColor(colors.danger)
                     }
 
                     Button {
@@ -54,7 +56,7 @@ struct DZStatusModalView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: isWide ? 52 : 48)
-                        .background(Color.mdzRed)
+                        .background(colors.accent)
                         .cornerRadius(12)
                     }
                     .buttonStyle(.plain)
@@ -65,12 +67,12 @@ struct DZStatusModalView: View {
             }
             .navigationTitle("DZ Status")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                 }
             }
             .task { await loadCurrent() }
@@ -106,6 +108,8 @@ struct DZStatusModalView: View {
 // MARK: - Announcement modal (send announcement; sets status to "announcement" with message)
 struct DZAnnouncementModalView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
     var onSaved: (() -> Void)?
     @State private var announcement: String = ""
     @State private var saving = false
@@ -116,31 +120,31 @@ struct DZAnnouncementModalView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 VStack(alignment: .leading, spacing: 20) {
                     Text("Send an announcement to all app users with notifications on (when their device is locked).")
                         .font(.system(size: isWide ? 14 : 13))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
 
                     VStack(alignment: .leading, spacing: 12) {
                         Text("ANNOUNCEMENT")
                             .font(.system(size: 10, weight: .black))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                             .tracking(1.5)
                         TextField("e.g. Closed today due to weather", text: $announcement, axis: .vertical)
                             .font(.system(size: 15))
-                            .foregroundColor(.mdzText)
+                            .foregroundColor(colors.text)
                             .padding(14)
                             .lineLimit(3...6)
-                            .background(Color.mdzCard)
+                            .background(colors.card)
                             .cornerRadius(10)
-                            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
                     }
 
                     if let err = lastError {
                         Text(err)
                             .font(.system(size: 13))
-                            .foregroundColor(.mdzDanger)
+                            .foregroundColor(colors.danger)
                     }
 
                     Button {
@@ -157,7 +161,7 @@ struct DZAnnouncementModalView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: isWide ? 52 : 48)
-                        .background(Color.mdzRed)
+                        .background(colors.accent)
                         .cornerRadius(12)
                     }
                     .buttonStyle(.plain)
@@ -168,12 +172,12 @@ struct DZAnnouncementModalView: View {
             }
             .navigationTitle("Announcement")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                 }
             }
         }

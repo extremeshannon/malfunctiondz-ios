@@ -1,10 +1,11 @@
 // File: ASC/Views/Loft/DzRigDetailView.swift
-// DZ Rig detail — Pack form (date, count), pack history, Inspect for rigger.
+// DZ Rig detail — Header, component cards, 25-Jump Check block, pack form, inspect, pack history.
 import SwiftUI
 
 struct DzRigDetailView: View {
     let rigId: Int
     @ObservedObject var vm: DzRigsViewModel
+    @Environment(\.mdzColors) private var colors
     @State private var packDate = Date()
     @State private var packJobCount = 1
     @State private var packNotes = ""
@@ -12,26 +13,28 @@ struct DzRigDetailView: View {
 
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             if vm.isLoadingDetail && vm.detailRig == nil {
-                ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzGreen)).scaleEffect(1.4)
+                ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.dz)).scaleEffect(1.4)
             } else if let rig = vm.detailRig {
+                ScrollViewReader { proxy in
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
-                        rigHeaderSection(rig: rig)
+                        rigHeaderBlock(rig: rig)
+                        componentCardsBlock(rig: rig)
+                        jumpCheckBlock(rig: rig, scrollToPackHistory: { proxy.scrollTo("packHistory", anchor: .center) })
                         if !rig.isEligibleFor25JumpCheck {
                             expiredReadOnlyBanner(rig: rig)
                         } else if vm.detailCanMarkPacked && (rig.outOfService != true) {
                             packFormSection
                         }
-                        if vm.detailCanInspect && (rig.outOfService == true) {
-                            inspectSection
-                        }
                         if !vm.detailRecords.isEmpty {
                             packHistorySection
+                                .id("packHistory")
                         }
                     }
                     .padding(16)
+                }
                 }
             } else {
                 EmptyStateView(icon: "questionmark.circle", title: "Rig not found", subtitle: "This DZ rig could not be loaded.")
@@ -49,138 +52,260 @@ struct DzRigDetailView: View {
         }
     }
 
-    private func rigHeaderSection(rig: LoftRig) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+    // MARK: - Header: title, subtitle, status pill (Pic 1 style)
+    private func rigHeaderBlock(rig: LoftRig) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 12) {
-                rigThumbnail(rig: rig)
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(rig.label)
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.mdzText)
-                    packJobsBadge(rig: rig)
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(colors.text)
+                    let subtitle = rigSubtitle(rig)
+                    if !subtitle.isEmpty {
+                        Text(subtitle)
+                            .font(.system(size: 13))
+                            .foregroundColor(colors.muted)
+                    }
                 }
-                Spacer()
+                Spacer(minLength: 8)
+                if rig.outOfService == true {
+                    Text("OUT OF SERVICE")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(colors.danger)
+                        .cornerRadius(6)
+                }
             }
-            if let mfr = rig.harness.mfr { detailRow("Harness", mfr) }
-            if let mod = rig.harness.model, !mod.isEmpty { detailRow("Harness model", mod) }
-            if let sn = rig.harness.sn { detailRow("Harness SN", sn) }
-            if let mfr = rig.reserve.mfr { detailRow("Reserve", mfr) }
-            if let sn = rig.reserve.sn { detailRow("Reserve SN", sn) }
-            if let dom = rig.reserve.dom { detailRow("Reserve DOM", dom) }
-            if let mfr = rig.aad.mfr { detailRow("AAD", mfr) }
-            if let sn = rig.aad.sn { detailRow("AAD SN", sn) }
-            if let mfr = rig.manufacturer { detailRow("Manufacturer", mfr) }
-            if let mod = rig.model { detailRow("Model", mod) }
-            rigImagesSection(rig: rig)
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
-    @ViewBuilder
-    private func rigThumbnail(rig: LoftRig) -> some View {
-        let url = rig.imageURL(path: rig.imageContainer)
-        Group {
-            if let u = url {
-                AsyncImage(url: u) { phase in
-                    switch phase {
-                    case .success(let img): img.resizable().scaledToFill()
-                    case .failure: placeholderImage(icon: "square.stack.3d.up.fill")
-                    default: placeholderImage(icon: "square.stack.3d.up.fill")
+    private func rigSubtitle(_ rig: LoftRig) -> String {
+        let parts: [String] = [
+            rig.model ?? rig.manufacturer,
+            rig.harness.sn.map { "SN \($0)" }
+        ].compactMap { $0 }
+        return parts.joined(separator: " · ")
+    }
+
+    // MARK: - Three horizontal component cards (CONTAINER, RESERVE, AAD)
+    private func componentCardsBlock(rig: LoftRig) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            componentCard(
+                title: "CONTAINER",
+                lines: [
+                    ("Mfr", rig.harness.mfr),
+                    ("SN", rig.harness.sn)
+                ]
+            )
+            componentCard(
+                title: "RESERVE",
+                lines: [
+                    ("Mfr", rig.reserve.mfr),
+                    ("Size", rig.reserve.model),
+                    ("SN", rig.reserve.sn),
+                    ("DOM", rig.reserve.dom)
+                ]
+            )
+            componentCard(
+                title: "AAD",
+                lines: [
+                    ("Mfr", rig.aad.mfr),
+                    ("Model", rig.aad.model),
+                    ("SN", rig.aad.sn)
+                ]
+            )
+        }
+    }
+
+    private func componentCard(title: String, lines: [(String, String?)]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 10, weight: .black))
+                .foregroundColor(colors.muted)
+                .tracking(1)
+            ForEach(Array(lines.enumerated()), id: \.offset) { _, pair in
+                if let value = pair.1, !value.isEmpty {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(pair.0)
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(colors.muted)
+                        Text(value)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(colors.text)
+                            .lineLimit(1)
                     }
                 }
-            } else {
-                placeholderImage(icon: "square.stack.3d.up.fill")
             }
         }
-        .frame(width: 80, height: 80)
-        .clipped()
-        .cornerRadius(8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(colors.card)
+        .cornerRadius(10)
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
     }
 
-    private func placeholderImage(icon: String) -> some View {
-        ZStack {
-            Color.mdzNavyMid
-            Image(systemName: icon)
-                .font(.system(size: 28))
-                .foregroundColor(.mdzMuted)
-        }
-    }
+    // MARK: - 25-Jump Check block (count, progress bar, warn at 20, lock at 25, last check, All Checks / + Inspect)
+    private func jumpCheckBlock(rig: LoftRig, scrollToPackHistory: @escaping () -> Void) -> some View {
+        let n = min(rig.packJobsSinceInspection ?? 0, 25)
+        let remaining = max(0, 25 - n)
+        let atLimit = n >= 25
 
-    @ViewBuilder
-    private func rigImagesSection(rig: LoftRig) -> some View {
-        let hasAny = (rig.imageContainer != nil && !(rig.imageContainer ?? "").isEmpty)
-            || (rig.imageReserve != nil && !(rig.imageReserve ?? "").isEmpty)
-            || (rig.imageMain != nil && !(rig.imageMain ?? "").isEmpty)
-        if hasAny {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Pictures")
-                    .font(.system(size: 12, weight: .black))
-                    .foregroundColor(.mdzMuted)
-                HStack(spacing: 12) {
-                    if let p = rig.imageContainer, !p.isEmpty, let url = rig.imageURL(path: p) {
-                        rigImageCell(label: "Container", url: url)
+        return VStack(alignment: .leading, spacing: 12) {
+            Text("25-JUMP CHECK")
+                .font(.system(size: 12, weight: .black))
+                .foregroundColor(colors.muted)
+                .tracking(0.5)
+
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text("\(n) / 25")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundColor(atLimit ? colors.danger : colors.text)
+                Spacer()
+                Text("REMAINING \(remaining)")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(atLimit ? colors.danger : colors.muted)
+            }
+
+            // Progress bar 0–25 with markers at 20 (warn) and 25 (lock)
+            jumpCheckProgressBar(current: n, atLimit: atLimit)
+
+            if atLimit {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(colors.dz)
+                    Text("Limit reached – rig locked until inspection")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(colors.text)
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(colors.amber.opacity(0.15))
+                .cornerRadius(8)
+                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.dz.opacity(0.4), lineWidth: 1))
+            }
+
+            if let last = rig.lastInspectionAt, !last.isEmpty {
+                let formatted = formatLastInspection(last)
+                HStack(spacing: 4) {
+                    Text("Last check:")
+                        .font(.system(size: 11))
+                        .foregroundColor(colors.muted)
+                    Text(formatted)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(colors.text)
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 11))
+                        .foregroundColor(colors.green)
+                    Text("Passed")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(colors.green)
+                }
+            }
+
+            HStack(spacing: 10) {
+                Button {
+                    scrollToPackHistory()
+                } label: {
+                    Text("All Checks")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(colors.text)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(colors.card2)
+                        .cornerRadius(10)
+                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+
+                if vm.detailCanInspect && rig.outOfService == true {
+                    Button {
+                        Task { await vm.inspect(rigId: rigId) }
+                    } label: {
+                        HStack(spacing: 6) {
+                            if vm.markingRigId == rigId {
+                                ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white)).scaleEffect(0.9)
+                            } else {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 14, weight: .bold))
+                                Text("Inspect")
+                                    .font(.system(size: 14, weight: .bold))
+                            }
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(colors.dz)
+                        .cornerRadius(10)
                     }
-                    if let p = rig.imageReserve, !p.isEmpty, let url = rig.imageURL(path: p) {
-                        rigImageCell(label: "Reserve", url: url)
-                    }
-                    if let p = rig.imageMain, !p.isEmpty, let url = rig.imageURL(path: p) {
-                        rigImageCell(label: "Main", url: url)
-                    }
+                    .disabled(vm.markingRigId == rigId)
+                    .buttonStyle(.plain)
                 }
             }
         }
+        .padding(16)
+        .background(colors.card)
+        .cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
-    private func rigImageCell(label: String, url: URL) -> some View {
-        VStack(spacing: 4) {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .success(let img): img.resizable().scaledToFill()
-                case .failure: placeholderImage(icon: "photo")
-                default: placeholderImage(icon: "photo")
+    private func jumpCheckProgressBar(current: Int, atLimit: Bool) -> some View {
+        let fillColor = atLimit ? colors.danger : colors.dz
+        return GeometryReader { geo in
+            let w = geo.size.width
+            let segment = w / 25
+            ZStack(alignment: .leading) {
+                // Background
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(colors.border.opacity(0.5))
+                    .frame(height: 10)
+                // Filled
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(fillColor)
+                    .frame(width: max(0, segment * CGFloat(current)), height: 10)
+                // Markers at 20 and 25
+                let mark20 = segment * 20
+                let mark25 = segment * 25
+                if mark20 < w {
+                    Rectangle()
+                        .fill(colors.amber)
+                        .frame(width: 2, height: 14)
+                        .offset(x: mark20 - 1)
+                }
+                if mark25 <= w {
+                    Rectangle()
+                        .fill(colors.danger)
+                        .frame(width: 2, height: 14)
+                        .offset(x: mark25 - 2)
                 }
             }
-            .frame(width: 70, height: 70)
-            .clipped()
-            .cornerRadius(6)
-            Text(label)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundColor(.mdzMuted)
         }
+        .frame(height: 14)
     }
 
-    private func packJobsBadge(rig: LoftRig) -> some View {
-        let n = rig.packJobsSinceInspection ?? 0
-        let outOfService = rig.outOfService == true
-        return HStack(spacing: 6) {
-            Text("\(min(n, 25))/25 pack jobs")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundColor(outOfService ? .mdzDanger : .mdzGreen)
-            if outOfService {
-                Text("OUT OF SERVICE")
-                    .font(.system(size: 9, weight: .black))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(Color.mdzDanger)
-                    .cornerRadius(4)
-            }
+    private func formatLastInspection(_ iso: String) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        if let d = formatter.date(from: iso) {
+            let out = DateFormatter()
+            out.dateStyle = .medium
+            return out.string(from: d)
         }
-    }
-
-    private func detailRow(_ label: String, _ value: String) -> some View {
-        HStack {
-            Text(label)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.mdzMuted)
-            Spacer()
-            Text(value)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.mdzText)
+        formatter.dateFormat = "yyyy-MM-dd"
+        if let d = formatter.date(from: String(iso.prefix(10))) {
+            let out = DateFormatter()
+            out.dateStyle = .medium
+            return out.string(from: d)
         }
+        return String(iso.prefix(10))
     }
 
     private func expiredReadOnlyBanner(rig: LoftRig) -> some View {
@@ -190,35 +315,35 @@ struct DzRigDetailView: View {
         return HStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 18))
-                .foregroundColor(.mdzDanger)
+                .foregroundColor(colors.danger)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
                 Text(subtitle)
                     .font(.system(size: 12))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
             Spacer()
         }
         .padding(16)
-        .background(Color.mdzDanger.opacity(0.12))
+        .background(colors.danger.opacity(0.12))
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzDanger.opacity(0.5), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.danger.opacity(0.5), lineWidth: 1))
     }
 
     private var packFormSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Record Pack Job")
                 .font(.system(size: 12, weight: .black))
-                .foregroundColor(.mdzGreen)
+                .foregroundColor(colors.dz)
             DatePicker("Pack date", selection: $packDate, displayedComponents: .date)
                 .datePickerStyle(.compact)
-                .tint(.mdzGreen)
+                .tint(colors.dz)
             HStack {
                 Text("Pack jobs this entry")
                     .font(.system(size: 13))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
                 Spacer()
                 Picker("", selection: $packJobCount) {
                     ForEach(1...25, id: \.self) { n in
@@ -227,7 +352,7 @@ struct DzRigDetailView: View {
                 }
                 .pickerStyle(.menu)
                 .labelsHidden()
-                .tint(.mdzGreen)
+                .tint(colors.dz)
             }
             TextField("Notes (optional)", text: $packNotes, axis: .vertical)
                 .lineLimit(2...4)
@@ -251,7 +376,7 @@ struct DzRigDetailView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(Color.mdzGreen)
+                .background(colors.dz)
                 .foregroundColor(.white)
                 .cornerRadius(10)
             }
@@ -259,20 +384,18 @@ struct DzRigDetailView: View {
             .buttonStyle(.plain)
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private var inspectSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Rig needs inspection")
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
             Button {
-                Task {
-                    await vm.inspect(rigId: rigId)
-                }
+                Task { await vm.inspect(rigId: rigId) }
             } label: {
                 HStack {
                     if vm.markingRigId == rigId {
@@ -285,32 +408,32 @@ struct DzRigDetailView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(Color.mdzAmber)
-                .foregroundColor(.black)
+                .background(colors.dz)
+                .foregroundColor(.white)
                 .cornerRadius(10)
             }
             .disabled(vm.markingRigId == rigId)
             .buttonStyle(.plain)
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzAmber.opacity(0.5), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private var packHistorySection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("25 Jump Check pack jobs")
                 .font(.system(size: 12, weight: .black))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
             ForEach(vm.detailRecords) { rec in
                 packHistoryRow(rec: rec)
             }
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private func packHistoryRow(rec: PackRecord) -> some View {
@@ -318,31 +441,25 @@ struct DzRigDetailView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(rec.packDate)
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
                 if let by = rec.packedBy {
                     Text(by)
                         .font(.system(size: 11))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                 }
             }
             Spacer()
             Text("×\(rec.packJobCount ?? 1)")
                 .font(.system(size: 12, weight: .bold))
-                .foregroundColor(.mdzGreen)
+                .foregroundColor(colors.dz)
             if rec.isLocked == true {
                 Image(systemName: "lock.fill")
                     .font(.system(size: 10))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
         }
         .padding(12)
-        .background(Color.mdzNavyMid.opacity(0.5))
+        .background(colors.navyMid.opacity(0.5))
         .cornerRadius(8)
-    }
-
-    private func isoDate(from s: String) -> Date? {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        return f.date(from: s)
     }
 }

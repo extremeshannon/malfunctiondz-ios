@@ -13,6 +13,7 @@ struct HomeView: View {
     @EnvironmentObject private var config:    AppConfig
     @EnvironmentObject private var tabSelect: TabSelection
     @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
     @StateObject private var vm = HomeViewModel()
     @State private var dzStatusJustUpdated = false
     @Environment(\.horizontalSizeClass) private var hSizeClass
@@ -142,7 +143,7 @@ struct HomeView: View {
                                     icon: "airplane",
                                     title: config.moduleAviation.uppercased(),
                                     subtitle: vm.aviationSummary,
-                                    accentColor: .mdzBlue,
+                                    accentColor: colors.aviation,
                                     badges: vm.aviationBadges,
                                     wide: isWide
                                 ) { tabSelect.selected = 1 }
@@ -152,7 +153,7 @@ struct HomeView: View {
                                     icon: "backpack.fill",
                                     title: config.moduleLoft.uppercased(),
                                     subtitle: vm.loftSummary,
-                                    accentColor: .mdzGreen,
+                                    accentColor: colors.loft,
                                     badges: vm.loftBadges,
                                     wide: isWide
                                 ) { tabSelect.selected = 2 }
@@ -162,7 +163,7 @@ struct HomeView: View {
                                     icon: "briefcase.fill",
                                     title: "RIGS",
                                     subtitle: "Personal rigs + DZ rigs (read-only)",
-                                    accentColor: .mdzGreen,
+                                    accentColor: colors.green,
                                     badges: [],
                                     wide: isWide
                                 ) { tabSelect.selected = 6 }
@@ -172,7 +173,7 @@ struct HomeView: View {
                                         icon: "briefcase.fill",
                                         title: "MY RIGS",
                                         subtitle: "Your rigs — reserve & AAD expiry",
-                                        accentColor: .mdzGreen,
+                                        accentColor: colors.green,
                                         badges: [],
                                         wide: isWide
                                     ) { tabSelect.selected = 6 }
@@ -182,7 +183,7 @@ struct HomeView: View {
                                         icon: "square.stack.3d.up.fill",
                                         title: "DZ RIGS",
                                         subtitle: isAdmin ? vm.loftSummary : "DZ-owned rigs — Packers can mark packed",
-                                        accentColor: .mdzAmber,
+                                        accentColor: colors.dz,
                                         badges: isAdmin ? vm.loftBadges : [],
                                         wide: isWide
                                     ) { tabSelect.selected = 7 }
@@ -193,7 +194,7 @@ struct HomeView: View {
                                     icon: "graduationcap.fill",
                                     title: config.moduleGroundSchool.uppercased(),
                                     subtitle: vm.groundSchoolSummary,
-                                    accentColor: .mdzAmber,
+                                    accentColor: colors.groundSchool,
                                     badges: vm.groundSchoolBadges,
                                     wide: isWide
                                 ) { tabSelect.selected = 3 }
@@ -203,7 +204,7 @@ struct HomeView: View {
                                     icon: "book.closed.fill",
                                     title: "LOGBOOK",
                                     subtitle: "Jump entries & sign-offs",
-                                    accentColor: .mdzAmber,
+                                    accentColor: colors.amber,
                                     badges: [],
                                     wide: isWide
                                 ) { tabSelect.selected = 4 }
@@ -213,7 +214,7 @@ struct HomeView: View {
                                     icon: "calendar",
                                     title: "CALENDAR",
                                     subtitle: "Events & todos",
-                                    accentColor: .mdzBlue,
+                                    accentColor: colors.primary,
                                     badges: [],
                                     wide: isWide
                                 ) { tabSelect.selected = 5 }
@@ -221,7 +222,7 @@ struct HomeView: View {
                                     icon: "square.grid.3x3.fill",
                                     title: "SHIFTS",
                                     subtitle: "My schedule & pick shifts",
-                                    accentColor: .mdzRed,
+                                    accentColor: colors.accent,
                                     badges: [],
                                     wide: isWide
                                 ) { tabSelect.selected = 12 }
@@ -231,7 +232,7 @@ struct HomeView: View {
                                     icon: "list.clipboard.fill",
                                     title: config.moduleManifest.uppercased(),
                                     subtitle: vm.manifestSummary,
-                                    accentColor: .mdzRed,
+                                    accentColor: colors.accent,
                                     badges: vm.manifestBadges,
                                     wide: isWide
                                 ) { /* manifest TBD */ }
@@ -241,7 +242,7 @@ struct HomeView: View {
                                     icon: "person.2.fill",
                                     title: "USERS",
                                     subtitle: "Manage logins and roles",
-                                    accentColor: .mdzRed,
+                                    accentColor: colors.accent,
                                     badges: [],
                                     wide: isWide
                                 ) { tabSelect.selected = 8 }
@@ -320,26 +321,32 @@ struct HomeView: View {
 
     // MARK: - Header
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(dateString)
-                .font(.system(size: isWide ? 12 : 11, weight: .semibold))
-                .foregroundColor(colors.muted)
-                .tracking(2)
-                .textCase(.uppercase)
-
-            Text(config.dzName.uppercased())
-                .font(.system(size: isWide ? 36 : 28, weight: .black, design: .rounded))
-                .foregroundColor(colors.text)
-                .lineLimit(2)
-
-            HStack(spacing: 6) {
-                Text(greeting)
-                    .font(.system(size: isWide ? 15 : 13, weight: .medium))
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(dateString)
+                    .font(.system(size: isWide ? 12 : 11, weight: .semibold))
                     .foregroundColor(colors.muted)
-                Text("·").foregroundColor(colors.border)
-                Text(auth.currentUser?.roleDisplayLabel ?? "")
-                    .font(.system(size: isWide ? 15 : 13, weight: .semibold))
-                    .foregroundColor(colors.primary)
+                    .tracking(2)
+                    .textCase(.uppercase)
+
+                Text(config.dzName.uppercased())
+                    .font(.system(size: isWide ? 36 : 28, weight: .black, design: .rounded))
+                    .foregroundColor(colors.text)
+                    .lineLimit(2)
+
+                HStack(spacing: 6) {
+                    Text(greeting)
+                        .font(.system(size: isWide ? 15 : 13, weight: .medium))
+                        .foregroundColor(colors.muted)
+                    Text("·").foregroundColor(colors.border)
+                    Text(auth.currentUser?.roleDisplayLabel ?? "")
+                        .font(.system(size: isWide ? 15 : 13, weight: .semibold))
+                        .foregroundColor(colors.primary)
+                }
+            }
+            Spacer(minLength: 12)
+            if showDzStatus {
+                DZStatusPill(status: vm.dzStatus)
             }
         }
     }
@@ -353,14 +360,14 @@ struct HomeView: View {
                     icon: "square.stack.3d.up.fill",
                     title: "DZ RIGS",
                     subtitle: dr.summaryText,
-                    accentColor: .mdzAmber
+                    accentColor: colors.dz
                 )
             }
             ManifestStatusCard(
                 icon: "airplane",
                 title: config.moduleAviation.uppercased(),
                 subtitle: vm.aviationSummary,
-                accentColor: .mdzBlue,
+                accentColor: colors.aviation,
                 badges: vm.aviationBadges
             )
         }
@@ -392,7 +399,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("AIRWORTHY AIRCRAFT")
                 .font(.system(size: 10, weight: .black))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(2)
 
             // 2 columns on iPad, 1 on iPhone
@@ -406,19 +413,19 @@ struct HomeView: View {
                         HStack(spacing: 12) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.mdzBlue.opacity(0.12))
+                                    .fill(colors.aviation.opacity(0.12))
                                     .frame(width: 38, height: 38)
                                 Image(systemName: "airplane")
-                                    .foregroundColor(.mdzBlue)
+                                    .foregroundColor(colors.aviation)
                                     .font(.system(size: 17))
                             }
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(ac.tailNumber)
                                     .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(.mdzText)
+                                    .foregroundColor(colors.text)
                                 Text(ac.model)
                                     .font(.system(size: 11))
-                                    .foregroundColor(.mdzMuted)
+                                    .foregroundColor(colors.muted)
                             }
                             Spacer()
                             Text(ac.status.capitalized)
@@ -428,13 +435,13 @@ struct HomeView: View {
                                 .background(ac.statusColor.opacity(0.15))
                                 .clipShape(Capsule())
                             Image(systemName: "chevron.right")
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                                 .font(.system(size: 11))
                         }
                         .padding(12)
-                        .background(Color.mdzCard)
+                        .background(colors.card)
                         .cornerRadius(12)
-                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
                     }
                     .buttonStyle(.plain)
                 }
@@ -447,7 +454,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("TODAY AT A GLANCE")
                 .font(.system(size: 10, weight: .black))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(2)
 
             let alertCols = isWide
@@ -468,33 +475,33 @@ struct HomeView: View {
             HStack(spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(Color.mdzAmber.opacity(0.15))
+                        .fill(colors.amber.opacity(0.15))
                         .frame(width: 44, height: 44)
                     Image(systemName: "pencil.and.signature")
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text("STUDENTS AWAITING CHECK-OFFS")
                         .font(.system(size: 10, weight: .black))
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                         .tracking(1.2)
                     Text("\(pending) student\(pending == 1 ? "" : "s") awaiting sign-off")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                     Text("Tap to open Ground School")
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
             .padding(16)
-            .background(Color.mdzCard)
+            .background(colors.card)
             .cornerRadius(14)
-            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzAmber.opacity(0.4), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.amber.opacity(0.4), lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
@@ -542,6 +549,7 @@ struct MetarWidget: View {
     let isLoading: Bool
     var wide:      Bool = false
     let onRefresh: () -> Void
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -549,24 +557,24 @@ struct MetarWidget: View {
                 HStack(spacing: 6) {
                     Image(systemName: "cloud.sun.fill")
                         .font(.system(size: 11, weight: .black))
-                        .foregroundColor(.mdzBlue)
+                        .foregroundColor(colors.primary)
                     Text("PAAQ PALMER — WEATHER")
                         .font(.system(size: 11, weight: .black))
-                        .foregroundColor(.mdzBlue)
+                        .foregroundColor(colors.primary)
                         .tracking(1.5)
                 }
                 Spacer()
                 Button(action: onRefresh) {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 13))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                 }
             }
 
             if isLoading || metar == nil {
                 HStack {
-                    ProgressView().tint(.mdzBlue).scaleEffect(0.8)
-                    Text("Fetching METAR…").font(.system(size: 12)).foregroundColor(.mdzMuted)
+                    ProgressView().tint(colors.primary).scaleEffect(0.8)
+                    Text("Fetching METAR…").font(.system(size: 12)).foregroundColor(colors.muted)
                 }
             } else if let m = metar {
                 if wide {
@@ -579,7 +587,7 @@ struct MetarWidget: View {
                                 .foregroundColor(m.flightCategoryColor)
                             Text("CATEGORY")
                                 .font(.system(size: 8, weight: .bold))
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                                 .tracking(1)
                         }
                         .frame(width: 90)
@@ -587,7 +595,7 @@ struct MetarWidget: View {
                         .background(m.flightCategoryColor.opacity(0.12))
                         .cornerRadius(10)
 
-                        Divider().background(Color.mdzBorder).frame(height: 48)
+                        Divider().background(colors.border).frame(height: 48)
 
                         MetarStat(label: "TEMP",
                                   value: m.tempF.map { String(format: "%.0f°F", $0) } ?? "--")
@@ -602,7 +610,7 @@ struct MetarWidget: View {
                         if !m.rawText.isEmpty {
                             Text(m.rawText)
                                 .font(.system(size: 9, design: .monospaced))
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                                 .lineLimit(2)
                                 .frame(maxWidth: 260, alignment: .trailing)
                         }
@@ -616,7 +624,7 @@ struct MetarWidget: View {
                                 .foregroundColor(m.flightCategoryColor)
                             Text("CATEGORY")
                                 .font(.system(size: 8, weight: .bold))
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                                 .tracking(1)
                         }
                         .frame(width: 72)
@@ -642,25 +650,26 @@ struct MetarWidget: View {
                     if !m.rawText.isEmpty {
                         Text(m.rawText)
                             .font(.system(size: 9, design: .monospaced))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                             .lineLimit(2)
                     }
                 }
             }
         }
         .padding(wide ? 20 : 14)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
     }
 }
 
 struct MetarStat: View {
     let label: String; let value: String
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(label).font(.system(size: 8, weight: .bold)).foregroundColor(.mdzMuted).tracking(0.8)
-            Text(value).font(.system(size: 13, weight: .semibold)).foregroundColor(.mdzText)
+            Text(label).font(.system(size: 8, weight: .bold)).foregroundColor(colors.muted).tracking(0.8)
+            Text(value).font(.system(size: 13, weight: .semibold)).foregroundColor(colors.text)
         }
     }
 }
@@ -672,6 +681,7 @@ struct ManifestStatusCard: View {
     let subtitle: String
     let accentColor: Color
     var badges: [DashBadge] = []
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -681,20 +691,21 @@ struct ManifestStatusCard: View {
                     .foregroundColor(accentColor)
                 Text(title)
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
                     .tracking(1.5)
             }
             Text(subtitle)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
             if !badges.isEmpty {
                 HStack(spacing: 6) {
                     ForEach(badges) { b in
+                        let c = badgeColor(b)
                         Text(b.label)
                             .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(b.color)
+                            .foregroundColor(c)
                             .padding(.horizontal, 6).padding(.vertical, 3)
-                            .background(b.color.opacity(0.15))
+                            .background(c.opacity(0.15))
                             .clipShape(Capsule())
                     }
                 }
@@ -702,9 +713,9 @@ struct ManifestStatusCard: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
         .overlay(
             Rectangle()
                 .fill(accentColor)
@@ -712,6 +723,18 @@ struct ManifestStatusCard: View {
                 .cornerRadius(2),
             alignment: .top
         )
+    }
+
+    private func badgeColor(_ b: DashBadge) -> Color {
+        guard let k = b.semanticKey else { return b.color }
+        switch k {
+        case "green": return colors.green
+        case "danger": return colors.danger
+        case "amber": return colors.amber
+        case "muted": return colors.muted
+        case "primary": return colors.primary
+        default: return b.color
+        }
     }
 }
 
@@ -721,6 +744,7 @@ struct PilotQuickWidget: View {
     let onTapMore: () -> Void
     @State private var pulse = false
     @Environment(\.horizontalSizeClass) private var hSizeClass
+    @Environment(\.mdzColors) private var colors
     private var isWide: Bool { hSizeClass == .regular }
 
     var body: some View {
@@ -728,15 +752,15 @@ struct PilotQuickWidget: View {
             HStack {
                 HStack(spacing: 6) {
                     Image(systemName: "airplane.departure")
-                        .font(.system(size: 11, weight: .black)).foregroundColor(.mdzBlue)
+                        .font(.system(size: 11, weight: .black)).foregroundColor(colors.primary)
                     Text("TODAY'S FLIGHTS")
-                        .font(.system(size: 11, weight: .black)).foregroundColor(.mdzBlue).tracking(1.5)
+                        .font(.system(size: 11, weight: .black)).foregroundColor(colors.primary).tracking(1.5)
                 }
                 Spacer()
                 Button(action: onTapMore) {
                     HStack(spacing: 4) {
-                        Text("Aviation").font(.system(size: 11, weight: .semibold)).foregroundColor(.mdzBlue)
-                        Image(systemName: "chevron.right").font(.system(size: 10)).foregroundColor(.mdzBlue)
+                        Text("Aviation").font(.system(size: 11, weight: .semibold)).foregroundColor(colors.primary)
+                        Image(systemName: "chevron.right").font(.system(size: 10)).foregroundColor(colors.primary)
                     }
                 }
             }
@@ -745,23 +769,23 @@ struct PilotQuickWidget: View {
                 Button(action: onTapMore) {
                     HStack(spacing: 10) {
                         Circle()
-                            .fill(Color.mdzGreen)
+                            .fill(colors.green)
                             .frame(width: 10, height: 10)
                             .scaleEffect(pulse ? 1.35 : 1.0)
                             .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: pulse)
                         Text("FLIGHT ACTIVE — \(tail)")
                             .font(.system(size: isWide ? 15 : 13, weight: .black))
-                            .foregroundColor(.mdzGreen)
+                            .foregroundColor(colors.green)
                         Spacer()
                         Text("TAP TO MANAGE")
                             .font(.system(size: 9, weight: .bold))
-                            .foregroundColor(.mdzGreen)
+                            .foregroundColor(colors.green)
                             .tracking(1)
                     }
                     .padding(12)
-                    .background(Color.mdzGreen.opacity(0.1))
+                    .background(colors.green.opacity(0.1))
                     .cornerRadius(10)
-                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzGreen.opacity(0.3), lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.green.opacity(0.3), lineWidth: 1))
                 }
                 .buttonStyle(.plain)
                 .onAppear { pulse = true }
@@ -770,11 +794,11 @@ struct PilotQuickWidget: View {
             if let d = data, d.flightCount > 0 {
                 HStack(spacing: 0) {
                     PilotStatCell(label: "FLIGHTS", value: "\(d.flightCount)").frame(maxWidth: .infinity)
-                    Divider().background(Color.mdzBorder)
+                    Divider().background(colors.border)
                     PilotStatCell(label: "LOADS",   value: "\(d.totalLoads)").frame(maxWidth: .infinity)
-                    Divider().background(Color.mdzBorder)
+                    Divider().background(colors.border)
                     PilotStatCell(label: "PAX",     value: "\(d.totalPax)").frame(maxWidth: .infinity)
-                    Divider().background(Color.mdzBorder)
+                    Divider().background(colors.border)
                     PilotStatCell(label: "HOBBS Δ", value: String(format: "%.1f", d.hobbsDelta)).frame(maxWidth: .infinity)
                 }
                 .frame(height: isWide ? 72 : 56)
@@ -788,16 +812,16 @@ struct PilotQuickWidget: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: isWide ? 52 : 44)
-                    .background(Color.mdzRed)
+                    .background(colors.accent)
                     .cornerRadius(10)
                 }
                 .buttonStyle(.plain)
             }
         }
         .padding(isWide ? 20 : 14)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
     }
 }
 
@@ -806,41 +830,42 @@ struct StudentProgressWidget: View {
     let data:       StudentDashData?
     let onContinue: () -> Void
     @Environment(\.horizontalSizeClass) private var hSizeClass
+    @Environment(\.mdzColors) private var colors
     private var isWide: Bool { hSizeClass == .regular }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 6) {
                 Image(systemName: "graduationcap.fill")
-                    .font(.system(size: 11, weight: .black)).foregroundColor(.mdzAmber)
+                    .font(.system(size: 11, weight: .black)).foregroundColor(colors.amber)
                 Text("MY PROGRESS")
-                    .font(.system(size: 11, weight: .black)).foregroundColor(.mdzAmber).tracking(1.5)
+                    .font(.system(size: 11, weight: .black)).foregroundColor(colors.amber).tracking(1.5)
             }
             if let d = data {
                 HStack {
                     Text(d.courseTitle)
                         .font(.system(size: isWide ? 16 : 14, weight: .bold))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                     Spacer()
                     Text("Level \(d.currentLevel)")
-                        .font(.system(size: isWide ? 14 : 12, weight: .semibold)).foregroundColor(.mdzBlue)
+                        .font(.system(size: isWide ? 14 : 12, weight: .semibold)).foregroundColor(colors.primary)
                         .padding(.horizontal, 10).padding(.vertical, 4)
-                        .background(Color.mdzBlue.opacity(0.12)).clipShape(Capsule())
+                        .background(colors.primary.opacity(0.12)).clipShape(Capsule())
                 }
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4).fill(Color.mdzBorder).frame(height: 8)
-                        RoundedRectangle(cornerRadius: 4).fill(Color.mdzAmber)
+                        RoundedRectangle(cornerRadius: 4).fill(colors.border).frame(height: 8)
+                        RoundedRectangle(cornerRadius: 4).fill(colors.amber)
                             .frame(width: geo.size.width * CGFloat(d.progressPct / 100), height: 8)
                             .animation(.easeOut(duration: 0.8), value: d.progressPct)
                     }
                 }.frame(height: 8)
                 HStack {
                     Text("\(d.completedLessons) / \(d.totalLessons) lessons")
-                        .font(.system(size: isWide ? 13 : 11)).foregroundColor(.mdzMuted)
+                        .font(.system(size: isWide ? 13 : 11)).foregroundColor(colors.muted)
                     Spacer()
                     Text("\(Int(d.progressPct))%")
-                        .font(.system(size: isWide ? 13 : 11, weight: .bold)).foregroundColor(.mdzAmber)
+                        .font(.system(size: isWide ? 13 : 11, weight: .bold)).foregroundColor(colors.amber)
                 }
                 Button(action: onContinue) {
                     HStack {
@@ -851,16 +876,16 @@ struct StudentProgressWidget: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: isWide ? 50 : 40)
-                    .background(Color.mdzAmber).cornerRadius(10)
+                    .background(colors.amber).cornerRadius(10)
                 }
                 .buttonStyle(.plain)
             } else {
-                Text("Loading progress…").font(.system(size: 13)).foregroundColor(.mdzMuted)
+                Text("Loading progress…").font(.system(size: 13)).foregroundColor(colors.muted)
             }
         }
         .padding(isWide ? 20 : 14)
-        .background(Color.mdzCard).cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .background(colors.card).cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
     }
 }
 
@@ -869,6 +894,7 @@ struct InstructorQuickWidget: View {
     let data: InstructorDashData?
     var onTapGroundSchool: (() -> Void)? = nil
     @Environment(\.horizontalSizeClass) private var hSizeClass
+    @Environment(\.mdzColors) private var colors
     private var isWide: Bool { hSizeClass == .regular }
 
     var body: some View {
@@ -876,30 +902,30 @@ struct InstructorQuickWidget: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 6) {
                     Image(systemName: "person.2.fill")
-                        .font(.system(size: 11, weight: .black)).foregroundColor(.mdzGreen)
+                        .font(.system(size: 11, weight: .black)).foregroundColor(colors.green)
                     Text("INSTRUCTOR OVERVIEW")
-                        .font(.system(size: 11, weight: .black)).foregroundColor(.mdzGreen).tracking(1.5)
+                        .font(.system(size: 11, weight: .black)).foregroundColor(colors.green).tracking(1.5)
                     if (data?.pendingSignoffs ?? 0) > 0 {
                         Spacer()
                         Text("Tap to view")
-                            .font(.system(size: 10, weight: .semibold)).foregroundColor(.mdzAmber)
+                            .font(.system(size: 10, weight: .semibold)).foregroundColor(colors.amber)
                     }
                 }
                 if let d = data {
                     HStack(spacing: 0) {
                         PilotStatCell(label: "STUDENTS",  value: "\(d.activeStudents)").frame(maxWidth: .infinity)
-                        Divider().background(Color.mdzBorder)
+                        Divider().background(colors.border)
                         PilotStatCell(label: "SIGN-OFFS", value: "\(d.pendingSignoffs)").frame(maxWidth: .infinity)
                     }
                     .frame(height: isWide ? 72 : 56)
                 } else {
-                    Text("Loading…").font(.system(size: 13)).foregroundColor(.mdzMuted)
+                    Text("Loading…").font(.system(size: 13)).foregroundColor(colors.muted)
                 }
             }
             .padding(isWide ? 20 : 14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.mdzCard).cornerRadius(14)
-            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+            .background(colors.card).cornerRadius(14)
+            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
         }
         .buttonStyle(.plain)
         .disabled(onTapGroundSchool == nil)
@@ -916,6 +942,7 @@ struct ModuleTile: View {
     var wide:        Bool = false
     let onTap:       () -> Void
     @State private var pressed = false
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         Button(action: onTap) {
@@ -929,27 +956,28 @@ struct ModuleTile: View {
                 }
                 Text(title)
                     .font(.system(size: wide ? 15 : 13, weight: .black))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
                     .tracking(0.5).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 Text(subtitle)
                     .font(.system(size: wide ? 13 : 11, weight: .medium))
-                    .foregroundColor(.mdzMuted).lineLimit(2)
+                    .foregroundColor(colors.muted).lineLimit(2)
                 if !badges.isEmpty {
                     HStack(spacing: 4) {
                         ForEach(badges) { b in
+                            let c = badgeColor(b)
                             Text(b.label)
                                 .font(.system(size: wide ? 11 : 10, weight: .bold))
-                                .foregroundColor(b.color)
+                                .foregroundColor(c)
                                 .padding(.horizontal, 7).padding(.vertical, 3)
-                                .background(b.color.opacity(0.15)).clipShape(Capsule())
+                                .background(c.opacity(0.15)).clipShape(Capsule())
                         }
                     }
                 }
             }
             .padding(wide ? 20 : 14)
             .frame(maxWidth: .infinity, minHeight: wide ? 160 : 130, alignment: .topLeading)
-            .background(Color.mdzCard).cornerRadius(14)
-            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+            .background(colors.card).cornerRadius(14)
+            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
             .overlay(VStack { Rectangle().fill(accentColor).frame(height: 3).cornerRadius(14); Spacer() })
             .scaleEffect(pressed ? 0.97 : 1.0)
             .animation(.easeOut(duration: 0.15), value: pressed)
@@ -961,6 +989,18 @@ struct ModuleTile: View {
                 .onEnded   { _ in pressed = false }
         )
     }
+
+    private func badgeColor(_ b: DashBadge) -> Color {
+        guard let k = b.semanticKey else { return b.color }
+        switch k {
+        case "green": return colors.green
+        case "danger": return colors.danger
+        case "amber": return colors.amber
+        case "muted": return colors.muted
+        case "primary": return colors.primary
+        default: return b.color
+        }
+    }
 }
 
 // MARK: - Shared sub-views
@@ -968,19 +1008,32 @@ struct ModuleTile: View {
 
 struct AlertRow: View {
     let alert: DashAlert
+    @Environment(\.mdzColors) private var colors
     var body: some View {
+        let c = alertColor(alert)
         HStack(spacing: 12) {
-            Circle().fill(alert.color).frame(width: 8, height: 8)
+            Circle().fill(c).frame(width: 8, height: 8)
             Text(alert.message)
-                .font(.system(size: 13, weight: .medium)).foregroundColor(.mdzText)
+                .font(.system(size: 13, weight: .medium)).foregroundColor(colors.text)
             Spacer()
             Text(alert.category)
-                .font(.system(size: 10, weight: .semibold)).foregroundColor(alert.color)
+                .font(.system(size: 10, weight: .semibold)).foregroundColor(c)
                 .padding(.horizontal, 8).padding(.vertical, 3)
-                .background(alert.color.opacity(0.15)).clipShape(Capsule())
+                .background(c.opacity(0.15)).clipShape(Capsule())
         }
-        .padding(12).background(Color.mdzCard).cornerRadius(10)
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .padding(12).background(colors.card).cornerRadius(10)
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
+    }
+    private func alertColor(_ a: DashAlert) -> Color {
+        guard let k = a.semanticKey else { return a.color }
+        switch k {
+        case "green": return colors.green
+        case "danger": return colors.danger
+        case "amber": return colors.amber
+        case "muted": return colors.muted
+        case "primary": return colors.primary
+        default: return a.color
+        }
     }
 }
 
@@ -989,6 +1042,7 @@ struct AlertRow: View {
 struct RigExpiryCard: View {
     let rigs: [JumperRig]
     let onTapLogbook: () -> Void
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         Button(action: onTapLogbook) {
@@ -996,21 +1050,21 @@ struct RigExpiryCard: View {
                 HStack {
                     Image(systemName: "backpack.fill")
                         .font(.system(size: 18))
-                        .foregroundColor(.mdzGreen)
+                        .foregroundColor(colors.green)
                     Text("MY RIGS")
                         .font(.system(size: 10, weight: .black))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                         .tracking(2)
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.system(size: 12))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                 }
                 ForEach(rigs) { rig in
                     VStack(alignment: .leading, spacing: 4) {
                         Text(rig.rigLabel)
                             .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.mdzText)
+                            .foregroundColor(colors.text)
                         HStack(spacing: 16) {
                             if let dom = rig.reserveDomDisplay, !dom.isEmpty {
                                 labelVal("Reserve DOM", dom)
@@ -1021,24 +1075,24 @@ struct RigExpiryCard: View {
                             if (rig.reserveDomDisplay ?? "").isEmpty && (rig.aadDomDisplay ?? "").isEmpty {
                                 Text("Add dates in Logbook")
                                     .font(.system(size: 11))
-                                    .foregroundColor(.mdzMuted)
+                                    .foregroundColor(colors.muted)
                             }
                         }
                     }
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.mdzCard2)
+                    .background(colors.card2)
                     .cornerRadius(8)
-                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
                 }
             }
             .padding(16)
-            .background(Color.mdzCard)
+            .background(colors.card)
             .cornerRadius(14)
-            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
             .overlay(
                 Rectangle()
-                    .fill(Color.mdzGreen)
+                    .fill(colors.green)
                     .frame(height: 3)
                     .cornerRadius(2),
                 alignment: .top
@@ -1051,11 +1105,11 @@ struct RigExpiryCard: View {
         VStack(alignment: .leading, spacing: 1) {
             Text(label)
                 .font(.system(size: 9, weight: .black))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(0.5)
             Text(value)
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
         }
     }
 }
@@ -1068,16 +1122,17 @@ struct LogbookConfigCard: View {
     @State private var freefallEditorValue = ""
     @State private var showHomeDzEditor = false
     @State private var homeDzEditorValue = ""
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "book.closed.fill")
                     .font(.system(size: 18))
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                 Text("LOGBOOK CONFIG")
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
                     .tracking(2)
             }
             configRow("Start Freefall Time", vm.startFreefallTime.isEmpty ? "Not set" : vm.startFreefallTime) {
@@ -1090,19 +1145,19 @@ struct LogbookConfigCard: View {
             }
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
         .sheet(isPresented: $showFreefallEditor) {
-            configEditorSheet(title: "Start Freefall Time", hint: "Default freefall when adding a jump (e.g. 45 or 1:30)", value: $freefallEditorValue) {
+            ConfigEditorSheet(title: "Start Freefall Time", hint: "Default freefall when adding a jump (e.g. 45 or 1:30)", value: $freefallEditorValue, onSave: {
                 Task { await vm.setStartFreefallTime(freefallEditorValue); showFreefallEditor = false }
-            } onCancel: { showFreefallEditor = false }
+            }, onCancel: { showFreefallEditor = false })
             .presentationDetents([.medium])
         }
         .sheet(isPresented: $showHomeDzEditor) {
-            configEditorSheet(title: "Home Dropzone", hint: "Your home DZ, prefills when adding a jump", value: $homeDzEditorValue) {
+            ConfigEditorSheet(title: "Home Dropzone", hint: "Your home DZ, prefills when adding a jump", value: $homeDzEditorValue, onSave: {
                 Task { await vm.setHomeDropzone(homeDzEditorValue); showHomeDzEditor = false }
-            } onCancel: { showHomeDzEditor = false }
+            }, onCancel: { showHomeDzEditor = false })
             .presentationDetents([.medium])
         }
     }
@@ -1113,24 +1168,59 @@ struct LogbookConfigCard: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(label.uppercased())
                         .font(.system(size: 9, weight: .black))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                         .tracking(0.5)
                     Text(value)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                 }
                 Spacer()
                 Image(systemName: "pencil.circle.fill")
                     .font(.system(size: 18))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
             }
             .padding(12)
-            .background(Color.mdzCard2)
+            .background(colors.card2)
             .cornerRadius(10)
-            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
         }
         .buttonStyle(.plain)
         .disabled(vm.logbookSettingsSaving)
+    }
+}
+
+// MARK: - DZ Status pill (top-right on dashboard: DZ Open green / DZ Closed red)
+struct DZStatusPill: View {
+    let status: DZStatus?
+    @Environment(\.mdzColors) private var colors
+
+    private var isOpen: Bool {
+        guard let s = status?.status else { return false }
+        return s.lowercased() == "open"
+    }
+
+    private var pillLabel: String {
+        guard let s = status?.status else { return "—" }
+        switch s.lowercased() {
+        case "open": return "DZ OPEN"
+        case "closed": return "DZ CLOSED"
+        case "announcement": return "DZ CLOSED"
+        default: return "DZ CLOSED"
+        }
+    }
+
+    private var pillColor: Color {
+        status == nil ? colors.muted : (isOpen ? colors.green : colors.danger)
+    }
+
+    var body: some View {
+        Text(pillLabel)
+            .font(.system(size: 11, weight: .bold))
+            .foregroundColor(status == nil ? colors.text : .white)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(pillColor)
+            .cornerRadius(8)
     }
 }
 
@@ -1139,14 +1229,15 @@ struct DZStatusCard: View {
     let status: DZStatus
     var tappable: Bool = false
     @Environment(\.horizontalSizeClass) private var hSizeClass
+    @Environment(\.mdzColors) private var colors
     private var isWide: Bool { hSizeClass == .regular }
 
     private var statusColor: Color {
         switch status.status.lowercased() {
-        case "open": return .mdzGreen
-        case "closed": return .mdzDanger
-        case "announcement": return .mdzAmber
-        default: return .mdzMuted
+        case "open": return colors.green
+        case "closed": return colors.danger
+        case "announcement": return colors.amber
+        default: return colors.muted
         }
     }
 
@@ -1173,20 +1264,20 @@ struct DZStatusCard: View {
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                 }
             }
             if let ann = status.announcement, !ann.isEmpty {
                 Text(ann)
                     .font(.system(size: isWide ? 15 : 14))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
             }
         }
         .padding(isWide ? 18 : 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
         .overlay(
             Rectangle()
                 .fill(statusColor)
@@ -1201,23 +1292,24 @@ struct DZStatusCard: View {
 struct DZStatusUpdatedBanner: View {
     let onDismiss: () -> Void
     @State private var appeared = false
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         Button(action: onDismiss) {
             HStack(spacing: 10) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 18))
-                    .foregroundColor(.mdzGreen)
+                    .foregroundColor(colors.green)
                 Text("DZ status updated")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity)
-            .background(Color.mdzGreen.opacity(0.15))
+            .background(colors.green.opacity(0.15))
             .cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzGreen.opacity(0.5), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.green.opacity(0.5), lineWidth: 1))
         }
         .buttonStyle(.plain)
         .onAppear {
@@ -1229,43 +1321,53 @@ struct DZStatusUpdatedBanner: View {
     }
 }
 
-private func configEditorSheet(title: String, hint: String, value: Binding<String>, onSave: @escaping () -> Void, onCancel: @escaping () -> Void) -> some View {
-    NavigationStack {
-        ZStack {
-            Color.mdzBackground.ignoresSafeArea()
-            VStack(alignment: .leading, spacing: 16) {
-                Text(hint)
-                    .font(.system(size: 14))
-                    .foregroundColor(.mdzText)
-                Text("VALUE")
-                    .font(.system(size: 10, weight: .black))
-                    .foregroundColor(.mdzAmber)
-                    .tracking(1)
-                TextField("", text: value)
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.mdzText)
-                    .padding(14)
-                    .background(Color.mdzCard)
-                    .cornerRadius(10)
-                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
-                Spacer()
+private struct ConfigEditorSheet: View {
+    let title: String
+    let hint: String
+    @Binding var value: String
+    let onSave: () -> Void
+    let onCancel: () -> Void
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                colors.background.ignoresSafeArea()
+                VStack(alignment: .leading, spacing: 16) {
+                    Text(hint)
+                        .font(.system(size: 14))
+                        .foregroundColor(colors.text)
+                    Text("VALUE")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(colors.amber)
+                        .tracking(1)
+                    TextField("", text: $value)
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(colors.text)
+                        .padding(14)
+                        .background(colors.card)
+                        .cornerRadius(10)
+                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
+                    Spacer()
+                }
+                .padding(20)
             }
-            .padding(20)
-        }
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel", action: onCancel)
-                    .foregroundColor(.mdzAmber)
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save", action: onSave)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.mdzAmber)
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onCancel)
+                        .foregroundColor(colors.amber)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save", action: onSave)
+                        .fontWeight(.semibold)
+                        .foregroundColor(colors.amber)
+                }
             }
         }
     }

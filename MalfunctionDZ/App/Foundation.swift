@@ -80,6 +80,9 @@ extension Color {
     static let mdzAmber      = Color(hex:"F39C12")
     static let mdzDanger     = Color(hex:"E74C3C")
     static let mdzBorder     = Color(hex:"1A3A5C")
+    static let mdzTeal       = Color(hex:"0D9488")
+    static let mdzOrange     = Color(hex:"F06020")
+    static let mdzPurple     = Color(hex:"7C3AED")
 
     // Login screen — Alaska Skydive Center logo palette (cream, orange, warm earth)
     static let ascLoginBackground = Color(hex:"F5F0E8")
@@ -106,6 +109,14 @@ struct MDZColorSet {
     let danger: Color
     let navy: Color
     let navyMid: Color
+    /// Aviation module — blue
+    let aviation: Color
+    /// Loft module — teal
+    let loft: Color
+    /// Dropzone / DZ Rigs — orange
+    let dz: Color
+    /// Ground School — purple
+    let groundSchool: Color
 
     static let oldGlory = MDZColorSet(
         background: .mdzBackground,
@@ -120,7 +131,11 @@ struct MDZColorSet {
         amber: .mdzAmber,
         danger: .mdzDanger,
         navy: .mdzNavy,
-        navyMid: .mdzNavyMid
+        navyMid: .mdzNavyMid,
+        aviation: Color(hex: "5B9BD5"),
+        loft: Color(hex: "0D9488"),
+        dz: Color(hex: "E85D04"),
+        groundSchool: Color(hex: "7C3AED")
     )
 
     static let slateFire = MDZColorSet(
@@ -136,29 +151,41 @@ struct MDZColorSet {
         amber: Color(hex: "D4920A"),
         danger: Color(hex: "D63C3C"),
         navy: Color(hex: "2A3A47"),
-        navyMid: Color(hex: "1E2D38")
+        navyMid: Color(hex: "1E2D38"),
+        aviation: Color(hex: "2563EB"),
+        loft: Color(hex: "0D9488"),
+        dz: Color(hex: "F06020"),
+        groundSchool: Color(hex: "7C3AED")
     )
 
     static func `for`(_ theme: String) -> MDZColorSet {
-        theme == "slate_fire" ? .slateFire : .oldGlory
+        theme == "old_glory" ? .oldGlory : .slateFire
     }
 }
 
 private struct MDZColorsKey: EnvironmentKey {
-    static let defaultValue = MDZColorSet.oldGlory
+    static let defaultValue = MDZColorSet.slateFire
 }
 extension EnvironmentValues {
     var mdzColors: MDZColorSet {
         get { self[MDZColorsKey.self] }
         set { self[MDZColorsKey.self] = newValue }
     }
+    var mdzColorScheme: ColorScheme {
+        get { self[MDZColorSchemeKey.self] }
+        set { self[MDZColorSchemeKey.self] = newValue }
+    }
+}
+private struct MDZColorSchemeKey: EnvironmentKey {
+    static let defaultValue: ColorScheme = .light
 }
 
 // MARK: - View Modifiers
 struct MDZCardModifier: ViewModifier {
+    @Environment(\.mdzColors) private var colors
     func body(content: Content) -> some View {
-        content.background(Color.mdzCard).cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius:12).strokeBorder(Color.mdzBorder, lineWidth:1))
+        content.background(colors.card).cornerRadius(12)
+            .overlay(RoundedRectangle(cornerRadius:12).strokeBorder(colors.border, lineWidth:1))
     }
 }
 struct MDZPillModifier: ViewModifier {
@@ -168,9 +195,22 @@ struct MDZPillModifier: ViewModifier {
             .padding(.horizontal,10).padding(.vertical,4).background(color).clipShape(Capsule())
     }
 }
+struct MDZInputStyleModifier: ViewModifier {
+    @Environment(\.mdzColors) private var colors
+    func body(content: Content) -> some View {
+        content
+            .padding(10)
+            .background(colors.navyMid)
+            .cornerRadius(8)
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(colors.border, lineWidth: 1))
+            .foregroundColor(colors.text)
+            .font(.system(size: 15))
+    }
+}
 extension View {
     func mdzCard() -> some View { modifier(MDZCardModifier()) }
-    func mdzPill(_ color: Color = .mdzBlue) -> some View { modifier(MDZPillModifier(color: color)) }
+    func mdzPill(_ color: Color = Color(hex: "5AACCA")) -> some View { modifier(MDZPillModifier(color: color)) }
+    func mdzInputStyle() -> some View { modifier(MDZInputStyleModifier()) }
 }
 
 // MARK: - Shared UI Components
@@ -185,14 +225,15 @@ struct PilotStatCell: View {
     let label: String
     let value: String
     @Environment(\.horizontalSizeClass) private var hSizeClass
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         VStack(spacing: 3) {
             Text(value)
                 .font(.system(size: hSizeClass == .regular ? 24 : 20, weight: .black))
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
             Text(label)
                 .font(.system(size: 9, weight: .bold))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(1)
         }
     }
@@ -202,12 +243,13 @@ struct PilotStatCell: View {
 
 struct LoadingOverlay: View {
     var message: String = "Loading…"
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             VStack(spacing:16) {
-                ProgressView().progressViewStyle(CircularProgressViewStyle(tint:.mdzBlue)).scaleEffect(1.4)
-                Text(message).foregroundColor(.mdzMuted).font(.subheadline)
+                ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.primary)).scaleEffect(1.4)
+                Text(message).foregroundColor(colors.muted).font(.subheadline)
             }
         }
     }
@@ -217,12 +259,13 @@ struct EmptyStateView: View {
     var icon: String = "tray"
     var title: String
     var subtitle: String?
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         VStack(spacing:12) {
-            Image(systemName:icon).font(.system(size:40)).foregroundColor(.mdzMuted)
-            Text(title).font(.headline).foregroundColor(.mdzText)
+            Image(systemName:icon).font(.system(size:40)).foregroundColor(colors.muted)
+            Text(title).font(.headline).foregroundColor(colors.text)
             if let s = subtitle {
-                Text(s).font(.subheadline).foregroundColor(.mdzMuted).multilineTextAlignment(.center)
+                Text(s).font(.subheadline).foregroundColor(colors.muted).multilineTextAlignment(.center)
             }
         }.padding(32)
     }
@@ -231,11 +274,12 @@ struct EmptyStateView: View {
 struct InfoRow: View {
     let label: String
     let value: String
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         HStack {
-            Text(label).foregroundColor(.mdzMuted)
+            Text(label).foregroundColor(colors.muted)
             Spacer()
-            Text(value).foregroundColor(.mdzText)
+            Text(value).foregroundColor(colors.text)
         }.font(.subheadline)
     }
 }
@@ -358,10 +402,10 @@ actor APIClient {
     init() { restore() }
     @Published var dzName             = "Alaska Skydive Center"
     @Published var moduleAviation     = "Aviation"
-    @Published var moduleLoft         = "Loft"
+    @Published var moduleLoft         = "Rigs"
     @Published var moduleGroundSchool = "Ground School"
     @Published var moduleManifest     = "Manifest"
-    @Published var theme              = "old_glory"
+    @Published var theme              = "slate_fire"
     let poweredBy                     = "Powered by MalfunctionDZ"
     func loadConfig() async {
         guard let url = URL(string:"\(kServerURL)/api/config.php") else { return }
@@ -378,7 +422,7 @@ actor APIClient {
             dzName = d.dzName ?? dzName; moduleAviation = d.av ?? moduleAviation
             moduleLoft = d.loft ?? moduleLoft; moduleGroundSchool = d.gs ?? moduleGroundSchool
             moduleManifest = d.mf ?? moduleManifest
-            if let t = d.theme, !t.isEmpty { theme = t }
+            // Keep app theme as Slate & Fire; do not overwrite from server
             let ud = UserDefaults.standard
             ud.set(dzName, forKey:"cfg_dz"); ud.set(moduleAviation, forKey:"cfg_av")
             ud.set(moduleLoft, forKey:"cfg_loft"); ud.set(moduleGroundSchool, forKey:"cfg_gs")

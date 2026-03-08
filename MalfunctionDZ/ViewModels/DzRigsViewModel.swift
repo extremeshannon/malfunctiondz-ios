@@ -85,6 +85,24 @@ class DzRigsViewModel: ObservableObject {
     var dueSoonRigs:  [LoftRig] { rigs.filter { $0.status == "due_soon" } }
     var currentRigs:  [LoftRig] { rigs.filter { $0.status == "current" } }
     var unknownRigs:  [LoftRig] { rigs.filter { $0.status == "unknown" } }
+    /// At 25 pack jobs — locked until inspection (Pic 2: OUT OF SERVICE card)
+    var outOfServiceRigs: [LoftRig] { rigs.filter { $0.outOfService == true } }
+    /// 20–24 pack jobs, not yet locked (Pic 2: APPROACHING LIMIT card)
+    var approachingLimitRigs: [LoftRig] {
+        rigs.filter { rig in
+            guard rig.outOfService != true else { return false }
+            let n = rig.packJobsSinceInspection ?? 0
+            return n >= 20 && n < 25
+        }
+    }
+    /// Reserve due soon — 180-day repack within 30 days (Pic 2: REPACK DUE SOON)
+    var repackDueSoonRigs: [LoftRig] { dueSoonRigs }
+    /// In service, current, not approaching limit (Pic 2: ALL CLEAR)
+    var allClearRigs: [LoftRig] {
+        rigs.filter { rig in
+            rig.status == "current" && rig.outOfService != true && ((rig.packJobsSinceInspection ?? 0) < 20)
+        }
+    }
 
     func load() async {
         isLoading = true

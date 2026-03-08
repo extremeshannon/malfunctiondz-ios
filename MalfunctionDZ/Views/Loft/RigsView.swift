@@ -4,6 +4,7 @@ import SwiftUI
 
 struct RigsView: View {
     @EnvironmentObject private var auth: AuthManager
+    @Environment(\.mdzColors) private var colors
     @StateObject private var myRigsVm = MyRigsViewModel()
     @StateObject private var dzRigsVm = DzRigsViewModel()
 
@@ -29,12 +30,12 @@ struct RigsView: View {
 
     private var rigsContent: some View {
         ZStack {
-            Color.mdzBackground.ignoresSafeArea()
+            colors.background.ignoresSafeArea()
             VStack(spacing: 0) {
                 headerSection
                 if myRigsVm.isLoading && dzRigsVm.isLoading && myRigsVm.rigs.isEmpty && dzRigsVm.rigs.isEmpty {
                     Spacer()
-                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .mdzGreen)).scaleEffect(1.4)
+                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.green)).scaleEffect(1.4)
                     Spacer()
                 } else if myRigsVm.rigs.isEmpty && dzRigsVm.rigs.isEmpty {
                     Spacer()
@@ -62,24 +63,24 @@ struct RigsView: View {
             HStack {
                 Image(systemName: "briefcase.fill")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.mdzGreen)
+                    .foregroundColor(colors.green)
                 Text("RIGS")
                     .font(.system(size: 11, weight: .black))
-                    .foregroundColor(.mdzGreen)
+                    .foregroundColor(colors.green)
                     .tracking(2)
                 Spacer()
                 let total = myRigsVm.rigs.count + dzRigsVm.rigs.count
                 Text("\(total) RIG\(total == 1 ? "" : "S")")
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
                     .tracking(1)
             }
             Text(rigsDateString)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
             Text("Read-only — personal rigs and DZ rigs")
                 .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.mdzAmber)
+                .foregroundColor(colors.amber)
             if auth.currentUser?.canAccess25JumpCheck == true {
                 NavigationLink {
                     JumpCheckView(vm: dzRigsVm)
@@ -90,10 +91,10 @@ struct RigsView: View {
                         Text("25 Jump Check")
                             .font(.system(size: 12, weight: .semibold))
                     }
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
-                    .background(Color.mdzAmber.opacity(0.15))
+                    .background(colors.amber.opacity(0.15))
                     .cornerRadius(8)
                 }
                 .padding(.top, 8)
@@ -102,7 +103,7 @@ struct RigsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
-        .background(Color.mdzNavyMid)
+        .background(colors.navyMid)
     }
 
     private var rigsDateString: String {
@@ -116,10 +117,10 @@ struct RigsView: View {
             HStack(spacing: 6) {
                 Image(systemName: "person.fill")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.mdzGreen)
+                    .foregroundColor(colors.green)
                 Text("MY RIGS — \(myRigsVm.rigs.count)")
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(.mdzGreen)
+                    .foregroundColor(colors.green)
                     .tracking(1)
             }
             .padding(.horizontal, 14)
@@ -131,9 +132,9 @@ struct RigsView: View {
             }
             .padding(.bottom, 12)
         }
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private var dzRigsSection: some View {
@@ -141,10 +142,10 @@ struct RigsView: View {
             HStack(spacing: 6) {
                 Image(systemName: "square.stack.3d.up.fill")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                 Text("DZ RIGS — \(dzRigsVm.rigs.count) (read-only)")
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                     .tracking(1)
             }
             .padding(.horizontal, 14)
@@ -159,14 +160,14 @@ struct RigsView: View {
                     .buttonStyle(.plain)
                     .contentShape(Rectangle())
                     if rig.id != dzRigsVm.rigs.last?.id {
-                        Divider().background(Color.mdzBorder).padding(.horizontal, 14)
+                        Divider().background(colors.border).padding(.horizontal, 14)
                     }
                 }
             }
             .padding(.bottom, 8)
         }
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzAmber.opacity(0.3), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.amber.opacity(0.3), lineWidth: 1))
     }
 }

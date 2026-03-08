@@ -5,6 +5,8 @@ import SwiftUI
 struct ProfileView: View {
     @EnvironmentObject private var auth:   AuthManager
     @EnvironmentObject private var config: AppConfig
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
     @ObservedObject private var pushReg  = PushRegistration.shared
     @Environment(\.horizontalSizeClass) private var hSizeClass
     private var isWide: Bool { hSizeClass == .regular }
@@ -12,7 +14,7 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: isWide ? 20 : 16) {
 
@@ -20,44 +22,44 @@ struct ProfileView: View {
                         VStack(spacing: isWide ? 16 : 12) {
                             ZStack {
                                 Circle()
-                                    .fill(Color.mdzBlue.opacity(0.2))
+                                    .fill(colors.primary.opacity(0.2))
                                     .frame(width: isWide ? 110 : 80, height: isWide ? 110 : 80)
                                 Text(initials)
                                     .font(.system(size: isWide ? 44 : 32, weight: .black))
-                                    .foregroundColor(.mdzBlue)
+                                    .foregroundColor(colors.primary)
                             }
                             VStack(spacing: 6) {
                                 Text(displayName)
                                     .font(.system(size: isWide ? 28 : 20, weight: .black))
-                                    .foregroundColor(.mdzText)
+                                    .foregroundColor(colors.text)
                                 Text(auth.currentUser?.roleDisplayLabel ?? "Member")
                                     .font(.system(size: isWide ? 14 : 12, weight: .semibold))
-                                    .foregroundColor(.mdzBlue)
+                                    .foregroundColor(colors.primary)
                                     .padding(.horizontal, 14).padding(.vertical, 5)
-                                    .background(Color.mdzBlue.opacity(0.15))
+                                    .background(colors.primary.opacity(0.15))
                                     .clipShape(Capsule())
                             }
                         }
                         .frame(maxWidth: .infinity)
                         .padding(isWide ? 32 : 24)
-                        .background(Color.mdzCard).cornerRadius(14)
-                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                        .background(colors.card).cornerRadius(14)
+                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
 
                         // ── Account Info ───────────────────────────────────
                         VStack(alignment: .leading, spacing: 0) {
                             SectionHeader(title: "ACCOUNT")
                             if let user = auth.currentUser {
                                 profileRow(label: "Username", value: user.username)
-                                Divider().background(Color.mdzBorder).padding(.leading, 16)
+                                Divider().background(colors.border).padding(.leading, 16)
                                 if let email = user.email {
                                     profileRow(label: "Email", value: email)
-                                    Divider().background(Color.mdzBorder).padding(.leading, 16)
+                                    Divider().background(colors.border).padding(.leading, 16)
                                 }
                                 profileRow(label: "Role", value: user.roleDisplayLabel)
                             }
                         }
-                        .background(Color.mdzCard).cornerRadius(14)
-                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                        .background(colors.card).cornerRadius(14)
+                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
 
                         // ── Manage LMS (admin/instructor) ─────────────────────
                         if auth.currentUser?.canManageLMS == true {
@@ -65,26 +67,26 @@ struct ProfileView: View {
                                 HStack(spacing: 12) {
                                     Image(systemName: "pencil.and.list.clipboard")
                                         .font(.system(size: 18))
-                                        .foregroundColor(.mdzRed)
+                                        .foregroundColor(colors.accent)
                                         .frame(width: 28)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("Manage LMS")
                                             .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(.mdzText)
+                                            .foregroundColor(colors.text)
                                         Text("Edit courses, modules, lessons & quizzes")
                                             .font(.system(size: 12))
-                                            .foregroundColor(.mdzMuted)
+                                            .foregroundColor(colors.muted)
                                     }
                                     Spacer()
                                     Image(systemName: "chevron.right")
                                         .font(.system(size: 13, weight: .semibold))
-                                        .foregroundColor(.mdzMuted)
+                                        .foregroundColor(colors.muted)
                                 }
                                 .padding(16)
                             }
                             .buttonStyle(.plain)
-                            .background(Color.mdzCard).cornerRadius(14)
-                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                            .background(colors.card).cornerRadius(14)
+                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
                         }
 
                         // ── Notifications history ────────────────────────────
@@ -92,26 +94,26 @@ struct ProfileView: View {
                             HStack(spacing: 12) {
                                 Image(systemName: "bell.badge")
                                     .font(.system(size: 18))
-                                    .foregroundColor(.mdzRed)
+                                    .foregroundColor(colors.accent)
                                     .frame(width: 28)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Notifications")
                                         .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(.mdzText)
+                                        .foregroundColor(colors.text)
                                     Text("View status notes & announcements")
                                         .font(.system(size: 12))
-                                        .foregroundColor(.mdzMuted)
+                                        .foregroundColor(colors.muted)
                                 }
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.mdzMuted)
+                                    .foregroundColor(colors.muted)
                             }
                             .padding(16)
                         }
                         .buttonStyle(.plain)
-                        .background(Color.mdzCard).cornerRadius(14)
-                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                        .background(colors.card).cornerRadius(14)
+                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
 
                         // ── Push status (diagnostics) ──────────────────────
                         VStack(alignment: .leading, spacing: 0) {
@@ -119,20 +121,20 @@ struct ProfileView: View {
                             HStack {
                                 Text("Status")
                                     .font(.system(size: isWide ? 15 : 14))
-                                    .foregroundColor(.mdzMuted)
+                                    .foregroundColor(colors.muted)
                                 Spacer()
                                 Group {
                                     if let s = pushReg.lastStatus {
                                         switch s {
-                                        case "sent": Text("Registered ✓").foregroundColor(.mdzGreen)
-                                        case "received": Text("Token received…").foregroundColor(.mdzBlue)
-                                        case "skipped": Text("Skipped").foregroundColor(.mdzMuted)
-                                        case "denied": Text("Denied").foregroundColor(.mdzMuted)
-                                        case "failed": Text("Failed").foregroundColor(.mdzDanger)
-                                        default: Text(s).foregroundColor(.mdzMuted)
+                                        case "sent": Text("Registered ✓").foregroundColor(colors.green)
+                                        case "received": Text("Token received…").foregroundColor(colors.primary)
+                                        case "skipped": Text("Skipped").foregroundColor(colors.muted)
+                                        case "denied": Text("Denied").foregroundColor(colors.muted)
+                                        case "failed": Text("Failed").foregroundColor(colors.danger)
+                                        default: Text(s).foregroundColor(colors.muted)
                                         }
                                     } else {
-                                        Text("Checking…").foregroundColor(.mdzMuted)
+                                        Text("Checking…").foregroundColor(colors.muted)
                                     }
                                 }
                                 .font(.system(size: isWide ? 15 : 14))
@@ -142,23 +144,23 @@ struct ProfileView: View {
                             if let err = pushReg.lastError, !err.isEmpty {
                                 Text(err)
                                     .font(.system(size: 11))
-                                    .foregroundColor(.mdzDanger)
+                                    .foregroundColor(colors.danger)
                                     .padding(.horizontal, 16)
                                     .padding(.bottom, 10)
                             }
                         }
-                        .background(Color.mdzCard).cornerRadius(14)
-                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                        .background(colors.card).cornerRadius(14)
+                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
 
                         // ── DZ Info ────────────────────────────────────────
                         VStack(alignment: .leading, spacing: 0) {
                             SectionHeader(title: "DROPZONE")
                             profileRow(label: "Name",     value: config.dzName)
-                            Divider().background(Color.mdzBorder).padding(.leading, 16)
+                            Divider().background(colors.border).padding(.leading, 16)
                             profileRow(label: "Platform", value: config.poweredBy)
                         }
-                        .background(Color.mdzCard).cornerRadius(14)
-                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                        .background(colors.card).cornerRadius(14)
+                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
 
                         // ── Sign Out ───────────────────────────────────────
                         Button { auth.logout() } label: {
@@ -167,22 +169,22 @@ struct ProfileView: View {
                                 Text("Sign Out")
                                     .font(.system(size: isWide ? 18 : 16, weight: .bold))
                             }
-                            .foregroundColor(.mdzDanger)
+                            .foregroundColor(colors.danger)
                             .frame(maxWidth: .infinity)
                             .frame(height: isWide ? 60 : 52)
-                            .background(Color.mdzDanger.opacity(0.12))
+                            .background(colors.danger.opacity(0.12))
                             .cornerRadius(12)
-                            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzDanger.opacity(0.3), lineWidth: 1))
+                            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.danger.opacity(0.3), lineWidth: 1))
                         }
 
                         Text(config.poweredBy)
                             .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.mdzMuted).tracking(1)
+                            .foregroundColor(colors.muted).tracking(1)
 
                         if let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
                             Text("Build \(build)")
                                 .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(.mdzMuted.opacity(0.8))
+                                .foregroundColor(colors.muted.opacity(0.8))
                                 .padding(.top, 4)
                         }
 
@@ -197,12 +199,12 @@ struct ProfileView: View {
             }
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button("Sign Out", action: { auth.logout() })
-                        .foregroundColor(.mdzDanger)
+                        .foregroundColor(colors.danger)
                         .font(.system(size: 15, weight: .semibold))
                 }
             }
@@ -217,11 +219,11 @@ struct ProfileView: View {
         HStack {
             Text(label)
                 .font(.system(size: isWide ? 15 : 14))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
             Spacer()
             Text(value)
                 .font(.system(size: isWide ? 15 : 14))
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, isWide ? 14 : 10)
@@ -245,10 +247,11 @@ struct ProfileView: View {
 struct SectionHeader: View {
     let title: String
     @Environment(\.horizontalSizeClass) private var hSizeClass
+    @Environment(\.mdzColors) private var colors
     var body: some View {
         Text(title)
             .font(.system(size: 10, weight: .black))
-            .foregroundColor(.mdzMuted).tracking(2)
+            .foregroundColor(colors.muted).tracking(2)
             .padding(.horizontal, 16)
             .padding(.vertical, hSizeClass == .regular ? 14 : 10)
     }

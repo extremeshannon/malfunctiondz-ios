@@ -6,6 +6,7 @@ import SwiftUI
 struct EventsView: View {
     @StateObject private var vm = CalendarViewModel()
     @State private var selectedEvent: CalendarEvent?
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(spacing: 0) {
@@ -40,17 +41,17 @@ struct EventsView: View {
         HStack(spacing: 10) {
             Image(systemName: "calendar")
                 .font(.system(size: 17))
-                .foregroundColor(.mdzBlue)
+                .foregroundColor(colors.primary)
             Text(vm.eventsDateRangeText)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
             Spacer()
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity)
-        .background(Color.mdzCard)
-        .overlay(RoundedRectangle(cornerRadius: 0).strokeBorder(Color.mdzBorder, lineWidth: 0.5))
+        .background(colors.card)
+        .overlay(RoundedRectangle(cornerRadius: 0).strokeBorder(colors.border, lineWidth: 0.5))
     }
 
     private var eventList: some View {
@@ -73,10 +74,10 @@ struct EventsView: View {
         VStack(spacing: 20) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 44))
-                .foregroundColor(.mdzAmber)
+                .foregroundColor(colors.amber)
             Text(message)
                 .font(.subheadline)
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
             Button {
@@ -90,7 +91,7 @@ struct EventsView: View {
                 .foregroundColor(.white)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
-                .background(Color.mdzRed)
+                .background(colors.accent)
                 .cornerRadius(10)
             }
             .buttonStyle(.plain)
@@ -101,18 +102,19 @@ struct EventsView: View {
 
 struct EventRow: View {
     let event: CalendarEvent
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(event.formattedDate)
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(.mdzBlue)
+                    .foregroundColor(colors.primary)
                     .tracking(1)
                 if !event.timeRange.isEmpty {
                     Text(event.timeRange)
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                 }
             }
             .frame(width: 90, alignment: .leading)
@@ -120,7 +122,7 @@ struct EventRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(event.title)
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
                 if let loc = event.location, !loc.isEmpty {
                     HStack(spacing: 4) {
                         Image(systemName: "mappin.circle.fill")
@@ -128,57 +130,59 @@ struct EventRow: View {
                         Text(loc)
                             .font(.system(size: 12))
                     }
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 }
 
 struct EventDetailSheet: View {
     let event: CalendarEvent
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(event.formattedDate)
                                 .font(.system(size: 11, weight: .black))
-                                .foregroundColor(.mdzBlue)
+                                .foregroundColor(colors.primary)
                                 .tracking(1)
                             if !event.timeRange.isEmpty {
                                 Text(event.timeRange)
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.mdzMuted)
+                                    .foregroundColor(colors.muted)
                             }
                         }
 
                         if let loc = event.location, !loc.isEmpty {
                             HStack(spacing: 8) {
                                 Image(systemName: "mappin.circle.fill")
-                                    .foregroundColor(.mdzRed)
+                                    .foregroundColor(colors.accent)
                                 Text(loc)
                                     .font(.system(size: 14))
-                                    .foregroundColor(.mdzText)
+                                    .foregroundColor(colors.text)
                             }
                         }
 
                         if let desc = event.description, !desc.isEmpty {
                             Text(desc)
                                 .font(.system(size: 14))
-                                .foregroundColor(.mdzText)
+                                .foregroundColor(colors.text)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
@@ -188,8 +192,8 @@ struct EventDetailSheet: View {
             }
             .navigationTitle(event.title)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }
     }

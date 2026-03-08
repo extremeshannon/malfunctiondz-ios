@@ -15,6 +15,7 @@ struct ModuleSignoffBlock: View {
     @State private var noteText: String = ""
     @State private var isSubmitting = false
     @State private var errorMessage: String?
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -23,16 +24,16 @@ struct ModuleSignoffBlock: View {
             HStack(spacing: 8) {
                 Image(systemName: "pencil.and.signature")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                 Text("SIGN-OFF REQUIRED")
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
                     .tracking(2)
                 Spacer()
                 StatusPill(label: unlockStatus.label, color: statusColor)
             }
 
-            Divider().background(Color.mdzBorder)
+            Divider().background(colors.border)
 
             // ── Instructor Ready ──────────────────────────────
             SignoffRow(
@@ -74,19 +75,19 @@ struct ModuleSignoffBlock: View {
                     Text(pending == "instructor_ready" ? "Waiting for instructor review..." : "Waiting for jump sign-off...")
                         .font(.system(size: 12, weight: .medium))
                 }
-                .foregroundColor(.mdzAmber)
+                .foregroundColor(colors.amber)
             }
 
             if let error = errorMessage {
                 Text(error)
                     .font(.system(size: 12))
-                    .foregroundColor(.mdzDanger)
+                    .foregroundColor(colors.danger)
             }
         }
         .padding(14)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzAmber.opacity(0.3), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.amber.opacity(0.3), lineWidth: 1))
         .sheet(isPresented: $showRequestSheet) {
             SignoffRequestSheet(
                 requestType: requestType,
@@ -100,11 +101,11 @@ struct ModuleSignoffBlock: View {
 
     private var statusColor: Color {
         switch unlockStatus {
-        case .complete:           return .mdzGreen
-        case .jumpFailed:         return .mdzDanger
+        case .complete:           return colors.green
+        case .jumpFailed:         return colors.danger
         case .awaitingInstructor,
-             .awaitingJump:       return .mdzAmber
-        default:                  return .mdzMuted
+             .awaitingJump:       return colors.amber
+        default:                  return colors.muted
         }
     }
 
@@ -150,6 +151,7 @@ struct SignoffRow: View {
     let subtitle: String
     let record: LMSSignoffRecord?
     let isPending: Bool
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -165,22 +167,22 @@ struct SignoffRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(.mdzText)
+                    .foregroundColor(colors.text)
                 Text(subtitle)
                     .font(.system(size: 11))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
                 if let rec = record {
                     Text(rec.result == "approved" ? "Approved" : "Failed")
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(rec.result == "approved" ? .mdzGreen : .mdzDanger)
+                        .foregroundColor(rec.result == "approved" ? colors.green : colors.danger)
                 } else if isPending {
                     Text("Pending...")
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                 } else {
                     Text("Not yet signed")
                         .font(.system(size: 11))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                 }
             }
             Spacer()
@@ -188,14 +190,15 @@ struct SignoffRow: View {
     }
 
     private var circleColor: Color {
-        guard let rec = record else { return isPending ? .mdzAmber : .mdzMuted }
-        return rec.result == "approved" ? .mdzGreen : .mdzDanger
+        guard let rec = record else { return isPending ? colors.amber : colors.muted }
+        return rec.result == "approved" ? colors.green : colors.danger
     }
 }
 
 struct RequestButton: View {
     let label: String
     let action: () -> Void
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         Button(action: action) {
@@ -205,10 +208,10 @@ struct RequestButton: View {
                 Text(label)
                     .font(.system(size: 13, weight: .bold))
             }
-            .foregroundColor(.mdzBackground)
+            .foregroundColor(colors.background)
             .frame(maxWidth: .infinity)
             .frame(height: 40)
-            .background(Color.mdzAmber)
+            .background(colors.amber)
             .cornerRadius(8)
         }
     }
@@ -220,30 +223,31 @@ struct SignoffRequestSheet: View {
     @Binding var isSubmitting: Bool
     let onSubmit: () -> Void
     let onCancel: () -> Void
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         NavigationView {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 VStack(alignment: .leading, spacing: 20) {
                     Text(requestType == "instructor_ready"
                          ? "I've completed all lessons and hands-on training for this module and I'm ready to jump."
                          : "Request jump sign-off from your instructor.")
                         .font(.system(size: 14))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                         .padding(.top, 8)
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Note (optional)")
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                         TextEditor(text: $noteText)
                             .frame(height: 100)
                             .padding(8)
-                            .background(Color.mdzCard)
+                            .background(colors.card)
                             .cornerRadius(8)
-                            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.mdzBorder, lineWidth: 1))
-                            .foregroundColor(.mdzText)
+                            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+                            .foregroundColor(colors.text)
                     }
 
                     Button {
@@ -259,7 +263,7 @@ struct SignoffRequestSheet: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(Color.mdzAmber)
+                        .background(colors.amber)
                         .cornerRadius(12)
                     }
                     .disabled(isSubmitting)
@@ -273,7 +277,7 @@ struct SignoffRequestSheet: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel", action: onCancel)
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                 }
             }
         }

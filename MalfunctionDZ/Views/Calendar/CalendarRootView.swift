@@ -5,18 +5,20 @@ import SwiftUI
 
 struct CalendarRootView: View {
     @State private var selectedTab = 0
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.mdzBackground.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
 
                 VStack(spacing: 0) {
                     CalendarSegmentPicker(selectedTab: $selectedTab)
                         .padding(.horizontal, 16)
                         .padding(.top, 8)
                         .padding(.bottom, 12)
-                        .background(Color.mdzBackground)
+                        .background(colors.background)
 
                     Group {
                         if selectedTab == 0 {
@@ -31,8 +33,8 @@ struct CalendarRootView: View {
             }
             .navigationTitle("Calendar")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }
     }
@@ -41,6 +43,7 @@ struct CalendarRootView: View {
 // MARK: - Segmented control: Todos | Events
 struct CalendarSegmentPicker: View {
     @Binding var selectedTab: Int
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         HStack(spacing: 0) {
@@ -48,9 +51,9 @@ struct CalendarSegmentPicker: View {
             segmentButton(title: "Events", tag: 1)
         }
         .padding(4)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(10)
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private func segmentButton(title: String, tag: Int) -> some View {
@@ -60,14 +63,14 @@ struct CalendarSegmentPicker: View {
         } label: {
             Text(title)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(isSelected ? .mdzBackground : .mdzText)
+                .foregroundColor(isSelected ? colors.background : colors.text)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
         }
         .buttonStyle(.plain)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(isSelected ? Color.mdzRed : Color.clear)
+                .fill(isSelected ? colors.accent : Color.clear)
         )
     }
 }
