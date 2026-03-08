@@ -14,9 +14,8 @@ struct AircraftDetailView: View {
     @State private var enlargedImageURL: URL?
     @State private var showEditAircraft = false
 
-    private let logbookFiltersSingle: [(String, String)] = [("all", "All"), ("airframe", "Aircraft"), ("engine", "Engine"), ("prop", "Prop")]
-    private var logbookFiltersMulti: [(String, String)] { [("all", "All"), ("airframe", "Aircraft"), ("engine_left", "Left Engine"), ("engine_right", "Right Engine"), ("prop", "Prop")] }
-    private var logbookFilters: [(String, String)] { (aircraft.isMultiEngine == true) ? logbookFiltersMulti : logbookFiltersSingle }
+    // Logbook filters: single-engine only on detail page. Multi-engine is set only in Add/Edit Aircraft.
+    private let logbookFilters: [(String, String)] = [("all", "All"), ("airframe", "Aircraft"), ("engine", "Engine"), ("prop", "Prop")]
 
     var body: some View {
         ZStack {
@@ -39,15 +38,24 @@ struct AircraftDetailView: View {
                 .overlay(alignment: .top) {
                     if let err = vm.error {
                         VStack(spacing: 0) {
-                            HStack {
+                            HStack(alignment: .top) {
                                 Text(err)
                                     .font(.system(size: 13))
                                     .foregroundColor(colors.text)
                                     .multilineTextAlignment(.leading)
                                 Spacer()
-                                Button { vm.error = nil } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(colors.muted)
+                                HStack(spacing: 12) {
+                                    Button {
+                                        Task { await vm.loadDetail(aircraftId: aircraft.id) }
+                                    } label: {
+                                        Text("Retry")
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .foregroundColor(colors.amber)
+                                    }
+                                    Button { vm.error = nil } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(colors.muted)
+                                    }
                                 }
                             }
                             .padding(12)
@@ -76,12 +84,6 @@ struct AircraftDetailView: View {
             }
         }
         .task { await vm.loadDetail(aircraftId: aircraft.id) }
-        .onChange(of: aircraft.isMultiEngine) { _, _ in
-            if aircraft.isMultiEngine == true && (logbookFilter == "engine" || logbookFilter == "airframe") {
-                logbookFilter = "all"
-                Task { await vm.loadLogbook(aircraftId: aircraft.id, bookType: "all") }
-            }
-        }
         .sheet(item: $selectedLogbookEntry) { entry in
             AircraftLogbookEntryDetailSheet(
                 aircraft: aircraft,

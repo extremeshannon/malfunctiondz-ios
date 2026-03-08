@@ -35,26 +35,38 @@ class AircraftDetailViewModel: ObservableObject {
         logbook = logbookResult.entries
         ads = adsResult.entries
         if let e = squawkResult.error ?? logbookResult.error ?? adsResult.error {
-            error = e
+            error = friendlyError(e)
         }
+    }
+
+    private func friendlyError(_ message: String) -> String {
+        let lower = message.lowercased()
+        if lower.contains("not found") || lower.contains("404") {
+            return "Aircraft data not found. Ensure the app’s API URL points at the PHP backend (e.g. MAMP) that serves /api/aircraft/squawks.php, logbook.php, and ads.php."
+        }
+        return message
     }
 
     func loadLogbook(aircraftId: Int, bookType: String) async {
         let result = await fetchLogbook(aircraftId: aircraftId, bookType: bookType)
         logbook = result.entries
-        if let e = result.error { error = e }
+        if let e = result.error { error = friendlyError(e) }
     }
 
     func loadLogbookEntryDetail(aircraftId: Int, entryId: Int) async {
         logbookDetailLoading = true
         logbookDetail = nil
         defer { logbookDetailLoading = false }
-        guard let data = await fetch(path: "/api/aircraft/logbook_entry.php?id=\(aircraftId)&entry_id=\(entryId)") else { return }
+        guard let data = await fetch(path: "/api/aircraft/logbook_entry.php?id=\(aircraftId)&entry_id=\(entryId)").data else { return }
         logbookDetail = (try? JSONDecoder().decode(DetailSingleWrapper<LogbookEntryDetail>.self, from: data))?.data
     }
 
     private func fetchSquawks(aircraftId: Int) async -> (entries: [Squawk], error: String?) {
-        guard let data = await fetch(path: "/api/aircraft/squawks.php?id=\(aircraftId)") else {
+        let (data, statusCode) = await fetch(path: "/api/aircraft/squawks.php?id=\(aircraftId)")
+        if statusCode == 404 {
+            return ([], "Squawks endpoint not found. Point the app at the PHP API (e.g. MAMP) that serves /api/aircraft/.")
+        }
+        guard let data = data else {
             return ([], "Could not reach server. Check that the app is pointed at the correct API (e.g. MAMP).")
         }
         if let wrapper = try? JSONDecoder().decode(DetailListWrapper<Squawk>.self, from: data) {
@@ -66,7 +78,11 @@ class AircraftDetailViewModel: ObservableObject {
 
     private func fetchLogbook(aircraftId: Int, bookType: String = "all") async -> (entries: [LogbookEntry], error: String?) {
         let encoded = bookType.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? bookType
-        guard let data = await fetch(path: "/api/aircraft/logbook.php?id=\(aircraftId)&book_type=\(encoded)") else {
+        let (data, statusCode) = await fetch(path: "/api/aircraft/logbook.php?id=\(aircraftId)&book_type=\(encoded)")
+        if statusCode == 404 {
+            return ([], "Logbook endpoint not found. Point the app at the PHP API (e.g. MAMP) that serves /api/aircraft/.")
+        }
+        guard let data = data else {
             return ([], "Could not reach server.")
         }
         if let wrapper = try? JSONDecoder().decode(DetailListWrapper<LogbookEntry>.self, from: data) {
@@ -77,7 +93,11 @@ class AircraftDetailViewModel: ObservableObject {
     }
 
     private func fetchAds(aircraftId: Int) async -> (entries: [AirworthinessDirective], error: String?) {
-        guard let data = await fetch(path: "/api/aircraft/ads.php?id=\(aircraftId)") else {
+        let (data, statusCode) = await fetch(path: "/api/aircraft/ads.php?id=\(aircraftId)")
+        if statusCode == 404 {
+            return ([], "ADs endpoint not found. Point the app at the PHP API (e.g. MAMP) that serves /api/aircraft/.")
+        }
+        guard let data = data else {
             return ([], "Could not reach server.")
         }
         if let wrapper = try? JSONDecoder().decode(DetailListWrapper<AirworthinessDirective>.self, from: data) {
@@ -87,11 +107,13 @@ class AircraftDetailViewModel: ObservableObject {
         return ([], "Invalid response from ADs API.")
     }
 
-    private func fetch(path: String) async -> Data? {
+    private func fetch(path: String) async -> (data: Data?, statusCode: Int?) {
         guard let token = KeychainHelper.readToken(),
-              let url = URL(string: "\(kServerURL)\(path)") else { return nil }
+              let url = URL(string: "\(kServerURL)\(path)") else { return (nil, nil) }
         var req = URLRequest(url: url)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        return try? await URLSession.shared.data(for: req).0
+        guard let (data, response) = try? await URLSession.shared.data(for: req),
+              let http = response as? HTTPURLResponse else { return (nil, nil) }
+        return (data, http.statusCode)
     }
 }

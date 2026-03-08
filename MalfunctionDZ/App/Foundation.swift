@@ -7,10 +7,15 @@ import Security
 import UserNotifications
 
 // MARK: - Server URL
-// Production: https://malfunctiondz.com (no trailing slash).
-// Backend is FastAPI (platform-py). All API paths use this base + path e.g. base + "/api/login.php".
-// 401 on any request triggers logout (session expired); app shows login again.
-let kServerURL = "https://malfunctiondz.com"
+// Production default: https://malfunctiondz.com (no trailing slash).
+// Override: set "API Base URL" in Profile to point at local PHP backend (e.g. http://localhost:8888).
+var kServerURL: String {
+    if let custom = UserDefaults.standard.string(forKey: "api_base_url"), !custom.isEmpty {
+        let t = custom.trimmingCharacters(in: .whitespacesAndNewlines)
+        return t.hasSuffix("/") ? String(t.dropLast()) : t
+    }
+    return "https://malfunctiondz.com"
+}
 
 // MARK: - Keychain
 struct KeychainHelper {

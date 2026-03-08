@@ -162,6 +162,9 @@ struct ProfileView: View {
                         .background(colors.card).cornerRadius(14)
                         .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
 
+                        // ── API URL (for local PHP / MAMP) ─────────────────
+                        ApiBaseUrlSection()
+
                         // ── Sign Out ───────────────────────────────────────
                         Button { auth.logout() } label: {
                             HStack {
@@ -254,5 +257,79 @@ struct SectionHeader: View {
             .foregroundColor(colors.muted).tracking(2)
             .padding(.horizontal, 16)
             .padding(.vertical, hSizeClass == .regular ? 14 : 10)
+    }
+}
+
+// MARK: - API Base URL (override for local MAMP / PHP backend)
+private let kApiBaseUrlKey = "api_base_url"
+
+struct ApiBaseUrlSection: View {
+    @Environment(\.mdzColors) private var colors
+    @State private var urlInput: String = ""
+    @State private var savedMessage: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SectionHeader(title: "API BASE URL")
+            Text("For local testing (e.g. MAMP), set this to your PHP backend. Leave empty for production.")
+                .font(.system(size: 11))
+                .foregroundColor(colors.muted)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+            HStack(spacing: 8) {
+                TextField("e.g. http://localhost:8888", text: $urlInput)
+                    .font(.system(size: 14))
+                    .foregroundColor(colors.text)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .keyboardType(.URL)
+                    .padding(12)
+                    .background(colors.background)
+                    .cornerRadius(8)
+                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+                Button("Save") {
+                    let value = urlInput.trimmingCharacters(in: .whitespacesAndNewlines)
+                    UserDefaults.standard.set(value.isEmpty ? nil : value, forKey: kApiBaseUrlKey)
+                    savedMessage = value.isEmpty ? "Using production URL." : "Saved. Retry aircraft data."
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { savedMessage = nil }
+                }
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(colors.amber)
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 8)
+            if let msg = savedMessage {
+                Text(msg)
+                    .font(.system(size: 12))
+                    .foregroundColor(colors.green)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 10)
+            }
+            HStack {
+                Text("Current")
+                    .font(.system(size: 14))
+                    .foregroundColor(colors.muted)
+                Spacer()
+                Text(currentDisplay)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(colors.primary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
+        }
+        .background(colors.card).cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
+        .onAppear {
+            urlInput = UserDefaults.standard.string(forKey: kApiBaseUrlKey) ?? ""
+        }
+    }
+
+    private var currentDisplay: String {
+        if let custom = UserDefaults.standard.string(forKey: kApiBaseUrlKey), !custom.isEmpty {
+            return custom
+        }
+        return "https://malfunctiondz.com (default)"
     }
 }
