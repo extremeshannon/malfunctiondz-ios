@@ -33,12 +33,21 @@ class AircraftDetailViewModel: ObservableObject {
         async let ad = fetchAds(aircraftId: aircraftId)
         async let stc = fetchStc337(aircraftId: aircraftId)
         let (squawkResult, logbookResult, adsResult, stcResult) = await (sq, lb, ad, stc)
-        squawks = squawkResult.entries
-        logbook = logbookResult.entries
-        ads = adsResult.entries
-        stcEntries = stcResult.entries
-        if let e = squawkResult.error ?? logbookResult.error ?? adsResult.error ?? stcResult.error {
-            error = friendlyError(e)
+
+        // Only replace data when fetch succeeded; on failure keep previous so refresh doesn't wipe good data
+        if squawkResult.error == nil { squawks = squawkResult.entries }
+        if logbookResult.error == nil { logbook = logbookResult.entries }
+        if adsResult.error == nil { ads = adsResult.entries }
+        if stcResult.error == nil { stcEntries = stcResult.entries }
+
+        let anyError = squawkResult.error ?? logbookResult.error ?? adsResult.error ?? stcResult.error
+        if let e = anyError {
+            let hasData = !squawks.isEmpty || !logbook.isEmpty || !ads.isEmpty || !stcEntries.isEmpty
+            if hasData {
+                error = "Could not refresh all data. Showing last loaded."
+            } else {
+                error = friendlyError(e)
+            }
         }
     }
 
@@ -52,7 +61,9 @@ class AircraftDetailViewModel: ObservableObject {
 
     func loadLogbook(aircraftId: Int, bookType: String) async {
         let result = await fetchLogbook(aircraftId: aircraftId, bookType: bookType)
-        logbook = result.entries
+        if result.error == nil {
+            logbook = result.entries
+        }
         if let e = result.error { error = friendlyError(e) }
     }
 

@@ -13,6 +13,10 @@ struct AircraftDetailView: View {
     @State private var selectedLogbookEntry: LogbookEntry?
     @State private var enlargedImageURL: URL?
     @State private var showEditAircraft = false
+    @State private var showAddSquawk = false
+    @State private var showAddAd = false
+    @State private var showAddStc337 = false
+    @State private var showAddLogbookEntry = false
 
     // Logbook filters: single-engine only on detail page. Multi-engine is set only in Add/Edit Aircraft.
     private let logbookFilters: [(String, String)] = [("all", "All"), ("airframe", "Aircraft"), ("engine", "Engine"), ("prop", "Prop")]
@@ -82,6 +86,9 @@ struct AircraftDetailView: View {
                     }
                 }
             }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                addButtonForCurrentTab
+            }
         }
         .task { await vm.loadDetail(aircraftId: aircraft.id) }
         .sheet(item: $selectedLogbookEntry) { entry in
@@ -103,6 +110,18 @@ struct AircraftDetailView: View {
         }
         .sheet(isPresented: $showEditAircraft) {
             EditAircraftSheet(aircraft: aircraft, onDismiss: { showEditAircraft = false })
+        }
+        .sheet(isPresented: $showAddSquawk) {
+            AddSquawkPlaceholderSheet(aircraft: aircraft, onDismiss: { showAddSquawk = false }, onSaved: { Task { await vm.loadDetail(aircraftId: aircraft.id) } })
+        }
+        .sheet(isPresented: $showAddAd) {
+            AddAdPlaceholderSheet(aircraft: aircraft, onDismiss: { showAddAd = false }, onSaved: { Task { await vm.loadDetail(aircraftId: aircraft.id) } })
+        }
+        .sheet(isPresented: $showAddStc337) {
+            AddStc337PlaceholderSheet(aircraft: aircraft, onDismiss: { showAddStc337 = false }, onSaved: { Task { await vm.loadDetail(aircraftId: aircraft.id) } })
+        }
+        .sheet(isPresented: $showAddLogbookEntry) {
+            AddLogbookEntryPlaceholderSheet(aircraft: aircraft, onDismiss: { showAddLogbookEntry = false }, onSaved: { Task { await vm.loadDetail(aircraftId: aircraft.id) } })
         }
     }
 
@@ -171,6 +190,24 @@ struct AircraftDetailView: View {
             Text(value)
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(valueColor)
+        }
+    }
+
+    @ViewBuilder
+    private var addButtonForCurrentTab: some View {
+        if selectedTab != 4 {
+            Button {
+                switch selectedTab {
+                case 0: showAddSquawk = true
+                case 1: showAddLogbookEntry = true
+                case 2: showAddAd = true
+                case 3: showAddStc337 = true
+                default: break
+                }
+            } label: {
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 22))
+            }
         }
     }
 
@@ -579,6 +616,115 @@ struct EditAircraftSheet: View {
                     }
                     .fontWeight(.semibold)
                     .foregroundColor(colors.amber)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Add Squawk / AD / STC/337 / Logbook placeholder sheets (API wiring later)
+private struct AddSquawkPlaceholderSheet: View {
+    let aircraft: Aircraft
+    let onDismiss: () -> Void
+    let onSaved: () -> Void
+    @Environment(\.mdzColors) private var colors
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                colors.background.ignoresSafeArea()
+                Text("Add squawk for \(aircraft.tailNumber). Form and API integration coming soon.")
+                    .font(.subheadline)
+                    .foregroundColor(colors.muted)
+                    .multilineTextAlignment(.center)
+                    .padding()
+            }
+            .navigationTitle("Add Squawk")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onDismiss).foregroundColor(colors.amber)
+                }
+            }
+        }
+    }
+}
+
+private struct AddAdPlaceholderSheet: View {
+    let aircraft: Aircraft
+    let onDismiss: () -> Void
+    let onSaved: () -> Void
+    @Environment(\.mdzColors) private var colors
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                colors.background.ignoresSafeArea()
+                Text("Add AD for \(aircraft.tailNumber). Form and API integration coming soon.")
+                    .font(.subheadline)
+                    .foregroundColor(colors.muted)
+                    .multilineTextAlignment(.center)
+                    .padding()
+            }
+            .navigationTitle("Add AD")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onDismiss).foregroundColor(colors.amber)
+                }
+            }
+        }
+    }
+}
+
+private struct AddStc337PlaceholderSheet: View {
+    let aircraft: Aircraft
+    let onDismiss: () -> Void
+    let onSaved: () -> Void
+    @Environment(\.mdzColors) private var colors
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                colors.background.ignoresSafeArea()
+                Text("Add STC/337 for \(aircraft.tailNumber). Form and API integration coming soon.")
+                    .font(.subheadline)
+                    .foregroundColor(colors.muted)
+                    .multilineTextAlignment(.center)
+                    .padding()
+            }
+            .navigationTitle("Add STC/337")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onDismiss).foregroundColor(colors.amber)
+                }
+            }
+        }
+    }
+}
+
+private struct AddLogbookEntryPlaceholderSheet: View {
+    let aircraft: Aircraft
+    let onDismiss: () -> Void
+    let onSaved: () -> Void
+    @Environment(\.mdzColors) private var colors
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                colors.background.ignoresSafeArea()
+                Text("Add logbook entry for \(aircraft.tailNumber). Form and API integration coming soon.")
+                    .font(.subheadline)
+                    .foregroundColor(colors.muted)
+                    .multilineTextAlignment(.center)
+                    .padding()
+            }
+            .navigationTitle("Add Logbook Entry")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onDismiss).foregroundColor(colors.amber)
                 }
             }
         }
