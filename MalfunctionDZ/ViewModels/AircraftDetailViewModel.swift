@@ -1,15 +1,16 @@
 // File: ASC/ViewModels/AircraftDetailViewModel.swift
 import Foundation
 
-// Top-level wrapper — cannot be nested in generic function
 private struct DetailListWrapper<T: Decodable>: Decodable {
     let ok: Bool
     let data: [T]?
+    let error: String?
 }
 
 private struct DetailSingleWrapper<T: Decodable>: Decodable {
     let ok: Bool
     let data: T?
+    let error: String?
 }
 
 @MainActor
@@ -24,18 +25,24 @@ class AircraftDetailViewModel: ObservableObject {
 
     func loadDetail(aircraftId: Int) async {
         isLoading = true
+        error = nil
         defer { isLoading = false }
         async let sq = fetchSquawks(aircraftId: aircraftId)
         async let lb = fetchLogbook(aircraftId: aircraftId, bookType: "all")
         async let ad = fetchAds(aircraftId: aircraftId)
-        squawks = await sq
-        logbook = await lb
-        ads     = await ad
+        let (squawkResult, logbookResult, adsResult) = await (sq, lb, ad)
+        squawks = squawkResult.entries
+        logbook = logbookResult.entries
+        ads = adsResult.entries
+        if let e = squawkResult.error ?? logbookResult.error ?? adsResult.error {
+            error = e
+        }
     }
 
     func loadLogbook(aircraftId: Int, bookType: String) async {
-        let entries = await fetchLogbook(aircraftId: aircraftId, bookType: bookType)
-        logbook = entries
+        let result = await fetchLogbook(aircraftId: aircraftId, bookType: bookType)
+        logbook = result.entries
+        if let e = result.error { error = e }
     }
 
     func loadLogbookEntryDetail(aircraftId: Int, entryId: Int) async {
@@ -46,20 +53,38 @@ class AircraftDetailViewModel: ObservableObject {
         logbookDetail = (try? JSONDecoder().decode(DetailSingleWrapper<LogbookEntryDetail>.self, from: data))?.data
     }
 
-    private func fetchSquawks(aircraftId: Int) async -> [Squawk] {
-        guard let data = await fetch(path: "/api/aircraft/squawks.php?id=\(aircraftId)") else { return [] }
-        return (try? JSONDecoder().decode(DetailListWrapper<Squawk>.self, from: data))?.data ?? []
+    private func fetchSquawks(aircraftId: Int) async -> (entries: [Squawk], error: String?) {
+        guard let data = await fetch(path: "/api/aircraft/squawks.php?id=\(aircraftId)") else {
+            return ([], "Could not reach server. Check that the app is pointed at the correct API (e.g. MAMP).")
+        }
+        if let wrapper = try? JSONDecoder().decode(DetailListWrapper<Squawk>.self, from: data) {
+            if !(wrapper.ok) { return ([], wrapper.error ?? "Server error") }
+            return (wrapper.data ?? [], nil)
+        }
+        return ([], "Invalid response from squawks API.")
     }
 
-    private func fetchLogbook(aircraftId: Int, bookType: String = "all") async -> [LogbookEntry] {
+    private func fetchLogbook(aircraftId: Int, bookType: String = "all") async -> (entries: [LogbookEntry], error: String?) {
         let encoded = bookType.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? bookType
-        guard let data = await fetch(path: "/api/aircraft/logbook.php?id=\(aircraftId)&book_type=\(encoded)") else { return [] }
-        return (try? JSONDecoder().decode(DetailListWrapper<LogbookEntry>.self, from: data))?.data ?? []
+        guard let data = await fetch(path: "/api/aircraft/logbook.php?id=\(aircraftId)&book_type=\(encoded)") else {
+            return ([], "Could not reach server.")
+        }
+        if let wrapper = try? JSONDecoder().decode(DetailListWrapper<LogbookEntry>.self, from: data) {
+            if !(wrapper.ok) { return ([], wrapper.error ?? "Server error") }
+            return (wrapper.data ?? [], nil)
+        }
+        return ([], "Invalid response from logbook API.")
     }
 
-    private func fetchAds(aircraftId: Int) async -> [AirworthinessDirective] {
-        guard let data = await fetch(path: "/api/aircraft/ads.php?id=\(aircraftId)") else { return [] }
-        return (try? JSONDecoder().decode(DetailListWrapper<AirworthinessDirective>.self, from: data))?.data ?? []
+    private func fetchAds(aircraftId: Int) async -> (entries: [AirworthinessDirective], error: String?) {
+        guard let data = await fetch(path: "/api/aircraft/ads.php?id=\(aircraftId)") else {
+            return ([], "Could not reach server.")
+        }
+        if let wrapper = try? JSONDecoder().decode(DetailListWrapper<AirworthinessDirective>.self, from: data) {
+            if !(wrapper.ok) { return ([], wrapper.error ?? "Server error") }
+            return (wrapper.data ?? [], nil)
+        }
+        return ([], "Invalid response from ADs API.")
     }
 
     private func fetch(path: String) async -> Data? {

@@ -36,6 +36,28 @@ struct AircraftDetailView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(colors.background)
+                .overlay(alignment: .top) {
+                    if let err = vm.error {
+                        VStack(spacing: 0) {
+                            HStack {
+                                Text(err)
+                                    .font(.system(size: 13))
+                                    .foregroundColor(colors.text)
+                                    .multilineTextAlignment(.leading)
+                                Spacer()
+                                Button { vm.error = nil } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(colors.muted)
+                                }
+                            }
+                            .padding(12)
+                            .background(colors.amber.opacity(0.2))
+                            .overlay(RoundedRectangle(cornerRadius: 0).strokeBorder(colors.amber.opacity(0.5), lineWidth: 1))
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                    }
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -84,10 +106,11 @@ struct AircraftDetailView: View {
 
     private var aircraftHeaderBlock: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 10) {
+            // Header: left-justified, font colors like reference
+            VStack(alignment: .leading, spacing: 10) {
                 Text(aircraft.model.uppercased() + " · TURBINE")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.9))
+                    .foregroundColor(.white.opacity(0.85))
                 Text(aircraft.tailNumber)
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
@@ -97,24 +120,24 @@ struct AircraftDetailView: View {
                         .foregroundColor(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(aircraft.status == "airworthy" || aircraft.status == "active" ? colors.aviation : colors.amber)
+                        .background(aircraft.status == "airworthy" || aircraft.status == "active" ? colors.green : colors.amber)
                         .cornerRadius(8)
                     if let mic = aircraft.lastMic ?? aircraft.lastOilChange ?? aircraft.annualDue, !mic.isEmpty {
                         Text("Last mx: \(mic)")
                             .font(.system(size: 11))
-                            .foregroundColor(.white.opacity(0.9))
+                            .foregroundColor(.white.opacity(0.85))
                     }
                 }
-                // Aircraft time, engine time, prop time, slots — from DB
-                HStack(spacing: 20) {
-                    metricBlock(label: "TTSN", value: aircraft.ttsn ?? "—", valueColor: .white)
-                    metricBlock(label: "SMOH", value: aircraft.smoh ?? "—", valueColor: colors.amber)
-                    metricBlock(label: "PROP", value: aircraft.propTime ?? "—", valueColor: .white)
+                // TTSN, SMOH, PROP, SLOTS — left-aligned, label grey / value white (SMOH orange)
+                HStack(alignment: .top, spacing: 24) {
+                    metricBlock(label: "TTSN", value: formatHours(aircraft.ttsn), valueColor: .white)
+                    metricBlock(label: "SMOH", value: formatHours(aircraft.smoh), valueColor: colors.amber)
+                    metricBlock(label: "PROP", value: formatHours(aircraft.propTime), valueColor: .white)
                     metricBlock(label: "SLOTS", value: aircraft.slots.map { "\($0)" } ?? "—", valueColor: .white)
                 }
                 .padding(.top, 4)
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 16)
             .padding(.horizontal, 16)
             .background(colors.navyMid)
@@ -132,11 +155,17 @@ struct AircraftDetailView: View {
         }
     }
 
+    private func formatHours(_ s: String?) -> String {
+        guard let s = s, !s.isEmpty, s != "—" else { return "—" }
+        if s.contains("hr") || s.contains("hrs") { return s }
+        return s + " hrs"
+    }
+
     private func metricBlock(label: String, value: String, valueColor: Color) -> some View {
-        VStack(spacing: 2) {
+        VStack(alignment: .leading, spacing: 2) {
             Text(label)
                 .font(.system(size: 10, weight: .medium))
-                .foregroundColor(.white.opacity(0.85))
+                .foregroundColor(.white.opacity(0.8))
             Text(value)
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(valueColor)
