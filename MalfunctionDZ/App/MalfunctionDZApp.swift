@@ -192,7 +192,7 @@ struct MDZSplitView: View {
                 }
             }
             .listStyle(.sidebar)
-            .navigationTitle("MalfunctionDZ")
+            .navigationTitle(config.dzName)
             .navigationBarTitleDisplayMode(.inline)
             .background(colors.background)
             .scrollContentBackground(.hidden)

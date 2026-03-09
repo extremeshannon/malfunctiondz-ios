@@ -6,6 +6,7 @@ import PhotosUI
 struct AircraftDetailView: View {
     let aircraft: Aircraft
     var isReadOnly: Bool = false
+    @EnvironmentObject private var config: AppConfig
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
     @StateObject private var vm = AircraftDetailViewModel()
@@ -74,7 +75,7 @@ struct AircraftDetailView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .navigationTitle(aircraft.tailNumber)
+        .navigationTitle(config.dzName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if !isReadOnly {
@@ -159,7 +160,7 @@ struct AircraftDetailView: View {
                 .padding(.top, 4)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, 16)
+            .padding(.vertical, 12)
             .padding(.horizontal, 16)
             .background(colors.navyMid)
             Picker("", selection: $selectedTab) {

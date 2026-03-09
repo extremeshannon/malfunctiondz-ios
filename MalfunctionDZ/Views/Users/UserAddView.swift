@@ -16,6 +16,8 @@ struct UserAddView: View {
     @State private var phone = ""
     @State private var selectedRoles: Set<String> = []
     @State private var availableRoles: [(role: String, label: String)] = []
+    @State private var rolesLoading = true
+    @State private var rolesLoadError: String?
     @State private var saving = false
     @State private var error: String?
     @State private var created = false
@@ -45,7 +47,7 @@ struct UserAddView: View {
                     }
                     .fontWeight(.semibold)
                     .foregroundColor(colors.amber)
-                    .disabled(saving || selectedRoles.isEmpty)
+                    .disabled(saving || selectedRoles.isEmpty || rolesLoadError != nil)
                 }
             }
             .task { await loadRoles() }
@@ -105,6 +107,31 @@ struct UserAddView: View {
                 .font(.system(size: 10, weight: .bold))
                 .foregroundColor(colors.muted)
                 .tracking(1)
+            if rolesLoading {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: colors.primary))
+                        .scaleEffect(0.9)
+                    Text("Loading roles…")
+                        .font(.system(size: 14))
+                        .foregroundColor(colors.muted)
+                }
+                .padding(.vertical, 8)
+            } else if let err = rolesLoadError {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(err)
+                        .font(.system(size: 14))
+                        .foregroundColor(colors.danger)
+                    Button {
+                        Task { await loadRoles() }
+                    } label: {
+                        Text("Retry")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(colors.amber)
+                    }
+                }
+                .padding(.vertical, 8)
+            } else {
             let allowed = availableRoles.filter { r in
                 guard (auth.currentUser?.canEditAdminUsers ?? false) else {
                     return !["admin", "master", "godmode"].contains(r.role.lowercased())
@@ -130,6 +157,7 @@ struct UserAddView: View {
                     .buttonStyle(.plain)
                 }
             }
+            }
         }
         .padding(16)
         .background(colors.card)
@@ -138,14 +166,37 @@ struct UserAddView: View {
     }
 
     private func loadRoles() async {
-        guard let token = KeychainHelper.readToken(),
-              let url = URL(string: "\(kServerURL)/api/roles.php") else { return }
-        var req = URLRequest(url: url)
-        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        guard let (data, _) = try? await URLSession.shared.data(for: req),
-              let json = try? JSONDecoder().decode(RolesResponse.self, from: data),
-              json.ok else { return }
-        availableRoles = json.roles.map { (role: $0.role, label: $0.label.isEmpty ? $0.role.capitalized : $0.label) }
+        rolesLoading = true
+        rolesLoadError = nil
+        defer { rolesLoading = false }
+
+        guard let token = KeychainHelper.readToken() else {
+            rolesLoadError = "Not signed in."
+            return
+        }
+
+        let urls = ["\(kServerURL)/api/roles", "\(kServerURL)/api/roles.php"]
+        for base in urls {
+            guard let url = URL(string: base) else { continue }
+            var req = URLRequest(url: url)
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            do {
+                let (data, response) = try await URLSession.shared.data(for: req)
+                if let http = response as? HTTPURLResponse, http.statusCode == 401 {
+                    rolesLoadError = "Session expired. Sign in again."
+                    return
+                }
+                let json = try JSONDecoder().decode(RolesResponse.self, from: data)
+                if json.ok {
+                    availableRoles = json.roles.map { (role: $0.role, label: $0.label.isEmpty ? $0.role.capitalized : $0.label) }
+                    rolesLoadError = nil
+                    return
+                }
+            } catch {
+                continue
+            }
+        }
+        rolesLoadError = "Could not load roles. Check connection and retry."
     }
 
     private func createUser() async {

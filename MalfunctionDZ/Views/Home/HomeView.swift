@@ -20,6 +20,7 @@ struct HomeView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var showDzStatusModal = false
     @State private var showDzAnnouncementModal = false
+    @AppStorage("mdz_dismissed_announcement") private var dismissedAnnouncementKey = ""
 
     // iPad uses more columns and wider padding
     private var isWide: Bool { hSizeClass == .regular }
@@ -39,45 +40,19 @@ struct HomeView: View {
                         // ── Header ──────────────────────────────────
                         headerSection
                             .padding(.horizontal, hPad)
-                            .padding(.top, isWide ? 28 : 20)
-                            .padding(.bottom, 20)
+                            .padding(.top, isWide ? 16 : 12)
+                            .padding(.bottom, 12)
 
-                        // ── DZ Status (open/closed) — everyone sees it; Admin/Ops: tap = status modal, separate Announcement button ─
-                        if showDzStatus, let dz = vm.dzStatus {
-                            Group {
-                                if auth.currentUser?.canUpdateDzStatus == true {
-                                    VStack(alignment: .leading, spacing: 10) {
-                                        Button {
-                                            showDzStatusModal = true
-                                        } label: {
-                                            DZStatusCard(status: dz, tappable: true)
-                                        }
-                                        .buttonStyle(.plain)
-                                        Button {
-                                            showDzAnnouncementModal = true
-                                        } label: {
-                                            HStack(spacing: 8) {
-                                                Image(systemName: "megaphone.fill")
-                                                    .font(.system(size: 14))
-                                                Text("Send announcement")
-                                                    .font(.system(size: 14, weight: .medium))
-                                            }
-                                            .foregroundColor(colors.amber)
-                                            .frame(maxWidth: .infinity)
-                                            .padding(.vertical, 10)
-                                            .background(colors.card)
-                                            .cornerRadius(10)
-                                            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                } else {
-                                    DZStatusCard(status: dz, tappable: false)
-                                }
+                        // ── Dismissible announcement banner (when there is an announcement; no big card) ─
+                        if showDzStatus, let dz = vm.dzStatus, let ann = dz.announcement, !ann.isEmpty, dismissedAnnouncementKey != ann {
+                            announcementBanner(text: ann) {
+                                dismissedAnnouncementKey = ann
                             }
                             .padding(.horizontal, hPad)
-                            .padding(.bottom, 16)
+                            .padding(.bottom, 12)
                         }
+
+                        // ── (Removed: big DZ status card and "Send announcement" button; pill in header is tappable for Admin) ─
 
                         // ── METAR ────────────────────────────────────
                         if showMetar {
@@ -346,9 +321,52 @@ struct HomeView: View {
             }
             Spacer(minLength: 12)
             if showDzStatus {
-                DZStatusPill(status: vm.dzStatus)
+                if auth.currentUser?.canUpdateDzStatus == true {
+                    HStack(spacing: 10) {
+                        Button {
+                            showDzStatusModal = true
+                        } label: {
+                            DZStatusPill(status: vm.dzStatus)
+                        }
+                        .buttonStyle(.plain)
+                        Button {
+                            showDzAnnouncementModal = true
+                        } label: {
+                            Image(systemName: "megaphone.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(colors.amber)
+                        }
+                    }
+                } else {
+                    DZStatusPill(status: vm.dzStatus)
+                }
             }
         }
+    }
+
+    @ViewBuilder
+    private func announcementBanner(text: String, onDismiss: @escaping () -> Void) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "megaphone.fill")
+                .font(.system(size: 14))
+                .foregroundColor(colors.amber)
+            Text(text)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(colors.text)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Button {
+                onDismiss()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(colors.muted)
+            }
+        }
+        .padding(12)
+        .background(colors.card)
+        .cornerRadius(10)
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
     }
 
     // MARK: - Manifest home section (DZ Rigs + Aviation status)

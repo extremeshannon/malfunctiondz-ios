@@ -51,7 +51,6 @@ struct AircraftListSplitView: View {
             ZStack {
                 colors.background.ignoresSafeArea()
                 VStack(spacing: 0) {
-                    aircraftHeader
                     if vm.isLoading && vm.aircraft.isEmpty {
                         Spacer()
                         ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.primary)).scaleEffect(1.4)
@@ -66,10 +65,12 @@ struct AircraftListSplitView: View {
                         Spacer()
                     } else {
                         List(selection: $selectedAircraft) {
-                            ForEach(displayedAircraft) { aircraft in
-                                AircraftListRow(aircraft: aircraft)
-                                    .tag(aircraft)
-                                    .listRowBackground(colors.card)
+                            Section(header: sectionHeader) {
+                                ForEach(displayedAircraft) { aircraft in
+                                    AircraftListRow(aircraft: aircraft)
+                                        .tag(aircraft)
+                                        .listRowBackground(colors.card)
+                                }
                             }
                         }
                         .listStyle(.sidebar)
@@ -78,7 +79,8 @@ struct AircraftListSplitView: View {
                     }
                 }
             }
-            .navigationTitle(config.moduleAviation)
+            .navigationTitle(config.dzName)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
             .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbar {
@@ -118,6 +120,25 @@ struct AircraftListSplitView: View {
         }
     }
 
+    private var sectionHeader: some View {
+        HStack {
+            Image(systemName: "airplane")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(colors.aviation)
+            Text(config.moduleAviation.uppercased())
+                .font(.system(size: 11, weight: .black))
+                .foregroundColor(colors.aviation)
+                .tracking(2)
+            Text("·")
+                .foregroundColor(colors.muted)
+            Text(dateString)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(colors.muted)
+        }
+        .padding(.vertical, 6)
+    }
+
+    // Used on iPhone (AircraftListStackView); iPad split uses nav bar + section header for even headers
     private var aircraftHeader: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(config.dzName)
