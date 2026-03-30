@@ -2,6 +2,7 @@
 // Purpose: Skydiver logbook — list of jumps, stats, detail view, signature capture.
 import SwiftUI
 import PencilKit
+import MalfunctionDZCore
 
 struct LogbookView: View {
     /// nil = standalone "My Logbook" (all entries); non-nil = logbook for that course
@@ -14,12 +15,6 @@ struct LogbookView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
-    @State private var showPriorEditor = false
-    @State private var priorEditorValue = ""
-    @State private var showStartFreefallEditor = false
-    @State private var startFreefallEditorValue = ""
-    @State private var showHomeDzEditor = false
-    @State private var homeDzEditorValue = ""
     @State private var showAddEntry = false
     @State private var showConfigSheet = false
 
@@ -142,32 +137,13 @@ struct LogbookView: View {
             }
         }
         .task { await vm.load(courseId: courseId, userId: nil) }
-        .sheet(isPresented: $showPriorEditor) { priorJumpEditorSheet }
-        .sheet(isPresented: $showStartFreefallEditor) { startFreefallEditorSheet }
-        .sheet(isPresented: $showHomeDzEditor) { homeDzEditorSheet }
         .sheet(isPresented: $showAddEntry) {
             addEntrySheet
         }
         .sheet(isPresented: $showConfigSheet) {
-            LogbookConfigSheet(
-                vm: vm,
-                onTapPrior: {
-                    showConfigSheet = false
-                    priorEditorValue = "\(vm.priorJumpCount)"
-                    showPriorEditor = true
-                },
-                onTapStartFreefall: {
-                    showConfigSheet = false
-                    startFreefallEditorValue = vm.startFreefallTime
-                    showStartFreefallEditor = true
-                },
-                onTapHomeDz: {
-                    showConfigSheet = false
-                    homeDzEditorValue = vm.homeDropzone
-                    showHomeDzEditor = true
-                },
-                onDismiss: { showConfigSheet = false }
-            )
+            LogbookConfigSheet(vm: vm) {
+                showConfigSheet = false
+            }
         }
         .alert("Error", isPresented: Binding(
             get: { vm.error != nil },
@@ -175,35 +151,6 @@ struct LogbookView: View {
         )) {
             Button("OK", role: .cancel) { vm.error = nil }
         } message: { Text(vm.error ?? "") }
-    }
-
-    private func configCard(_ label: String, subtitle: String, value: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(label.uppercased())
-                        .font(.system(size: 9, weight: .black))
-                        .foregroundColor(colors.muted)
-                        .tracking(1)
-                    Text(subtitle)
-                        .font(.system(size: 12))
-                        .foregroundColor(colors.muted)
-                }
-                Spacer()
-                Text(value)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(colors.amber)
-                    .lineLimit(1)
-                Image(systemName: "pencil.circle.fill")
-                    .font(.system(size: 18))
-                    .foregroundColor(colors.muted)
-            }
-            .padding(14)
-            .background(colors.card)
-            .cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
-        }
-        .buttonStyle(.plain)
     }
 
     private var addJumpButton: some View {
@@ -249,7 +196,10 @@ struct LogbookView: View {
         return HStack(spacing: 0) {
             StatCell(label: "JUMPS", value: "\(vm.totalJumps)")
             Divider().frame(height: 36).background(colors.border)
-            StatCell(label: "FREEFALL", value: latest?.delay ?? "—")
+            StatCell(
+                label: "FREEFALL",
+                value: FreefallDurationFormatting.formatCumulativeSeconds(vm.totalFreefallSeconds)
+            )
             Divider().frame(height: 36).background(colors.border)
             StatCell(label: "LAST JUMP", value: timeSinceLast)
         }
@@ -274,146 +224,13 @@ struct LogbookView: View {
         .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.amber.opacity(0.3), lineWidth: 1))
     }
 
-    private var priorJumpEditorSheet: some View {
-        NavigationStack {
-            ZStack {
-                colors.background.ignoresSafeArea()
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Enter the number of jumps you had before using this system. New entries will continue from there.")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(colors.text)
-                    Text("JUMP COUNT")
-                        .font(.system(size: 10, weight: .black))
-                        .foregroundColor(colors.amber)
-                        .tracking(1)
-                    TextField("0", text: $priorEditorValue)
-                        .keyboardType(.numberPad)
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(colors.text)
-                        .padding(14)
-                        .background(colors.card)
-                        .cornerRadius(10)
-                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
-                    Spacer()
-                }
-                .padding(20)
-            }
-            .navigationTitle("Prior Jumps")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
-            .toolbarBackground(colors.navyMid, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { showPriorEditor = false }
-                        .foregroundColor(colors.amber)
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        let val = Int(priorEditorValue) ?? 0
-                        if val >= 0 {
-                            Task {
-                                await vm.setPriorJumpCount(val)
-                                showPriorEditor = false
-                            }
-                        }
-                    }
-                    .fontWeight(.semibold)
-                    .foregroundColor(colors.amber)
-                    .disabled(vm.isSaving || (Int(priorEditorValue) ?? -1) < 0)
-                }
-            }
-        }
-    }
-
-    private var startFreefallEditorSheet: some View {
-        configEditorSheet(
-            title: "Start Freefall Time",
-            hint: "Default freefall seconds when adding a jump. Use 45 for 45 sec, or 1:30 for 1 min 30 sec.",
-            value: $startFreefallEditorValue,
-            onSave: {
-                Task {
-                    await vm.setStartFreefallTime(startFreefallEditorValue)
-                    showStartFreefallEditor = false
-                }
-            },
-            onCancel: { showStartFreefallEditor = false },
-            label: "FREEFALL (sec or M:SS)"
-        )
-    }
-
-    private var homeDzEditorSheet: some View {
-        configEditorSheet(
-            title: "Home Dropzone",
-            hint: "Your home dropzone. This prefills the DZ field when adding a new jump.",
-            value: $homeDzEditorValue,
-            onSave: {
-                Task {
-                    await vm.setHomeDropzone(homeDzEditorValue)
-                    showHomeDzEditor = false
-                }
-            },
-            onCancel: { showHomeDzEditor = false },
-            label: "DROPZONE NAME"
-        )
-    }
-
-    private func configEditorSheet(
-        title: String,
-        hint: String,
-        value: Binding<String>,
-        onSave: @escaping () -> Void,
-        onCancel: @escaping () -> Void,
-        label: String
-    ) -> some View {
-        NavigationStack {
-            ZStack {
-                colors.background.ignoresSafeArea()
-                VStack(alignment: .leading, spacing: 16) {
-                    Text(hint)
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(colors.text)
-                    Text(label)
-                        .font(.system(size: 10, weight: .black))
-                        .foregroundColor(colors.amber)
-                        .tracking(1)
-                    TextField("", text: value)
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(colors.text)
-                        .padding(14)
-                        .background(colors.card)
-                        .cornerRadius(10)
-                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
-                    Spacer()
-                }
-                .padding(20)
-            }
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
-            .toolbarBackground(colors.navyMid, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", action: onCancel)
-                        .foregroundColor(colors.amber)
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save", action: onSave)
-                        .fontWeight(.semibold)
-                        .foregroundColor(colors.amber)
-                        .disabled(vm.isSaving)
-                }
-            }
-        }
-    }
-
     private var addEntrySheet: some View {
         AddLogbookEntrySheet(
             vm: vm,
             nextJumpNumber: vm.nextJumpNumber,
             lastEntry: vm.entries.last,
             startFreefallTime: vm.startFreefallTime,
+            defaultJumpType: vm.defaultJumpType,
             homeDropzone: vm.homeDropzone,
             onSave: { dz, altitude, delay, date, aircraft, equipment, rigId, jumpType, comments in
                 Task {
@@ -427,13 +244,17 @@ struct LogbookView: View {
     }
 }
 
-// MARK: - Logbook Config (single page, opened from gear icon)
+// MARK: - Logbook Config (inline edit, single Save)
 struct LogbookConfigSheet: View {
     @ObservedObject var vm: LogbookViewModel
-    let onTapPrior: () -> Void
-    let onTapStartFreefall: () -> Void
-    let onTapHomeDz: () -> Void
     let onDismiss: () -> Void
+
+    @State private var draftPriorJumps = ""
+    @State private var draftPriorFreefallSec = ""
+    @State private var draftDefaultFreefall = ""
+    @State private var draftJumpType = ""
+    @State private var draftHomeDz = ""
+
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
 
@@ -442,19 +263,73 @@ struct LogbookConfigSheet: View {
             ZStack {
                 colors.background.ignoresSafeArea()
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("All logbook settings in one place. Tap to edit.")
+                    VStack(alignment: .leading, spacing: 18) {
+                        Text("Edit settings on this screen, then tap Save.")
                             .font(.system(size: 13))
                             .foregroundColor(colors.muted)
-                            .padding(.bottom, 8)
-                        configRow("Prior Jumps", subtitle: "Jumps you had before using this system", value: "\(vm.priorJumpCount)") {
-                            onTapPrior()
+
+                        configField(
+                            title: "Prior jumps",
+                            subtitle: "Jumps you had before using this system"
+                        ) {
+                            TextField("0", text: $draftPriorJumps)
+                                .keyboardType(.numberPad)
+                                .font(.system(size: 17, weight: .medium))
+                                .foregroundColor(colors.text)
                         }
-                        configRow("Start Freefall Time", subtitle: "Default freefall when adding a jump (e.g. 45 or 1:30)", value: vm.startFreefallTime.isEmpty ? "Not set" : vm.startFreefallTime) {
-                            onTapStartFreefall()
+
+                        configField(
+                            title: "Start freefall time",
+                            subtitle: "Total freefall before this app (whole seconds). Adds to your cumulative total."
+                        ) {
+                            TextField("0", text: $draftPriorFreefallSec)
+                                .keyboardType(.numberPad)
+                                .font(.system(size: 17, weight: .medium))
+                                .foregroundColor(colors.text)
                         }
-                        configRow("Home Dropzone", subtitle: "Your home DZ, prefills when adding a jump", value: vm.homeDropzone.isEmpty ? "Not set" : vm.homeDropzone) {
-                            onTapHomeDz()
+
+                        configField(
+                            title: "Default freefall per jump",
+                            subtitle: "Prefills when adding a jump. Type digits; : appears after minutes (e.g. 130 → 1:30)."
+                        ) {
+                            TextField("e.g. 45 or 1:30", text: $draftDefaultFreefall)
+                                .keyboardType(.numberPad)
+                                .font(.system(size: 17, weight: .medium))
+                                .foregroundColor(colors.text)
+                                .onChange(of: draftDefaultFreefall) { _, newValue in
+                                    let formatted = FreefallDurationFormatting.formatWhileTyping(newValue)
+                                    if formatted != newValue {
+                                        draftDefaultFreefall = formatted
+                                    }
+                                }
+                        }
+
+                        configField(
+                            title: "Default jump type",
+                            subtitle: "Prefills new jumps; you can still change each jump."
+                        ) {
+                            Picker("", selection: $draftJumpType) {
+                                Text("None").tag("")
+                                if !draftJumpType.isEmpty,
+                                   LogbookJumpTypeOptions.all.first(where: { $0.value == draftJumpType }) == nil {
+                                    Text(draftJumpType).tag(draftJumpType)
+                                }
+                                ForEach(0..<LogbookJumpTypeOptions.all.count, id: \.self) { i in
+                                    let opt = LogbookJumpTypeOptions.all[i]
+                                    Text(opt.label).tag(opt.value)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .tint(colors.amber)
+                        }
+
+                        configField(
+                            title: "Home dropzone",
+                            subtitle: "Prefills DZ when adding a jump."
+                        ) {
+                            TextField("Drop zone name", text: $draftHomeDz)
+                                .font(.system(size: 17, weight: .medium))
+                                .foregroundColor(colors.text)
                         }
                     }
                     .padding(20)
@@ -464,42 +339,62 @@ struct LogbookConfigSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
             .toolbarBackground(colors.navyMid, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done", action: onDismiss)
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onDismiss)
                         .foregroundColor(colors.amber)
                 }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        Task {
+                            let pj = Int(draftPriorJumps.filter { $0.isNumber }) ?? 0
+                            let pff = Int(draftPriorFreefallSec.filter { $0.isNumber }) ?? 0
+                            let ok = await vm.saveLogbookSettings(
+                                priorJumpCount: max(0, pj),
+                                priorFreefallSeconds: max(0, pff),
+                                startFreefallTime: draftDefaultFreefall,
+                                defaultJumpType: draftJumpType,
+                                homeDropzone: draftHomeDz
+                            )
+                            if ok { onDismiss() }
+                        }
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundColor(colors.amber)
+                    .disabled(vm.isSaving)
+                }
+            }
+            .onAppear {
+                draftPriorJumps = "\(vm.priorJumpCount)"
+                draftPriorFreefallSec = "\(vm.priorFreefallSeconds)"
+                draftDefaultFreefall = vm.startFreefallTime
+                draftJumpType = vm.defaultJumpType
+                draftHomeDz = vm.homeDropzone
             }
         }
     }
 
-    private func configRow(_ label: String, subtitle: String, value: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(label.uppercased())
-                        .font(.system(size: 9, weight: .black))
-                        .foregroundColor(colors.muted)
-                        .tracking(1)
-                    Text(subtitle)
-                        .font(.system(size: 12))
-                        .foregroundColor(colors.muted)
-                }
-                Spacer()
-                Text(value)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(colors.amber)
-                    .lineLimit(1)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(colors.muted)
-            }
-            .padding(14)
-            .background(colors.card)
-            .cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
+    private func configField<Content: View>(
+        title: String,
+        subtitle: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title.uppercased())
+                .font(.system(size: 9, weight: .black))
+                .foregroundColor(colors.muted)
+                .tracking(1)
+            Text(subtitle)
+                .font(.system(size: 12))
+                .foregroundColor(colors.muted)
+            content()
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(colors.card)
+                .cornerRadius(12)
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
         }
-        .buttonStyle(.plain)
     }
 }
 
@@ -842,6 +737,7 @@ struct AddLogbookEntrySheet: View {
     let nextJumpNumber: Int
     let lastEntry: SkydiverLogbookEntry?
     let startFreefallTime: String
+    let defaultJumpType: String
     let homeDropzone: String
     let onSave: (String?, String?, String?, String?, String?, String?, Int?, String?, String?) -> Void
     let onCancel: () -> Void
@@ -877,12 +773,12 @@ struct AddLogbookEntrySheet: View {
 
                         addEntryField("DZ", text: $dz, hint: "Drop zone name")
                         addEntryField("Altitude", text: $altitude, hint: "Exit altitude (e.g. 13500)")
-                        addEntryField("Freefall", text: $delay, hint: "Seconds or M:SS (e.g. 45 or 1:30)")
+                        addFreefallField()
                         datePickerField
                         addEntryField("Aircraft", text: $aircraft, hint: "e.g. Caravan, Otter")
                         rigPickerField
                         addEntryField("Equipment", text: $equipment, hint: "Rig or canopy (free text if not in list)")
-                        addEntryField("Jump Type", text: $jumpType, hint: "e.g. solo, tandem, hop-n-pop")
+                        addEntryField("Jump Type", text: $jumpType, hint: "Prefills from your default; change freely for this jump")
                         addEntryField("Comments", text: $comments, hint: "Optional remarks", multiline: true)
                     }
                     .padding(20)
@@ -963,7 +859,16 @@ struct AddLogbookEntrySheet: View {
             if let rid = e.rigId, rid > 0 { selectedRigId = rid }
         }
         if dz.isEmpty, !homeDropzone.isEmpty { dz = homeDropzone }
-        if delay.isEmpty, !startFreefallTime.isEmpty { delay = startFreefallTime }
+        if delay.isEmpty, !startFreefallTime.isEmpty {
+            delay = FreefallDurationFormatting.formatWhileTyping(startFreefallTime)
+        }
+        if jumpType.isEmpty {
+            if let j = lastEntry?.jumpType, !j.isEmpty {
+                jumpType = j
+            } else if !defaultJumpType.isEmpty {
+                jumpType = defaultJumpType
+            }
+        }
     }
 
     private var datePickerField: some View {
@@ -977,6 +882,35 @@ struct AddLogbookEntrySheet: View {
                 .labelsHidden()
                 .tint(colors.amber)
                 .colorScheme(.dark)
+        }
+        .padding(14)
+        .background(colors.card)
+        .cornerRadius(8)
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+    }
+
+    private func addFreefallField() -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("FREEFALL")
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundColor(colors.amber)
+                    .tracking(1)
+                Text("This jump’s freefall time (added to your cumulative total). Type digits; : appears after minutes.")
+                    .font(.system(size: 12))
+                    .foregroundColor(colors.text.opacity(0.9))
+            }
+            TextField("Freefall", text: $delay)
+                .keyboardType(.numberPad)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(colors.text)
+                .tint(colors.amber)
+                .onChange(of: delay) { _, newValue in
+                    let formatted = FreefallDurationFormatting.formatWhileTyping(newValue)
+                    if formatted != newValue {
+                        delay = formatted
+                    }
+                }
         }
         .padding(14)
         .background(colors.card)
@@ -1022,35 +956,96 @@ struct AddLogbookEntrySheet: View {
 struct CreateRigSheet: View {
     @ObservedObject var vm: LogbookViewModel
     let onComplete: () -> Void
+    /// When set, the form updates this rig instead of creating a new one.
+    var editingRig: JumperRig? = nil
 
     @State private var rigLabel = ""
     @State private var harnessMfr = ""
     @State private var harnessModel = ""
     @State private var harnessSn = ""
-    @State private var harnessDom = ""
+    @State private var harnessDomDate = Date()
     @State private var reserveMfr = ""
     @State private var reserveModel = ""
     @State private var reserveSizeSqft = ""
     @State private var reserveSn = ""
-    @State private var reserveDom = ""
+    @State private var reserveDomDate = Date()
+    @State private var includeMainParachute = false
+    @State private var mainMfr = ""
+    @State private var mainModel = ""
+    @State private var mainSizeSqft = ""
+    @State private var mainSn = ""
+    @State private var mainDomDate = Date()
     @State private var aadMfr = ""
     @State private var aadModel = ""
     @State private var aadSn = ""
-    @State private var aadDom = ""
+    @State private var aadDomDate = Date()
     @State private var notes = ""
+    /// Set after catalog loads so Save always sends the correct id for updates.
+    @State private var rigIdForSave: Int?
+    /// While true, manufacturer pickers must not clear dependent fields (populate from server).
+    @State private var isApplyingRigSnapshot = false
+    @State private var showDeleteConfirm = false
     @Environment(\.dismiss) private var dismiss
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     private var cat: RigCatalogResponse? { vm.rigCatalog }
+    private var harnessMfrs: [String] { cat?.harnessMfrs ?? [] }
+    private var harnessModels: [String] {
+        var base = harnessMfr.isEmpty ? [] : (cat?.harnessModelsByMfr?[harnessMfr] ?? [])
+        if !harnessModel.isEmpty, !base.contains(harnessModel) { base.append(harnessModel) }
+        return base
+    }
     private var reserveMfrs: [String] { cat?.reserveMfrs ?? [] }
-    private var reserveModels: [String] { reserveMfr.isEmpty ? [] : (cat?.reserveModelsByMfr?[reserveMfr] ?? []) }
+    private var reserveModels: [String] {
+        var base = reserveMfr.isEmpty ? [] : (cat?.reserveModelsByMfr?[reserveMfr] ?? [])
+        if !reserveModel.isEmpty, !base.contains(reserveModel) { base.append(reserveModel) }
+        return base
+    }
     private var reserveSizes: [Int] {
         guard !reserveMfr.isEmpty, !reserveModel.isEmpty else { return [] }
-        return cat?.reserveSizesByMfrModel?[reserveMfr]?[reserveModel] ?? []
+        var base = cat?.reserveSizesByMfrModel?[reserveMfr]?[reserveModel] ?? []
+        if let sz = Int(reserveSizeSqft.trimmingCharacters(in: .whitespaces)), sz > 0, !base.contains(sz) {
+            base.append(sz)
+        }
+        return base
+    }
+    private var mainMfrs: [String] { cat?.mainMfrs ?? [] }
+    private var mainModels: [String] {
+        var base = mainMfr.isEmpty ? [] : (cat?.mainModelsByMfr?[mainMfr] ?? [])
+        if !mainModel.isEmpty, !base.contains(mainModel) { base.append(mainModel) }
+        return base
+    }
+    private var mainSizes: [Int] {
+        guard !mainMfr.isEmpty, !mainModel.isEmpty else { return [] }
+        var base = cat?.mainSizesByMfrModel?[mainMfr]?[mainModel] ?? []
+        if let sz = Int(mainSizeSqft.trimmingCharacters(in: .whitespaces)), sz > 0, !base.contains(sz) {
+            base.append(sz)
+        }
+        return base
     }
     private var aadMfrs: [String] { cat?.aadMfrs ?? [] }
-    private var aadModels: [String] { aadMfr.isEmpty ? [] : (cat?.aadModelsByMfr?[aadMfr] ?? []) }
+    private var aadModels: [String] {
+        var base = aadMfr.isEmpty ? [] : (cat?.aadModelsByMfr?[aadMfr] ?? [])
+        if !aadModel.isEmpty, !base.contains(aadModel) { base.append(aadModel) }
+        return base
+    }
+
+    /// Required fields: harness, reserve, AAD; main optional block; main SN optional when main is on.
+    private var formIsValid: Bool {
+        let labelOk = !rigLabel.trimmingCharacters(in: .whitespaces).isEmpty
+        let harnessOk = !harnessMfr.isEmpty && !harnessModel.isEmpty && !harnessSn.isEmpty
+        let reserveOk = !reserveMfr.isEmpty && !reserveModel.isEmpty && !reserveSizeSqft.isEmpty && !reserveSn.isEmpty
+        let aadOk = !aadMfr.isEmpty && !aadModel.isEmpty && !aadSn.isEmpty
+        let mainOk: Bool
+        if includeMainParachute {
+            let sz = Int(mainSizeSqft.trimmingCharacters(in: .whitespaces)) ?? 0
+            mainOk = !mainMfr.isEmpty && !mainModel.isEmpty && sz > 0
+        } else {
+            mainOk = true
+        }
+        return labelOk && harnessOk && reserveOk && aadOk && mainOk
+    }
 
     var body: some View {
         NavigationStack {
@@ -1058,40 +1053,93 @@ struct CreateRigSheet: View {
                 colors.background.ignoresSafeArea()
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 14) {
-                        Text("Add a rig to select when logging jumps. Same fields as the loft rig form.")
+                        Text(editingRig == nil
+                             ? "Add a rig to select when logging jumps. All fields below are required except main canopy SN when main is included."
+                             : "Editing this rig. Catalog loads first so manufacturer/model pickers show saved values. Tap Save to update.")
                             .font(.system(size: 13))
                             .foregroundColor(colors.text.opacity(0.9))
                             .padding(.bottom, 4)
 
                         sectionTitle("Rig")
-                        addField("Rig label", text: $rigLabel, hint: "e.g. Sigma-5, My Rig")
+                        addField("Rig label", text: $rigLabel, hint: "Required")
 
                         sectionTitle("Harness & Container")
-                        addField("Harness MFR", text: $harnessMfr)
-                        addField("Harness Model", text: $harnessModel)
-                        addField("Harness SN", text: $harnessSn)
-                        addField("Harness DOM", text: $harnessDom, hint: "YYYY-MM-DD")
+                        pickerField("Harness Manufacturer", selection: $harnessMfr, options: harnessMfrs) { harnessModel = "" }
+                        pickerField("Harness Model", selection: $harnessModel, options: harnessModels)
+                        addField("Harness SN", text: $harnessSn, hint: "Required")
+                        domDateRow(
+                            label: "Harness DOM",
+                            hint: "Date of manufacture (required)",
+                            date: $harnessDomDate
+                        )
 
-                        sectionTitle("Reserve Canopy")
-                        pickerField("Reserve Manufacturer", selection: $reserveMfr, options: reserveMfrs) { reserveModel = ""; reserveSizeSqft = "" }
-                        pickerField("Reserve Model", selection: $reserveModel, options: reserveModels) { reserveSizeSqft = "" }
-                        pickerField("Reserve Size (sqft)", selection: $reserveSizeSqft, options: reserveSizes.map { "\($0)" })
-                        addField("Reserve SN", text: $reserveSn)
-                        addField("Reserve DOM", text: $reserveDom, hint: "YYYY-MM-DD")
+                        sectionTitle("Reserve parachute")
+                        Text("Reserve canopy — catalog from the server.")
+                            .font(.system(size: 12))
+                            .foregroundColor(colors.muted)
+                        pickerField("Reserve manufacturer", selection: $reserveMfr, options: reserveMfrs) { reserveModel = ""; reserveSizeSqft = "" }
+                        pickerField("Reserve model", selection: $reserveModel, options: reserveModels) { reserveSizeSqft = "" }
+                        pickerField("Reserve size (sq ft)", selection: $reserveSizeSqft, options: reserveSizes.map { "\($0)" })
+                        addField("Reserve SN", text: $reserveSn, hint: "Required")
+                        domDateRow(
+                            label: "Reserve DOM",
+                            hint: "Date of manufacture (required)",
+                            date: $reserveDomDate
+                        )
+
+                        Toggle(isOn: $includeMainParachute) {
+                            Text("Include main parachute")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(colors.text)
+                        }
+                        .tint(colors.amber)
+                        .padding(.vertical, 4)
+
+                        if includeMainParachute {
+                            sectionTitle("Main parachute")
+                            Text("Sport / main canopy catalog (separate from reserve).")
+                                .font(.system(size: 12))
+                                .foregroundColor(colors.muted)
+                            pickerField("Main manufacturer", selection: $mainMfr, options: mainMfrs) { mainModel = ""; mainSizeSqft = "" }
+                            pickerField("Main model", selection: $mainModel, options: mainModels) { mainSizeSqft = "" }
+                            pickerField("Main size (sq ft)", selection: $mainSizeSqft, options: mainSizes.map { "\($0)" })
+                            addField("Main SN", text: $mainSn, hint: "Optional")
+                            domDateRow(
+                                label: "Main DOM",
+                                hint: "Date of manufacture (required when main is included)",
+                                date: $mainDomDate
+                            )
+                        }
 
                         sectionTitle("AAD")
                         pickerField("AAD Manufacturer", selection: $aadMfr, options: aadMfrs) { aadModel = "" }
                         pickerField("AAD Model", selection: $aadModel, options: aadModels)
-                        addField("AAD SN", text: $aadSn)
-                        addField("AAD DOM", text: $aadDom, hint: "YYYY-MM-DD")
+                        addField("AAD SN", text: $aadSn, hint: "Required")
+                        domDateRow(
+                            label: "AAD DOM",
+                            hint: "Date of manufacture (required)",
+                            date: $aadDomDate
+                        )
 
                         sectionTitle("Notes")
                         addField("Notes", text: $notes, hint: "Optional")
+
+                        if editingRig != nil {
+                            Button(role: .destructive) {
+                                showDeleteConfirm = true
+                            } label: {
+                                Text("Delete this rig")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                            }
+                            .padding(.top, 8)
+                        }
                     }
                     .padding(20)
                 }
             }
-            .navigationTitle("Add Rig")
+            .navigationTitle(editingRig == nil ? "Add Rig" : "Edit Rig")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
             .toolbarBackground(colors.navyMid, for: .navigationBar)
@@ -1107,23 +1155,30 @@ struct CreateRigSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         Task {
-                            let sizeInt = Int(reserveSizeSqft.trimmingCharacters(in: .whitespaces))
+                            let reserveSizeInt = Int(reserveSizeSqft.trimmingCharacters(in: .whitespaces))
+                            let mainSizeInt = Int(mainSizeSqft.trimmingCharacters(in: .whitespaces))
                             let ok = await vm.createRig(
-                                rigLabel: rigLabel.trimmingCharacters(in: .whitespaces),
-                                harnessMfr: harnessMfr.isEmpty ? nil : harnessMfr,
-                                harnessModel: harnessModel.isEmpty ? nil : harnessModel,
-                                harnessSn: harnessSn.isEmpty ? nil : harnessSn,
-                                harnessDom: harnessDom.isEmpty ? nil : harnessDom,
-                                reserveMfr: reserveMfr.isEmpty ? nil : reserveMfr,
-                                reserveModel: reserveModel.isEmpty ? nil : reserveModel,
-                                reserveSizeSqft: (sizeInt != nil && sizeInt! > 0) ? sizeInt : nil,
-                                reserveSn: reserveSn.isEmpty ? nil : reserveSn,
-                                reserveDom: reserveDom.isEmpty ? nil : reserveDom,
-                                aadMfr: aadMfr.isEmpty ? nil : aadMfr,
-                                aadModel: aadModel.isEmpty ? nil : aadModel,
-                                aadSn: aadSn.isEmpty ? nil : aadSn,
-                                aadDom: aadDom.isEmpty ? nil : aadDom,
-                                notes: notes.isEmpty ? nil : notes
+                                rigId: rigIdForSave ?? editingRig?.id,
+                                rigLabel: rigLabel.trimmingCharacters(in: .whitespacesAndNewlines),
+                                harnessMfr: harnessMfr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : harnessMfr.trimmingCharacters(in: .whitespacesAndNewlines),
+                                harnessModel: harnessModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : harnessModel.trimmingCharacters(in: .whitespacesAndNewlines),
+                                harnessSn: harnessSn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : harnessSn.trimmingCharacters(in: .whitespacesAndNewlines),
+                                harnessDom: domISOString(from: harnessDomDate),
+                                mainMfr: includeMainParachute && !mainMfr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? mainMfr.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
+                                mainModel: includeMainParachute && !mainModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? mainModel.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
+                                mainSizeSqft: includeMainParachute && mainSizeInt != nil && mainSizeInt! > 0 ? mainSizeInt : nil,
+                                mainSn: includeMainParachute && !mainSn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? mainSn.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
+                                mainDom: includeMainParachute ? domISOString(from: mainDomDate) : nil,
+                                reserveMfr: reserveMfr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : reserveMfr.trimmingCharacters(in: .whitespacesAndNewlines),
+                                reserveModel: reserveModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : reserveModel.trimmingCharacters(in: .whitespacesAndNewlines),
+                                reserveSizeSqft: (reserveSizeInt != nil && reserveSizeInt! > 0) ? reserveSizeInt : nil,
+                                reserveSn: reserveSn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : reserveSn.trimmingCharacters(in: .whitespacesAndNewlines),
+                                reserveDom: domISOString(from: reserveDomDate),
+                                aadMfr: aadMfr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : aadMfr.trimmingCharacters(in: .whitespacesAndNewlines),
+                                aadModel: aadModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : aadModel.trimmingCharacters(in: .whitespacesAndNewlines),
+                                aadSn: aadSn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : aadSn.trimmingCharacters(in: .whitespacesAndNewlines),
+                                aadDom: domISOString(from: aadDomDate),
+                                notes: notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : notes.trimmingCharacters(in: .whitespacesAndNewlines)
                             )
                             if ok {
                                 onComplete()
@@ -1133,11 +1188,147 @@ struct CreateRigSheet: View {
                     }
                     .fontWeight(.semibold)
                     .foregroundColor(colors.amber)
-                    .disabled(rigLabel.trimmingCharacters(in: .whitespaces).isEmpty || vm.isSaving)
+                    .disabled(!formIsValid || vm.isSaving)
                 }
             }
-            .task { await vm.loadRigCatalog() }
+            .task {
+                await vm.loadRigCatalog()
+                populateFromEditingRig()
+            }
+            .confirmationDialog(
+                "Delete this rig?",
+                isPresented: $showDeleteConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Delete", role: .destructive) {
+                    Task {
+                        let id = rigIdForSave ?? editingRig?.id ?? 0
+                        let ok = await vm.deleteRig(rigId: id)
+                        if ok {
+                            onComplete()
+                            dismiss()
+                        }
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This removes the rig from your list. Past jumps stay in your log.")
+            }
         }
+    }
+
+    private func resetFormForNewRig() {
+        rigIdForSave = nil
+        rigLabel = ""
+        harnessMfr = ""
+        harnessModel = ""
+        harnessSn = ""
+        harnessDomDate = Date()
+        reserveMfr = ""
+        reserveModel = ""
+        reserveSizeSqft = ""
+        reserveSn = ""
+        reserveDomDate = Date()
+        includeMainParachute = false
+        mainMfr = ""
+        mainModel = ""
+        mainSizeSqft = ""
+        mainSn = ""
+        mainDomDate = Date()
+        aadMfr = ""
+        aadModel = ""
+        aadSn = ""
+        aadDomDate = Date()
+        notes = ""
+    }
+
+    private func populateFromEditingRig() {
+        guard let r = editingRig else {
+            resetFormForNewRig()
+            return
+        }
+        isApplyingRigSnapshot = true
+        rigIdForSave = r.id
+        rigLabel = r.rigLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+        harnessMfr = trim(r.harness?.mfr)
+        harnessModel = trim(r.harness?.model)
+        harnessSn = trim(r.harness?.sn)
+        if let d = dateFromISO(r.harness?.dom) { harnessDomDate = d }
+        reserveMfr = trim(r.reserve?.mfr)
+        reserveModel = trim(r.reserve?.model)
+        if let sz = r.reserve?.sizeSqft, sz > 0 {
+            reserveSizeSqft = "\(sz)"
+        } else {
+            reserveSizeSqft = ""
+        }
+        reserveSn = trim(r.reserve?.sn)
+        if let d = dateFromISO(r.reserve?.dom) { reserveDomDate = d }
+        if let m = r.main, (!(m.mfr ?? "").trimmingCharacters(in: .whitespaces).isEmpty
+            || !(m.model ?? "").trimmingCharacters(in: .whitespaces).isEmpty
+            || (m.sizeSqft != nil && m.sizeSqft! > 0)
+            || !(m.sn ?? "").trimmingCharacters(in: .whitespaces).isEmpty) {
+            includeMainParachute = true
+            mainMfr = trim(m.mfr)
+            mainModel = trim(m.model)
+            if let sz = m.sizeSqft, sz > 0 { mainSizeSqft = "\(sz)" } else { mainSizeSqft = "" }
+            mainSn = trim(m.sn)
+            if let d = dateFromISO(m.dom) { mainDomDate = d }
+        } else {
+            includeMainParachute = false
+        }
+        aadMfr = trim(r.aad?.mfr)
+        aadModel = trim(r.aad?.model)
+        aadSn = trim(r.aad?.sn)
+        if let d = dateFromISO(r.aad?.dom) { aadDomDate = d }
+        notes = trim(r.notes)
+        DispatchQueue.main.async {
+            isApplyingRigSnapshot = false
+        }
+    }
+
+    private func trim(_ s: String?) -> String {
+        (s ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func dateFromISO(_ iso: String?) -> Date? {
+        guard let iso = iso, iso.count >= 10,
+              let d = Self.domOutputFormatter.date(from: String(iso.prefix(10))) else { return nil }
+        return d
+    }
+
+    private static let domOutputFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.calendar = Calendar(identifier: .gregorian)
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(secondsFromGMT: 0)
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
+
+    private func domISOString(from date: Date) -> String {
+        Self.domOutputFormatter.string(from: date)
+    }
+
+    private func domDateRow(label: String, hint: String, date: Binding<Date>) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label.uppercased())
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundColor(colors.amber)
+                    .tracking(1)
+                Text(hint)
+                    .font(.system(size: 12))
+                    .foregroundColor(colors.text.opacity(0.9))
+            }
+            DatePicker(label, selection: date, displayedComponents: .date)
+                .datePickerStyle(.compact)
+                .labelsHidden()
+                .tint(colors.amber)
+        }
+        .padding(14)
+        .background(colors.card)
+        .cornerRadius(8)
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private func sectionTitle(_ t: String) -> some View {
@@ -1186,7 +1377,10 @@ struct CreateRigSheet: View {
             }
             .pickerStyle(.menu)
             .tint(colors.amber)
-            .onChange(of: selection.wrappedValue) { _, _ in onChange?() }
+            .onChange(of: selection.wrappedValue) { _, _ in
+                guard !isApplyingRigSnapshot else { return }
+                onChange?()
+            }
         }
         .padding(14)
         .background(colors.card)

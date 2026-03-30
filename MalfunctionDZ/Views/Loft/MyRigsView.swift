@@ -1,9 +1,15 @@
 // File: ASC/Views/Loft/MyRigsView.swift
-// My Rigs — read-only list of rig owner's rigs. View-only; no editing.
+// My Rigs — list of rig owner's rigs; tap a rig to edit.
 import SwiftUI
+import MalfunctionDZCore
 
 struct MyRigsView: View {
     @StateObject private var vm = MyRigsViewModel()
+    /// Shared with `CreateRigSheet` (same API as Logbook → Add Jump → + rig).
+    @StateObject private var logbookVm = LogbookViewModel()
+    @State private var showAddRig = false
+    @State private var rigToEdit: JumperRig?
+    @State private var rigPendingDelete: JumperRig?
     @Environment(\.horizontalSizeClass) private var hSizeClass
     @Environment(\.mdzColors) private var colors
 
@@ -18,28 +24,103 @@ struct MyRigsView: View {
                     Spacer()
                 } else if vm.rigs.isEmpty {
                     Spacer()
-                    EmptyStateView(icon: "briefcase.fill", title: "No Rigs", subtitle: "Add rigs in your Logbook to see them here.")
+                    VStack(spacing: 20) {
+                        EmptyStateView(
+                            icon: "briefcase.fill",
+                            title: "No Rigs",
+                            subtitle: "Add your harness and reserve here, or when logging a jump in Logbook."
+                        )
+                        Button {
+                            showAddRig = true
+                        } label: {
+                            Text("Add rig")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(colors.green)
+                                .cornerRadius(12)
+                        }
+                        .padding(.horizontal, 32)
+                    }
                     Spacer()
                 } else {
-                    ScrollView(showsIndicators: false) {
-                        VStack(spacing: 12) {
-                            ForEach(vm.rigs) { rig in
+                    List {
+                        ForEach(vm.rigs) { rig in
+                            Button {
+                                rigToEdit = rig
+                            } label: {
                                 MyRigRow(rig: rig)
                             }
+                            .buttonStyle(.plain)
+                            .listRowBackground(colors.background)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    rigPendingDelete = rig
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
                         }
-                        .padding(16)
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                 }
             }
         }
         .task { await vm.load() }
         .refreshable { await vm.load() }
+        .sheet(isPresented: $showAddRig) {
+            CreateRigSheet(vm: logbookVm) {
+                showAddRig = false
+                Task { await vm.load() }
+            }
+        }
+        .sheet(item: $rigToEdit) { rig in
+            CreateRigSheet(vm: logbookVm, editingRig: rig) {
+                rigToEdit = nil
+                Task { await vm.load() }
+            }
+        }
         .alert("Error", isPresented: Binding(
-            get: { vm.error != nil },
-            set: { if !$0 { vm.error = nil } }
+            get: { vm.error != nil || logbookVm.error != nil },
+            set: {
+                if !$0 {
+                    vm.error = nil
+                    logbookVm.error = nil
+                }
+            }
         )) {
-            Button("OK", role: .cancel) { vm.error = nil }
-        } message: { Text(vm.error ?? "") }
+            Button("OK", role: .cancel) {
+                vm.error = nil
+                logbookVm.error = nil
+            }
+        } message: { Text(vm.error ?? logbookVm.error ?? "") }
+        .confirmationDialog(
+            "Delete this rig?",
+            isPresented: Binding(
+                get: { rigPendingDelete != nil },
+                set: { if !$0 { rigPendingDelete = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                if let r = rigPendingDelete {
+                    Task {
+                        let ok = await logbookVm.deleteRig(rigId: r.id)
+                        rigPendingDelete = nil
+                        if ok { await vm.load() }
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                rigPendingDelete = nil
+            }
+        } message: {
+            Text("This removes the rig from your list. Past jumps stay in your log.")
+        }
     }
 
     private var headerSection: some View {
@@ -57,6 +138,15 @@ struct MyRigsView: View {
                     .font(.system(size: 10, weight: .black))
                     .foregroundColor(colors.muted)
                     .tracking(1)
+                Button {
+                    showAddRig = true
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 22))
+                        .foregroundColor(colors.green)
+                        .accessibilityLabel("Add rig")
+                }
+                .buttonStyle(.plain)
             }
             Text(myRigsDateString)
                 .font(.system(size: 13, weight: .medium))
@@ -75,36 +165,51 @@ struct MyRigsView: View {
     }
 }
 
-// MARK: - MyRigRow (read-only detail, no navigation to edit)
+// MARK: - MyRigRow (full summary; "—" when missing)
 struct MyRigRow: View {
     let rig: JumperRig
     @Environment(\.mdzColors) private var colors
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(rig.rigLabel)
-                .font(.system(size: 16, weight: .bold))
-                .foregroundColor(colors.text)
-            HStack(spacing: 20) {
-                if let mfr = rig.harness?.mfr, !mfr.isEmpty {
-                    labelVal("Harness", mfr)
+        HStack(alignment: .top, spacing: 10) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(rig.rigLabel)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(colors.text)
+
+                sectionBlock("Harness", rows: [
+                    ("Mfr", dash(rig.harness?.mfr)),
+                    ("Model", dash(rig.harness?.model)),
+                    ("SN", dash(rig.harness?.sn)),
+                    ("DOM", dash(rig.harness?.dom)),
+                ])
+                if rigHasMain(rig) {
+                    sectionBlock("Main", rows: mainRows())
                 }
-                if let mfr = rig.reserve?.mfr, !mfr.isEmpty {
-                    labelVal("Reserve", mfr)
-                }
-                if let dom = rig.reserveDomDisplay, !dom.isEmpty {
-                    labelVal("Reserve DOM", dom)
-                }
-                if let dom = rig.aadDomDisplay, !dom.isEmpty {
-                    labelVal("AAD DOM", dom)
+                sectionBlock("Reserve", rows: [
+                    ("Mfr", dash(rig.reserve?.mfr)),
+                    ("Model", dash(rig.reserve?.model)),
+                    ("Size", sizeStr(rig.reserve?.sizeSqft)),
+                    ("SN", dash(rig.reserve?.sn)),
+                    ("DOM", dash(rig.reserve?.dom)),
+                ])
+                sectionBlock("AAD", rows: [
+                    ("Mfr", dash(rig.aad?.mfr)),
+                    ("Model", dash(rig.aad?.model)),
+                    ("SN", dash(rig.aad?.sn)),
+                    ("DOM", dash(rig.aad?.dom)),
+                ])
+                if let n = rig.notes, !n.trimmingCharacters(in: .whitespaces).isEmpty {
+                    Text("Notes: \(n)")
+                        .font(.system(size: 12))
+                        .foregroundColor(colors.muted)
                 }
             }
-            if (rig.reserveDomDisplay ?? "").isEmpty && (rig.aadDomDisplay ?? "").isEmpty &&
-               (rig.harness?.mfr ?? "").isEmpty && (rig.reserve?.mfr ?? "").isEmpty {
-                Text("Add equipment details in Logbook")
-                    .font(.system(size: 12))
-                    .foregroundColor(colors.muted)
-            }
+            Spacer(minLength: 8)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(colors.muted)
+                .padding(.top, 2)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -113,15 +218,60 @@ struct MyRigRow: View {
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
-    private func labelVal(_ label: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(label.uppercased())
+    private func rigHasMain(_ rig: JumperRig) -> Bool {
+        guard let m = rig.main else { return false }
+        if !(m.mfr ?? "").trimmingCharacters(in: .whitespaces).isEmpty { return true }
+        if !(m.model ?? "").trimmingCharacters(in: .whitespaces).isEmpty { return true }
+        if let sz = m.sizeSqft, sz > 0 { return true }
+        if !(m.sn ?? "").trimmingCharacters(in: .whitespaces).isEmpty { return true }
+        if let d = m.dom, !d.trimmingCharacters(in: .whitespaces).isEmpty { return true }
+        return false
+    }
+
+    private func mainRows() -> [(String, String)] {
+        guard let m = rig.main else {
+            return []
+        }
+        return [
+            ("Mfr", dash(m.mfr)),
+            ("Model", dash(m.model)),
+            ("Size", sizeStr(m.sizeSqft)),
+            ("SN", dash(m.sn)),
+            ("DOM", dash(m.dom)),
+        ]
+    }
+
+    private func sectionBlock(_ title: String, rows: [(String, String)]) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title.uppercased())
                 .font(.system(size: 9, weight: .black))
                 .foregroundColor(colors.muted)
                 .tracking(0.5)
-            Text(value)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(colors.text)
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text(row.0)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(colors.muted)
+                            .frame(width: 44, alignment: .leading)
+                        Text(row.1)
+                            .font(.system(size: 13))
+                            .foregroundColor(colors.text)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.85)
+                    }
+                }
+            }
         }
+    }
+
+    private func dash(_ s: String?) -> String {
+        let t = (s ?? "").trimmingCharacters(in: .whitespaces)
+        return t.isEmpty ? "—" : t
+    }
+
+    private func sizeStr(_ sq: Int?) -> String {
+        guard let s = sq, s > 0 else { return "—" }
+        return "\(s) sq ft"
     }
 }

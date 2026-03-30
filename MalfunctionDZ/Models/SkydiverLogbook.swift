@@ -3,6 +3,7 @@
 //          Matches printable logbook layout: Jump, DZ, Altitude, Delay, Date, Aircraft,
 //          Equipment, Total Time, Jump Type, Comments, Signature. Links to LMS signoffs.
 import Foundation
+import MalfunctionDZCore
 
 // MARK: - API Responses
 
@@ -11,7 +12,13 @@ struct SkydiverLogbookResponse: Codable {
     let entries: [SkydiverLogbookEntry]?
     let otherTrainingNotes: String?  // "Other training / comments" at bottom (e.g. Clear to jump)
     let priorJumpCount: Int?
+    /// Seconds of freefall logged before this platform (pre-platform total).
+    let priorFreefallSeconds: Int?
+    /// Cumulative freefall seconds: prior + sum of logged jumps.
+    let totalFreefallSeconds: Int?
     let startFreefallTime: String?
+    /// Canonical jump type (e.g. rw, freefly) prefilled when adding a jump.
+    let defaultJumpType: String?
     let homeDropzone: String?
     let totalJumps: Int?
     let isStudent: Bool?
@@ -22,7 +29,10 @@ struct SkydiverLogbookResponse: Codable {
         case ok, entries
         case otherTrainingNotes = "other_training_notes"
         case priorJumpCount = "prior_jump_count"
+        case priorFreefallSeconds = "prior_freefall_seconds"
+        case totalFreefallSeconds = "total_freefall_seconds"
         case startFreefallTime = "start_freefall_time"
+        case defaultJumpType = "default_jump_type"
         case homeDropzone = "home_dropzone"
         case totalJumps = "total_jumps"
         case isStudent = "is_student"
@@ -104,6 +114,8 @@ struct JumperRig: Codable, Identifiable {
     let id: Int
     let rigLabel: String
     let harness: RigComponent?
+    /// Main canopy (sport); optional when not configured.
+    let main: RigReserveComponent?
     let reserve: RigReserveComponent?
     let aad: RigComponent?
     let notes: String?
@@ -132,6 +144,7 @@ struct JumperRig: Codable, Identifiable {
         case id
         case rigLabel = "rig_label"
         case harness
+        case main
         case reserve
         case aad
         case notes
@@ -150,18 +163,80 @@ struct RigsResponse: Codable {
 
 struct RigCatalogResponse: Codable {
     let ok: Bool?
+    let harnessMfrs: [String]?
+    let harnessModelsByMfr: [String: [String]]?
     let aadMfrs: [String]?
     let aadModelsByMfr: [String: [String]]?
     let reserveMfrs: [String]?
     let reserveModelsByMfr: [String: [String]]?
     let reserveSizesByMfrModel: [String: [String: [Int]]]?
+    let mainMfrs: [String]?
+    let mainModelsByMfr: [String: [String]]?
+    let mainSizesByMfrModel: [String: [String: [Int]]]?
 
     enum CodingKeys: String, CodingKey {
         case ok
+        case harnessMfrs = "harness_mfrs"
+        case harnessModelsByMfr = "harness_models_by_mfr"
         case aadMfrs = "aad_mfrs"
         case aadModelsByMfr = "aad_models_by_mfr"
         case reserveMfrs = "reserve_mfrs"
         case reserveModelsByMfr = "reserve_models_by_mfr"
         case reserveSizesByMfrModel = "reserve_sizes_by_mfr_model"
+        case mainMfrs = "main_mfrs"
+        case mainModelsByMfr = "main_models_by_mfr"
+        case mainSizesByMfrModel = "main_sizes_by_mfr_model"
+    }
+}
+
+// MARK: - Jump type defaults (matches server `normalize_jump_type`)
+
+enum LogbookJumpTypeOptions {
+    static let all: [(value: String, label: String)] = [
+        ("rw", "RW"),
+        ("freefly", "Freefly"),
+        ("solo", "Solo"),
+        ("hopnpop", "Hop & pop"),
+        ("student", "Student / training"),
+        ("tandem", "Tandem"),
+        ("aff", "AFF"),
+        ("coach", "Coach"),
+        ("wingsuit", "Wingsuit"),
+        ("video", "Video"),
+        ("crw", "CRW"),
+        ("fun", "Fun"),
+        ("other", "Other"),
+    ]
+
+    static func label(for value: String) -> String {
+        let v = value.lowercased()
+        return all.first { $0.value == v }?.label ?? value
+    }
+}
+
+// MARK: - Freefall duration (M:SS input + cumulative display)
+
+enum FreefallDurationFormatting {
+    /// Formats digit input as M:SS once there are more than two digits (last two are seconds, 0–59).
+    static func formatWhileTyping(_ raw: String) -> String {
+        let digits = String(raw.filter(\.isNumber).prefix(6))
+        guard !digits.isEmpty else { return "" }
+        if digits.count <= 2 { return digits }
+        let minPart = String(digits.dropLast(2))
+        var sec = Int(String(digits.suffix(2))) ?? 0
+        if sec > 59 { sec = 59 }
+        return "\(minPart):\(String(format: "%02d", sec))"
+    }
+
+    /// Cumulative seconds as H:MM:SS or M:SS (minutes may exceed 59). Uses `0:00` when total is zero.
+    static func formatCumulativeSeconds(_ total: Int) -> String {
+        let t = max(0, total)
+        let h = t / 3600
+        let m = (t % 3600) / 60
+        let s = t % 60
+        if h > 0 {
+            return String(format: "%d:%02d:%02d", h, m, s)
+        }
+        return String(format: "%d:%02d", m, s)
     }
 }
