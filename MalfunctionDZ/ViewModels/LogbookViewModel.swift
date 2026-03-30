@@ -414,19 +414,13 @@ class LogbookViewModel: ObservableObject {
         error = nil
         defer { isSaving = false }
         guard let token = KeychainHelper.readToken() else { return false }
-        var components = URLComponents(string: "\(kServerURL)/api/lms/rigs.php")
-        components?.queryItems = [
-            URLQueryItem(name: "delete", value: "1"),
-            URLQueryItem(name: "rig_id", value: "\(rigId)"),
-        ]
+        // Dedicated endpoint + GET: avoids rigs.php POST body / query being dropped by proxies.
+        var components = URLComponents(string: "\(kServerURL)/api/lms/rig_delete.php")
+        components?.queryItems = [URLQueryItem(name: "rig_id", value: "\(rigId)")]
         guard let url = components?.url else { return false }
-        let body: [String: Any] = ["delete": true, "rig_id": rigId]
-        guard let jsonData = try? JSONSerialization.data(withJSONObject: body) else { return false }
         var req = URLRequest(url: url)
-        req.httpMethod = "POST"
+        req.httpMethod = "GET"
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = jsonData
         do {
             let (data, response) = try await URLSession.shared.data(for: req)
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0
