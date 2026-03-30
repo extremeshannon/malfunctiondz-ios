@@ -413,8 +413,13 @@ class LogbookViewModel: ObservableObject {
         isSaving = true
         error = nil
         defer { isSaving = false }
-        guard let token = KeychainHelper.readToken(),
-              let url = URL(string: "\(kServerURL)/api/lms/rigs.php") else { return false }
+        guard let token = KeychainHelper.readToken() else { return false }
+        var components = URLComponents(string: "\(kServerURL)/api/lms/rigs.php")
+        components?.queryItems = [
+            URLQueryItem(name: "delete", value: "1"),
+            URLQueryItem(name: "rig_id", value: "\(rigId)"),
+        ]
+        guard let url = components?.url else { return false }
         let body: [String: Any] = ["delete": true, "rig_id": rigId]
         guard let jsonData = try? JSONSerialization.data(withJSONObject: body) else { return false }
         var req = URLRequest(url: url)
