@@ -1,7 +1,6 @@
 // File: ASC/Views/GroundSchool/LogbookView.swift
 // Purpose: Skydiver logbook — list of jumps, stats, detail view, signature capture.
 import SwiftUI
-import UIKit
 import PencilKit
 import MalfunctionDZCore
 
@@ -1066,7 +1065,12 @@ struct CreateRigSheet: View {
 
                         sectionTitle("Harness & Container")
                         pickerField("Harness Manufacturer", selection: $harnessMfr, options: harnessMfrs) { harnessModel = "" }
-                        pickerField("Harness Model", selection: $harnessModel, options: harnessModels)
+                        pickerField(
+                            "Harness Model",
+                            selection: $harnessModel,
+                            options: harnessModels,
+                            dependencyHint: harnessMfr.isEmpty ? "Select harness manufacturer first." : nil
+                        )
                         addField("Harness SN", text: $harnessSn, hint: "Required")
                         domDateRow(
                             label: "Harness DOM",
@@ -1079,8 +1083,22 @@ struct CreateRigSheet: View {
                             .font(.system(size: 12))
                             .foregroundColor(colors.muted)
                         pickerField("Reserve manufacturer", selection: $reserveMfr, options: reserveMfrs) { reserveModel = ""; reserveSizeSqft = "" }
-                        pickerField("Reserve model", selection: $reserveModel, options: reserveModels) { reserveSizeSqft = "" }
-                        pickerField("Reserve size (sq ft)", selection: $reserveSizeSqft, options: reserveSizes.map { "\($0)" })
+                        pickerField(
+                            "Reserve model",
+                            selection: $reserveModel,
+                            options: reserveModels,
+                            dependencyHint: reserveMfr.isEmpty ? "Select reserve manufacturer first." : nil
+                        ) { reserveSizeSqft = "" }
+                        pickerField(
+                            "Reserve size (sq ft)",
+                            selection: $reserveSizeSqft,
+                            options: reserveSizes.map { "\($0)" },
+                            dependencyHint: {
+                                if reserveMfr.isEmpty { return "Select reserve manufacturer first." }
+                                if reserveModel.isEmpty { return "Select reserve model first." }
+                                return nil
+                            }()
+                        )
                         addField("Reserve SN", text: $reserveSn, hint: "Required")
                         domDateRow(
                             label: "Reserve DOM",
@@ -1102,8 +1120,22 @@ struct CreateRigSheet: View {
                                 .font(.system(size: 12))
                                 .foregroundColor(colors.muted)
                             pickerField("Main manufacturer", selection: $mainMfr, options: mainMfrs) { mainModel = ""; mainSizeSqft = "" }
-                            pickerField("Main model", selection: $mainModel, options: mainModels) { mainSizeSqft = "" }
-                            pickerField("Main size (sq ft)", selection: $mainSizeSqft, options: mainSizes.map { "\($0)" })
+                            pickerField(
+                                "Main model",
+                                selection: $mainModel,
+                                options: mainModels,
+                                dependencyHint: mainMfr.isEmpty ? "Select main manufacturer first." : nil
+                            ) { mainSizeSqft = "" }
+                            pickerField(
+                                "Main size (sq ft)",
+                                selection: $mainSizeSqft,
+                                options: mainSizes.map { "\($0)" },
+                                dependencyHint: {
+                                    if mainMfr.isEmpty { return "Select main manufacturer first." }
+                                    if mainModel.isEmpty { return "Select main model first." }
+                                    return nil
+                                }()
+                            )
                             addField("Main SN", text: $mainSn, hint: "Optional")
                             domDateRow(
                                 label: "Main DOM",
@@ -1114,7 +1146,12 @@ struct CreateRigSheet: View {
 
                         sectionTitle("AAD")
                         pickerField("AAD Manufacturer", selection: $aadMfr, options: aadMfrs) { aadModel = "" }
-                        pickerField("AAD Model", selection: $aadModel, options: aadModels)
+                        pickerField(
+                            "AAD Model",
+                            selection: $aadModel,
+                            options: aadModels,
+                            dependencyHint: aadMfr.isEmpty ? "Select AAD manufacturer first." : nil
+                        )
                         addField("AAD SN", text: $aadSn, hint: "Required")
                         domDateRow(
                             label: "AAD DOM",
@@ -1365,14 +1402,22 @@ struct CreateRigSheet: View {
         .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
     }
 
-    /// `Picker` + `.menu` inside a sheet + `ScrollView` often breaks on device (floating control, taps ignored).
-    private func pickerField(_ label: String, selection: Binding<String>, options: [String], onChange: (() -> Void)? = nil) -> some View {
+    /// Inline `Menu` (dropdown) + loading / retry / dependency hints so the sheet is not empty by mistake.
+    private func pickerField(
+        _ label: String,
+        selection: Binding<String>,
+        options: [String],
+        dependencyHint: String? = nil,
+        onChange: (() -> Void)? = nil
+    ) -> some View {
         RigCatalogPickerRow(
             label: label,
             selection: selection,
             options: options,
+            dependencyHint: dependencyHint,
             isApplyingSnapshot: isApplyingRigSnapshot,
-            onChange: onChange
+            onChange: onChange,
+            vm: vm
         )
     }
 
@@ -1380,11 +1425,11 @@ struct CreateRigSheet: View {
         let label: String
         @Binding var selection: String
         let options: [String]
+        var dependencyHint: String?
         var isApplyingSnapshot: Bool
         var onChange: (() -> Void)?
+        @ObservedObject var vm: LogbookViewModel
         @Environment(\.mdzColors) private var colors
-        @Environment(\.mdzColorScheme) private var mdzColorScheme
-        @State private var showSheet = false
 
         var body: some View {
             VStack(alignment: .leading, spacing: 6) {
@@ -1392,14 +1437,55 @@ struct CreateRigSheet: View {
                     .font(.system(size: 10, weight: .black))
                     .foregroundColor(colors.amber)
                     .tracking(1)
-                Button {
-                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                    showSheet = true
+                pickerContent
+            }
+            .padding(14)
+            .background(colors.card)
+            .cornerRadius(8)
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+        }
+
+        @ViewBuilder
+        private var pickerContent: some View {
+            if vm.rigCatalogLoading {
+                HStack(spacing: 10) {
+                    ProgressView()
+                    Text("Loading catalog…")
+                        .font(.system(size: 14))
+                        .foregroundColor(colors.text.opacity(0.9))
+                }
+                .accessibilityElement(children: .combine)
+            } else if let err = vm.rigCatalogError, vm.rigCatalog == nil {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(err)
+                        .font(.system(size: 13))
+                        .foregroundColor(.red.opacity(0.95))
+                    Button("Retry") {
+                        Task { await vm.loadRigCatalog() }
+                    }
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(colors.amber)
+                }
+            } else if let hint = dependencyHint, options.isEmpty {
+                Text(hint)
+                    .font(.system(size: 14))
+                    .foregroundColor(colors.muted)
+            } else if options.isEmpty {
+                Text("No loft catalog data for this field. Ask an admin to configure canopy/harness catalogs.")
+                    .font(.system(size: 13))
+                    .foregroundColor(colors.muted)
+            } else {
+                Menu {
+                    Button("— Select —") { applySelection("") }
+                    ForEach(options, id: \.self) { opt in
+                        Button(opt) { applySelection(opt) }
+                    }
                 } label: {
                     HStack(alignment: .center, spacing: 8) {
                         Text(selection.isEmpty ? "— Select —" : selection)
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(colors.text)
+                            .lineLimit(3)
                             .multilineTextAlignment(.leading)
                         Spacer(minLength: 8)
                         Image(systemName: "chevron.up.chevron.down")
@@ -1409,71 +1495,9 @@ struct CreateRigSheet: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .tint(colors.amber)
                 .accessibilityLabel(Text(label))
                 .accessibilityValue(Text(selection.isEmpty ? "Nothing selected" : selection))
-            }
-            .padding(14)
-            .background(colors.card)
-            .cornerRadius(8)
-            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
-            .sheet(isPresented: $showSheet) {
-                NavigationStack {
-                    Group {
-                        if options.isEmpty {
-                            Text("No options yet. Choose the fields above first, or wait for the catalog to load.")
-                                .font(.system(size: 15))
-                                .foregroundColor(colors.text.opacity(0.85))
-                                .multilineTextAlignment(.center)
-                                .padding(24)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        } else {
-                            List {
-                                Button {
-                                    applySelection("")
-                                } label: {
-                                    HStack {
-                                        Text("— Select —")
-                                            .foregroundColor(colors.text)
-                                        Spacer()
-                                        if selection.isEmpty {
-                                            Image(systemName: "checkmark.circle.fill").foregroundColor(colors.amber)
-                                        }
-                                    }
-                                }
-                                ForEach(options, id: \.self) { opt in
-                                    Button {
-                                        applySelection(opt)
-                                    } label: {
-                                        HStack {
-                                            Text(opt)
-                                                .foregroundColor(colors.text)
-                                            Spacer()
-                                            if selection == opt {
-                                                Image(systemName: "checkmark.circle.fill").foregroundColor(colors.amber)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            .scrollContentBackground(.hidden)
-                            .listStyle(.plain)
-                            .background(colors.background)
-                        }
-                    }
-                    .navigationTitle(label)
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbarBackground(colors.navyMid, for: .navigationBar)
-                    .toolbarBackground(.visible, for: .navigationBar)
-                    .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
-                    .toolbar {
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("Done") { showSheet = false }
-                                .foregroundColor(colors.amber)
-                        }
-                    }
-                }
-                .background(colors.background)
             }
         }
 
@@ -1482,7 +1506,6 @@ struct CreateRigSheet: View {
             if !isApplyingSnapshot {
                 onChange?()
             }
-            showSheet = false
         }
     }
 }

@@ -8,6 +8,8 @@ class LogbookViewModel: ObservableObject {
     @Published var entries: [SkydiverLogbookEntry] = []
     @Published var rigs: [JumperRig] = []
     @Published var rigCatalog: RigCatalogResponse?
+    @Published var rigCatalogLoading = false
+    @Published var rigCatalogError: String?
     @Published var otherTrainingNotes: String = ""
     @Published var priorJumpCount: Int = 0
     /// Pre-platform freefall total (seconds), from server settings.
@@ -301,15 +303,62 @@ class LogbookViewModel: ObservableObject {
 
     /// Load rig catalog (AAD/reserve dropdowns) for Add Rig form.
     func loadRigCatalog() async {
-        guard let token = KeychainHelper.readToken(),
-              let url = URL(string: "\(kServerURL)/api/lms/rig_catalog.php") else { return }
-        var req = URLRequest(url: url)
-        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        rigCatalogError = nil
+        rigCatalogLoading = true
+        defer { rigCatalogLoading = false }
+        guard let token = KeychainHelper.readToken() else {
+            rigCatalogError = "Not signed in"
+            rigCatalog = nil
+            return
+        }
+        /// Prefer `/rig_catalog` (no .php): nginx often routes `*.php` to PHP; a missing file 404s before FastAPI.
+        let catalogURLStrings = [
+            "\(kServerURL)/api/lms/rig_catalog",
+            "\(kServerURL)/api/lms/rig_catalog.php",
+        ]
         do {
-            let (data, _) = try await URLSession.shared.data(for: req)
-            let decoded = try? JSONDecoder().decode(RigCatalogResponse.self, from: data)
-            rigCatalog = decoded
+            var lastStatus = 0
+            var lastData = Data()
+            for urlString in catalogURLStrings {
+                guard let url = URL(string: urlString) else { continue }
+                var req = URLRequest(url: url)
+                req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                let (data, response) = try await URLSession.shared.data(for: req)
+                lastData = data
+                let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+                lastStatus = status
+                if status == 200 {
+                    if let parsed = RigCatalogResponse.parseFromCatalogPayload(data) {
+                        rigCatalog = parsed
+                    } else {
+                        rigCatalogError = "Could not read catalog"
+                        rigCatalog = nil
+                    }
+                    return
+                }
+                if status != 404 {
+                    break
+                }
+            }
+            let status = lastStatus
+            var detail = "Catalog request failed (HTTP \(status))"
+            if status == 404 {
+                detail += ". Deploy FastAPI (GET /api/lms/rig_catalog or /rig_catalog.php) or add legacy api/lms/rig_catalog.php for PHP. If nginx sends *.php to PHP only, use the no-.php path (now tried first)."
+            }
+            if let obj = try? JSONSerialization.jsonObject(with: lastData) as? [String: Any],
+               let err = obj["error"] as? String, !err.isEmpty {
+                detail += " \(err)"
+            } else if let s = String(data: lastData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                      !s.isEmpty, s.count < 280, status != 404 {
+                detail += " — \(s)"
+            }
+            if status == 0 {
+                detail += " (not an HTTP response — check Profile → API Base URL)"
+            }
+            rigCatalogError = detail
+            rigCatalog = nil
         } catch {
+            rigCatalogError = error.localizedDescription
             rigCatalog = nil
         }
     }

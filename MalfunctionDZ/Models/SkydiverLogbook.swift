@@ -187,6 +187,67 @@ struct RigCatalogResponse: Codable {
         case mainModelsByMfr = "main_models_by_mfr"
         case mainSizesByMfrModel = "main_sizes_by_mfr_model"
     }
+
+    /// Prefer `Codable`; fall back to `JSONSerialization` when nested numbers/types differ (PHP / older APIs).
+    static func parseFromCatalogPayload(_ data: Data) -> RigCatalogResponse? {
+        if let r = try? JSONDecoder().decode(RigCatalogResponse.self, from: data) {
+            return r
+        }
+        guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        func strList(_ key: String) -> [String] {
+            guard let raw = obj[key] as? [Any] else { return [] }
+            return raw.compactMap { $0 as? String }
+        }
+        func mfrModels(_ key: String) -> [String: [String]] {
+            guard let d = obj[key] as? [String: Any] else { return [:] }
+            var out: [String: [String]] = [:]
+            for (mfr, val) in d {
+                if let arr = val as? [String] {
+                    out[mfr] = arr
+                } else if let anyArr = val as? [Any] {
+                    out[mfr] = anyArr.compactMap { $0 as? String }
+                }
+            }
+            return out
+        }
+        func intList(_ any: Any?) -> [Int] {
+            guard let raw = any as? [Any] else { return [] }
+            return raw.compactMap { v in
+                if let i = v as? Int { return i }
+                if let d = v as? Double { return Int(d) }
+                if let n = v as? NSNumber { return n.intValue }
+                return nil
+            }
+        }
+        func sizesByMfrModel(_ key: String) -> [String: [String: [Int]]] {
+            guard let d = obj[key] as? [String: Any] else { return [:] }
+            var out: [String: [String: [Int]]] = [:]
+            for (mfr, innerVal) in d {
+                guard let inner = innerVal as? [String: Any] else { continue }
+                var modMap: [String: [Int]] = [:]
+                for (mod, arrAny) in inner {
+                    modMap[mod] = intList(arrAny)
+                }
+                out[mfr] = modMap
+            }
+            return out
+        }
+        return RigCatalogResponse(
+            ok: obj["ok"] as? Bool,
+            harnessMfrs: strList("harness_mfrs"),
+            harnessModelsByMfr: mfrModels("harness_models_by_mfr"),
+            aadMfrs: strList("aad_mfrs"),
+            aadModelsByMfr: mfrModels("aad_models_by_mfr"),
+            reserveMfrs: strList("reserve_mfrs"),
+            reserveModelsByMfr: mfrModels("reserve_models_by_mfr"),
+            reserveSizesByMfrModel: sizesByMfrModel("reserve_sizes_by_mfr_model"),
+            mainMfrs: strList("main_mfrs"),
+            mainModelsByMfr: mfrModels("main_models_by_mfr"),
+            mainSizesByMfrModel: sizesByMfrModel("main_sizes_by_mfr_model")
+        )
+    }
 }
 
 // MARK: - Jump type defaults (matches server `normalize_jump_type`)
