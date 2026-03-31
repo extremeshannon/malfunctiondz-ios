@@ -1,6 +1,7 @@
 // File: ASC/Models/Loft.swift
 import Foundation
 import SwiftUI
+import MalfunctionDZCore
 
 struct LoftRig: Codable, Identifiable, Hashable {
     static func == (lhs: LoftRig, rhs: LoftRig) -> Bool { lhs.id == rhs.id }

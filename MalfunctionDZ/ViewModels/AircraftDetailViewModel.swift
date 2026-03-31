@@ -1,5 +1,6 @@
 // File: ASC/ViewModels/AircraftDetailViewModel.swift
 import Foundation
+import MalfunctionDZCore
 
 private struct DetailListWrapper<T: Decodable>: Decodable {
     let ok: Bool

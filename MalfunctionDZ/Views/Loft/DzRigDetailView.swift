@@ -1,6 +1,7 @@
 // File: ASC/Views/Loft/DzRigDetailView.swift
 // DZ Rig detail — Header, component cards, 25-Jump Check block, pack form, inspect, pack history.
 import SwiftUI
+import MalfunctionDZCore
 
 struct DzRigDetailView: View {
     let rigId: Int

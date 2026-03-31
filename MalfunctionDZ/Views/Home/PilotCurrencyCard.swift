@@ -2,6 +2,7 @@
 // iPad: Wide layout shows all currency columns in a table-style row.
 import SwiftUI
 import PhotosUI
+import MalfunctionDZCore
 
 // MARK: - Models (unchanged)
 struct PilotCurrencyItem: Identifiable, Decodable {

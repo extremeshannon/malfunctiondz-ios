@@ -2,6 +2,7 @@
 // Placeholder for Todos tab (no todos API yet).
 
 import SwiftUI
+import MalfunctionDZCore
 
 struct TodosView: View {
     var body: some View {

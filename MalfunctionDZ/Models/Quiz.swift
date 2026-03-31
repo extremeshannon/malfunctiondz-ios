@@ -1,6 +1,7 @@
 // File: ASC/Models/Quiz.swift
 import Foundation
 import SwiftUI
+import MalfunctionDZCore
 
 struct QuizDetail: Codable {
     let id: Int

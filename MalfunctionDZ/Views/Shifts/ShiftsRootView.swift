@@ -2,6 +2,7 @@
 // Dedicated Shifts page with per-day view. Pulled out from Calendar.
 
 import SwiftUI
+import MalfunctionDZCore
 
 struct ShiftsRootView: View {
     @Environment(\.mdzColors) private var colors

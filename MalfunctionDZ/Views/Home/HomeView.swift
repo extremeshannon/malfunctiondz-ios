@@ -1,6 +1,7 @@
 // File: ASC/Views/Home/HomeView.swift
 // iPad: Multi-column grid, wider METAR layout, NavigationStack instead of NavigationView.
 import SwiftUI
+import MalfunctionDZCore
 
 // MARK: - Tab Selection (shared singleton for programmatic navigation)
 class TabSelection: ObservableObject {
@@ -12,6 +13,7 @@ struct HomeView: View {
     @EnvironmentObject private var auth:      AuthManager
     @EnvironmentObject private var config:    AppConfig
     @EnvironmentObject private var tabSelect: TabSelection
+    @Environment(\.appShell) private var appShell
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
     @StateObject private var vm = HomeViewModel()
@@ -21,6 +23,8 @@ struct HomeView: View {
     @State private var showDzStatusModal = false
     @State private var showDzAnnouncementModal = false
     @AppStorage("mdz_dismissed_announcement") private var dismissedAnnouncementKey = ""
+
+    private var isMemberShell: Bool { appShell == .member }
 
     // iPad uses more columns and wider padding
     private var isWide: Bool { hSizeClass == .regular }
@@ -70,8 +74,8 @@ struct HomeView: View {
                             .padding(.horizontal, hPad)
                             .padding(.bottom, 16)
 
-                        // ── Manifest-only: 25 Jump Check + Aviation status ──
-                        if isManifestOnly {
+                        // ── Manifest-only: 25 Jump Check + Aviation status (staff app only) ──
+                        if isManifestOnly && !isMemberShell {
                             manifestHomeSection
                                 .padding(.horizontal, hPad)
                                 .padding(.bottom, 16)
@@ -94,7 +98,8 @@ struct HomeView: View {
                         // ── My rigs (reserve / AAD expiry) ─────────────
                         if !vm.myRigs.isEmpty {
                             RigExpiryCard(rigs: vm.myRigs) {
-                                if auth.currentUser?.canAccessMyRigs == true {
+                                if auth.currentUser?.canAccessMyRigs == true
+                                    || (isMemberShell && auth.currentUser?.canAccessLogbook == true) {
                                     tabSelect.selected = 6
                                 } else {
                                     tabSelect.selected = 4
@@ -113,7 +118,7 @@ struct HomeView: View {
 
                         // ── Module tiles ──────────────────────────────
                         LazyVGrid(columns: gridColumns, spacing: 14) {
-                            if showAviation {
+                            if showAviation && !isMemberShell {
                                 ModuleTile(
                                     icon: "airplane",
                                     title: config.moduleAviation.uppercased(),
@@ -123,7 +128,7 @@ struct HomeView: View {
                                     wide: isWide
                                 ) { tabSelect.selected = 1 }
                             }
-                            if showLoft {
+                            if showLoft && !isMemberShell {
                                 ModuleTile(
                                     icon: "backpack.fill",
                                     title: config.moduleLoft.uppercased(),
@@ -133,7 +138,7 @@ struct HomeView: View {
                                     wide: isWide
                                 ) { tabSelect.selected = 2 }
                             }
-                            if auth.currentUser?.canAccessRigs == true {
+                            if auth.currentUser?.canAccessRigs == true && !isMemberShell {
                                 ModuleTile(
                                     icon: "briefcase.fill",
                                     title: "RIGS",
@@ -143,7 +148,8 @@ struct HomeView: View {
                                     wide: isWide
                                 ) { tabSelect.selected = 6 }
                             } else {
-                                if auth.currentUser?.canAccessMyRigs == true {
+                                if auth.currentUser?.canAccessMyRigs == true
+                                    || (isMemberShell && auth.currentUser?.canAccessLogbook == true) {
                                     ModuleTile(
                                         icon: "briefcase.fill",
                                         title: "MY RIGS",
@@ -153,7 +159,7 @@ struct HomeView: View {
                                         wide: isWide
                                     ) { tabSelect.selected = 6 }
                                 }
-                                if auth.currentUser?.canAccessDzRigs == true {
+                                if auth.currentUser?.canAccessDzRigs == true && !isMemberShell {
                                     ModuleTile(
                                         icon: "square.stack.3d.up.fill",
                                         title: "DZ RIGS",
@@ -188,21 +194,23 @@ struct HomeView: View {
                                 ModuleTile(
                                     icon: "calendar",
                                     title: "CALENDAR",
-                                    subtitle: "Events & todos",
+                                    subtitle: isMemberShell ? "Events" : "Events & todos",
                                     accentColor: colors.primary,
                                     badges: [],
                                     wide: isWide
                                 ) { tabSelect.selected = 5 }
-                                ModuleTile(
-                                    icon: "square.grid.3x3.fill",
-                                    title: "SHIFTS",
-                                    subtitle: "My schedule & pick shifts",
-                                    accentColor: colors.accent,
-                                    badges: [],
-                                    wide: isWide
-                                ) { tabSelect.selected = 12 }
+                                if !isMemberShell {
+                                    ModuleTile(
+                                        icon: "square.grid.3x3.fill",
+                                        title: "SHIFTS",
+                                        subtitle: "My schedule & pick shifts",
+                                        accentColor: colors.accent,
+                                        badges: [],
+                                        wide: isWide
+                                    ) { tabSelect.selected = 12 }
+                                }
                             }
-                            if showManifest {
+                            if showManifest && !isMemberShell {
                                 ModuleTile(
                                     icon: "list.clipboard.fill",
                                     title: config.moduleManifest.uppercased(),
@@ -212,7 +220,7 @@ struct HomeView: View {
                                     wide: isWide
                                 ) { /* manifest TBD */ }
                             }
-                            if auth.currentUser?.canManageUsers == true {
+                            if auth.currentUser?.canManageUsers == true && !isMemberShell {
                                 ModuleTile(
                                     icon: "person.2.fill",
                                     title: "USERS",
@@ -225,8 +233,8 @@ struct HomeView: View {
                         }
                         .padding(.horizontal, hPad)
 
-                        // ── Airworthy aircraft (pilot) ────────────────
-                        if isPilot && !vm.airworthyAircraft.isEmpty {
+                        // ── Airworthy aircraft (pilot) — staff app only ──
+                        if isPilot && !vm.airworthyAircraft.isEmpty && !isMemberShell {
                             aircraftSection
                                 .padding(.horizontal, hPad)
                                 .padding(.top, 24)
@@ -321,7 +329,7 @@ struct HomeView: View {
             }
             Spacer(minLength: 12)
             if showDzStatus {
-                if auth.currentUser?.canUpdateDzStatus == true {
+                if auth.currentUser?.canUpdateDzStatus == true && !isMemberShell {
                     HStack(spacing: 10) {
                         Button {
                             showDzStatusModal = true
@@ -396,7 +404,7 @@ struct HomeView: View {
     private var roleWidget: some View {
         if isAdmin {
             EmptyView()
-        } else if isPilot {
+        } else if isPilot && !isMemberShell {
             PilotQuickWidget(data: vm.pilotData) {
                 tabSelect.selected = 1
             }
@@ -1153,7 +1161,7 @@ struct LogbookConfigCard: View {
                     .foregroundColor(colors.muted)
                     .tracking(2)
             }
-            configRow("Start Freefall Time", vm.startFreefallTime.isEmpty ? "Not set" : vm.startFreefallTime) {
+            configRow("Default freefall per jump", vm.startFreefallTime.isEmpty ? "Not set" : vm.startFreefallTime) {
                 freefallEditorValue = vm.startFreefallTime
                 showFreefallEditor = true
             }
@@ -1167,9 +1175,16 @@ struct LogbookConfigCard: View {
         .cornerRadius(14)
         .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
         .sheet(isPresented: $showFreefallEditor) {
-            ConfigEditorSheet(title: "Start Freefall Time", hint: "Default freefall when adding a jump (e.g. 45 or 1:30)", value: $freefallEditorValue, onSave: {
-                Task { await vm.setStartFreefallTime(freefallEditorValue); showFreefallEditor = false }
-            }, onCancel: { showFreefallEditor = false })
+            ConfigEditorSheet(
+                title: "Default freefall per jump",
+                hint: "Prefills freefall when you add a jump. Type digits; a colon appears after the minutes (e.g. 130 → 1:30).",
+                value: $freefallEditorValue,
+                formatFreefallDigits: true,
+                onSave: {
+                    Task { await vm.setStartFreefallTime(freefallEditorValue); showFreefallEditor = false }
+                },
+                onCancel: { showFreefallEditor = false }
+            )
             .presentationDetents([.medium])
         }
         .sheet(isPresented: $showHomeDzEditor) {
@@ -1343,6 +1358,7 @@ private struct ConfigEditorSheet: View {
     let title: String
     let hint: String
     @Binding var value: String
+    var formatFreefallDigits: Bool = false
     let onSave: () -> Void
     let onCancel: () -> Void
     @Environment(\.mdzColors) private var colors
@@ -1363,6 +1379,14 @@ private struct ConfigEditorSheet: View {
                     TextField("", text: $value)
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(colors.text)
+                        .keyboardType(formatFreefallDigits ? .numberPad : .default)
+                        .onChange(of: value) { _, newValue in
+                            guard formatFreefallDigits else { return }
+                            let formatted = FreefallDurationFormatting.formatWhileTyping(newValue)
+                            if formatted != newValue {
+                                value = formatted
+                            }
+                        }
                         .padding(14)
                         .background(colors.card)
                         .cornerRadius(10)

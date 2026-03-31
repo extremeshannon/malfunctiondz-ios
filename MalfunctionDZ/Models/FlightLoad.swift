@@ -1,5 +1,6 @@
 // File: ASC/Models/FlightLoad.swift
 import Foundation
+import MalfunctionDZCore
 
 // MARK: - StringDouble
 // PHP PDO returns decimal columns as strings. This decodes both "1234.5" and 1234.5.

@@ -1,6 +1,7 @@
 // File: ASC/ViewModels/QuizViewModel.swift
 import Foundation
 import SwiftUI
+import MalfunctionDZCore
 
 @MainActor
 class QuizViewModel: ObservableObject {

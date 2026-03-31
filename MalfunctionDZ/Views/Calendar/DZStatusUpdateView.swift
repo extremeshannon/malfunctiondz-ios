@@ -2,6 +2,7 @@
 // Admin/Ops: DZ status = Open/Closed (modal). Announcements = separate modal. Push still sent from API when updated from app.
 
 import SwiftUI
+import MalfunctionDZCore
 
 // MARK: - Status modal (Open / Closed only)
 struct DZStatusModalView: View {

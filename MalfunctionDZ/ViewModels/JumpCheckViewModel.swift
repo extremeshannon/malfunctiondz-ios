@@ -2,6 +2,7 @@
 // 25 Jump Check — Ops view of users with jump counts
 import Foundation
 import SwiftUI
+import MalfunctionDZCore
 
 struct JumpCheckUser: Identifiable, Codable {
     let id: Int

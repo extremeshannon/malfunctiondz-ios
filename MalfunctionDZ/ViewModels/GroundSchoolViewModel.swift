@@ -1,6 +1,7 @@
 // File: ASC/ViewModels/GroundSchoolViewModel.swift
 import Foundation
 import SwiftUI
+import MalfunctionDZCore
 
 @MainActor
 class GroundSchoolViewModel: ObservableObject {

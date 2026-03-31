@@ -2,6 +2,7 @@
 // Purpose: Card component that displays quiz info, lock state, attempt count,
 //          last score, and launches the quiz attempt flow.
 import SwiftUI
+import MalfunctionDZCore
 
 struct QuizLaunchCard: View {
     let quizId: Int

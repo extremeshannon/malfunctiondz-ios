@@ -2,6 +2,7 @@
 // My Rigs — read-only view of user's owned rigs from /api/lms/rigs.php
 import Foundation
 import SwiftUI
+import MalfunctionDZCore
 
 @MainActor
 class MyRigsViewModel: ObservableObject {

@@ -2,6 +2,7 @@
 // iPad: NavigationSplitView with aircraft list sidebar + detail pane.
 //       iPhone: NavigationStack (unchanged behaviour).
 import SwiftUI
+import MalfunctionDZCore
 
 // MARK: - Root Router
 struct AviationRootView: View {

@@ -1,6 +1,7 @@
 // File: MalfunctionDZ/Views/Notifications/NotificationsView.swift
 // Push notification history — view past status notes and announcements.
 import SwiftUI
+import MalfunctionDZCore
 
 struct PushNotificationItem: Identifiable {
     let id: Int

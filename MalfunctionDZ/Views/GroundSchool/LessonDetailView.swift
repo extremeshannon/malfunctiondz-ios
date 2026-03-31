@@ -4,6 +4,7 @@
 import SwiftUI
 import WebKit
 import SafariServices
+import MalfunctionDZCore
 
 // MARK: - Models
 

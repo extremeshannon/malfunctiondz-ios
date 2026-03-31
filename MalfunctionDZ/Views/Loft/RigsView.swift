@@ -1,6 +1,7 @@
 // File: ASC/Views/Loft/RigsView.swift
 // Consolidated Rigs for Ops Admin + Manifest: My Rigs + DZ Rigs (read-only). Single "Rigs" tab.
 import SwiftUI
+import MalfunctionDZCore
 
 struct RigsView: View {
     @EnvironmentObject private var auth: AuthManager

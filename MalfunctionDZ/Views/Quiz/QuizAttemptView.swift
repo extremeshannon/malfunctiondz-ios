@@ -1,5 +1,6 @@
 // File: ASC/Views/Quiz/QuizAttemptView.swift
 import SwiftUI
+import MalfunctionDZCore
 
 struct QuizAttemptView: View {
     @StateObject private var vm: QuizViewModel

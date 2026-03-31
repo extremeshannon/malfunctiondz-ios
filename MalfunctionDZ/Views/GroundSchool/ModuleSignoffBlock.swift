@@ -2,6 +2,7 @@
 // Purpose: Displays the sign-off block at the bottom of a module — shows instructor ready
 //          and jump result sign-off status, and allows students to request sign-offs.
 import SwiftUI
+import MalfunctionDZCore
 
 struct ModuleSignoffBlock: View {
     let courseId: Int

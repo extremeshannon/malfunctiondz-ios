@@ -2,6 +2,7 @@
 // DZ Rigs — DZ-owned rigs for packers + 25+ jump users. Packers can mark as packed.
 import Foundation
 import SwiftUI
+import MalfunctionDZCore
 
 private func decodeErrorMessage(_ e: DecodingError) -> String {
     switch e {

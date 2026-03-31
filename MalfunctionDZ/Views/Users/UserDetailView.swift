@@ -1,6 +1,7 @@
 // File: ASC/Views/Users/UserDetailView.swift
 // View/edit user. Chief Pilot/Ops: admin users are read-only + Send reset only.
 import SwiftUI
+import MalfunctionDZCore
 
 struct UserDetailView: View {
     let user: PlatformUser

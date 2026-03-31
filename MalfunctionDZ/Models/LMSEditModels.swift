@@ -2,6 +2,7 @@
 // Codable models for LMS management API (courses, modules, lessons, quizzes, questions).
 
 import Foundation
+import MalfunctionDZCore
 
 // MARK: - Course
 

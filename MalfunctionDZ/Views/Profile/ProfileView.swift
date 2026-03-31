@@ -1,15 +1,18 @@
 // File: ASC/Views/Profile/ProfileView.swift
 // iPad: Content max-width capped and centred, larger typography.
 import SwiftUI
+import MalfunctionDZCore
 
 struct ProfileView: View {
     @EnvironmentObject private var auth:   AuthManager
     @EnvironmentObject private var config: AppConfig
+    @Environment(\.appShell) private var appShell
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
     @ObservedObject private var pushReg  = PushRegistration.shared
     @Environment(\.horizontalSizeClass) private var hSizeClass
     private var isWide: Bool { hSizeClass == .regular }
+    private var isMemberShell: Bool { appShell == .member }
 
     var body: some View {
         NavigationStack {
@@ -61,8 +64,8 @@ struct ProfileView: View {
                         .background(colors.card).cornerRadius(14)
                         .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
 
-                        // ── Manage LMS (admin/instructor) ─────────────────────
-                        if auth.currentUser?.canManageLMS == true {
+                        // ── Manage LMS (admin/instructor) — staff app only ───
+                        if auth.currentUser?.canManageLMS == true && !isMemberShell {
                             NavigationLink(destination: LMSEditRootView()) {
                                 HStack(spacing: 12) {
                                     Image(systemName: "pencil.and.list.clipboard")
@@ -89,68 +92,72 @@ struct ProfileView: View {
                             .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
                         }
 
-                        // ── Notifications history ────────────────────────────
-                        NavigationLink(destination: NotificationsView()) {
-                            HStack(spacing: 12) {
-                                Image(systemName: "bell.badge")
-                                    .font(.system(size: 18))
-                                    .foregroundColor(colors.accent)
-                                    .frame(width: 28)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Notifications")
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(colors.text)
-                                    Text("View status notes & announcements")
-                                        .font(.system(size: 12))
+                        // ── Notifications history (staff) ───────────────────
+                        if !isMemberShell {
+                            NavigationLink(destination: NotificationsView()) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "bell.badge")
+                                        .font(.system(size: 18))
+                                        .foregroundColor(colors.accent)
+                                        .frame(width: 28)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Notifications")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(colors.text)
+                                        Text("View status notes & announcements")
+                                            .font(.system(size: 12))
+                                            .foregroundColor(colors.muted)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 13, weight: .semibold))
                                         .foregroundColor(colors.muted)
                                 }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(colors.muted)
+                                .padding(16)
                             }
-                            .padding(16)
+                            .buttonStyle(.plain)
+                            .background(colors.card).cornerRadius(14)
+                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
                         }
-                        .buttonStyle(.plain)
-                        .background(colors.card).cornerRadius(14)
-                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
 
-                        // ── Push status (diagnostics) ──────────────────────
-                        VStack(alignment: .leading, spacing: 0) {
-                            SectionHeader(title: "PUSH NOTIFICATIONS")
-                            HStack {
-                                Text("Status")
-                                    .font(.system(size: isWide ? 15 : 14))
-                                    .foregroundColor(colors.muted)
-                                Spacer()
-                                Group {
-                                    if let s = pushReg.lastStatus {
-                                        switch s {
-                                        case "sent": Text("Registered ✓").foregroundColor(colors.green)
-                                        case "received": Text("Token received…").foregroundColor(colors.primary)
-                                        case "skipped": Text("Skipped").foregroundColor(colors.muted)
-                                        case "denied": Text("Denied").foregroundColor(colors.muted)
-                                        case "failed": Text("Failed").foregroundColor(colors.danger)
-                                        default: Text(s).foregroundColor(colors.muted)
+                        // ── Push status (diagnostics) — staff only ──────────
+                        if !isMemberShell {
+                            VStack(alignment: .leading, spacing: 0) {
+                                SectionHeader(title: "PUSH NOTIFICATIONS")
+                                HStack {
+                                    Text("Status")
+                                        .font(.system(size: isWide ? 15 : 14))
+                                        .foregroundColor(colors.muted)
+                                    Spacer()
+                                    Group {
+                                        if let s = pushReg.lastStatus {
+                                            switch s {
+                                            case "sent": Text("Registered ✓").foregroundColor(colors.green)
+                                            case "received": Text("Token received…").foregroundColor(colors.primary)
+                                            case "skipped": Text("Skipped").foregroundColor(colors.muted)
+                                            case "denied": Text("Denied").foregroundColor(colors.muted)
+                                            case "failed": Text("Failed").foregroundColor(colors.danger)
+                                            default: Text(s).foregroundColor(colors.muted)
+                                            }
+                                        } else {
+                                            Text("Checking…").foregroundColor(colors.muted)
                                         }
-                                    } else {
-                                        Text("Checking…").foregroundColor(colors.muted)
                                     }
+                                    .font(.system(size: isWide ? 15 : 14))
                                 }
-                                .font(.system(size: isWide ? 15 : 14))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, isWide ? 14 : 10)
+                                if let err = pushReg.lastError, !err.isEmpty {
+                                    Text(err)
+                                        .font(.system(size: 11))
+                                        .foregroundColor(colors.danger)
+                                        .padding(.horizontal, 16)
+                                        .padding(.bottom, 10)
+                                }
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, isWide ? 14 : 10)
-                            if let err = pushReg.lastError, !err.isEmpty {
-                                Text(err)
-                                    .font(.system(size: 11))
-                                    .foregroundColor(colors.danger)
-                                    .padding(.horizontal, 16)
-                                    .padding(.bottom, 10)
-                            }
+                            .background(colors.card).cornerRadius(14)
+                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
                         }
-                        .background(colors.card).cornerRadius(14)
-                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
 
                         // ── DZ Info ────────────────────────────────────────
                         VStack(alignment: .leading, spacing: 0) {
@@ -162,8 +169,10 @@ struct ProfileView: View {
                         .background(colors.card).cornerRadius(14)
                         .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
 
-                        // ── API URL (for local PHP / MAMP) ─────────────────
-                        ApiBaseUrlSection()
+                        // ── API URL (for local PHP / MAMP) — staff only ─────
+                        if !isMemberShell {
+                            ApiBaseUrlSection()
+                        }
 
                         // ── Sign Out ───────────────────────────────────────
                         Button { auth.logout() } label: {
@@ -212,7 +221,9 @@ struct ProfileView: View {
                 }
             }
             .onAppear {
-                PushRegistration.shared.requestPermissionAndRegister()
+                if !isMemberShell {
+                    PushRegistration.shared.requestPermissionAndRegister()
+                }
             }
         }
     }
@@ -271,13 +282,13 @@ struct ApiBaseUrlSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: "API BASE URL")
-            Text("For local testing (e.g. MAMP), set this to your PHP backend. Leave empty for production.")
+            Text("Debug builds default to http://localhost:8000. Set a custom URL to override (e.g. http://YOUR_MAC_IP:8000 on device, or https://malfunctiondz.com for VPS). Leave empty to use the default for this build.")
                 .font(.system(size: 11))
                 .foregroundColor(colors.muted)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 8)
             HStack(spacing: 8) {
-                TextField("e.g. http://localhost:8888", text: $urlInput)
+                TextField("e.g. http://localhost:8000 or https://malfunctiondz.com", text: $urlInput)
                     .font(.system(size: 14))
                     .foregroundColor(colors.text)
                     .textInputAutocapitalization(.never)
@@ -290,7 +301,7 @@ struct ApiBaseUrlSection: View {
                 Button("Save") {
                     let value = urlInput.trimmingCharacters(in: .whitespacesAndNewlines)
                     UserDefaults.standard.set(value.isEmpty ? nil : value, forKey: kApiBaseUrlKey)
-                    savedMessage = value.isEmpty ? "Using production URL." : "Saved. Retry aircraft data."
+                    savedMessage = value.isEmpty ? "Using default URL for this build." : "Saved. Restart or retry requests."
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) { savedMessage = nil }
                 }
                 .font(.system(size: 14, weight: .semibold))
@@ -331,6 +342,10 @@ struct ApiBaseUrlSection: View {
             let t = custom.trimmingCharacters(in: .whitespacesAndNewlines)
             return t.hasSuffix("/") ? String(t.dropLast()) : t
         }
+        #if DEBUG
+        return "http://localhost:8000 (Debug default)"
+        #else
         return "https://malfunctiondz.com (default)"
+        #endif
     }
 }

@@ -1,6 +1,7 @@
 // File: ASC/Views/Users/UserAddView.swift
 // Add new user. Chief Pilot/Ops cannot assign admin role.
 import SwiftUI
+import MalfunctionDZCore
 
 struct UserAddView: View {
     let onDismiss: () -> Void

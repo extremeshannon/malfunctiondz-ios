@@ -1,6 +1,7 @@
 // File: ASC/ViewModels/AircraftViewModel.swift
 import Foundation
 import SwiftUI
+import MalfunctionDZCore
 
 // Server returns {"ok":true,"aircraft":[...]} not {"ok":true,"data":[...]}
 private struct AircraftListResponse: Decodable {

@@ -1,6 +1,7 @@
 // File: ASC/ViewModels/HomeViewModel.swift
 import Foundation
 import SwiftUI
+import MalfunctionDZCore
 
 // MARK: - Shared Dashboard Models
 struct DashBadge: Identifiable {

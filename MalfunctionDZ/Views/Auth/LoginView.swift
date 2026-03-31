@@ -1,5 +1,6 @@
 // File: ASC/Views/Auth/LoginView.swift
 import SwiftUI
+import MalfunctionDZCore
 
 struct LoginView: View {
     @EnvironmentObject private var auth: AuthManager

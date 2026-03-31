@@ -3,6 +3,7 @@
 //          lessons, sign-off blocks, and quiz launch cards.
 
 import SwiftUI
+import MalfunctionDZCore
 
 struct GroundSchoolView: View {
     @EnvironmentObject private var auth: AuthManager

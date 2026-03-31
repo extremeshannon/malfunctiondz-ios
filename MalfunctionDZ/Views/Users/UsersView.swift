@@ -2,6 +2,7 @@
 // User management for Admin, Chief Pilot, Ops Manager.
 // Search, filters, Add User, edit by tapping name. Chief Pilot/Ops: see admin, cannot edit, Send reset only.
 import SwiftUI
+import MalfunctionDZCore
 
 struct PlatformUser: Identifiable, Codable, Hashable {
     let id: Int

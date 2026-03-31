@@ -2,6 +2,7 @@
 // Staff shifts with per-day view: week picker + day rows.
 
 import SwiftUI
+import MalfunctionDZCore
 
 struct ShiftsView: View {
     @EnvironmentObject private var auth: AuthManager

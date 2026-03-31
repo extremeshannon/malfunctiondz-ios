@@ -2,6 +2,7 @@
 // Calendar events and staff shifts for Alaska Skydive Center.
 
 import Foundation
+import MalfunctionDZCore
 
 // MARK: - Calendar Event (public, no auth)
 struct CalendarEvent: Codable, Identifiable {

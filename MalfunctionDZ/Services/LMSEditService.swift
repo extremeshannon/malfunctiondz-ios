@@ -2,6 +2,7 @@
 // API client for LMS management. Uses kServerURL and KeychainHelper.
 
 import Foundation
+import MalfunctionDZCore
 
 enum LMSEditService {
 

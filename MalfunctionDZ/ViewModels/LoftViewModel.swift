@@ -1,6 +1,7 @@
 // File: ASC/ViewModels/LoftViewModel.swift
 import Foundation
 import SwiftUI
+import MalfunctionDZCore
 
 @MainActor
 class LoftViewModel: ObservableObject {

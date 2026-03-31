@@ -1,6 +1,7 @@
 // File: ASC/Views/Quiz/QuizLaunchCard.swift
 // Embedded in CourseDetailView to show available quizzes for a course
 import SwiftUI
+import MalfunctionDZCore
 
 struct QuizLaunchCard: View {
     let quizId: Int

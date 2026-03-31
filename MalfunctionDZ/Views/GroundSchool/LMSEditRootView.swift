@@ -2,6 +2,7 @@
 // Manage LMS: courses, modules, lessons, quizzes, question bank (admin/instructor).
 
 import SwiftUI
+import MalfunctionDZCore
 
 struct LMSEditRootView: View {
     @Environment(\.mdzColors) private var colors

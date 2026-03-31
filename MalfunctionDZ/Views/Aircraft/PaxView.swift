@@ -6,6 +6,7 @@
 //   3. Closed flight → Summary
 
 import SwiftUI
+import MalfunctionDZCore
 
 struct PaxView: View {
     @StateObject private var vm: PaxViewModel

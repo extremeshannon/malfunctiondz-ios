@@ -8,6 +8,16 @@ make_logo_transparent.py
 DerivedData/
 *.xcuserstate
 *.xcuserdatad/
+**/xcuserdata/
+
+# Accidental local photos at repo root
+IMG_3504.JPG
+
+# SwiftPM / Xcode package build artifacts (never commit)
+Packages/**/.build/
+**/.build/
+.swiftpm/
+Packages/**/.swiftpm/
 
 # macOS
 .DS_Store

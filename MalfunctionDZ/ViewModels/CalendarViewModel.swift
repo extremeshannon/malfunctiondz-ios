@@ -3,6 +3,7 @@
 
 import Foundation
 import SwiftUI
+import MalfunctionDZCore
 
 @MainActor
 final class CalendarViewModel: ObservableObject {

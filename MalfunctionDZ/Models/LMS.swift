@@ -1,6 +1,7 @@
 // File: ASC/Models/LMS.swift
 // Purpose: Codable models for LMS courses, modules, lessons, quizzes, and sign-off data.
 import Foundation
+import MalfunctionDZCore
 
 // MARK: - Course List Response (courses optional so 401/403 body decodes without failure)
 struct LMSCoursesResponse: Codable {

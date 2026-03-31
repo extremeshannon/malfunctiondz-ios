@@ -1,6 +1,7 @@
 // File: ASC/Views/Loft/DzRigsView.swift
 // Gear Room — DZ-owned rigs with status cards: Out of Service, Approaching Limit, Repack Due Soon, All Clear.
 import SwiftUI
+import MalfunctionDZCore
 
 struct DzRigsView: View {
     @StateObject private var vm = DzRigsViewModel()

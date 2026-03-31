@@ -2,11 +2,15 @@
 // Root view for Calendar (Todos | Events). Shifts has its own tab.
 
 import SwiftUI
+import MalfunctionDZCore
 
 struct CalendarRootView: View {
     @State private var selectedTab = 0
+    @Environment(\.appShell) private var appShell
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
+
+    private var isMemberShell: Bool { appShell == .member }
 
     var body: some View {
         NavigationStack {
@@ -14,14 +18,18 @@ struct CalendarRootView: View {
                 colors.background.ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    CalendarSegmentPicker(selectedTab: $selectedTab)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                        .padding(.bottom, 12)
-                        .background(colors.background)
+                    if !isMemberShell {
+                        CalendarSegmentPicker(selectedTab: $selectedTab)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 8)
+                            .padding(.bottom, 12)
+                            .background(colors.background)
+                    }
 
                     Group {
-                        if selectedTab == 0 {
+                        if isMemberShell {
+                            EventsView()
+                        } else if selectedTab == 0 {
                             TodosView()
                         } else {
                             EventsView()
@@ -31,7 +39,7 @@ struct CalendarRootView: View {
                     .transition(.opacity)
                 }
             }
-            .navigationTitle("Calendar")
+            .navigationTitle(isMemberShell ? "Events" : "Calendar")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
             .toolbarBackground(colors.navyMid, for: .navigationBar)

@@ -1,6 +1,7 @@
 // File: ASC/Views/Users/JumpCheckView.swift
 // 25 Jump Check — DZ rigs with pack job counts (X/25). At 25 pack jobs rig is out of service.
 import SwiftUI
+import MalfunctionDZCore
 
 struct JumpCheckView: View {
     @ObservedObject var vm: DzRigsViewModel

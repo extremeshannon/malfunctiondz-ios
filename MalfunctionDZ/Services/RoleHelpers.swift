@@ -1,5 +1,6 @@
 // File: ASC/Services/RoleHelpers.swift
 import Foundation
+import MalfunctionDZCore
 
 extension User {
 

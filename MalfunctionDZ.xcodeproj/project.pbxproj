@@ -3,10 +3,73 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0277D6EAB987CF43A48519A6 /* JumpCheckViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D3B2F54BB280227638 /* JumpCheckViewModel.swift */; };
+		0AD7B9E04427F20787E1BE2A /* LoftViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF42F521B5100227638 /* LoftViewModel.swift */; };
+		1310265F1C159C672CA46FC9 /* CalendarModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F012F56000200022763 /* CalendarModels.swift */; };
+		1711083D05E32C2CC524A67C /* QuizViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D012F52AD1E00227638 /* QuizViewModel.swift */; };
+		184F0B7368EDA97E0A0A66E0 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0F2F56000200022765 /* NotificationsView.swift */; };
+		2A8B318C96E09F1D47621902 /* UserAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2E2F54BB130227638 /* UserAddView.swift */; };
+		2EB224C889AC7ACC2D9CFE8F /* GroundSchoolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE32F52191600227638 /* GroundSchoolView.swift */; };
+		31416E09DFD57BBED348B649 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCE2F5201DB00FBAD05 /* HomeView.swift */; };
+		359AA57006CB679675F2D67C /* AircraftDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEC2F521AFF00227638 /* AircraftDetailView.swift */; };
+		36AC855C931997430E028A97 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0D2F52C9CE00227638 /* ProfileView.swift */; };
+		3771697563876CB7CA0D1542 /* MyRigsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D352F54BB220227638 /* MyRigsViewModel.swift */; };
+		3AA8C32C5953AD211585B998 /* TodosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F132F56000200022763 /* TodosView.swift */; };
+		457112FECEAC7ACCF4FFC78E /* DzRigsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D372F54BB230227638 /* DzRigsViewModel.swift */; };
+		464FC721722F3C327A3FBB2F /* UsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D292F54BB100227638 /* UsersView.swift */; };
+		47999026C4ABF7D05C6C5A42 /* ModuleSignoffBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D132F534F9E00227638 /* ModuleSignoffBlock.swift */; };
+		48DF0B39C8B1F73C237EED9E /* DzRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D332F54BB210227638 /* DzRigsView.swift */; };
+		4936B0B4AF6D76D7EBFEFC01 /* UserDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2C2F54BB120227638 /* UserDetailView.swift */; };
+		49502B1F722DE37895EBDD37 /* PaxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D192F53F92300227638 /* PaxView.swift */; };
+		59AA29BFFF9B97DBBC6A4220 /* LogbookRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D252F54BB040227638 /* LogbookRootView.swift */; };
+		5D7C238F8B69DEF63850B52C /* QuizLaunchCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D112F52D4EC00227638 /* QuizLaunchCard.swift */; };
+		5E5D42ED3A1152BCDC6E35BE /* Foundation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD02F52032300FBAD05 /* Foundation.swift */; };
+		5F8B9EBC9EDE067C40D89508 /* QuizResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D062F52ADD000227638 /* QuizResultView.swift */; };
+		633D5C73E56D5A997419139F /* AircraftDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CED2F521B1A00227638 /* AircraftDetailViewModel.swift */; };
+		6BC093E7605898E1F8BD039D /* MalfunctionDZCore in Frameworks */ = {isa = PBXBuildFile; productRef = FB063FAB2F60000100022763 /* MalfunctionDZCore */; };
+		6F3B0C44D0EB312ED1BB8029 /* CalendarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F052F56000200022763 /* CalendarViewModel.swift */; };
+		71352277F6A69510A1DE2905 /* PilotCurrencyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */; };
+		772C3A9D93412CB1F9C34DA1 /* CalendarRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F072F56000200022763 /* CalendarRootView.swift */; };
+		7B3A42C5736D038E8BEE50A5 /* PushNavigationSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC016AC305ACC94B41FEF6 /* PushNavigationSupport.swift */; };
+		7CC98768114F6E4781539996 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF72F521B7300227638 /* LoginView.swift */; };
+		7D228554ADBB0ADEA5700730 /* LMSEditModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E002F56000100022763 /* LMSEditModels.swift */; };
+		7D3EE304A8B20DBE5A2242F1 /* Aircraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE52F521A7400227638 /* Aircraft.swift */; };
+		82C30F1994ACC623CEDAAE9E /* GroundSchoolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */; };
+		876A0CAD8FFAAB6580564272 /* AviationRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1D2F54AB9B00227638 /* AviationRootView.swift */; };
+		88560E9616CC7A15EB5BAC2E /* AppShellKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = 082E7E54562843BAEE626099 /* AppShellKind.swift */; };
+		89A8E59F9D8DCFEB1C9DD28E /* Loft.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE72F521A8800227638 /* Loft.swift */; };
+		8CF61B76E5E657E6B8B2D52C /* AircraftListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEF2F521B2900227638 /* AircraftListView.swift */; };
+		8EFD35CC489098965A5568DB /* LMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD42F52169D00FBAD05 /* LMS.swift */; };
+		9253A8FD2FC80F2839C69227 /* ASCApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 636ACA25B0FB6724F62901C9 /* ASCApp.swift */; };
+		94F8466128F07288A54705AF /* FlightLoad.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D152F53F69A00227638 /* FlightLoad.swift */; };
+		9984ED42BB535E203CB044F7 /* LMSEditService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E032F56000100022763 /* LMSEditService.swift */; };
+		9A0D42B5EB9F3973B85CF4C5 /* EventsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F092F56000200022763 /* EventsView.swift */; };
+		9D7E273D712D87195A0AC7AC /* AircraftViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF02F521B3A00227638 /* AircraftViewModel.swift */; };
+		A0A8138F933C5ECE70062E1E /* DzRigDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D3E2F54BB250227638 /* DzRigDetailView.swift */; };
+		A19682FF3522F595475F8E41 /* DZStatusUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0D2F56000200022764 /* DZStatusUpdateView.swift */; };
+		A829D4DE9A53EB41F03B9F67 /* ShiftsRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F172F56000200022763 /* ShiftsRootView.swift */; };
+		AEAEACA5866C6C87065E9A90 /* LessonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0F2F52D10B00227638 /* LessonDetailView.swift */; };
+		B03C4105962FBEC45C6A6F41 /* RigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D422F54BB270227638 /* RigsView.swift */; };
+		B74671EE2737061854ECCD01 /* LMSEditRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E052F56000100022763 /* LMSEditRootView.swift */; };
+		B83076D835D072689F69CE77 /* AppShellKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = 082E7E54562843BAEE626099 /* AppShellKind.swift */; };
+		C40A2289B4ED69583D026455 /* RoleHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1B2F54AB7600227638 /* RoleHelpers.swift */; };
+		C85C3BB5011E2FA000CF39F1 /* MyRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2F2F54BB200227638 /* MyRigsView.swift */; };
+		CA1699C9D9536FDAEE54EF2B /* Quiz.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CFF2F52ACE600227638 /* Quiz.swift */; };
+		D528A477893001F7E1EB2BBC /* LogbookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D232F54BB020227638 /* LogbookViewModel.swift */; };
+		D5929D0DD9AA53D86CAEBE08 /* LogbookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D242F54BB030227638 /* LogbookView.swift */; };
+		E486E0F3DE4BBDD77E274CA6 /* JumpCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D392F54BB260227638 /* JumpCheckView.swift */; };
+		E7008BD09B5DA53180BD6EAD /* ShiftsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0B2F56000200022763 /* ShiftsView.swift */; };
+		E831674ABDC53D3157A78CC4 /* LoftRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEA2F521AD900227638 /* LoftRootView.swift */; };
+		E9733796060DDA0EA1F1825A /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF22F521B4B00227638 /* HomeViewModel.swift */; };
+		EABBC7036BAABDA0DD2634DC /* SkydiverLogbook.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */; };
+		F018AA29CA8A5E1577D89B87 /* PaxViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D172F53F6CF00227638 /* PaxViewModel.swift */; };
+		F0F7A80EDF63FA4854297EC9 /* PushNavigationSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC016AC305ACC94B41FEF6 /* PushNavigationSupport.swift */; };
+		F72A60F4DC88F26AB597D626 /* CalendarAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F032F56000200022763 /* CalendarAPIService.swift */; };
+		FA99E17BC7AEC5BEB24CAB3C /* QuizAttemptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D042F52AD7F00227638 /* QuizAttemptView.swift */; };
 		FB063CE42F52191600227638 /* GroundSchoolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE32F52191600227638 /* GroundSchoolView.swift */; };
 		FB063CE62F521A7400227638 /* Aircraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE52F521A7400227638 /* Aircraft.swift */; };
 		FB063CE82F521A8800227638 /* Loft.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE72F521A8800227638 /* Loft.swift */; };
@@ -59,6 +122,9 @@
 		FB063F0E2F56000200022765 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0F2F56000200022765 /* NotificationsView.swift */; };
 		FB063F122F56000200022763 /* TodosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F132F56000200022763 /* TodosView.swift */; };
 		FB063F162F56000200022763 /* ShiftsRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F172F56000200022763 /* ShiftsRootView.swift */; };
+		FB063FAA2F60000100022763 /* MalfunctionDZCore in Frameworks */ = {isa = PBXBuildFile; productRef = FB063FAB2F60000100022763 /* MalfunctionDZCore */; };
+		FB28B0C92F78DAEC004C95A0 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */; };
+		FB28B0CA2F78DAEC004C95A0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
 		FB367C542F510E6100FBAD05 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
 		FB367C572F510E6100FBAD05 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */; };
 		FB367DCC2F52007600FBAD05 /* MalfunctionDZApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */; };
@@ -70,6 +136,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		082E7E54562843BAEE626099 /* AppShellKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellKind.swift; sourceTree = "<group>"; };
+		0D708EA0597452135AF3B10A /* AlaskaSkydiveCenter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AlaskaSkydiveCenter.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1575E88620C58F23C5063938 /* ASC.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ASC.entitlements; sourceTree = "<group>"; };
+		636ACA25B0FB6724F62901C9 /* ASCApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCApp.swift; sourceTree = "<group>"; };
+		6FDC016AC305ACC94B41FEF6 /* PushNavigationSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNavigationSupport.swift; sourceTree = "<group>"; };
 		FB063CE32F52191600227638 /* GroundSchoolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroundSchoolView.swift; sourceTree = "<group>"; };
 		FB063CE52F521A7400227638 /* Aircraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Aircraft.swift; sourceTree = "<group>"; };
 		FB063CE72F521A8800227638 /* Loft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Loft.swift; sourceTree = "<group>"; };
@@ -136,10 +207,19 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		34776E7515720308238429EF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6BC093E7605898E1F8BD039D /* MalfunctionDZCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FB367C492F510E6000FBAD05 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FB063FAA2F60000100022763 /* MalfunctionDZCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -266,6 +346,7 @@
 			isa = PBXGroup;
 			children = (
 				FB367C4C2F510E6000FBAD05 /* MalfunctionDZ.app */,
+				0D708EA0597452135AF3B10A /* AlaskaSkydiveCenter.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -274,6 +355,7 @@
 			isa = PBXGroup;
 			children = (
 				FBFFF0E42F58BC1F009895AE /* MalfunctionDZ.entitlements */,
+				1575E88620C58F23C5063938 /* ASC.entitlements */,
 				FB367DC52F51FECB00FBAD05 /* App */,
 				FB367DC32F51FD3A00FBAD05 /* Models */,
 				FB367DD32F52037A00FBAD05 /* ViewModels */,
@@ -332,6 +414,9 @@
 			isa = PBXGroup;
 			children = (
 				FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */,
+				082E7E54562843BAEE626099 /* AppShellKind.swift */,
+				6FDC016AC305ACC94B41FEF6 /* PushNavigationSupport.swift */,
+				636ACA25B0FB6724F62901C9 /* ASCApp.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -378,6 +463,26 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		D2C4D853457DBF13A549ACBA /* AlaskaSkydiveCenter */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 10E962069D788C384B342258 /* Build configuration list for PBXNativeTarget "AlaskaSkydiveCenter" */;
+			buildPhases = (
+				4735E0D943F8F72014237355 /* Sources */,
+				34776E7515720308238429EF /* Frameworks */,
+				ED1A9EB7F44CC223B0D8DA19 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AlaskaSkydiveCenter;
+			packageProductDependencies = (
+				FB063FAB2F60000100022763 /* MalfunctionDZCore */,
+			);
+			productName = AlaskaSkydiveCenter;
+			productReference = 0D708EA0597452135AF3B10A /* AlaskaSkydiveCenter.app */;
+			productType = "com.apple.product-type.application";
+		};
 		FB367C4B2F510E6000FBAD05 /* MalfunctionDZ */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = FB367C5A2F510E6100FBAD05 /* Build configuration list for PBXNativeTarget "MalfunctionDZ" */;
@@ -391,6 +496,9 @@
 			dependencies = (
 			);
 			name = MalfunctionDZ;
+			packageProductDependencies = (
+				FB063FAB2F60000100022763 /* MalfunctionDZCore */,
+			);
 			productName = MalfunctionDZ;
 			productReference = FB367C4C2F510E6000FBAD05 /* MalfunctionDZ.app */;
 			productType = "com.apple.product-type.application";
@@ -405,6 +513,9 @@
 				LastSwiftUpdateCheck = 1540;
 				LastUpgradeCheck = 1540;
 				TargetAttributes = {
+					D2C4D853457DBF13A549ACBA = {
+						CreatedOnToolsVersion = 15.4;
+					};
 					FB367C4B2F510E6000FBAD05 = {
 						CreatedOnToolsVersion = 15.4;
 						LastSwiftMigration = 1540;
@@ -420,16 +531,29 @@
 				Base,
 			);
 			mainGroup = FB367C432F510E6000FBAD05;
+			packageReferences = (
+				FB063FAC2F60000100022763 /* XCLocalSwiftPackageReference "Packages/MalfunctionDZCore" */,
+			);
 			productRefGroup = FB367C4D2F510E6000FBAD05 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				FB367C4B2F510E6000FBAD05 /* MalfunctionDZ */,
+				D2C4D853457DBF13A549ACBA /* AlaskaSkydiveCenter */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		ED1A9EB7F44CC223B0D8DA19 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FB28B0C92F78DAEC004C95A0 /* Preview Assets.xcassets in Resources */,
+				FB28B0CA2F78DAEC004C95A0 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FB367C4A2F510E6000FBAD05 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -442,6 +566,73 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		4735E0D943F8F72014237355 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				47999026C4ABF7D05C6C5A42 /* ModuleSignoffBlock.swift in Sources */,
+				EABBC7036BAABDA0DD2634DC /* SkydiverLogbook.swift in Sources */,
+				D528A477893001F7E1EB2BBC /* LogbookViewModel.swift in Sources */,
+				D5929D0DD9AA53D86CAEBE08 /* LogbookView.swift in Sources */,
+				59AA29BFFF9B97DBBC6A4220 /* LogbookRootView.swift in Sources */,
+				71352277F6A69510A1DE2905 /* PilotCurrencyCard.swift in Sources */,
+				0AD7B9E04427F20787E1BE2A /* LoftViewModel.swift in Sources */,
+				E831674ABDC53D3157A78CC4 /* LoftRootView.swift in Sources */,
+				C85C3BB5011E2FA000CF39F1 /* MyRigsView.swift in Sources */,
+				48DF0B39C8B1F73C237EED9E /* DzRigsView.swift in Sources */,
+				A0A8138F933C5ECE70062E1E /* DzRigDetailView.swift in Sources */,
+				B03C4105962FBEC45C6A6F41 /* RigsView.swift in Sources */,
+				3771697563876CB7CA0D1542 /* MyRigsViewModel.swift in Sources */,
+				457112FECEAC7ACCF4FFC78E /* DzRigsViewModel.swift in Sources */,
+				E486E0F3DE4BBDD77E274CA6 /* JumpCheckView.swift in Sources */,
+				0277D6EAB987CF43A48519A6 /* JumpCheckViewModel.swift in Sources */,
+				5E5D42ED3A1152BCDC6E35BE /* Foundation.swift in Sources */,
+				AEAEACA5866C6C87065E9A90 /* LessonDetailView.swift in Sources */,
+				633D5C73E56D5A997419139F /* AircraftDetailViewModel.swift in Sources */,
+				F018AA29CA8A5E1577D89B87 /* PaxViewModel.swift in Sources */,
+				359AA57006CB679675F2D67C /* AircraftDetailView.swift in Sources */,
+				7D3EE304A8B20DBE5A2242F1 /* Aircraft.swift in Sources */,
+				8CF61B76E5E657E6B8B2D52C /* AircraftListView.swift in Sources */,
+				89A8E59F9D8DCFEB1C9DD28E /* Loft.swift in Sources */,
+				1711083D05E32C2CC524A67C /* QuizViewModel.swift in Sources */,
+				5F8B9EBC9EDE067C40D89508 /* QuizResultView.swift in Sources */,
+				94F8466128F07288A54705AF /* FlightLoad.swift in Sources */,
+				CA1699C9D9536FDAEE54EF2B /* Quiz.swift in Sources */,
+				8EFD35CC489098965A5568DB /* LMS.swift in Sources */,
+				5D7C238F8B69DEF63850B52C /* QuizLaunchCard.swift in Sources */,
+				FA99E17BC7AEC5BEB24CAB3C /* QuizAttemptView.swift in Sources */,
+				49502B1F722DE37895EBDD37 /* PaxView.swift in Sources */,
+				82C30F1994ACC623CEDAAE9E /* GroundSchoolViewModel.swift in Sources */,
+				876A0CAD8FFAAB6580564272 /* AviationRootView.swift in Sources */,
+				C40A2289B4ED69583D026455 /* RoleHelpers.swift in Sources */,
+				9D7E273D712D87195A0AC7AC /* AircraftViewModel.swift in Sources */,
+				E9733796060DDA0EA1F1825A /* HomeViewModel.swift in Sources */,
+				7CC98768114F6E4781539996 /* LoginView.swift in Sources */,
+				31416E09DFD57BBED348B649 /* HomeView.swift in Sources */,
+				36AC855C931997430E028A97 /* ProfileView.swift in Sources */,
+				2EB224C889AC7ACC2D9CFE8F /* GroundSchoolView.swift in Sources */,
+				464FC721722F3C327A3FBB2F /* UsersView.swift in Sources */,
+				4936B0B4AF6D76D7EBFEFC01 /* UserDetailView.swift in Sources */,
+				2A8B318C96E09F1D47621902 /* UserAddView.swift in Sources */,
+				7D228554ADBB0ADEA5700730 /* LMSEditModels.swift in Sources */,
+				9984ED42BB535E203CB044F7 /* LMSEditService.swift in Sources */,
+				B74671EE2737061854ECCD01 /* LMSEditRootView.swift in Sources */,
+				1310265F1C159C672CA46FC9 /* CalendarModels.swift in Sources */,
+				F72A60F4DC88F26AB597D626 /* CalendarAPIService.swift in Sources */,
+				6F3B0C44D0EB312ED1BB8029 /* CalendarViewModel.swift in Sources */,
+				772C3A9D93412CB1F9C34DA1 /* CalendarRootView.swift in Sources */,
+				9A0D42B5EB9F3973B85CF4C5 /* EventsView.swift in Sources */,
+				E7008BD09B5DA53180BD6EAD /* ShiftsView.swift in Sources */,
+				3AA8C32C5953AD211585B998 /* TodosView.swift in Sources */,
+				A829D4DE9A53EB41F03B9F67 /* ShiftsRootView.swift in Sources */,
+				A19682FF3522F595475F8E41 /* DZStatusUpdateView.swift in Sources */,
+				184F0B7368EDA97E0A0A66E0 /* NotificationsView.swift in Sources */,
+				88560E9616CC7A15EB5BAC2E /* AppShellKind.swift in Sources */,
+				F0F7A80EDF63FA4854297EC9 /* PushNavigationSupport.swift in Sources */,
+				9253A8FD2FC80F2839C69227 /* ASCApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FB367C482F510E6000FBAD05 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -481,6 +672,8 @@
 				FBD783602F5217F800F5EBCD /* GroundSchoolViewModel.swift in Sources */,
 				FB063D1E2F54AB9B00227638 /* AviationRootView.swift in Sources */,
 				FB367DCC2F52007600FBAD05 /* MalfunctionDZApp.swift in Sources */,
+				B83076D835D072689F69CE77 /* AppShellKind.swift in Sources */,
+				7B3A42C5736D038E8BEE50A5 /* PushNavigationSupport.swift in Sources */,
 				FB063D1C2F54AB7600227638 /* RoleHelpers.swift in Sources */,
 				FB063CF12F521B3A00227638 /* AircraftViewModel.swift in Sources */,
 				FB063CF32F521B4B00227638 /* HomeViewModel.swift in Sources */,
@@ -510,6 +703,79 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		6C39416C093F2C155F7437A9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-ASC";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASC.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 3;
+				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
+				DEVELOPMENT_TEAM = 8D9BFVLLPF;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Alaska Skydive Center";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.malfunctiondz.app.ASC;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AAAA2FAF3BE7EC9399518B39 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-ASC";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASC.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 3;
+				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
+				DEVELOPMENT_TEAM = 8D9BFVLLPF;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Alaska Skydive Center";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.malfunctiondz.app.ASC;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		FB367C582F510E6100FBAD05 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -637,12 +903,13 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/MalfunctionDZ.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 30;
+				CURRENT_PROJECT_VERSION = 31;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Malfunction DZ";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -672,12 +939,13 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/MalfunctionDZ.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 30;
+				CURRENT_PROJECT_VERSION = 31;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Malfunction DZ";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -701,6 +969,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		10E962069D788C384B342258 /* Build configuration list for PBXNativeTarget "AlaskaSkydiveCenter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6C39416C093F2C155F7437A9 /* Debug */,
+				AAAA2FAF3BE7EC9399518B39 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		FB367C472F510E6000FBAD05 /* Build configuration list for PBXProject "MalfunctionDZ" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -720,6 +997,21 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		FB063FAC2F60000100022763 /* XCLocalSwiftPackageReference "Packages/MalfunctionDZCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/MalfunctionDZCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		FB063FAB2F60000100022763 /* MalfunctionDZCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FB063FAC2F60000100022763 /* XCLocalSwiftPackageReference "Packages/MalfunctionDZCore" */;
+			productName = MalfunctionDZCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = FB367C442F510E6000FBAD05 /* Project object */;
 }

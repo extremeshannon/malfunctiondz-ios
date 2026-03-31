@@ -2,6 +2,7 @@
 // Change from previous version: added PAX tab (index 3), logbook filter, detail view, thumbnails
 import SwiftUI
 import PhotosUI
+import MalfunctionDZCore
 
 struct AircraftDetailView: View {
     let aircraft: Aircraft

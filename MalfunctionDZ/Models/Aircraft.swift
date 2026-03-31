@@ -1,6 +1,7 @@
 // File: ASC/Models/Aircraft.swift
 import Foundation
 import SwiftUI
+import MalfunctionDZCore
 
 // Compatible with FastAPI /api/aircraft/list (id, tail_number, make, model, year, status, ...)
 // and legacy PHP (adds open_squawks, due_soon, overdue, next_100hr_due, annual_due, last_oil_change).

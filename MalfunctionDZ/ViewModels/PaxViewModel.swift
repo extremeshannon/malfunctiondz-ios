@@ -1,5 +1,6 @@
 // File: ASC/ViewModels/PaxViewModel.swift
 import Foundation
+import MalfunctionDZCore
 
 // MARK: - Response wrappers (top-level, not nested in generic functions)
 private struct PaxOkWrapper: Decodable { let ok: Bool; let error: String? }

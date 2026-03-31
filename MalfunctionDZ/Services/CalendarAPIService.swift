@@ -2,6 +2,7 @@
 // API client for calendar events and staff shifts.
 
 import Foundation
+import MalfunctionDZCore
 
 actor CalendarAPIService {
     static let shared = CalendarAPIService()

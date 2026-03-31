@@ -407,20 +407,27 @@ class LogbookViewModel: ObservableObject {
         }
     }
 
-    /// Remove a jumper-owned rig (`delete: true` in JSON body). Reloads rigs on success.
+    /// Soft-delete a jumper-owned rig. Uses `rigs.php` with query + JSON so it works on PHP (MAMP)
+    /// and FastAPI without a separate `rig_delete.php` route (404 if that file/route is missing).
     func deleteRig(rigId: Int) async -> Bool {
         guard rigId > 0 else { return false }
         isSaving = true
         error = nil
         defer { isSaving = false }
         guard let token = KeychainHelper.readToken() else { return false }
-        // Dedicated endpoint + GET: avoids rigs.php POST body / query being dropped by proxies.
-        var components = URLComponents(string: "\(kServerURL)/api/lms/rig_delete.php")
-        components?.queryItems = [URLQueryItem(name: "rig_id", value: "\(rigId)")]
+        var components = URLComponents(string: "\(kServerURL)/api/lms/rigs.php")
+        components?.queryItems = [
+            URLQueryItem(name: "delete", value: "1"),
+            URLQueryItem(name: "rig_id", value: "\(rigId)"),
+        ]
         guard let url = components?.url else { return false }
+        let body: [String: Any] = ["delete": true, "rig_id": rigId]
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: body) else { return false }
         var req = URLRequest(url: url)
-        req.httpMethod = "GET"
+        req.httpMethod = "POST"
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = jsonData
         do {
             let (data, response) = try await URLSession.shared.data(for: req)
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0

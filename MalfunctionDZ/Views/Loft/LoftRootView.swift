@@ -1,6 +1,7 @@
 // File: ASC/Views/Loft/LoftRootView.swift
 // iPad: NavigationSplitView (rig list | rig detail). iPhone: NavigationStack.
 import SwiftUI
+import MalfunctionDZCore
 
 struct LoftRootView: View {
     @StateObject private var vm = LoftViewModel()

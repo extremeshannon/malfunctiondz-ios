@@ -1,5 +1,6 @@
 // File: ASC/Views/Quiz/QuizResultView.swift
 import SwiftUI
+import MalfunctionDZCore
 
 struct QuizResultView: View {
     let result: QuizSubmitResponse

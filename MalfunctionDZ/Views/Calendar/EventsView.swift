@@ -2,6 +2,7 @@
 // Public calendar events list.
 
 import SwiftUI
+import MalfunctionDZCore
 
 struct EventsView: View {
     @StateObject private var vm = CalendarViewModel()

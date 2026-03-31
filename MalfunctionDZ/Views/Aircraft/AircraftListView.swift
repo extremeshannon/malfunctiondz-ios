@@ -1,6 +1,7 @@
 // File: ASC/Views/Aircraft/AircraftListView.swift
 // iPad: NavigationSplitView (list | detail). iPhone: NavigationStack.
 import SwiftUI
+import MalfunctionDZCore
 
 struct AircraftListView: View {
     @StateObject private var vm = AircraftViewModel()
