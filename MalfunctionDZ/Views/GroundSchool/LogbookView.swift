@@ -1,6 +1,7 @@
 // File: ASC/Views/GroundSchool/LogbookView.swift
 // Purpose: Skydiver logbook — list of jumps, stats, detail view, signature capture.
 import SwiftUI
+import UIKit
 import PencilKit
 import MalfunctionDZCore
 
@@ -1138,6 +1139,7 @@ struct CreateRigSheet: View {
                     }
                     .padding(20)
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
             .navigationTitle(editingRig == nil ? "Add Rig" : "Edit Rig")
             .navigationBarTitleDisplayMode(.inline)
@@ -1363,29 +1365,125 @@ struct CreateRigSheet: View {
         .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
     }
 
+    /// `Picker` + `.menu` inside a sheet + `ScrollView` often breaks on device (floating control, taps ignored).
     private func pickerField(_ label: String, selection: Binding<String>, options: [String], onChange: (() -> Void)? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(label.uppercased())
-                .font(.system(size: 10, weight: .black))
-                .foregroundColor(colors.amber)
-                .tracking(1)
-            Picker(label, selection: selection) {
-                Text("— Select —").tag("")
-                ForEach(options, id: \.self) { opt in
-                    Text(opt).tag(opt)
+        RigCatalogPickerRow(
+            label: label,
+            selection: selection,
+            options: options,
+            isApplyingSnapshot: isApplyingRigSnapshot,
+            onChange: onChange
+        )
+    }
+
+    private struct RigCatalogPickerRow: View {
+        let label: String
+        @Binding var selection: String
+        let options: [String]
+        var isApplyingSnapshot: Bool
+        var onChange: (() -> Void)?
+        @Environment(\.mdzColors) private var colors
+        @Environment(\.mdzColorScheme) private var mdzColorScheme
+        @State private var showSheet = false
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(label.uppercased())
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundColor(colors.amber)
+                    .tracking(1)
+                Button {
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    showSheet = true
+                } label: {
+                    HStack(alignment: .center, spacing: 8) {
+                        Text(selection.isEmpty ? "— Select —" : selection)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(colors.text)
+                            .multilineTextAlignment(.leading)
+                        Spacer(minLength: 8)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(colors.muted)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text(label))
+                .accessibilityValue(Text(selection.isEmpty ? "Nothing selected" : selection))
             }
-            .pickerStyle(.menu)
-            .tint(colors.amber)
-            .onChange(of: selection.wrappedValue) { _, _ in
-                guard !isApplyingRigSnapshot else { return }
-                onChange?()
+            .padding(14)
+            .background(colors.card)
+            .cornerRadius(8)
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+            .sheet(isPresented: $showSheet) {
+                NavigationStack {
+                    Group {
+                        if options.isEmpty {
+                            Text("No options yet. Choose the fields above first, or wait for the catalog to load.")
+                                .font(.system(size: 15))
+                                .foregroundColor(colors.text.opacity(0.85))
+                                .multilineTextAlignment(.center)
+                                .padding(24)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } else {
+                            List {
+                                Button {
+                                    applySelection("")
+                                } label: {
+                                    HStack {
+                                        Text("— Select —")
+                                            .foregroundColor(colors.text)
+                                        Spacer()
+                                        if selection.isEmpty {
+                                            Image(systemName: "checkmark.circle.fill").foregroundColor(colors.amber)
+                                        }
+                                    }
+                                }
+                                ForEach(options, id: \.self) { opt in
+                                    Button {
+                                        applySelection(opt)
+                                    } label: {
+                                        HStack {
+                                            Text(opt)
+                                                .foregroundColor(colors.text)
+                                            Spacer()
+                                            if selection == opt {
+                                                Image(systemName: "checkmark.circle.fill").foregroundColor(colors.amber)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            .scrollContentBackground(.hidden)
+                            .listStyle(.plain)
+                            .background(colors.background)
+                        }
+                    }
+                    .navigationTitle(label)
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbarBackground(colors.navyMid, for: .navigationBar)
+                    .toolbarBackground(.visible, for: .navigationBar)
+                    .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { showSheet = false }
+                                .foregroundColor(colors.amber)
+                        }
+                    }
+                }
+                .background(colors.background)
             }
         }
-        .padding(14)
-        .background(colors.card)
-        .cornerRadius(8)
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+
+        private func applySelection(_ value: String) {
+            selection = value
+            if !isApplyingSnapshot {
+                onChange?()
+            }
+            showSheet = false
+        }
     }
 }
 
