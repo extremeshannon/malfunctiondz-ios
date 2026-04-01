@@ -658,6 +658,12 @@ public actor APIClient {
 
 // MARK: - Push registration (sends token to backend)
 
+private struct PushRegisterRequest: Encodable {
+    let device_token: String
+    let platform: String
+    let bundle_id: String
+}
+
 @MainActor
 public final class PushRegistration: ObservableObject {
     public static let shared = PushRegistration()
@@ -702,36 +708,49 @@ public final class PushRegistration: ObservableObject {
             print("⚠️ PUSH: Skipped — no auth token (user not logged in?)")
             return
         }
-        guard let url = URL(string: "\(kServerURL)/api/push/register.php") else {
-            lastStatus = "failed"
-            lastError = "Invalid URL"
-            return
-        }
-        var req = URLRequest(url: url)
-        req.httpMethod = "POST"
-        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try? JSONEncoder().encode([
-            "device_token": deviceToken,
-            "platform": "ios"
-        ])
-        do {
-            let (data, resp) = try await URLSession.shared.data(for: req)
-            let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
-            let body = String(data: data, encoding: .utf8) ?? ""
-            if code == 200 || (200...299).contains(code) {
-                lastStatus = "sent"
-                lastError = nil
-                print("✅ PUSH: Registered at \(kServerURL)/api/push/register.php (HTTP \(code))")
-            } else {
+        let paths = ["/api/push/register", "/api/push/register.php"]
+        var lastCode = 0
+        var lastBody = ""
+        for path in paths {
+            guard let url = URL(string: "\(kServerURL)\(path)") else {
                 lastStatus = "failed"
-                lastError = "HTTP \(code): \(body)"
-                print("⚠️ PUSH: Register failed HTTP \(code): \(body)")
+                lastError = "Invalid URL"
+                return
             }
-        } catch {
-            lastStatus = "failed"
-            lastError = error.localizedDescription
-            print("⚠️ PUSH: Register request failed: \(error.localizedDescription)")
+            var req = URLRequest(url: url)
+            req.httpMethod = "POST"
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            let bid = Bundle.main.bundleIdentifier ?? ""
+            req.httpBody = try? JSONEncoder().encode(
+                PushRegisterRequest(device_token: deviceToken, platform: "ios", bundle_id: bid)
+            )
+            do {
+                let (data, resp) = try await URLSession.shared.data(for: req)
+                let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
+                lastCode = code
+                lastBody = String(data: data, encoding: .utf8) ?? ""
+                if (200...299).contains(code) {
+                    lastStatus = "sent"
+                    lastError = nil
+                    print("✅ PUSH: Registered at \(kServerURL)\(path) (HTTP \(code))")
+                    return
+                }
+                if code == 404, path == paths[0] {
+                    continue
+                }
+                lastStatus = "failed"
+                lastError = "HTTP \(code): \(lastBody)"
+                print("⚠️ PUSH: Register failed HTTP \(code): \(lastBody)")
+                return
+            } catch {
+                lastStatus = "failed"
+                lastError = error.localizedDescription
+                print("⚠️ PUSH: Register request failed: \(error.localizedDescription)")
+                return
+            }
         }
+        lastStatus = "failed"
+        lastError = "HTTP \(lastCode): \(lastBody)"
     }
 }

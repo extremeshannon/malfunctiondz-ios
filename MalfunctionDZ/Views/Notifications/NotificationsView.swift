@@ -61,9 +61,24 @@ struct NotificationsView: View {
     private func loadNotifications() async {
         loading = true
         defer { loading = false }
-        guard let url = URL(string: "\(kServerURL)/api/push/notifications.php?limit=50") else { return }
+        let bases = [
+            "\(kServerURL)/api/push/notifications?limit=50",
+            "\(kServerURL)/api/push/notifications.php?limit=50",
+        ]
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
+            var data: Data?
+            for s in bases {
+                guard let url = URL(string: s) else { continue }
+                var req = URLRequest(url: url)
+                req.httpMethod = "GET"
+                let (d, resp) = try await URLSession.shared.data(for: req)
+                if let http = resp as? HTTPURLResponse, http.statusCode == 404 {
+                    continue
+                }
+                data = d
+                break
+            }
+            guard let data else { items = []; return }
             guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                   (json["ok"] as? Bool) == true,
                   let arr = json["notifications"] as? [[String: Any]] else { items = []; return }

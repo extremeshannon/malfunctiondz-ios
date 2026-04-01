@@ -48,14 +48,26 @@ actor CalendarAPIService {
 
     // MARK: - DZ Status (GET no auth, PUT auth)
     func fetchDzStatus() async throws -> DZStatus {
-        guard let url = URL(string: baseURL() + "/api/dz/status.php") else { throw APIError.invalidURL }
-        var req = URLRequest(url: url)
-        req.httpMethod = "GET"
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let (data, _) = try await URLSession.shared.data(for: req)
-        let decoded = try JSONDecoder().decode(DZStatusAPIResponse.self, from: data)
-        guard decoded.ok, let s = decoded.status else { throw APIError.serverError("Invalid response") }
-        return s
+        let paths = ["/api/dz/status", "/api/dz/status.php"]
+        for (idx, path) in paths.enumerated() {
+            guard let url = URL(string: baseURL() + path) else { throw APIError.invalidURL }
+            var req = URLRequest(url: url)
+            req.httpMethod = "GET"
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            let (data, response) = try await URLSession.shared.data(for: req)
+            if let http = response as? HTTPURLResponse {
+                if http.statusCode == 404, idx == 0 {
+                    continue
+                }
+                if http.statusCode == 404 {
+                    throw APIError.serverError("DZ status API not found")
+                }
+            }
+            let decoded = try JSONDecoder().decode(DZStatusAPIResponse.self, from: data)
+            guard decoded.ok, let s = decoded.status else { throw APIError.serverError("Invalid response") }
+            return s
+        }
+        throw APIError.serverError("DZ status API not found")
     }
 
     func updateDzStatus(status: String, announcement: String?) async throws -> DZStatus {
@@ -63,7 +75,61 @@ actor CalendarAPIService {
             let status: String
             let announcement: String?
         }
-        return try await putDzStatus(path: "/api/dz/status_update.php", body: Body(status: status, announcement: announcement))
+        let body = Body(status: status, announcement: announcement)
+        if let s = try await putDzStatusOrNilIf404(path: "/api/dz/status_update", body: body) {
+            return s
+        }
+        return try await putDzStatus(path: "/api/dz/status_update.php", body: body)
+    }
+
+    /// Returns `nil` only for HTTP 404 so caller can try `/api/dz/*.php` behind nginx.
+    private func putDzStatusOrNilIf404<T: Encodable>(path: String, body: T) async throws -> DZStatus? {
+        guard let token = KeychainHelper.readToken(), !token.isEmpty else { throw APIError.notAuthenticated }
+        guard let url = URL(string: baseURL() + path) else { throw APIError.invalidURL }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.httpBody = try JSONEncoder().encode(body)
+        let (data, response) = try await URLSession.shared.data(for: req)
+        if let http = response as? HTTPURLResponse {
+            if http.statusCode == 404 { return nil }
+            if http.statusCode == 403 { throw APIError.serverError("You don't have permission to update DZ status") }
+            if http.statusCode == 401 { await AuthManager.shared.logout(); throw APIError.notAuthenticated }
+            if http.statusCode != 200 && http.statusCode != 201 {
+                if let err = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String {
+                    throw APIError.serverError(err)
+                }
+                let preview = String(data: data.prefix(300), encoding: .utf8) ?? ""
+                if preview.trimmingCharacters(in: .whitespaces).hasPrefix("<") {
+                    throw APIError.serverError("Server returned an error page (HTTP \(http.statusCode)). Check API URL and server logs.")
+                }
+                throw APIError.serverError("Server returned HTTP \(http.statusCode)")
+            }
+        }
+        return try parseDzStatusUpdateResponse(data: data)
+    }
+
+    private func parseDzStatusUpdateResponse(data: Data) throws -> DZStatus {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            let preview = String(data: data.prefix(200), encoding: .utf8) ?? ""
+            let isHtml = preview.trimmingCharacters(in: .whitespaces).hasPrefix("<")
+            throw APIError.serverError(isHtml ? "Server returned an error page. Check API URL and server logs." : "Invalid response format from server.")
+        }
+        if let ok = json["ok"] as? Bool, !ok {
+            throw APIError.serverError((json["error"] as? String) ?? "Invalid response")
+        }
+        if let statusObj = json["status"] as? [String: Any] {
+            let statusValue = statusObj["status"] as? String ?? ""
+            let id = (statusObj["id"] as? Int) ?? (statusObj["id"] as? String).flatMap(Int.init) ?? 1
+            let announcement = statusObj["announcement"] as? String
+            let updatedAt = statusObj["updated_at"] as? String
+            return DZStatus(id: id, status: statusValue, announcement: announcement, updatedAt: updatedAt)
+        }
+        if let statusStr = json["status"] as? String {
+            return DZStatus(id: 1, status: statusStr, announcement: nil, updatedAt: nil)
+        }
+        throw APIError.serverError("Invalid response")
     }
 
     private func putDzStatus<T: Encodable>(path: String, body: T) async throws -> DZStatus {
@@ -89,27 +155,7 @@ actor CalendarAPIService {
                 throw APIError.serverError("Server returned HTTP \(http.statusCode)")
             }
         }
-        // Parse as raw JSON so we can handle different server response shapes
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            let preview = String(data: data.prefix(200), encoding: .utf8) ?? ""
-            let isHtml = preview.trimmingCharacters(in: .whitespaces).hasPrefix("<")
-            throw APIError.serverError(isHtml ? "Server returned an error page. Check API URL and server logs." : "Invalid response format from server.")
-        }
-        if let ok = json["ok"] as? Bool, !ok {
-            throw APIError.serverError((json["error"] as? String) ?? "Invalid response")
-        }
-        // status can be object { id, status, announcement, updated_at } or we build from request
-        if let statusObj = json["status"] as? [String: Any] {
-            let statusValue = statusObj["status"] as? String ?? ""
-            let id = (statusObj["id"] as? Int) ?? (statusObj["id"] as? String).flatMap(Int.init) ?? 1
-            let announcement = statusObj["announcement"] as? String
-            let updatedAt = statusObj["updated_at"] as? String
-            return DZStatus(id: id, status: statusValue, announcement: announcement, updatedAt: updatedAt)
-        }
-        if let statusStr = json["status"] as? String {
-            return DZStatus(id: 1, status: statusStr, announcement: nil, updatedAt: nil)
-        }
-        throw APIError.serverError("Invalid response")
+        return try parseDzStatusUpdateResponse(data: data)
     }
 
     // MARK: - Internal request helpers
