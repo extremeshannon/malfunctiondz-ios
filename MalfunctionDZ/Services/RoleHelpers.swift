@@ -89,9 +89,9 @@ extension User {
         hasAnyRole(["ops", "ops_admin", "admin", "master", "godmode"])
     }
 
-    /// Can mark DZ rigs as packed: Packers or 25+ jumps (Ops is read-only)
+    /// Can mark DZ rigs as packed (parity with API roles): packer, rigger, or 25+ jumps — UI should prefer `can_mark_packed` from GET /api/loft/dz_rigs.
     var canMarkPackedDzRigs: Bool {
-        hasAnyRole(["packer"]) || (totalJumps ?? 0) >= 25
+        hasAnyRole(["packer", "rigger"]) || (totalJumps ?? 0) >= 25
     }
 
     var canAccessGroundSchool: Bool {
@@ -201,5 +201,75 @@ extension User {
     /// Manifest tile on Home: for Admin/Chief Pilot/Ops who run manifest — not for manifest-only users
     var canSeeManifestTile: Bool {
         canAccessManifest && !isManifestOnly
+    }
+
+    /// Manifest / Ops Admin / Admin / Master: may check other users in (no self check-in).
+    var canCheckInUsers: Bool {
+        hasAnyRole(["manifest", "ops_admin", "admin", "master", "godmode"])
+    }
+
+    /// Matches server `aircraft_has_full_access`: may choose another pilot when starting a PAX flight.
+    var canSelectPilotForPaxFlightStart: Bool {
+        hasAnyRole(["admin", "master", "godmode", "ops_admin", "ops", "ops admin", "platform_admin"])
+    }
+}
+
+// MARK: - Dropzone check-in (Bearer API)
+enum CheckinAPI {
+    /// Whether the current user is checked in for `dateStr` (yyyy-MM-dd).
+    static func isCheckedIn(dateStr: String) async -> Bool {
+        guard let token = KeychainHelper.readToken(),
+              var c = URLComponents(string: "\(kServerURL)/api/checkin/status.php") else { return false }
+        c.queryItems = [URLQueryItem(name: "date_str", value: dateStr)]
+        guard let url = c.url else { return false }
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              (json["ok"] as? Bool) == true else { return false }
+        return (json["checked_in"] as? Bool) ?? false
+    }
+
+    /// Load users eligible for check-in (staff-only API).
+    static func fetchEligibleUsersForCheckIn() async -> [(id: Int, name: String)] {
+        guard let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)/api/checkin/eligible-users.php") else { return [] }
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              (json["ok"] as? Bool) == true,
+              let raw = json["users"] as? [[String: Any]] else { return [] }
+        return raw.compactMap { row in
+            let id: Int? = {
+                if let i = row["id"] as? Int { return i }
+                if let d = row["id"] as? Double { return Int(d) }
+                return nil
+            }()
+            guard let id else { return nil }
+            let name = (row["name"] as? String) ?? ""
+            return (id, name.isEmpty ? "User \(id)" : name)
+        }
+    }
+
+    /// Check another user in (`userId` > 0). Returns nil on success, or an error message.
+    static func checkInUser(userId: Int, dateStr: String) async -> String? {
+        guard userId > 0 else { return "Select a user" }
+        guard let token = KeychainHelper.readToken(),
+              var c = URLComponents(string: "\(kServerURL)/api/checkin.php") else { return "Not configured" }
+        c.queryItems = [
+            URLQueryItem(name: "date_str", value: dateStr),
+            URLQueryItem(name: "user_id", value: "\(userId)"),
+        ]
+        guard let url = c.url else { return "Bad URL" }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return "No response"
+        }
+        if (json["ok"] as? Bool) == true { return nil }
+        return (json["error"] as? String) ?? "Check-in failed"
     }
 }

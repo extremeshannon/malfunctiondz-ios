@@ -5,6 +5,15 @@ import MalfunctionDZCore
 
 struct DzRigsView: View {
     @StateObject private var vm = DzRigsViewModel()
+
+    /// Belt-and-suspenders: API often returns bare `"Not Found"` before humanization in VM ships.
+    private static func alertBody(_ raw: String?) -> String {
+        let t = raw?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if t.caseInsensitiveCompare("not found") == .orderedSame {
+            return "DZ rigs API not found. In Profile, set API Base URL to your MalfunctionDZ server. The backend must expose GET /api/loft/dz_rigs."
+        }
+        return t.isEmpty ? "Unknown error." : t
+    }
     @Environment(\.horizontalSizeClass) private var hSizeClass
     @Environment(\.mdzColors) private var colors
 
@@ -22,7 +31,9 @@ struct DzRigsView: View {
             set: { if !$0 { vm.error = nil } }
         )) {
             Button("OK", role: .cancel) { vm.error = nil }
-        } message: { Text(vm.error ?? "") }
+        } message: {
+            Text(Self.alertBody(vm.error))
+        }
     }
 
     private var gearRoomContent: some View {

@@ -28,7 +28,7 @@ struct PaxView: View {
                 case .noFlight:
                     Group {
                         if isReadOnly { paxReadOnlyNoFlight }
-                        else { startFlightView }
+                        else { logFlightSection }
                     }
                 case .openFlight:
                     openFlightView
@@ -73,13 +73,55 @@ struct PaxView: View {
         .padding(32)
     }
 
-    // MARK: - Start Flight
-    private var startFlightView: some View {
+    // MARK: - Log flight (meter end — matches web Flight log)
+    private var logFlightSection: some View {
         VStack(alignment: .leading, spacing: 20) {
-            PaxSectionHeader(icon: "airplane.departure", title: "START FLIGHT")
+            PaxSectionHeader(icon: "airplane.departure", title: "FLIGHT LOG")
 
             if let err = vm.errorMessage {
                 PaxErrorBanner(message: err)
+            }
+
+            if !vm.isCheckedInForFlightDate {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "person.badge.clock")
+                            .foregroundColor(colors.amber)
+                            .font(.system(size: 16))
+                        Text("You are not checked in for this flight date. Self check-in is disabled — ask manifest staff (or Ops Admin / Admin) to check you in for \(vm.flightDate.trimmingCharacters(in: .whitespacesAndNewlines)).")
+                            .font(.system(size: 13))
+                            .foregroundColor(colors.muted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(colors.card2)
+                .cornerRadius(8)
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(colors.border, lineWidth: 1))
+            }
+
+            Text("Enter meter-end Hobbs and Tach (total hours on the gauges). Flight time is the difference between the aircraft’s current Hobbs/Tach (baseline below) and these end readings — same as the website.")
+                .font(.system(size: 11))
+                .foregroundColor(colors.muted)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if auth.currentUser?.canSelectPilotForPaxFlightStart == true, !vm.pilots.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    PaxFieldLabel("Pilot")
+                    Picker("Pilot", selection: $vm.selectedPilotUserId) {
+                        ForEach(vm.pilots) { p in
+                            Text(p.displayName).tag(p.userId)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .tint(colors.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(10)
+                    .background(colors.card2)
+                    .cornerRadius(8)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(colors.border, lineWidth: 1))
+                }
             }
 
             // Aircraft picker
@@ -111,30 +153,91 @@ struct PaxView: View {
                 TextField("YYYY-MM-DD", text: $vm.flightDate)
                     .mdzInputStyle()
                     .keyboardType(.numbersAndPunctuation)
+                    .onChange(of: vm.flightDate) { _, _ in
+                        Task { await vm.refreshCheckInStatus() }
+                    }
             }
 
-            // Hobbs + Tach start — side by side
+            if vm.selectedAircraftId > 0,
+               let bh = vm.baselineAircraftHobbs,
+               let bt = vm.baselineAircraftTach {
+                VStack(alignment: .leading, spacing: 4) {
+                    PaxFieldLabel("Current aircraft (baseline)")
+                    Text("Hobbs \(String(format: "%.1f", bh)) hrs · Tach \(String(format: "%.2f", bt)) hrs — flight time = your end reading minus these.")
+                        .font(.system(size: 12))
+                        .foregroundColor(colors.text.opacity(0.9))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(colors.navyMid.opacity(0.35))
+                .cornerRadius(8)
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(colors.border, lineWidth: 1))
+            } else if vm.selectedAircraftId > 0 {
+                Text("Baseline Hobbs/Tach not loaded — pick aircraft again after refresh.")
+                    .font(.caption)
+                    .foregroundColor(colors.amber)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                PaxFieldLabel("Altitude (ft AGL)")
+                TextField("10000", text: $vm.altitudeFtAgl)
+                    .mdzInputStyle()
+                    .keyboardType(.numberPad)
+            }
+
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
-                    PaxFieldLabel("Hobbs Start")
-                    TextField("0.0", text: $vm.hobbsStart)
+                    PaxFieldLabel("Hobbs (meter end, hrs)")
+                    TextField("e.g. after flight", text: $vm.logHobbsEnd)
                         .mdzInputStyle()
                         .keyboardType(.decimalPad)
                 }
                 VStack(alignment: .leading, spacing: 6) {
-                    PaxFieldLabel("Tach Start")
-                    TextField("0.00", text: $vm.tachStart)
+                    PaxFieldLabel("Tach (meter end, hrs)")
+                    TextField("e.g. after flight", text: $vm.logTachEnd)
                         .mdzInputStyle()
                         .keyboardType(.decimalPad)
+                }
+            }
+
+            meterPreviewSection(prev: vm.meterPreviewDeltas())
+
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    PaxFieldLabel("Fuel (gal)")
+                    TextField("optional", text: $vm.fuelSession)
+                        .mdzInputStyle()
+                        .keyboardType(.decimalPad)
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    PaxFieldLabel("Oil (qt)")
+                    TextField("optional", text: $vm.oilSession)
+                        .mdzInputStyle()
+                        .keyboardType(.decimalPad)
+                }
+            }
+
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    PaxFieldLabel("PAX")
+                    TextField("0", text: $vm.paxSession)
+                        .mdzInputStyle()
+                        .keyboardType(.numberPad)
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    PaxFieldLabel("Notes")
+                    TextField("optional", text: $vm.sessionNotes)
+                        .mdzInputStyle()
                 }
             }
 
             Button {
-                Task { await vm.startFlight() }
+                Task { await vm.logFlight() }
             } label: {
                 HStack {
                     if vm.isSaving { ProgressView().tint(.white).scaleEffect(0.8) }
-                    Text("Start Flight")
+                    Text("Log flight")
                         .font(.system(size: 15, weight: .bold))
                 }
                 .frame(maxWidth: .infinity)
@@ -143,6 +246,32 @@ struct PaxView: View {
             .disabled(vm.isSaving)
         }
         .paxCard()
+    }
+
+    @ViewBuilder
+    private func meterPreviewSection(prev: (Double?, Double?)) -> some View {
+        if prev.0 != nil || prev.1 != nil {
+            VStack(alignment: .leading, spacing: 4) {
+                PaxFieldLabel("Calculated flight time (preview)")
+                HStack(spacing: 16) {
+                    if let h = prev.0 {
+                        Text("Flight time (Hobbs): \(String(format: "%.2f", h)) hrs")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(colors.green)
+                    }
+                    if let t = prev.1 {
+                        Text("Time on flight (Tach): \(String(format: "%.2f", t)) hrs")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(colors.green)
+                    }
+                }
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(colors.green.opacity(0.08))
+            .cornerRadius(8)
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(colors.green.opacity(0.35), lineWidth: 1))
+        }
     }
 
     // MARK: - Open Flight
@@ -192,6 +321,22 @@ struct PaxView: View {
                 }
                 if let t = f.tachStart?.value {
                     PaxPill(label: "T: \(String(format: "%.2f", t))", color: colors.muted)
+                }
+                if let agl = f.altitudeFtAgl {
+                    PaxPill(label: "Alt \(agl) ft", color: colors.muted)
+                }
+                if let fp = f.fuelPumped?.value {
+                    PaxPill(label: String(format: "Fuel %.1f", fp), color: colors.muted)
+                }
+                if let o = f.oilUsed?.value {
+                    PaxPill(label: String(format: "Oil %.1f", o), color: colors.muted)
+                }
+                if let pc = f.paxCount, pc > 0 {
+                    PaxPill(label: "PAX \(pc)", color: colors.muted)
+                }
+                if let n = f.flightNotes, !n.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    let short = n.count > 36 ? String(n.prefix(36)) + "…" : n
+                    PaxPill(label: short, color: colors.muted)
                 }
             }
             .flexWrapped()

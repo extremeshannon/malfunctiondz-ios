@@ -74,6 +74,12 @@ struct HomeView: View {
                             .padding(.horizontal, hPad)
                             .padding(.bottom, 16)
 
+                        if auth.currentUser?.canCheckInUsers == true && !isMemberShell {
+                            StaffCheckInCard()
+                                .padding(.horizontal, hPad)
+                                .padding(.bottom, 16)
+                        }
+
                         // ── Manifest-only: 25 Jump Check + Aviation status (staff app only) ──
                         if isManifestOnly && !isMemberShell {
                             manifestHomeSection
@@ -697,6 +703,165 @@ struct MetarStat: View {
             Text(label).font(.system(size: 8, weight: .bold)).foregroundColor(colors.muted).tracking(0.8)
             Text(value).font(.system(size: 13, weight: .semibold)).foregroundColor(colors.text)
         }
+    }
+}
+
+// MARK: - Staff check-in (Manifest / Ops Admin / Admin — check others in; no self check-in)
+struct StaffCheckInCard: View {
+    @Environment(\.mdzColors) private var colors
+    @State private var dateStr: String = StaffCheckInCard.todayString()
+    @State private var users: [(id: Int, name: String)] = []
+    @State private var selectedId: Int = 0
+    @State private var loadingList = false
+    @State private var submitting = false
+    @State private var banner: String?
+    @State private var bannerIsError = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(colors.primary)
+                Text("CHECK SOMEONE IN")
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundColor(colors.muted)
+                    .tracking(1.5)
+                Spacer()
+                if loadingList {
+                    ProgressView().scaleEffect(0.85)
+                } else {
+                    Button {
+                        Task { await loadUsers() }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(colors.primary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            Text("Pick a person and date. Jumpers cannot check themselves in from the app.")
+                .font(.system(size: 12))
+                .foregroundColor(colors.muted)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("DATE (YYYY-MM-DD)")
+                    .font(.system(size: 9, weight: .black))
+                    .foregroundColor(colors.muted)
+                    .tracking(0.8)
+                TextField("YYYY-MM-DD", text: $dateStr)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(colors.text)
+                    .padding(10)
+                    .background(colors.card2)
+                    .cornerRadius(8)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(colors.border, lineWidth: 1))
+                    .keyboardType(.numbersAndPunctuation)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("PERSON")
+                    .font(.system(size: 9, weight: .black))
+                    .foregroundColor(colors.muted)
+                    .tracking(0.8)
+                Picker("Person", selection: $selectedId) {
+                    Text("— Select —").tag(0)
+                    ForEach(users, id: \.id) { u in
+                        Text(u.name).tag(u.id)
+                    }
+                }
+                .pickerStyle(.menu)
+                .tint(colors.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(10)
+                .background(colors.card2)
+                .cornerRadius(8)
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(colors.border, lineWidth: 1))
+            }
+
+            if let b = banner {
+                Text(b)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(bannerIsError ? colors.danger : colors.green)
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background((bannerIsError ? colors.danger : colors.green).opacity(0.12))
+                    .cornerRadius(8)
+            }
+
+            Button {
+                Task { await submitCheckIn() }
+            } label: {
+                HStack {
+                    if submitting {
+                        ProgressView().tint(.white).scaleEffect(0.9)
+                    }
+                    Text("Check in")
+                        .font(.system(size: 15, weight: .bold))
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(colors.primary)
+            .disabled(submitting || selectedId <= 0)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(colors.card)
+        .cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
+        .overlay(
+            Rectangle()
+                .fill(colors.primary)
+                .frame(height: 3)
+                .cornerRadius(2),
+            alignment: .top
+        )
+        .task { await loadUsers() }
+    }
+
+    private func loadUsers() async {
+        loadingList = true
+        defer { loadingList = false }
+        banner = nil
+        users = await CheckinAPI.fetchEligibleUsersForCheckIn()
+        if !users.contains(where: { $0.id == selectedId }) {
+            selectedId = 0
+        }
+    }
+
+    private func submitCheckIn() async {
+        guard selectedId > 0 else {
+            banner = "Select a person."
+            bannerIsError = true
+            return
+        }
+        let d = dateStr.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !d.isEmpty else {
+            banner = "Enter a date."
+            bannerIsError = true
+            return
+        }
+        submitting = true
+        defer { submitting = false }
+        banner = nil
+        if let err = await CheckinAPI.checkInUser(userId: selectedId, dateStr: d) {
+            banner = err
+            bannerIsError = true
+        } else {
+            banner = "Checked in for \(d)."
+            bannerIsError = false
+        }
+    }
+
+    private static func todayString() -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.timeZone = TimeZone.current
+        return f.string(from: Date())
     }
 }
 

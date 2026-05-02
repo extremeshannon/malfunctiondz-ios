@@ -20,6 +20,11 @@ private struct PaxLoadsWrapper: Decodable {
     let data: Inner?
 }
 
+private struct PilotsListResponse: Decodable {
+    let ok: Bool
+    let pilots: [PaxPilot]?
+}
+
 // MARK: - Phase
 enum PaxPhase {
     case loading
@@ -39,12 +44,14 @@ class PaxViewModel: ObservableObject {
     @Published var availableAircraft: [PaxAircraft] = []
     @Published var isSaving = false
     @Published var errorMessage: String?
+    /// Dropzone check-in for the selected flight date (required before PAX actions).
+    @Published var isCheckedInForFlightDate: Bool = true
 
-    // Start flight form
+    // Log flight form (meter **end** readings — server computes time vs aircraft current Hobbs/Tach)
     @Published var selectedAircraftId: Int = 0
     @Published var flightDate: String = PaxViewModel.todayString()
-    @Published var hobbsStart: String = ""
-    @Published var tachStart: String = ""
+    @Published var logHobbsEnd: String = ""
+    @Published var logTachEnd: String = ""
 
     // Add load form
     @Published var loadPax: String = ""
@@ -54,6 +61,15 @@ class PaxViewModel: ObservableObject {
     @Published var loadFuel: String = ""
     @Published var loadOil: String = ""
     @Published var loadNotes: String = ""
+
+    /// Same optional fields as web Flight log row.
+    @Published var pilots: [PaxPilot] = []
+    @Published var selectedPilotUserId: Int = 0
+    @Published var altitudeFtAgl: String = "10000"
+    @Published var fuelSession: String = ""
+    @Published var oilSession: String = ""
+    @Published var paxSession: String = "0"
+    @Published var sessionNotes: String = ""
 
     // Close flight form
     @Published var hobbsEnd: String = ""
@@ -75,6 +91,8 @@ class PaxViewModel: ObservableObject {
 
         // Load aircraft list independently first
         await loadAircraftList(token: token)
+        await refreshCheckInStatus()
+        await loadPilotsForStart(token: token)
 
         // Ensure we have a user ID — refresh if needed
         var pid = currentPilotId
@@ -83,6 +101,9 @@ class PaxViewModel: ObservableObject {
             pid = currentPilotId
         }
         guard pid > 0 else { phase = .noFlight; return }
+        if selectedPilotUserId <= 0 {
+            selectedPilotUserId = pid
+        }
 
         // Load flight state
         guard let url = URL(string: "\(kServerURL)/api/aircraft/flights.php?pilot_user_id=\(pid)") else {
@@ -113,6 +134,26 @@ class PaxViewModel: ObservableObject {
         }
     }
 
+    func refreshCheckInStatus() async {
+        let d = flightDate.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !d.isEmpty else { isCheckedInForFlightDate = false; return }
+        isCheckedInForFlightDate = await CheckinAPI.isCheckedIn(dateStr: d)
+    }
+
+    private func loadPilotsForStart(token: String) async {
+        guard let url = URL(string: "\(kServerURL)/api/aircraft/pilots.php") else { return }
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let resp = try? JSONDecoder().decode(PilotsListResponse.self, from: data),
+              resp.ok, let list = resp.pilots else { return }
+        pilots = list
+        let pid = currentPilotId
+        if selectedPilotUserId <= 0 || !pilots.contains(where: { $0.userId == selectedPilotUserId }) {
+            selectedPilotUserId = pid
+        }
+    }
+
     // MARK: - Aircraft list (independent of pilot)
     private func loadAircraftList(token: String) async {
         guard let url = URL(string: "\(kServerURL)/api/aircraft/list.php") else { return }
@@ -124,9 +165,13 @@ class PaxViewModel: ObservableObject {
             let id: Int
             let tailNumber: String
             let model: String?
+            let currentHobbs: Double?
+            let currentTach: Double?
             enum CodingKeys: String, CodingKey {
                 case id, model
                 case tailNumber = "tail_number"
+                case currentHobbs = "current_hobbs"
+                case currentTach = "current_tach"
             }
         }
         struct AcResp: Decodable { let ok: Bool; let aircraft: [AcItem]? }
@@ -137,39 +182,98 @@ class PaxViewModel: ObservableObject {
         availableAircraft = list.map {
             PaxAircraft(id: $0.id, tailNumber: $0.tailNumber,
                         make: nil, model: $0.model,
-                        currentHobbs: nil, currentTach: nil)
+                        currentHobbs: $0.currentHobbs, currentTach: $0.currentTach)
         }
     }
 
-    // MARK: - Start Flight
-    func startFlight() async {
-        guard selectedAircraftId > 0 else { errorMessage = "Select an aircraft"; return }
-        guard !hobbsStart.isEmpty    else { errorMessage = "Hobbs start required"; return }
-        guard !tachStart.isEmpty     else { errorMessage = "Tach start required"; return }
+    // MARK: - Log flight (meter end — same logic as web Flight log)
 
-        let pid = currentPilotId
-        guard pid > 0 else { errorMessage = "User session expired — please log out and back in"; return }
+    var baselineAircraftHobbs: Double? {
+        availableAircraft.first(where: { $0.id == selectedAircraftId })?.currentHobbs?.value
+    }
+
+    var baselineAircraftTach: Double? {
+        availableAircraft.first(where: { $0.id == selectedAircraftId })?.currentTach?.value
+    }
+
+    /// Preview only — mirrors server `create_flight_log_meter_end` (one meter may be inferred from the other).
+    func meterPreviewDeltas() -> (hobbsHrs: Double?, tachHrs: Double?) {
+        guard let bh = baselineAircraftHobbs, let bt = baselineAircraftTach else { return (nil, nil) }
+        let he = parsedMeterEnd(logHobbsEnd)
+        let te = parsedMeterEnd(logTachEnd)
+        if let he, let te {
+            let dh = he - bh
+            let dt = te - bt
+            return (dh >= 0 ? dh : nil, dt >= 0 ? dt : nil)
+        }
+        if let he {
+            let dh = he - bh
+            guard dh >= 0 else { return (nil, nil) }
+            return (dh, dh)
+        }
+        if let te {
+            let dt = te - bt
+            guard dt >= 0 else { return (nil, nil) }
+            return (dt, dt)
+        }
+        return (nil, nil)
+    }
+
+    private func parsedMeterEnd(_ raw: String) -> Double? {
+        let s = raw.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: ",", with: "")
+        guard !s.isEmpty, let v = Double(s) else { return nil }
+        return v
+    }
+
+    func logFlight() async {
+        guard selectedAircraftId > 0 else { errorMessage = "Select an aircraft"; return }
+        let hobbsTrim = logHobbsEnd.trimmingCharacters(in: .whitespacesAndNewlines)
+        let tachTrim = logTachEnd.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !hobbsTrim.isEmpty || !tachTrim.isEmpty else {
+            errorMessage = "Enter Hobbs and/or Tach meter end (total hours)"
+            return
+        }
+
+        let selfId = currentPilotId
+        guard selfId > 0 else { errorMessage = "User session expired — please log out and back in"; return }
+        let pilotForFlight = selectedPilotUserId > 0 ? selectedPilotUserId : selfId
 
         isSaving = true; defer { isSaving = false }
         errorMessage = nil
 
-        let params: [String: Any] = [
-            "aircraft_id":   selectedAircraftId,
-            "pilot_user_id": pid,
-            "flight_date":   flightDate,
-            "hobbs_start":   hobbsStart,
-            "tach_start":    tachStart,
+        var params: [String: Any] = [
+            "aircraft_id": selectedAircraftId,
+            "pilot_user_id": pilotForFlight,
+            "flight_date": flightDate,
+            "altitude_ft_agl": altitudeFtAgl.trimmingCharacters(in: .whitespacesAndNewlines),
         ]
+        if !hobbsTrim.isEmpty { params["hobbs_end"] = hobbsTrim }
+        if !tachTrim.isEmpty { params["tach_end"] = tachTrim }
+        if !fuelSession.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            params["fuel_pumped"] = fuelSession.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if !oilSession.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            params["oil_used"] = oilSession.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if !paxSession.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            params["pax_count"] = paxSession.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if !sessionNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            params["notes"] = sessionNotes.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
 
         do {
-            let data = try await postJSON(path: "/api/aircraft/flight_start.php", body: params)
-            let resp = try JSONDecoder().decode(PaxFlightWrapper.self, from: data)
-            guard resp.ok, let inner = resp.data else {
-                errorMessage = resp.error ?? "Failed to start flight"; return
+            let data = try await postJSON(path: "/api/aircraft/flight_log.php", body: params)
+            let resp = try JSONDecoder().decode(PaxOkWrapper.self, from: data)
+            guard resp.ok else {
+                errorMessage = resp.error ?? "Could not log flight"
+                await refreshCheckInStatus()
+                return
             }
-            flight = inner.flight
-            loads  = inner.loads
-            phase  = .openFlight
+            logHobbsEnd = ""
+            logTachEnd = ""
+            await loadState()
+            await refreshCheckInStatus()
         } catch { errorMessage = error.localizedDescription }
     }
 
@@ -199,7 +303,9 @@ class PaxViewModel: ObservableObject {
             let data = try await postJSON(path: "/api/aircraft/load_add.php", body: params)
             let resp = try JSONDecoder().decode(PaxLoadsWrapper.self, from: data)
             guard resp.ok, let inner = resp.data else {
-                errorMessage = resp.error ?? "Failed to add load"; return
+                errorMessage = resp.error ?? "Failed to add load"
+                await refreshCheckInStatus()
+                return
             }
             loads = inner.loads
             clearLoadForm()
@@ -236,7 +342,9 @@ class PaxViewModel: ObservableObject {
             let data = try await postJSON(path: "/api/aircraft/flight_close.php", body: params)
             let resp = try JSONDecoder().decode(PaxFlightWrapper.self, from: data)
             guard resp.ok, let inner = resp.data else {
-                errorMessage = resp.error ?? "Failed to close flight"; return
+                errorMessage = resp.error ?? "Failed to close flight"
+                await refreshCheckInStatus()
+                return
             }
             flight = inner.flight
             loads  = inner.loads
@@ -261,8 +369,8 @@ class PaxViewModel: ObservableObject {
 
     func autoFillFromAircraft(_ ac: PaxAircraft) {
         selectedAircraftId = ac.id
-        if let h = ac.currentHobbs?.value { hobbsStart = String(format: "%.1f", h) }
-        if let t = ac.currentTach?.value  { tachStart  = String(format: "%.2f", t) }
+        logHobbsEnd = ""
+        logTachEnd = ""
     }
 
     // MARK: - Helpers

@@ -57,6 +57,12 @@ struct Flight: Codable, Identifiable {
     let tachEnd: StringDouble?
     let status: String
     let tailNumber: String?
+    /// Session-level totals from flight start / flight log (optional on older payloads).
+    let paxCount: Int?
+    let altitudeFtAgl: Int?
+    let fuelPumped: StringDouble?
+    let oilUsed: StringDouble?
+    let flightNotes: String?
 
     enum CodingKeys: String, CodingKey {
         case id, status
@@ -68,10 +74,27 @@ struct Flight: Codable, Identifiable {
         case tachStart      = "tach_start"
         case tachEnd        = "tach_end"
         case tailNumber     = "tail_number"
+        case paxCount       = "pax_count"
+        case altitudeFtAgl  = "altitude_ft_agl"
+        case fuelPumped     = "fuel_pumped"
+        case oilUsed        = "oil_used"
+        case flightNotes    = "notes"
     }
 
     var isOpen:   Bool { status == "open" }
     var isClosed: Bool { status == "closed" }
+}
+
+// MARK: - Pilot picker (PAX flight start)
+struct PaxPilot: Codable, Identifiable {
+    let userId: Int
+    let displayName: String
+    var id: Int { userId }
+
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+        case displayName = "display_name"
+    }
 }
 
 // MARK: - PaxAircraft
