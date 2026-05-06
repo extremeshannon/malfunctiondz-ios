@@ -421,6 +421,27 @@ public struct LoginResponse: Decodable {
     public let token: String?
     public let user: User?
     public let error: String?
+    public let mfaRequired: Bool?
+    public let mfaToken: String?
+
+    enum CodingKeys: String, CodingKey {
+        case ok, token, user, error
+        case mfaRequired = "mfa_required"
+        case mfaToken = "mfa_token"
+    }
+}
+
+public struct MfaLoginRequest: Encodable {
+    public let mfaToken: String
+    public let code: String
+    enum CodingKeys: String, CodingKey {
+        case mfaToken = "mfa_token"
+        case code
+    }
+    public init(mfaToken: String, code: String) {
+        self.mfaToken = mfaToken
+        self.code = code
+    }
 }
 public struct MobileResponse<T: Decodable>: Decodable {
     public let ok: Bool
@@ -548,11 +569,14 @@ public actor APIClient {
     @Published public var isLoading = false
     @Published public var errorMessage: String?
     @Published public private(set) var sessionID: String = UUID().uuidString
+    /// When MFA is required, backend returns `mfa_token`; user must enter TOTP and call `completeMfaLogin`.
+    @Published public var pendingMfaToken: String?
 
     public var isLoggedIn: Bool { isAuthenticated }
 
     public func login(username: String, password: String) async {
-        isLoading = true; errorMessage = nil; defer { isLoading = false }
+        isLoading = true; errorMessage = nil; pendingMfaToken = nil
+        defer { isLoading = false }
         guard let url = URL(string: "\(kServerURL)/api/login.php") else { return }
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
@@ -562,6 +586,12 @@ public actor APIClient {
             let (data, _) = try await URLSession.shared.data(for: req)
             let raw = String(data: data, encoding: .utf8) ?? "nil"
             print("📡 LOGIN RESPONSE: \(raw)")
+            // MFA challenge (no token yet)
+            if let resp = try? JSONDecoder().decode(LoginResponse.self, from: data),
+               resp.ok, resp.mfaRequired == true, let mt = resp.mfaToken, !mt.isEmpty {
+                pendingMfaToken = mt
+                return
+            }
             // Try Codable first, then raw JSON (handles PHP/MySQL type variations)
             if let resp = try? JSONDecoder().decode(LoginResponse.self, from: data),
                resp.ok, let token = resp.token, let user = resp.user {
@@ -580,6 +610,11 @@ public actor APIClient {
                 errorMessage = (json["error"] as? String) ?? "Invalid login"
                 return
             }
+            if (json["mfa_required"] as? Bool) == true,
+               let mt = json["mfa_token"] as? String, !mt.isEmpty {
+                pendingMfaToken = mt
+                return
+            }
             guard let token = json["token"] as? String, !token.isEmpty,
                   let userDict = json["user"] as? [String: Any],
                   let user = User(from: userDict) else {
@@ -590,6 +625,58 @@ public actor APIClient {
         } catch {
             errorMessage = "Network error: \(error.localizedDescription)"
         }
+    }
+
+    /// Complete login after MFA challenge (`pendingMfaToken` from first login step).
+    public func completeMfaLogin(code: String) async {
+        guard let mfaTok = pendingMfaToken, !mfaTok.isEmpty else {
+            errorMessage = "MFA session expired. Sign in again."
+            return
+        }
+        let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 6 else {
+            errorMessage = "Enter the 6-digit code from your authenticator app."
+            return
+        }
+        isLoading = true; errorMessage = nil
+        defer { isLoading = false }
+        guard let url = URL(string: "\(kServerURL)/api/login/mfa.php") else { return }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try? JSONEncoder().encode(MfaLoginRequest(mfaToken: mfaTok, code: trimmed))
+        do {
+            let (data, _) = try await URLSession.shared.data(for: req)
+            let raw = String(data: data, encoding: .utf8) ?? "nil"
+            print("📡 MFA LOGIN RESPONSE: \(raw)")
+            if let resp = try? JSONDecoder().decode(LoginResponse.self, from: data),
+               resp.ok, let token = resp.token, let user = resp.user {
+                pendingMfaToken = nil
+                finishLogin(token: token, user: user)
+                return
+            }
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                errorMessage = "Invalid response. Check API URL."
+                return
+            }
+            if json["ok"] as? Bool == true,
+               let token = json["token"] as? String, !token.isEmpty,
+               let userDict = json["user"] as? [String: Any],
+               let user = User(from: userDict) {
+                pendingMfaToken = nil
+                finishLogin(token: token, user: user)
+                return
+            }
+            errorMessage = (json["error"] as? String) ?? (json["detail"] as? String) ?? "Invalid MFA code."
+        } catch {
+            errorMessage = "Network error: \(error.localizedDescription)"
+        }
+    }
+
+    /// Cancel MFA step and return to username/password.
+    public func cancelMfaChallenge() {
+        pendingMfaToken = nil
+        errorMessage = nil
     }
 
     private func finishLogin(token: String, user: User) {
