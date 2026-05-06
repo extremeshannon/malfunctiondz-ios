@@ -41,7 +41,8 @@ struct Aircraft: Codable, Identifiable, Hashable {
         case ttsn, smoh, slots
         case lastMic       = "last_mic"
         case propTime      = "prop_time"
-        case isMultiEngine = "multi_engine"
+        case isMultiEngineLegacy = "multi_engine"
+        case isMultiEngineSnake = "is_multi_engine"
         case slotsMin      = "slots_min"
         case slotsMax      = "slots_max"
     }
@@ -67,7 +68,13 @@ struct Aircraft: Codable, Identifiable, Hashable {
         slots = try? c.decodeIfPresent(Int.self, forKey: .slots)
         lastMic = try? c.decodeIfPresent(String.self, forKey: .lastMic)
         propTime = try? c.decodeIfPresent(String.self, forKey: .propTime)
-        isMultiEngine = try? c.decodeIfPresent(Bool.self, forKey: .isMultiEngine)
+        if let v = try? c.decodeIfPresent(Bool.self, forKey: .isMultiEngineSnake) {
+            isMultiEngine = v
+        } else if let v = try? c.decodeIfPresent(Bool.self, forKey: .isMultiEngineLegacy) {
+            isMultiEngine = v
+        } else {
+            isMultiEngine = nil
+        }
         slotsMin = try? c.decodeIfPresent(Int.self, forKey: .slotsMin)
         slotsMax = try? c.decodeIfPresent(Int.self, forKey: .slotsMax)
     }
@@ -89,7 +96,7 @@ struct Aircraft: Codable, Identifiable, Hashable {
         try c.encodeIfPresent(slots, forKey: .slots)
         try c.encodeIfPresent(lastMic, forKey: .lastMic)
         try c.encodeIfPresent(propTime, forKey: .propTime)
-        try c.encodeIfPresent(isMultiEngine, forKey: .isMultiEngine)
+        try c.encodeIfPresent(isMultiEngine, forKey: .isMultiEngineSnake)
         try c.encodeIfPresent(slotsMin, forKey: .slotsMin)
         try c.encodeIfPresent(slotsMax, forKey: .slotsMax)
     }
@@ -104,6 +111,17 @@ struct Aircraft: Codable, Identifiable, Hashable {
     }
 
     var hasAlerts: Bool { openSquawks > 0 || dueSoon > 0 || overdue > 0 }
+
+    /// PAX choices for flight log / PAX session forms: `slots_min`…`slots_max`, else `0`…`slots`, else `0`…17.
+    var flightLogPaxChoices: [Int] {
+        if let lo = slotsMin, let hi = slotsMax, lo <= hi {
+            return Array(lo...hi)
+        }
+        if let s = slots, s >= 0 {
+            return Array(0...s)
+        }
+        return Array(0...17)
+    }
 }
 
 // Squawk model for detail view

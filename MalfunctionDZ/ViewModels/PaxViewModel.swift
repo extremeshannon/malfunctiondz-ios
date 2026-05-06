@@ -38,6 +38,9 @@ enum PaxPhase {
 @MainActor
 class PaxViewModel: ObservableObject {
 
+    /// Aircraft context from navigation (detail / pilot list); cannot be changed on this screen.
+    private let lockedAircraftId: Int
+
     @Published var phase: PaxPhase = .loading
     @Published var flight: Flight?
     @Published var loads: [FlightLoad] = []
@@ -49,7 +52,12 @@ class PaxViewModel: ObservableObject {
 
     // Log flight form (meter **end** readings — server computes time vs aircraft current Hobbs/Tach)
     @Published var selectedAircraftId: Int = 0
-    @Published var flightDate: String = PaxViewModel.todayString()
+    /// Local calendar date for the flight log; API uses `flightDate` (yyyy-MM-dd).
+    @Published var flightLogDate: Date = Calendar.current.startOfDay(for: Date()) {
+        didSet { Task { await refreshCheckInStatus() } }
+    }
+
+    var flightDate: String { Self.formatYMD(flightLogDate) }
     @Published var logHobbsEnd: String = ""
     @Published var logTachEnd: String = ""
 
@@ -65,10 +73,13 @@ class PaxViewModel: ObservableObject {
     /// Same optional fields as web Flight log row.
     @Published var pilots: [PaxPilot] = []
     @Published var selectedPilotUserId: Int = 0
-    @Published var altitudeFtAgl: String = "10000"
+    /// Matches web flight log: 0…60000 ft AGL step 100 (`detail_flight_log.html`).
+    static let flightLogAltitudeChoicesFt: [Int] = Array(stride(from: 0, through: 60_000, by: 100))
+    @Published var altitudeFtAglFt: Int = 10_000
+    let paxPickerChoices: [Int]
+    @Published var paxSessionCount: Int = 0
     @Published var fuelSession: String = ""
     @Published var oilSession: String = ""
-    @Published var paxSession: String = "0"
     @Published var sessionNotes: String = ""
 
     // Close flight form
@@ -78,6 +89,14 @@ class PaxViewModel: ObservableObject {
     // Always read live from AuthManager — never stale
     private var currentPilotId: Int {
         AuthManager.shared.currentUser?.id ?? 0
+    }
+
+    init(lockedAircraftId: Int, paxPickerChoices: [Int]) {
+        self.lockedAircraftId = lockedAircraftId
+        let pax = paxPickerChoices.isEmpty ? [0] : paxPickerChoices
+        self.paxPickerChoices = pax
+        self.paxSessionCount = pax.first ?? 0
+        self.selectedAircraftId = lockedAircraftId
     }
 
     // MARK: - Load State
@@ -91,6 +110,9 @@ class PaxViewModel: ObservableObject {
 
         // Load aircraft list independently first
         await loadAircraftList(token: token)
+        if lockedAircraftId > 0 {
+            selectedAircraftId = lockedAircraftId
+        }
         await refreshCheckInStatus()
         await loadPilotsForStart(token: token)
 
@@ -226,7 +248,10 @@ class PaxViewModel: ObservableObject {
     }
 
     func logFlight() async {
-        guard selectedAircraftId > 0 else { errorMessage = "Select an aircraft"; return }
+        guard selectedAircraftId > 0 else {
+            errorMessage = lockedAircraftId > 0 ? "Aircraft data not loaded — pull to refresh" : "Select an aircraft"
+            return
+        }
         let hobbsTrim = logHobbsEnd.trimmingCharacters(in: .whitespacesAndNewlines)
         let tachTrim = logTachEnd.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !hobbsTrim.isEmpty || !tachTrim.isEmpty else {
@@ -245,7 +270,8 @@ class PaxViewModel: ObservableObject {
             "aircraft_id": selectedAircraftId,
             "pilot_user_id": pilotForFlight,
             "flight_date": flightDate,
-            "altitude_ft_agl": altitudeFtAgl.trimmingCharacters(in: .whitespacesAndNewlines),
+            "altitude_ft_agl": altitudeFtAglFt,
+            "pax_count": paxSessionCount,
         ]
         if !hobbsTrim.isEmpty { params["hobbs_end"] = hobbsTrim }
         if !tachTrim.isEmpty { params["tach_end"] = tachTrim }
@@ -254,9 +280,6 @@ class PaxViewModel: ObservableObject {
         }
         if !oilSession.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             params["oil_used"] = oilSession.trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        if !paxSession.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            params["pax_count"] = paxSession.trimmingCharacters(in: .whitespacesAndNewlines)
         }
         if !sessionNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             params["notes"] = sessionNotes.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -391,8 +414,11 @@ class PaxViewModel: ObservableObject {
         return data
     }
 
-    private static func todayString() -> String {
-        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
-        return f.string(from: Date())
+    private static func formatYMD(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone.current
+        return f.string(from: date)
     }
 }

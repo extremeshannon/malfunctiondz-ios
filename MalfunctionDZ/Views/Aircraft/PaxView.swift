@@ -9,13 +9,17 @@ import SwiftUI
 import MalfunctionDZCore
 
 struct PaxView: View {
+    private let aircraft: Aircraft
     @StateObject private var vm: PaxViewModel
     @EnvironmentObject private var auth: AuthManager
     @Environment(\.mdzColors) private var colors
     var isReadOnly: Bool = false
 
     init(aircraft: Aircraft, isReadOnly: Bool = false) {
-        _vm = StateObject(wrappedValue: PaxViewModel())
+        self.aircraft = aircraft
+        _vm = StateObject(
+            wrappedValue: PaxViewModel(lockedAircraftId: aircraft.id, paxPickerChoices: aircraft.flightLogPaxChoices)
+        )
         self.isReadOnly = isReadOnly
     }
 
@@ -116,46 +120,38 @@ struct PaxView: View {
                     }
                     .pickerStyle(.menu)
                     .tint(colors.primary)
+                    .foregroundStyle(colors.text)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .paxInputStyle()
+                }
+            }
+
+            // Aircraft is fixed from the screen you navigated from (no duplicate selector).
+            VStack(alignment: .leading, spacing: 6) {
+                PaxFieldLabel("Aircraft")
+                Text("\(aircraft.tailNumber) · \(aircraft.model)")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(colors.text)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(10)
                     .background(colors.card2)
                     .cornerRadius(8)
                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(colors.border, lineWidth: 1))
-                }
             }
 
-            // Aircraft picker
-            VStack(alignment: .leading, spacing: 6) {
-                PaxFieldLabel("Aircraft")
-                Picker("Aircraft", selection: $vm.selectedAircraftId) {
-                    Text("— Select —").tag(0)
-                    ForEach(vm.availableAircraft) { ac in
-                        Text(ac.displayName).tag(ac.id)
-                    }
-                }
-                .pickerStyle(.menu)
-                .tint(colors.primary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(10)
-                .background(colors.card2)
-                .cornerRadius(8)
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(colors.border, lineWidth: 1))
-                .onChange(of: vm.selectedAircraftId) { id in
-                    if let ac = vm.availableAircraft.first(where: { $0.id == id }) {
-                        vm.autoFillFromAircraft(ac)
-                    }
-                }
-            }
-
-            // Date
             VStack(alignment: .leading, spacing: 6) {
                 PaxFieldLabel("Flight Date")
-                TextField("YYYY-MM-DD", text: $vm.flightDate)
-                    .mdzInputStyle()
-                    .keyboardType(.numbersAndPunctuation)
-                    .onChange(of: vm.flightDate) { _, _ in
-                        Task { await vm.refreshCheckInStatus() }
-                    }
+                DatePicker(
+                    "Flight Date",
+                    selection: $vm.flightLogDate,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.compact)
+                .labelsHidden()
+                .tint(colors.primary)
+                .foregroundStyle(colors.text)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .paxInputStyle()
             }
 
             if vm.selectedAircraftId > 0,
@@ -174,29 +170,36 @@ struct PaxView: View {
                 .cornerRadius(8)
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(colors.border, lineWidth: 1))
             } else if vm.selectedAircraftId > 0 {
-                Text("Baseline Hobbs/Tach not loaded — pick aircraft again after refresh.")
+                Text("Baseline Hobbs/Tach not loaded — pull to refresh.")
                     .font(.caption)
                     .foregroundColor(colors.amber)
             }
 
             VStack(alignment: .leading, spacing: 6) {
                 PaxFieldLabel("Altitude (ft AGL)")
-                TextField("10000", text: $vm.altitudeFtAgl)
-                    .mdzInputStyle()
-                    .keyboardType(.numberPad)
+                Picker("Altitude (ft AGL)", selection: $vm.altitudeFtAglFt) {
+                    ForEach(PaxViewModel.flightLogAltitudeChoicesFt, id: \.self) { ft in
+                        Text(altitudeChoiceLabel(ft)).tag(ft)
+                    }
+                }
+                .pickerStyle(.menu)
+                .tint(colors.primary)
+                .foregroundStyle(colors.text)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .paxInputStyle()
             }
 
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
                     PaxFieldLabel("Hobbs (meter end, hrs)")
                     TextField("e.g. after flight", text: $vm.logHobbsEnd)
-                        .mdzInputStyle()
+                        .paxInputStyle()
                         .keyboardType(.decimalPad)
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     PaxFieldLabel("Tach (meter end, hrs)")
                     TextField("e.g. after flight", text: $vm.logTachEnd)
-                        .mdzInputStyle()
+                        .paxInputStyle()
                         .keyboardType(.decimalPad)
                 }
             }
@@ -207,13 +210,13 @@ struct PaxView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     PaxFieldLabel("Fuel (gal)")
                     TextField("optional", text: $vm.fuelSession)
-                        .mdzInputStyle()
+                        .paxInputStyle()
                         .keyboardType(.decimalPad)
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     PaxFieldLabel("Oil (qt)")
                     TextField("optional", text: $vm.oilSession)
-                        .mdzInputStyle()
+                        .paxInputStyle()
                         .keyboardType(.decimalPad)
                 }
             }
@@ -221,14 +224,21 @@ struct PaxView: View {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
                     PaxFieldLabel("PAX")
-                    TextField("0", text: $vm.paxSession)
-                        .mdzInputStyle()
-                        .keyboardType(.numberPad)
+                    Picker("PAX", selection: $vm.paxSessionCount) {
+                        ForEach(vm.paxPickerChoices, id: \.self) { n in
+                            Text("\(n)").tag(n)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .tint(colors.primary)
+                    .foregroundStyle(colors.text)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .paxInputStyle()
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     PaxFieldLabel("Notes")
                     TextField("optional", text: $vm.sessionNotes)
-                        .mdzInputStyle()
+                        .paxInputStyle()
                 }
             }
 
@@ -403,13 +413,13 @@ struct PaxView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     PaxFieldLabel("Pax Count *")
                     TextField("e.g. 14", text: $vm.loadPax)
-                        .mdzInputStyle()
+                        .paxInputStyle()
                         .keyboardType(.numberPad)
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     PaxFieldLabel("Altitude (ft)")
                     TextField("e.g. 14000", text: $vm.loadAltitude)
-                        .mdzInputStyle()
+                        .paxInputStyle()
                         .keyboardType(.numberPad)
                 }
             }
@@ -418,13 +428,13 @@ struct PaxView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     PaxFieldLabel("Hobbs *")
                     TextField("0.0", text: $vm.loadHobbs)
-                        .mdzInputStyle()
+                        .paxInputStyle()
                         .keyboardType(.decimalPad)
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     PaxFieldLabel("Tach *")
                     TextField("0.00", text: $vm.loadTach)
-                        .mdzInputStyle()
+                        .paxInputStyle()
                         .keyboardType(.decimalPad)
                 }
             }
@@ -433,13 +443,13 @@ struct PaxView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     PaxFieldLabel("Fuel Added (gal)")
                     TextField("optional", text: $vm.loadFuel)
-                        .mdzInputStyle()
+                        .paxInputStyle()
                         .keyboardType(.decimalPad)
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     PaxFieldLabel("Oil Added (qt)")
                     TextField("optional", text: $vm.loadOil)
-                        .mdzInputStyle()
+                        .paxInputStyle()
                         .keyboardType(.decimalPad)
                 }
             }
@@ -447,7 +457,7 @@ struct PaxView: View {
             VStack(alignment: .leading, spacing: 6) {
                 PaxFieldLabel("Notes")
                 TextField("optional", text: $vm.loadNotes)
-                    .mdzInputStyle()
+                    .paxInputStyle()
             }
 
             Button {
@@ -476,13 +486,13 @@ struct PaxView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     PaxFieldLabel("Hobbs End")
                     TextField("0.0", text: $vm.hobbsEnd)
-                        .mdzInputStyle()
+                        .paxInputStyle()
                         .keyboardType(.decimalPad)
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     PaxFieldLabel("Tach End")
                     TextField("0.00", text: $vm.tachEnd)
-                        .mdzInputStyle()
+                        .paxInputStyle()
                         .keyboardType(.decimalPad)
                 }
             }
@@ -551,6 +561,13 @@ struct PaxView: View {
             }
         }
         .paxCard()
+    }
+
+    private func altitudeChoiceLabel(_ ft: Int) -> String {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        let num = f.string(from: NSNumber(value: ft)) ?? "\(ft)"
+        return "\(num) ft"
     }
 }
 
@@ -710,10 +727,24 @@ struct PaxTableCellModifier: ViewModifier {
     }
 }
 
+struct PaxInputStyleModifier: ViewModifier {
+    @Environment(\.mdzColors) private var colors
+    func body(content: Content) -> some View {
+        content
+            .padding(10)
+            .background(colors.card2)
+            .cornerRadius(8)
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(colors.border, lineWidth: 1))
+            .foregroundColor(colors.text)
+            .font(.system(size: 15))
+    }
+}
+
 extension View {
     func paxCard() -> some View { modifier(PaxCardModifier()) }
     func paxTableHeader() -> some View { modifier(PaxTableHeaderModifier()) }
     func paxTableCell(color: Color? = nil) -> some View { modifier(PaxTableCellModifier(color: color)) }
+    func paxInputStyle() -> some View { modifier(PaxInputStyleModifier()) }
     func flexWrapped() -> some View {
         self // SwiftUI doesn't do flex-wrap natively — HStack is close enough for pills
     }
