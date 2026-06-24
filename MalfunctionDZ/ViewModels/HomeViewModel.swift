@@ -261,10 +261,8 @@ class HomeViewModel: ObservableObject {
         let isPilot      = all.contains("pilot")
         let isInstructor = all.contains(where: { ["instructor","lms_instructor"].contains($0) })
         let isStudent    = all.contains(where: { ["student","lms_student"].contains($0) })
-        let isManifest   = all.contains("manifest")
-        let isManifestOnly = user.isManifestOnly
-        let isChiefPilot = all.contains(where: { ["chief_pilot", "chief pilot"].contains($0) })
 
+        // Manifest-only users use `User.isManifestOnly` (RoleHelpers); chief pilot routes here via `isPilot`.
         // Weather for everyone (all authenticated users)
         await loadMetar()
 
@@ -274,7 +272,7 @@ class HomeViewModel: ObservableObject {
                 $0.addTask { await self.loadLoftSummary() }
                 $0.addTask { await self.loadDzRigsSummary() }
             }
-        } else if isManifestOnly {
+        } else if user.isManifestOnly {
             // Manifest-only: DZ Rigs + Aviation status on home
             await withTaskGroup(of: Void.self) {
                 $0.addTask { await self.loadAviationSummary() }

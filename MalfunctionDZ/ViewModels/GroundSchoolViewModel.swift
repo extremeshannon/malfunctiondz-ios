@@ -8,6 +8,7 @@ class GroundSchoolViewModel: ObservableObject {
     @Published var courses:   [LMSCourse] = []
     @Published var isLoading  = false
     @Published var error:     String?
+    @Published var pendingInstructorReviews = 0
 
     func load() async {
         isLoading = true
@@ -21,7 +22,7 @@ class GroundSchoolViewModel: ObservableObject {
         do {
             let (data, response) = try await URLSession.shared.data(for: req)
             if let http = response as? HTTPURLResponse, http.statusCode == 401 {
-                await AuthManager.shared.logout()
+                AuthManager.shared.logout()
                 error = "Session expired"
                 return
             }
@@ -42,6 +43,23 @@ class GroundSchoolViewModel: ObservableObject {
         } catch {
             self.error = error.localizedDescription
         }
+        await loadPendingInstructorReviews()
+    }
+
+    private func loadPendingInstructorReviews() async {
+        guard AuthManager.shared.currentUser?.isInstructorRole == true,
+              let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)/api/lms/pending_signoffs.php") else {
+            pendingInstructorReviews = 0
+            return
+        }
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        struct PR: Decodable { let ok: Bool; let data: PD?; struct PD: Decodable { let pending_count: Int } }
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let resp = try? JSONDecoder().decode(PR.self, from: data),
+              resp.ok, let d = resp.data else { return }
+        pendingInstructorReviews = d.pending_count
     }
 
     func markComplete(lessonId: Int, courseId: Int) async {

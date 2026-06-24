@@ -100,7 +100,13 @@ struct AircraftListSplitView: View {
                 if selectedAircraft == nil, let first = vm.aircraft.first { selectedAircraft = first }
             }
             .sheet(isPresented: $showAddAircraft) {
-                AddAircraftPlaceholderSheet(onDismiss: { showAddAircraft = false })
+                AddAircraftSheet(
+                    onDismiss: { showAddAircraft = false },
+                    onCreated: {
+                        showAddAircraft = false
+                        Task { await vm.loadAll() }
+                    }
+                )
             }
         } detail: {
             if let aircraft = selectedAircraft {
@@ -269,7 +275,13 @@ struct AircraftListStackView: View {
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $showAddAircraft) {
-                AddAircraftPlaceholderSheet(onDismiss: { showAddAircraft = false })
+                AddAircraftSheet(
+                    onDismiss: { showAddAircraft = false },
+                    onCreated: {
+                        showAddAircraft = false
+                        Task { await vm.loadAll() }
+                    }
+                )
             }
         }
     }
@@ -389,42 +401,222 @@ struct AlertBadge: View {
     }
 }
 
-// MARK: - Add Aircraft (placeholder until API exists)
-struct AddAircraftPlaceholderSheet: View {
+// MARK: - Add Aircraft (POST /api/aircraft)
+struct AddAircraftSheet: View {
     let onDismiss: () -> Void
+    let onCreated: () -> Void
+
     @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
+
+    @State private var tailNumber = ""
+    @State private var make = ""
+    @State private var model = ""
+    @State private var year = ""
+    @State private var serialNumber = ""
+    @State private var engineTT = ""
+    @State private var engineTSMOH = ""
+    @State private var propTT = ""
+    @State private var propTSOH = ""
+    @State private var currentHobbs = ""
+    @State private var currentTach = ""
     @State private var isMultiEngine = false
+    @State private var status = "active"
+    @State private var saving = false
+    @State private var error: String?
+
+    private let statusOptions = [("active", "Active"), ("inactive", "Inactive"), ("maintenance", "Maintenance")]
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                colors.background.ignoresSafeArea()
-                VStack(spacing: 20) {
-                    Image(systemName: "airplane.circle")
-                        .font(.system(size: 56))
-                        .foregroundColor(colors.muted)
-                    Text("Add Aircraft")
-                        .font(.headline)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    sectionFields
                     Toggle(isOn: $isMultiEngine) {
                         Text("Multi-engine")
                             .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(colors.text)
                     }
                     .tint(colors.accent)
-                    .padding(.horizontal, 24)
-                    Text("When the add-aircraft API is ready, this form will include tail number, model, TTSN, SMOH, prop time, and multi-engine. Multi-engine aircraft use Left Engine and Right Engine logbooks.")
-                        .font(.subheadline)
+                    Text("Multi-engine aircraft use Left Engine and Right Engine logbooks.")
+                        .font(.caption)
                         .foregroundColor(colors.muted)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
                 }
+                .padding(20)
             }
+            .background(colors.background)
             .navigationTitle("Add Aircraft")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onDismiss).foregroundColor(colors.amber)
+                }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done", action: onDismiss)
+                    Button("Create") { Task { await save() } }
+                        .fontWeight(.semibold)
+                        .foregroundColor(canSubmit ? colors.amber : colors.muted)
+                        .disabled(!canSubmit || saving)
                 }
             }
+            .alert("Error", isPresented: .init(get: { error != nil }, set: { if !$0 { error = nil } })) {
+                Button("OK", role: .cancel) { error = nil }
+            } message: { Text(error ?? "") }
+        }
+    }
+
+    private var canSubmit: Bool {
+        !tailNumber.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    private var sectionFields: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            field("Tail number", $tailNumber)
+                .textInputAutocapitalization(.characters)
+            HStack(spacing: 12) {
+                field("Make", $make)
+                field("Model", $model)
+            }
+            HStack(spacing: 12) {
+                field("Year", $year)
+                    .keyboardType(.numberPad)
+                field("Serial", $serialNumber)
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                Text("STATUS")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(colors.muted)
+                    .tracking(1)
+                Picker("", selection: $status) {
+                    ForEach(statusOptions, id: \.0) { opt in
+                        Text(opt.1).tag(opt.0)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+            Text("Times (optional)")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(colors.muted)
+                .tracking(1)
+                .padding(.top, 4)
+            field("Engine TT (TTSN)", $engineTT).keyboardType(.decimalPad)
+            field("Engine TSMOH", $engineTSMOH).keyboardType(.decimalPad)
+            field("Prop TT", $propTT).keyboardType(.decimalPad)
+            field("Prop TSPOH / TSO", $propTSOH).keyboardType(.decimalPad)
+            field("Current Hobbs", $currentHobbs).keyboardType(.decimalPad)
+            field("Current Tach", $currentTach).keyboardType(.decimalPad)
+        }
+        .padding(16)
+        .background(colors.card)
+        .cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
+    }
+
+    private func field(_ label: String, _ binding: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label.uppercased())
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(colors.muted)
+                .tracking(1)
+            TextField("", text: binding)
+                .font(.system(size: 16))
+                .foregroundColor(colors.text)
+                .padding(12)
+                .background(colors.background)
+                .cornerRadius(8)
+                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+        }
+    }
+
+    private func save() async {
+        error = nil
+        saving = true
+        defer { saving = false }
+
+        guard let token = KeychainHelper.readToken() else {
+            error = "Not signed in"
+            return
+        }
+
+        var payload: [String: Any] = [
+            "tail_number": tailNumber.trimmingCharacters(in: .whitespaces),
+            "make": make.trimmingCharacters(in: .whitespaces),
+            "model": model.trimmingCharacters(in: .whitespaces),
+            "serial_number": serialNumber.trimmingCharacters(in: .whitespaces),
+            "status": status,
+            "is_multi_engine": isMultiEngine,
+            "is_jumpable": true,
+        ]
+        if let y = Int(year.trimmingCharacters(in: .whitespaces)), y > 1900, y < 2100 {
+            payload["year"] = y
+        }
+        if let v = Double(engineTT.trimmingCharacters(in: .whitespaces)) { payload["engine_tt"] = v }
+        if let v = Double(engineTSMOH.trimmingCharacters(in: .whitespaces)) { payload["engine_tsmoh"] = v }
+        if let v = Double(propTT.trimmingCharacters(in: .whitespaces)) { payload["prop_tt"] = v }
+        if let v = Double(propTSOH.trimmingCharacters(in: .whitespaces)) { payload["prop_tso"] = v }
+        if let v = Double(currentHobbs.trimmingCharacters(in: .whitespaces)) { payload["current_hobbs"] = v }
+        if let v = Double(currentTach.trimmingCharacters(in: .whitespaces)) { payload["current_tach"] = v }
+
+        let base = kServerURL.hasSuffix("/") ? String(kServerURL.dropLast()) : kServerURL
+        // Try extensionless first (often routed to FastAPI), then list.php (same file as working fleet GET).
+        let paths = [
+            "/api/aircraft",
+            "/api/aircraft/list.php",
+            "/api/aircraft/list",
+            "/api/aircraft/create.php",
+            "/api/aircraft/create",
+            "/api/aircraft.php",
+        ]
+        guard let bodyData = try? JSONSerialization.data(withJSONObject: payload) else {
+            error = "Could not build request"
+            return
+        }
+
+        struct R: Decodable { let ok: Bool; let error: String? }
+
+        do {
+            var lastStatus = 0
+            var lastBody = ""
+            for path in paths {
+                guard let url = URL(string: base + path) else { continue }
+                var req = URLRequest(url: url)
+                req.httpMethod = "POST"
+                req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                req.httpBody = bodyData
+                let (data, response) = try await URLSession.shared.data(for: req)
+                lastBody = String(data: data, encoding: .utf8) ?? ""
+                guard let http = response as? HTTPURLResponse else { continue }
+                lastStatus = http.statusCode
+                if http.statusCode == 401 {
+                    AuthManager.shared.logout()
+                    error = "Session expired"
+                    return
+                }
+                if http.statusCode == 405 || http.statusCode == 404 {
+                    continue
+                }
+                if let r = try? JSONDecoder().decode(R.self, from: data) {
+                    if r.ok {
+                        onCreated()
+                        return
+                    }
+                    error = r.error ?? "Could not create aircraft"
+                    return
+                }
+                if http.statusCode == 403 || http.statusCode == 422 || http.statusCode == 409 {
+                    error = lastBody.isEmpty ? "Request failed (HTTP \(http.statusCode))" : lastBody
+                    return
+                }
+                error = lastBody.isEmpty ? "Unexpected response (HTTP \(http.statusCode))" : lastBody
+                return
+            }
+            error = (lastStatus == 404 || lastStatus == 405)
+                ? "Aircraft create API not found (HTTP \(lastStatus)). Deploy FastAPI with POST /api/aircraft/list.php or route /api/* to uvicorn."
+                : (lastBody.isEmpty ? "Could not reach aircraft API" : lastBody)
+        } catch {
+            self.error = error.localizedDescription
         }
     }
 }

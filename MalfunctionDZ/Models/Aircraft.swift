@@ -28,6 +28,9 @@ struct Aircraft: Codable, Identifiable, Hashable {
     /// Min/max slots for aircraft (e.g. pax); shown in header.
     let slotsMin: Int?
     let slotsMax: Int?
+    /// Manifest / load limits (web edit form); drives flight-log PAX picker when set.
+    let minPaxPerLoad: Int?
+    let maxPaxPerLoad: Int?
 
     enum CodingKeys: String, CodingKey {
         case id, model, status, make, year
@@ -45,6 +48,8 @@ struct Aircraft: Codable, Identifiable, Hashable {
         case isMultiEngineSnake = "is_multi_engine"
         case slotsMin      = "slots_min"
         case slotsMax      = "slots_max"
+        case minPaxPerLoad = "min_pax_per_load"
+        case maxPaxPerLoad = "max_pax_per_load"
     }
 
     init(from decoder: Decoder) throws {
@@ -77,6 +82,8 @@ struct Aircraft: Codable, Identifiable, Hashable {
         }
         slotsMin = try? c.decodeIfPresent(Int.self, forKey: .slotsMin)
         slotsMax = try? c.decodeIfPresent(Int.self, forKey: .slotsMax)
+        minPaxPerLoad = try? c.decodeIfPresent(Int.self, forKey: .minPaxPerLoad)
+        maxPaxPerLoad = try? c.decodeIfPresent(Int.self, forKey: .maxPaxPerLoad)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -99,6 +106,8 @@ struct Aircraft: Codable, Identifiable, Hashable {
         try c.encodeIfPresent(isMultiEngine, forKey: .isMultiEngineSnake)
         try c.encodeIfPresent(slotsMin, forKey: .slotsMin)
         try c.encodeIfPresent(slotsMax, forKey: .slotsMax)
+        try c.encodeIfPresent(minPaxPerLoad, forKey: .minPaxPerLoad)
+        try c.encodeIfPresent(maxPaxPerLoad, forKey: .maxPaxPerLoad)
     }
 
     var statusColor: Color {
@@ -112,8 +121,11 @@ struct Aircraft: Codable, Identifiable, Hashable {
 
     var hasAlerts: Bool { openSquawks > 0 || dueSoon > 0 || overdue > 0 }
 
-    /// PAX choices for flight log / PAX session forms: `slots_min`…`slots_max`, else `0`…`slots`, else `0`…17.
+    /// PAX choices for flight log: `min_pax_per_load`…`max_pax_per_load`, else `slots_min`…`slots_max`, else `0`…`slots`, else `0`…17.
     var flightLogPaxChoices: [Int] {
+        if let lo = minPaxPerLoad, let hi = maxPaxPerLoad, lo <= hi, lo >= 0 {
+            return Array(lo...hi)
+        }
         if let lo = slotsMin, let hi = slotsMax, lo <= hi {
             return Array(lo...hi)
         }

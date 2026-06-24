@@ -6,6 +6,8 @@ import MalfunctionDZCore
 // MARK: - Tab Selection (shared singleton for programmatic navigation)
 class TabSelection: ObservableObject {
     @Published var selected: Int = 0
+    /// When true, Ground School tab opens the instructor review queue.
+    @Published var openInstructorReviews = false
     static let shared = TabSelection()
 }
 
@@ -417,7 +419,10 @@ struct HomeView: View {
         } else if isInstructor {
             InstructorQuickWidget(
                 data: vm.instructorData,
-                onTapGroundSchool: (vm.instructorData?.pendingSignoffs ?? 0) > 0 ? { tabSelect.selected = 3 } : nil
+                onTapGroundSchool: (vm.instructorData?.pendingSignoffs ?? 0) > 0 ? {
+                    tabSelect.selected = 3
+                    tabSelect.openInstructorReviews = true
+                } : nil
             )
         } else if isStudent {
             StudentProgressWidget(data: vm.studentData) {
@@ -503,6 +508,7 @@ struct HomeView: View {
     private func studentsAwaitingCard(pending: Int) -> some View {
         Button {
             tabSelect.selected = 3
+            tabSelect.openInstructorReviews = true
         } label: {
             HStack(spacing: 14) {
                 ZStack {
@@ -521,7 +527,7 @@ struct HomeView: View {
                     Text("\(pending) student\(pending == 1 ? "" : "s") awaiting sign-off")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(colors.text)
-                    Text("Tap to open Ground School")
+                    Text("Tap to review students")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(colors.muted)
                 }

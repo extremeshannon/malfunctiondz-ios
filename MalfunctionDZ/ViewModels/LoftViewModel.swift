@@ -25,7 +25,7 @@ class LoftViewModel: ObservableObject {
         do {
             let (data, response) = try await URLSession.shared.data(for: req)
             if let http = response as? HTTPURLResponse, http.statusCode == 401 {
-                await AuthManager.shared.logout()
+                AuthManager.shared.logout()
                 error = "Session expired"
                 return
             }

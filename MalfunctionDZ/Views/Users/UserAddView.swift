@@ -47,8 +47,8 @@ struct UserAddView: View {
                         Task { await createUser() }
                     }
                     .fontWeight(.semibold)
-                    .foregroundColor(colors.amber)
-                    .disabled(saving || selectedRoles.isEmpty || rolesLoadError != nil)
+                    .foregroundColor((saving || rolesLoading || selectedRoles.isEmpty) ? colors.muted : colors.amber)
+                    .disabled(saving || rolesLoading || selectedRoles.isEmpty)
                 }
             }
             .task { await loadRoles() }
@@ -148,11 +148,13 @@ struct UserAddView: View {
                     } label: {
                         Text(r.label)
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(isSel ? .white : colors.text)
+                            .foregroundColor(isSel ? Color.white : colors.text)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .background(isSel ? colors.accent : colors.navyMid)
-                            .overlay(Capsule().strokeBorder(isSel ? colors.accent : colors.border, lineWidth: isSel ? 2 : 1))
+                            .background(isSel ? colors.accent : colors.card2)
+                            .overlay(
+                                Capsule().strokeBorder(isSel ? colors.accent : colors.border.opacity(0.9), lineWidth: isSel ? 2 : 1)
+                            )
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
@@ -220,9 +222,13 @@ struct UserAddView: View {
         if ln.isEmpty { error = "Last name is required"; return }
         if selectedRoles.isEmpty { error = "At least one role is required"; return }
 
-        guard let token = KeychainHelper.readToken(),
-              let url = URL(string: "\(kServerURL)/api/users.php") else {
+        guard let token = KeychainHelper.readToken() else {
             error = "Not authenticated"
+            return
+        }
+        let urls = ["\(kServerURL)/api/users.php", "\(kServerURL)/api/users"]
+        guard let url = urls.compactMap({ URL(string: $0) }).first else {
+            error = "Invalid URL"
             return
         }
         var req = URLRequest(url: url)
@@ -244,17 +250,21 @@ struct UserAddView: View {
         do {
             let (data, response) = try await URLSession.shared.data(for: req)
             if let http = response as? HTTPURLResponse, http.statusCode == 401 {
-                await AuthManager.shared.logout()
+                AuthManager.shared.logout()
                 error = "Session expired"
                 return
             }
             struct R: Decodable { let ok: Bool; let error: String?; let id: Int? }
-            let r = try JSONDecoder().decode(R.self, from: data)
-            if r.ok {
-                created = true
-            } else {
-                error = r.error ?? "Create failed"
+            if let r = try? JSONDecoder().decode(R.self, from: data) {
+                if r.ok {
+                    created = true
+                } else {
+                    error = r.error ?? "Create failed"
+                }
+                return
             }
+            let raw = String(data: data, encoding: .utf8) ?? ""
+            error = raw.isEmpty ? "Unexpected server response" : raw
         } catch {
             self.error = error.localizedDescription
         }

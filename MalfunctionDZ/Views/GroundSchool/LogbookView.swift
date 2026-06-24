@@ -790,9 +790,9 @@ struct AddLogbookEntrySheet: View {
                 Task { await vm.loadRigs() }
             }
             .sheet(isPresented: $showCreateRig) {
-                CreateRigSheet(vm: vm) {
+                CreateRigSheet(vm: vm, onComplete: {
                     showCreateRig = false
-                }
+                })
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(mdzColorScheme, for: .navigationBar)

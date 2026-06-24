@@ -493,7 +493,7 @@ class PilotAviationViewModel: ObservableObject {
         do {
             let (data, response) = try await URLSession.shared.data(for: req)
             if (response as? HTTPURLResponse)?.statusCode == 401 {
-                await AuthManager.shared.logout()
+                AuthManager.shared.logout()
                 return
             }
             struct ListResp: Decodable { let ok: Bool; let aircraft: [Aircraft]? }

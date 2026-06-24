@@ -214,7 +214,7 @@ struct PilotCurrencyCard: View {
         .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
         .task { await vm.load() }
         .photosPicker(isPresented: $showImagePicker, selection: $pickerItem, matching: .images)
-        .onChange(of: pickerItem) { newItem in
+        .onChange(of: pickerItem) { _, newItem in
             guard let key = activeUploadKey, let item = newItem else { return }
             Task {
                 if let data = try? await item.loadTransferable(type: Data.self) {

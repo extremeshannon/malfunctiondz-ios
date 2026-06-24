@@ -13,8 +13,10 @@ struct GroundSchoolView: View {
 
     var body: some View {
         Group {
-            if hSizeClass == .regular {
-                GroundSchoolSplitView(vm: vm, selectedCourse: $selectedCourse)
+            if auth.currentUser?.isInstructorRole == true {
+                InstructorDashboardView(coursesVm: vm)
+            } else if hSizeClass == .regular {
+                GroundSchoolWideLayout(vm: vm, selectedCourse: $selectedCourse)
             } else {
                 GroundSchoolStackView(vm: vm)
             }
@@ -30,16 +32,18 @@ struct GroundSchoolView: View {
     }
 }
 
-// MARK: - iPad: Split view (course list | course detail)
-struct GroundSchoolSplitView: View {
+// MARK: - iPad: Wide layout (avoids nested NavigationSplitView — lesson taps work)
+struct GroundSchoolWideLayout: View {
     @EnvironmentObject private var auth: AuthManager
+    @EnvironmentObject private var tabSelect: TabSelection
     @ObservedObject var vm: GroundSchoolViewModel
     @Binding var selectedCourse: LMSCourse?
+    @State private var showInstructorReviews = false
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     var body: some View {
-        NavigationSplitView {
+        HStack(spacing: 0) {
             ZStack {
                 colors.background.ignoresSafeArea()
                 VStack(spacing: 0) {
@@ -66,12 +70,140 @@ struct GroundSchoolSplitView: View {
                     }
                 }
             }
+            .frame(width: 340)
+            .background(colors.background)
+
+            Divider().background(colors.border)
+
+            NavigationStack {
+                if let course = selectedCourse {
+                    CourseDetailView(course: course, vm: vm)
+                } else {
+                    ZStack {
+                        colors.background.ignoresSafeArea()
+                        VStack(spacing: 12) {
+                            Image(systemName: "graduationcap.fill")
+                                .font(.system(size: 48))
+                                .foregroundColor(colors.muted.opacity(0.5))
+                            Text("Select a course")
+                                .font(.headline)
+                                .foregroundColor(colors.muted)
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .onAppear { if selectedCourse == nil, let first = vm.courses.first { selectedCourse = first } }
+        .onChange(of: vm.courses.count) { _, _ in
+            if selectedCourse == nil, let first = vm.courses.first { selectedCourse = first }
+        }
+        .onChange(of: tabSelect.openInstructorReviews) { _, open in
+            if open {
+                showInstructorReviews = true
+                tabSelect.openInstructorReviews = false
+            }
+        }
+        .navigationDestination(isPresented: $showInstructorReviews) {
+            InstructorReviewListView()
+        }
+        .toolbar {
+            if auth.currentUser?.canManageLMS == true {
+                ToolbarItem(placement: .primaryAction) {
+                    NavigationLink(destination: LMSEditRootView()) {
+                        Label("Manage LMS", systemImage: "pencil.and.list.clipboard")
+                    }
+                }
+            }
+        }
+    }
+
+    private var groundSchoolHeader: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Image(systemName: "graduationcap.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(colors.amber)
+                Text("GROUND SCHOOL")
+                    .font(.system(size: 11, weight: .black))
+                    .foregroundColor(colors.amber)
+                    .tracking(2)
+                Spacer()
+                Text("\(vm.courses.count) COURSES")
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundColor(colors.muted)
+                    .tracking(1)
+            }
+            Text("Training & LMS")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(colors.muted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(colors.navyMid)
+    }
+}
+
+// MARK: - iPad: Split view (legacy — nested split breaks lesson navigation in app shell)
+struct GroundSchoolSplitView: View {
+    @EnvironmentObject private var auth: AuthManager
+    @EnvironmentObject private var tabSelect: TabSelection
+    @ObservedObject var vm: GroundSchoolViewModel
+    @Binding var selectedCourse: LMSCourse?
+    @State private var showInstructorReviews = false
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
+
+    var body: some View {
+        NavigationSplitView {
+            ZStack {
+                colors.background.ignoresSafeArea()
+                VStack(spacing: 0) {
+                    groundSchoolHeader
+                    if vm.isLoading && vm.courses.isEmpty {
+                        Spacer()
+                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.amber)).scaleEffect(1.4)
+                        Spacer()
+                    } else if vm.courses.isEmpty {
+                        Spacer()
+                        EmptyStateView(icon: "graduationcap", title: "No Courses", subtitle: "No courses available.")
+                        Spacer()
+                    } else {
+                        List(selection: $selectedCourse) {
+                            if auth.currentUser?.isInstructorRole == true {
+                                NavigationLink(destination: InstructorReviewListView()) {
+                                    InstructorReviewEntryCard(pendingCount: vm.pendingInstructorReviews)
+                                }
+                                .listRowBackground(colors.card)
+                            }
+                            ForEach(vm.courses) { course in
+                                GroundSchoolCourseRow(course: course)
+                                    .tag(course)
+                                    .listRowBackground(colors.card)
+                            }
+                        }
+                        .listStyle(.sidebar)
+                        .scrollContentBackground(.hidden)
+                        .background(colors.background)
+                    }
+                }
+            }
             .navigationTitle("Courses")
             .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
             .toolbarBackground(colors.navyMid, for: .navigationBar)
             .onAppear { if selectedCourse == nil, let first = vm.courses.first { selectedCourse = first } }
             .onChange(of: vm.courses.count) { _, _ in
                 if selectedCourse == nil, let first = vm.courses.first { selectedCourse = first }
+            }
+            .onChange(of: tabSelect.openInstructorReviews) { _, open in
+                if open {
+                    showInstructorReviews = true
+                    tabSelect.openInstructorReviews = false
+                }
+            }
+            .navigationDestination(isPresented: $showInstructorReviews) {
+                InstructorReviewListView()
             }
             .toolbar {
                 if auth.currentUser?.canManageLMS == true {
@@ -156,7 +288,9 @@ struct GroundSchoolCourseRow: View {
 // MARK: - iPhone: Stack navigation (original behavior)
 struct GroundSchoolStackView: View {
     @EnvironmentObject private var auth: AuthManager
+    @EnvironmentObject private var tabSelect: TabSelection
     @ObservedObject var vm: GroundSchoolViewModel
+    @State private var showInstructorReviews = false
     @Environment(\.mdzColors) private var colors
 
     var body: some View {
@@ -201,6 +335,12 @@ struct GroundSchoolStackView: View {
                     } else {
                         ScrollView(showsIndicators: false) {
                             VStack(spacing: 12) {
+                                if auth.currentUser?.isInstructorRole == true {
+                                    NavigationLink(destination: InstructorReviewListView()) {
+                                        InstructorReviewEntryCard(pendingCount: vm.pendingInstructorReviews)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                                 // Manage LMS card for admins/instructors
                                 if auth.currentUser?.canManageLMS == true {
                                     NavigationLink(destination: LMSEditRootView()) {
@@ -229,7 +369,9 @@ struct GroundSchoolStackView: View {
                                     .buttonStyle(.plain)
                                 }
                                 ForEach(vm.courses) { course in
-                                    NavigationLink(destination: CourseDetailView(course: course, vm: vm)) {
+                                    NavigationLink {
+                                        CourseDetailView(course: course, vm: vm)
+                                    } label: {
                                         CourseCard(course: course)
                                     }
                                     .buttonStyle(.plain)
@@ -241,6 +383,15 @@ struct GroundSchoolStackView: View {
                 }
             }
             .navigationBarHidden(true)
+            .navigationDestination(isPresented: $showInstructorReviews) {
+                InstructorReviewListView()
+            }
+            .onChange(of: tabSelect.openInstructorReviews) { _, open in
+                if open {
+                    showInstructorReviews = true
+                    tabSelect.openInstructorReviews = false
+                }
+            }
         }
     }
 }
@@ -339,129 +490,298 @@ struct CourseCard: View {
     }
 }
 
+// MARK: - Lesson navigation (programmatic — reliable on iPad wide layout)
+struct LessonNavItem: Hashable {
+    let lessonId: Int
+    let lessonTitle: String
+    let courseId: Int
+    let moduleId: Int
+    let allLessons: [LMSLesson]
+}
+
 // MARK: - Course Detail
 struct CourseDetailView: View {
     let course: LMSCourse
     @ObservedObject var vm: GroundSchoolViewModel
     @State private var expandedModules: Set<Int> = []
+    @State private var showModuleQuizzes = false
+    @State private var showCompletedModules = false
+    @State private var lessonNav: LessonNavItem?
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
+
+    private var liveCourse: LMSCourse {
+        vm.courses.first(where: { $0.id == course.id }) ?? course
+    }
+
+    /// Unlocked modules only — future modules stay hidden until prior level is complete.
+    private var accessibleModules: [LMSModule] {
+        liveCourse.modules.filter { !$0.isLocked }
+    }
+
+    private var currentModule: LMSModule? {
+        accessibleModules.first(where: { !$0.isComplete })
+    }
+
+    private var completedModules: [LMSModule] {
+        accessibleModules.filter(\.isComplete)
+    }
+
+    private var currentModuleQuizzes: [LMSQuizSummary] {
+        guard let current = currentModule else { return [] }
+        return liveCourse.quizzesForModule(current)
+    }
 
     var body: some View {
         ZStack {
             colors.background.ignoresSafeArea()
 
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 16) {
+            ScrollViewReader { proxy in
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        courseHeaderCard
 
-                    // Course header
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            if !course.isActive {
-                                StatusPill(label: "INACTIVE", color: colors.muted)
+                        if let current = currentModule {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("CURRENT MODULE")
+                                    .font(.system(size: 10, weight: .black))
+                                    .foregroundColor(colors.amber)
+                                    .tracking(2)
+
+                                ModuleSection(
+                                    module: current,
+                                    courseId: liveCourse.id,
+                                    isExpanded: true,
+                                    pinsOpen: true,
+                                    moduleQuizzes: currentModuleQuizzes,
+                                    vm: vm,
+                                    onToggle: { },
+                                    onSelectLesson: { lesson in
+                                        lessonNav = LessonNavItem(
+                                            lessonId: lesson.id,
+                                            lessonTitle: lesson.title,
+                                            courseId: liveCourse.id,
+                                            moduleId: current.id,
+                                            allLessons: current.lessons
+                                        )
+                                    }
+                                )
+                                .id("current-module")
                             }
-                            StatusPill(label: course.enrollmentStatus.label, color: enrollmentColor(course, colors))
-                            Spacer()
-                            Text("\(Int(course.progressPct))% complete")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(enrollmentColor(course, colors))
-                        }
-
-                        if let desc = course.description {
-                            Text(desc)
+                        } else if accessibleModules.isEmpty {
+                            Text("No modules available yet.")
                                 .font(.subheadline)
                                 .foregroundColor(colors.muted)
+                                .padding(16)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(colors.card)
+                                .cornerRadius(12)
+                        } else {
+                            HStack(spacing: 8) {
+                                Image(systemName: "checkmark.seal.fill")
+                                    .foregroundColor(colors.green)
+                                Text("All available modules complete — great work!")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundColor(colors.text)
+                            }
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(colors.card)
+                            .cornerRadius(12)
                         }
 
-                        // Progress bar
-                        if course.enrolled {
-                            GeometryReader { geo in
-                                ZStack(alignment: .leading) {
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(colors.border)
-                                        .frame(height: 8)
-
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(enrollmentColor(course, colors))
-                                        .frame(
-                                            width: geo.size.width * CGFloat(course.progressPct) / 100,
-                                            height: 8
-                                        )
+                        if !completedModules.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Button {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        showCompletedModules.toggle()
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text("COMPLETED MODULES (\(completedModules.count))")
+                                            .font(.system(size: 10, weight: .black))
+                                            .foregroundColor(colors.muted)
+                                            .tracking(2)
+                                        Spacer()
+                                        Image(systemName: showCompletedModules ? "chevron.up" : "chevron.down")
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .foregroundColor(colors.muted)
+                                    }
                                 }
-                            }
-                            .frame(height: 8)
+                                .buttonStyle(.plain)
 
-                            HStack {
-                                Text("\(course.completedLessons) of \(course.totalLessons) lessons completed")
-                                    .font(.caption)
-                                    .foregroundColor(colors.muted)
-                                Spacer()
+                                if showCompletedModules {
+                                    ForEach(completedModules) { module in
+                                        ModuleSection(
+                                            module: module,
+                                            courseId: liveCourse.id,
+                                            isExpanded: expandedModules.contains(module.id),
+                                            moduleQuizzes: liveCourse.quizzesForModule(module),
+                                            vm: vm,
+                                            onToggle: { toggleModule(module.id) },
+                                            onSelectLesson: { lesson in
+                                                lessonNav = LessonNavItem(
+                                                    lessonId: lesson.id,
+                                                    lessonTitle: lesson.title,
+                                                    courseId: liveCourse.id,
+                                                    moduleId: module.id,
+                                                    allLessons: module.lessons
+                                                )
+                                            }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
                     .padding(16)
-                    .background(colors.card)
-                    .cornerRadius(12)
-
-                    // Quizzes for this course
-                    if !(course.quizzes ?? []).isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("ASSESSMENTS")
-                                .font(.system(size: 10, weight: .black))
-                                .foregroundColor(colors.muted)
-                                .tracking(2)
-
-                            ForEach(course.quizzes ?? []) { quiz in
-                                QuizLaunchCard(
-                                    quizId: quiz.id,
-                                    title: quiz.title,
-                                    passPercentage: quiz.passPercentage,
-                                    questionCount: quiz.questionCount,
-                                    isUnlocked: quiz.isUnlocked,
-                                    lockReason: quiz.lockReason,
-                                    maxAttempts: quiz.maxAttempts,
-                                    attemptCount: quiz.attemptCount,
-                                    attemptsRemaining: quiz.attemptsRemaining,
-                                    lastAttempt: quiz.lastAttempt.map {
-                                        QuizLastAttempt(id: 0, score: $0.score, passed: $0.passed, date: $0.date)
-                                    }
-                                )
+                }
+                .onAppear {
+                    if let current = currentModule {
+                        expandedModules = [current.id]
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                            withAnimation {
+                                proxy.scrollTo("current-module", anchor: .top)
                             }
                         }
                     }
-
-                    // Modules
-                    ForEach(course.modules) { module in
-                        ModuleSection(
-                            module: module,
-                            courseId: course.id,
-                            isExpanded: expandedModules.contains(module.id),
-                            vm: vm,
-                            onToggle: {
-                                if expandedModules.contains(module.id) {
-                                    expandedModules.remove(module.id)
-                                } else {
-                                    expandedModules.insert(module.id)
-                                }
-                            }
-                        )
-                    }
+                    Task { await vm.load() }
                 }
-                .padding(16)
             }
         }
-        .navigationTitle(course.title)
+        .navigationTitle(liveCourse.title)
         .navigationBarTitleDisplayMode(.large)
         .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
         .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .onAppear {
-            // Auto-expand first incomplete module
-            if let first = course.modules.first(where: { !$0.isComplete }) {
-                expandedModules.insert(first.id)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                if !currentModuleQuizzes.isEmpty {
+                    Button {
+                        showModuleQuizzes = true
+                    } label: {
+                        Image(systemName: "pencil.and.list.clipboard")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(colors.amber)
+                    }
+                    .accessibilityLabel("Module quiz")
+                }
             }
-            // Refresh course data when returning to course detail (e.g. from a lesson)
-            Task { await vm.load() }
+        }
+        .sheet(isPresented: $showModuleQuizzes) {
+            ModuleQuizzesSheet(quizzes: currentModuleQuizzes, moduleTitle: currentModule?.title)
+        }
+        .navigationDestination(item: $lessonNav) { nav in
+            LessonDetailView(
+                lessonId: nav.lessonId,
+                lessonTitle: nav.lessonTitle,
+                allLessons: nav.allLessons,
+                courseId: nav.courseId,
+                moduleId: nav.moduleId
+            )
+        }
+    }
+
+    private var courseHeaderCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                if !liveCourse.isActive {
+                    StatusPill(label: "INACTIVE", color: colors.muted)
+                }
+                StatusPill(label: liveCourse.enrollmentStatus.label, color: enrollmentColor(liveCourse, colors))
+                Spacer()
+                Text("\(Int(min(liveCourse.progressPct, 100)))% complete")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(enrollmentColor(liveCourse, colors))
+            }
+
+            if let desc = liveCourse.description {
+                Text(desc)
+                    .font(.subheadline)
+                    .foregroundColor(colors.muted)
+                    .lineLimit(3)
+            }
+
+            if liveCourse.enrolled {
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(colors.border)
+                            .frame(height: 8)
+
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(enrollmentColor(liveCourse, colors))
+                            .frame(
+                                width: geo.size.width * CGFloat(min(liveCourse.progressPct, 100)) / 100,
+                                height: 8
+                            )
+                    }
+                }
+                .frame(height: 8)
+
+                Text("\(liveCourse.completedLessons) of \(liveCourse.totalLessons) lessons completed")
+                    .font(.caption)
+                    .foregroundColor(colors.muted)
+            }
+        }
+        .padding(16)
+        .background(colors.card)
+        .cornerRadius(12)
+    }
+
+    private func toggleModule(_ id: Int) {
+        if expandedModules.contains(id) {
+            expandedModules.remove(id)
+        } else {
+            expandedModules.insert(id)
+        }
+    }
+}
+
+// MARK: - Module quizzes sheet
+private struct ModuleQuizzesSheet: View {
+    let quizzes: [LMSQuizSummary]
+    var moduleTitle: String?
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.mdzColors) private var colors
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 12) {
+                    if quizzes.isEmpty {
+                        Text("Complete all lessons in this module to unlock the quiz.")
+                            .foregroundColor(colors.muted)
+                            .padding(.top, 24)
+                    } else {
+                        ForEach(quizzes) { quiz in
+                            QuizLaunchCard(
+                                quizId: quiz.id,
+                                title: quiz.title,
+                                passPercentage: quiz.passPercentage,
+                                questionCount: quiz.questionCount,
+                                isUnlocked: true,
+                                lockReason: nil,
+                                maxAttempts: quiz.maxAttempts,
+                                attemptCount: quiz.attemptCount,
+                                attemptsRemaining: quiz.attemptsRemaining,
+                                lastAttempt: quiz.lastAttempt.map {
+                                    QuizLastAttempt(id: 0, score: $0.score, passed: $0.passed, date: $0.date)
+                                }
+                            )
+                        }
+                    }
+                }
+                .padding(16)
+            }
+            .background(colors.background.ignoresSafeArea())
+            .navigationTitle(moduleTitle ?? "Module Quiz")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
         }
     }
 }
@@ -471,15 +791,19 @@ struct ModuleSection: View {
     let module: LMSModule
     let courseId: Int
     let isExpanded: Bool
+    var pinsOpen: Bool = false
+    var moduleQuizzes: [LMSQuizSummary] = []
     @ObservedObject var vm: GroundSchoolViewModel
     let onToggle: () -> Void
+    var onSelectLesson: ((LMSLesson) -> Void)?
+    @State private var showModuleQuizzes = false
     @Environment(\.mdzColors) private var colors
 
     var body: some View {
         VStack(spacing: 0) {
 
             // ── Module header ─────────────────────────────
-            Button(action: { if !module.isLocked { onToggle() } }) {
+            Button(action: { if !module.isLocked && !pinsOpen { onToggle() } }) {
                 HStack(spacing: 12) {
                     ZStack {
                         Circle()
@@ -519,7 +843,22 @@ struct ModuleSection: View {
 
                     Spacer()
 
-                    if !module.isLocked {
+                    if !moduleQuizzes.isEmpty {
+                        Button {
+                            showModuleQuizzes = true
+                        } label: {
+                            Image(systemName: "pencil.and.list.clipboard")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(colors.amber)
+                                .padding(6)
+                                .background(colors.amber.opacity(0.12))
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Take module quiz")
+                    }
+
+                    if !module.isLocked && !pinsOpen {
                         Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(colors.muted)
@@ -539,17 +878,16 @@ struct ModuleSection: View {
                     if !module.lessons.isEmpty {
                         VStack(spacing: 0) {
                             ForEach(module.lessons) { lesson in
-                                NavigationLink(
-                                    destination: LessonDetailView(
-                                        lessonId: lesson.id,
-                                        lessonTitle: lesson.title,
-                                        allLessons: module.lessons,
-                                        courseId: courseId
-                                    )
-                                ) {
+                                Button {
+                                    if !lesson.isLocked {
+                                        onSelectLesson?(lesson)
+                                    }
+                                } label: {
                                     LessonRow(lesson: lesson, courseId: courseId, vm: vm)
                                 }
                                 .buttonStyle(.plain)
+                                .contentShape(Rectangle())
+                                .disabled(lesson.isLocked)
 
                                 if lesson.id != module.lessons.last?.id {
                                     Divider()
@@ -596,6 +934,9 @@ struct ModuleSection: View {
                 .strokeBorder(borderColor, lineWidth: 1)
         )
         .opacity(module.isLocked ? 0.6 : 1.0)
+        .sheet(isPresented: $showModuleQuizzes) {
+            ModuleQuizzesSheet(quizzes: moduleQuizzes, moduleTitle: module.title)
+        }
     }
 
     private var headerCircleColor: Color {
@@ -647,33 +988,48 @@ struct LessonRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Visual indicator only — not tappable
             ZStack {
                 Circle()
-                    .strokeBorder(lesson.completed ? colors.green : colors.border, lineWidth: 2)
+                    .strokeBorder(
+                        lesson.completed ? colors.green : (lesson.isLocked ? colors.border : colors.border),
+                        lineWidth: 2
+                    )
                     .frame(width: 24, height: 24)
 
                 if lesson.completed {
                     Image(systemName: "checkmark")
                         .font(.system(size: 11, weight: .black))
                         .foregroundColor(colors.green)
+                } else if lesson.isLocked {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(colors.muted)
                 }
             }
 
-            Text(lesson.title)
-                .font(.system(size: 13, weight: lesson.completed ? .medium : .regular))
-                .foregroundColor(lesson.completed ? colors.muted : colors.text)
-                .strikethrough(lesson.completed, color: colors.muted)
-                .multilineTextAlignment(.leading)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(lesson.title)
+                    .font(.system(size: 13, weight: lesson.completed ? .medium : .regular))
+                    .foregroundColor(lesson.isLocked ? colors.muted : colors.text)
+                    .multilineTextAlignment(.leading)
+                if lesson.isLocked, let reason = lesson.lockReason, !reason.isEmpty {
+                    Text(reason)
+                        .font(.system(size: 11))
+                        .foregroundColor(colors.muted)
+                }
+            }
 
             Spacer()
 
-            Image(systemName: "chevron.right")
-                .font(.system(size: 11))
-                .foregroundColor(colors.muted)
+            if !lesson.isLocked {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11))
+                    .foregroundColor(colors.muted)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
+        .opacity(lesson.isLocked ? 0.65 : 1)
     }
 }
 

@@ -22,6 +22,10 @@
 		457112FECEAC7ACCF4FFC78E /* DzRigsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D372F54BB230227638 /* DzRigsViewModel.swift */; };
 		464FC721722F3C327A3FBB2F /* UsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D292F54BB100227638 /* UsersView.swift */; };
 		47999026C4ABF7D05C6C5A42 /* ModuleSignoffBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D132F534F9E00227638 /* ModuleSignoffBlock.swift */; };
+		A1B2C3D42F57000200022763 /* InstructorReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E112F57000200022763 /* InstructorReviewView.swift */; };
+		B2C3D4E52F57000300022763 /* JumpSignoffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E132F57000300022763 /* JumpSignoffView.swift */; };
+		C3D4E5F62F57000400022763 /* InstructorProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E152F57000400022763 /* InstructorProfileView.swift */; };
+		E5F607182F57000500022763 /* InstructorDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E172F57000500022763 /* InstructorDashboardView.swift */; };
 		48DF0B39C8B1F73C237EED9E /* DzRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D332F54BB210227638 /* DzRigsView.swift */; };
 		4936B0B4AF6D76D7EBFEFC01 /* UserDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2C2F54BB120227638 /* UserDetailView.swift */; };
 		49502B1F722DE37895EBDD37 /* PaxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D192F53F92300227638 /* PaxView.swift */; };
@@ -89,6 +93,10 @@
 		FB063D102F52D10B00227638 /* LessonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0F2F52D10B00227638 /* LessonDetailView.swift */; };
 		FB063D122F52D4EC00227638 /* QuizLaunchCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D112F52D4EC00227638 /* QuizLaunchCard.swift */; };
 		FB063D142F534F9E00227638 /* ModuleSignoffBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D132F534F9E00227638 /* ModuleSignoffBlock.swift */; };
+		FB063E122F57000200022763 /* InstructorReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E112F57000200022763 /* InstructorReviewView.swift */; };
+		FB063E142F57000300022763 /* JumpSignoffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E132F57000300022763 /* JumpSignoffView.swift */; };
+		D4E5F6072F57000400022763 /* InstructorProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E152F57000400022763 /* InstructorProfileView.swift */; };
+		F60718192F57000500022763 /* InstructorDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E172F57000500022763 /* InstructorDashboardView.swift */; };
 		FB063D162F53F69A00227638 /* FlightLoad.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D152F53F69A00227638 /* FlightLoad.swift */; };
 		FB063D182F53F6CF00227638 /* PaxViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D172F53F6CF00227638 /* PaxViewModel.swift */; };
 		FB063D1A2F53F92300227638 /* PaxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D192F53F92300227638 /* PaxView.swift */; };
@@ -160,6 +168,10 @@
 		FB063D0F2F52D10B00227638 /* LessonDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonDetailView.swift; sourceTree = "<group>"; };
 		FB063D112F52D4EC00227638 /* QuizLaunchCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizLaunchCard.swift; sourceTree = "<group>"; };
 		FB063D132F534F9E00227638 /* ModuleSignoffBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleSignoffBlock.swift; sourceTree = "<group>"; };
+		FB063E112F57000200022763 /* InstructorReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstructorReviewView.swift; sourceTree = "<group>"; };
+		FB063E132F57000300022763 /* JumpSignoffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JumpSignoffView.swift; sourceTree = "<group>"; };
+		FB063E152F57000400022763 /* InstructorProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstructorProfileView.swift; sourceTree = "<group>"; };
+		FB063E172F57000500022763 /* InstructorDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstructorDashboardView.swift; sourceTree = "<group>"; };
 		FB063D152F53F69A00227638 /* FlightLoad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightLoad.swift; sourceTree = "<group>"; };
 		FB063D172F53F6CF00227638 /* PaxViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaxViewModel.swift; sourceTree = "<group>"; };
 		FB063D192F53F92300227638 /* PaxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaxView.swift; sourceTree = "<group>"; };
@@ -234,6 +246,10 @@
 				FB063D242F54BB030227638 /* LogbookView.swift */,
 				FB063D112F52D4EC00227638 /* QuizLaunchCard.swift */,
 				FB063D132F534F9E00227638 /* ModuleSignoffBlock.swift */,
+				FB063E112F57000200022763 /* InstructorReviewView.swift */,
+				FB063E132F57000300022763 /* JumpSignoffView.swift */,
+				FB063E152F57000400022763 /* InstructorProfileView.swift */,
+				FB063E172F57000500022763 /* InstructorDashboardView.swift */,
 				FB063E052F56000100022763 /* LMSEditRootView.swift */,
 			);
 			path = GroundSchool;
@@ -571,6 +587,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				47999026C4ABF7D05C6C5A42 /* ModuleSignoffBlock.swift in Sources */,
+				A1B2C3D42F57000200022763 /* InstructorReviewView.swift in Sources */,
+				B2C3D4E52F57000300022763 /* JumpSignoffView.swift in Sources */,
+				C3D4E5F62F57000400022763 /* InstructorProfileView.swift in Sources */,
+				E5F607182F57000500022763 /* InstructorDashboardView.swift in Sources */,
 				EABBC7036BAABDA0DD2634DC /* SkydiverLogbook.swift in Sources */,
 				D528A477893001F7E1EB2BBC /* LogbookViewModel.swift in Sources */,
 				D5929D0DD9AA53D86CAEBE08 /* LogbookView.swift in Sources */,
@@ -638,6 +658,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				FB063D142F534F9E00227638 /* ModuleSignoffBlock.swift in Sources */,
+				FB063E122F57000200022763 /* InstructorReviewView.swift in Sources */,
+				FB063E142F57000300022763 /* JumpSignoffView.swift in Sources */,
+				D4E5F6072F57000400022763 /* InstructorProfileView.swift in Sources */,
+				F60718192F57000500022763 /* InstructorDashboardView.swift in Sources */,
 				FB063D202F54BB010227638 /* SkydiverLogbook.swift in Sources */,
 				FB063D212F54BB020227638 /* LogbookViewModel.swift in Sources */,
 				FB063D222F54BB030227638 /* LogbookView.swift in Sources */,
@@ -713,7 +737,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
-				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
@@ -750,7 +773,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
-				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
@@ -811,6 +833,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -834,6 +857,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -874,6 +898,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -890,6 +915,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -903,9 +929,8 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/MalfunctionDZ.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 35;
+				CURRENT_PROJECT_VERSION = 41;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
-				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
@@ -939,9 +964,8 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/MalfunctionDZ.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 35;
+				CURRENT_PROJECT_VERSION = 41;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
-				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MalfunctionDZ/Info.plist;

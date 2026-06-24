@@ -95,12 +95,13 @@ extension User {
     }
 
     var canAccessGroundSchool: Bool {
-        // Pilots must complete training — they get Ground School too
+        // Pilots must complete training — they get Ground School too.
+        // Skydivers with LMS app access (ASP students, jump-plane training) use Ground School.
         hasAnyRole(["admin", "master", "godmode",
                     "instructor", "lms_instructor",
                     "student",   "lms_student",
-                    "pilot"])
-        || ["student", "lms_student", "instructor", "lms_instructor", "pilot"]
+                    "pilot",     "skydiver"])
+        || ["student", "lms_student", "instructor", "lms_instructor", "pilot", "skydiver"]
             .contains(role?.lowercased() ?? "")
     }
 

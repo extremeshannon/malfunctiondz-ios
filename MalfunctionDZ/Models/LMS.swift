@@ -127,6 +127,10 @@ struct LMSModule: Codable, Identifiable, Hashable {
     var unlockStatusEnum: ModuleUnlockStatus {
         ModuleUnlockStatus(rawValue: unlockStatus) ?? .inProgress
     }
+
+    var lessonsComplete: Bool {
+        lessonCount > 0 && completedCount >= lessonCount
+    }
 }
 
 // MARK: - Module Unlock Status
@@ -184,6 +188,31 @@ struct LMSLesson: Codable, Identifiable, Hashable {
     let id: Int
     let title: String
     let completed: Bool
+    let isLocked: Bool
+    let lockReason: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, completed
+        case isLocked = "is_locked"
+        case lockReason = "lock_reason"
+    }
+
+    init(id: Int, title: String, completed: Bool, isLocked: Bool = false, lockReason: String? = nil) {
+        self.id = id
+        self.title = title
+        self.completed = completed
+        self.isLocked = isLocked
+        self.lockReason = lockReason
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(Int.self, forKey: .id)
+        title = try c.decode(String.self, forKey: .title)
+        completed = try c.decodeIfPresent(Bool.self, forKey: .completed) ?? false
+        isLocked = try c.decodeIfPresent(Bool.self, forKey: .isLocked) ?? false
+        lockReason = try c.decodeIfPresent(String.self, forKey: .lockReason)
+    }
 }
 
 // MARK: - Quiz Summary
@@ -198,6 +227,7 @@ struct LMSQuizSummary: Codable, Identifiable, Hashable {
     let unlockRule: String
     let isUnlocked: Bool
     let lockReason: String?
+    let moduleId: Int?
     let lastAttempt: LMSLastAttempt?
 
     enum CodingKeys: String, CodingKey {
@@ -210,7 +240,21 @@ struct LMSQuizSummary: Codable, Identifiable, Hashable {
         case unlockRule        = "unlock_rule"
         case isUnlocked        = "is_unlocked"
         case lockReason        = "lock_reason"
+        case moduleId          = "module_id"
         case lastAttempt       = "last_attempt"
+    }
+}
+
+extension LMSCourse {
+    func quizzesForModule(_ module: LMSModule) -> [LMSQuizSummary] {
+        guard module.lessonsComplete else { return [] }
+        return (quizzes ?? []).filter { quiz in
+            guard quiz.isUnlocked else { return false }
+            if let moduleId = quiz.moduleId {
+                return moduleId == module.id
+            }
+            return module.requireQuiz && quiz.title.localizedCaseInsensitiveContains(String(module.title.prefix(12)))
+        }
     }
 }
 

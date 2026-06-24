@@ -64,6 +64,34 @@ struct ProfileView: View {
                         .background(colors.card).cornerRadius(14)
                         .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
 
+                        // ── Instructor profile (LMS instructors) ─────────────
+                        if auth.currentUser?.isInstructorRole == true {
+                            NavigationLink(destination: InstructorProfileView()) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "signature")
+                                        .font(.system(size: 18))
+                                        .foregroundColor(colors.accent)
+                                        .frame(width: 28)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Instructor Profile")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(colors.text)
+                                        Text("License, initials, and signature for sign-offs")
+                                            .font(.system(size: 12))
+                                            .foregroundColor(colors.muted)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(colors.muted)
+                                }
+                                .padding(16)
+                            }
+                            .buttonStyle(.plain)
+                            .background(colors.card).cornerRadius(14)
+                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
+                        }
+
                         // ── Manage LMS (admin/instructor) — staff app only ───
                         if auth.currentUser?.canManageLMS == true && !isMemberShell {
                             NavigationLink(destination: LMSEditRootView()) {

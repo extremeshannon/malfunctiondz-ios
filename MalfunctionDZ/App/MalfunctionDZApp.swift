@@ -45,7 +45,7 @@ struct ContentRootView: View {
         .environment(\.mdzColors, MDZColorSet.for(config.theme))
         .environment(\.mdzColorScheme, config.theme == "slate_fire" ? .light : .dark)
         .task { await config.loadConfig() }
-        .onChange(of: scenePhase) { newPhase in
+        .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active, auth.isAuthenticated {
                 PushRegistration.shared.requestPermissionAndRegister()
             }
@@ -70,7 +70,7 @@ struct MDZRootView: View {
             }
         }
         .task { await config.loadConfig() }
-        .onChange(of: pushNav.pendingTap?.id) { _ in
+        .onChange(of: pushNav.pendingTap?.id) { _, _ in
             if pushNav.pendingTap != nil { tabSelect.selected = 0 }
         }
         .sheet(item: $pushNav.pendingTap) { tap in
@@ -195,7 +195,7 @@ struct MDZSplitView: View {
                 }
             }
             // Sync tab selection from home-screen tile taps
-            .onChange(of: tabSelect.selected) { tag in
+            .onChange(of: tabSelect.selected) { _, tag in
                 selectedModule = AppModule(tag: tag) ?? .home
             }
         }
@@ -399,13 +399,17 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         print("⚠️ Push registration failed: \(error.localizedDescription)")
     }
 
-    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) -> UNNotificationPresentationOptions {
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
         let userInfo = notification.request.content.userInfo
         let type = (userInfo["type"] as? String) ?? ""
         if type == "dz_status" {
             NotificationCenter.default.post(name: .dzStatusDidUpdateFromPush, object: nil)
         }
-        return [.banner, .sound, .badge]
+        completionHandler([.banner, .sound, .badge])
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {

@@ -63,10 +63,17 @@ struct ModuleSignoffBlock: View {
             }
 
             if signoffBlock.canRequestJump {
-                RequestButton(label: "Request Jump Sign-Off") {
-                    requestType = "jump_result"
-                    showRequestSheet = true
+                HStack(spacing: 8) {
+                    Image(systemName: "book.closed.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(colors.primary)
+                    Text("Open the Sign off lesson in this module to log your jump and submit for instructor review.")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(colors.muted)
                 }
+                .padding(10)
+                .background(colors.card2)
+                .cornerRadius(8)
             }
 
             if let pending = signoffBlock.pendingRequest {
@@ -131,7 +138,7 @@ struct ModuleSignoffBlock: View {
             defer { isSubmitting = false }
             do {
                 let (data, _) = try await URLSession.shared.data(for: req)
-                let resp = try JSONDecoder().decode([String: AnyCodable].self, from: data)
+                _ = try JSONDecoder().decode([String: AnyCodable].self, from: data)
                 await MainActor.run {
                     showRequestSheet = false
                     noteText = ""

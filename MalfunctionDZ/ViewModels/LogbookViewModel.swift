@@ -118,7 +118,7 @@ class LogbookViewModel: ObservableObject {
         defer { isSaving = false }
         guard let token = KeychainHelper.readToken(),
               let url = URL(string: "\(kServerURL)/api/lms/logbook_settings.php") else { return false }
-        var body: [String: Any] = [
+        let body: [String: Any] = [
             "prior_jump_count": pj,
             "prior_freefall_seconds": pff,
             "start_freefall_time": startFreefallTime.isEmpty ? NSNull() : startFreefallTime,
@@ -509,7 +509,7 @@ class LogbookViewModel: ObservableObject {
         guard let token = KeychainHelper.readToken(),
               let url = URL(string: "\(kServerURL)/api/lms/logbook_add.php") else { return }
 
-        var body: [String: Any?] = [
+        let body: [String: Any?] = [
             "dz": dz?.isEmpty == true ? nil : dz,
             "altitude": altitude?.isEmpty == true ? nil : altitude,
             "delay": delay?.isEmpty == true ? nil : delay,

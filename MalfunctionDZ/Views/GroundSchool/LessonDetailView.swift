@@ -16,21 +16,58 @@ struct LessonDetail: Codable {
     let content: String?
     let durationMin: Int?
     let required: Bool
+    let requireAcknowledgement: Bool
     let courseId: Int
     let completed: Bool
+    let isLocked: Bool
+    let lockReason: String?
 
     enum CodingKeys: String, CodingKey {
         case id, title, content, required, completed
         case lessonType  = "lesson_type"
         case contentUrl  = "content_url"
         case durationMin = "duration_min"
+        case requireAcknowledgement = "require_acknowledgement"
         case courseId    = "course_id"
+        case isLocked    = "is_locked"
+        case lockReason  = "lock_reason"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(Int.self, forKey: .id)
+        title = try c.decode(String.self, forKey: .title)
+        lessonType = try c.decodeIfPresent(String.self, forKey: .lessonType) ?? "text"
+        contentUrl = try c.decodeIfPresent(String.self, forKey: .contentUrl)
+        content = try c.decodeIfPresent(String.self, forKey: .content)
+        durationMin = try c.decodeIfPresent(Int.self, forKey: .durationMin)
+        required = try c.decodeIfPresent(Bool.self, forKey: .required) ?? true
+        requireAcknowledgement = try c.decodeIfPresent(Bool.self, forKey: .requireAcknowledgement) ?? false
+        courseId = try c.decode(Int.self, forKey: .courseId)
+        completed = try c.decodeIfPresent(Bool.self, forKey: .completed) ?? false
+        isLocked = try c.decodeIfPresent(Bool.self, forKey: .isLocked) ?? false
+        lockReason = try c.decodeIfPresent(String.self, forKey: .lockReason)
+    }
+}
+
+struct LessonCompleteBody: Codable {
+    let acknowledged: Bool
+}
+
+struct LessonCompleteResponse: Codable {
+    let ok: Bool
+    let signoffRequested: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case ok
+        case signoffRequested = "signoff_requested"
     }
 }
 
 struct LessonDetailResponse: Codable {
     let ok: Bool
     let lesson: LessonDetail?
+    let error: String?
 }
 
 // MARK: - YouTube Player
@@ -96,11 +133,43 @@ struct SafariVideoView: UIViewControllerRepresentable {
 
 struct HTMLLessonWebView: UIViewRepresentable {
     let html: String
+    var textColorHex: String = "#1A2830"
+    var headingColorHex: String = "#1E2D38"
+    var linkColorHex: String = "#C87810"
+    var imageBorderColor: String = "rgba(42,58,71,0.15)"
     var onImageTapped: ((URL) -> Void)?
     var onContentHeightChanged: ((CGFloat) -> Void)?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(onImageTapped: onImageTapped, onContentHeightChanged: onContentHeightChanged)
+    }
+
+    private func wrappedBody() -> String {
+        let body = html.trimmingCharacters(in: .whitespacesAndNewlines)
+        let hasHtml = body.contains("<") && body.contains(">")
+        return hasHtml ? body : "<p>\(body.replacingOccurrences(of: "\n", with: "<br>"))</p>"
+    }
+
+    private func fullHTML() -> String {
+        let wrappedHtml = wrappedBody()
+        return """
+        <!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+        body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:16px;line-height:1.55;color:\(textColorHex);background:transparent;margin:0;padding:0;}
+        h1,h2,h3{color:\(headingColorHex);margin:0.8em 0 0.4em;}
+        p,ul,ol{margin:0.6em 0;}
+        ul,ol{padding-left:1.5em;}
+        li{margin:0.25em 0;}
+        img{max-width:100%;height:auto;border-radius:8px;cursor:pointer;border:1px solid \(imageBorderColor);}
+        img:active{opacity:0.9;}
+        a{color:\(linkColorHex);}
+        </style></head><body>\(wrappedHtml)
+        <script>
+        document.querySelectorAll('img').forEach(function(img){
+          img.onclick=function(){window.webkit.messageHandlers.imageTapped.postMessage(img.src);};
+        });
+        </script></body></html>
+        """
     }
 
     func makeUIView(context: Context) -> WKWebView {
@@ -112,45 +181,15 @@ struct HTMLLessonWebView: UIViewRepresentable {
         wv.backgroundColor = .clear
         wv.isOpaque = false
         wv.navigationDelegate = context.coordinator
-
-        let baseURL = URL(string: "\(kServerURL)/")
-        let body = html.trimmingCharacters(in: .whitespacesAndNewlines)
-        let hasHtml = body.contains("<") && body.contains(">")
-        let wrappedHtml = hasHtml ? body : "<p>\(body.replacingOccurrences(of: "\n", with: "<br>"))</p>"
-
-        let fullHtml = """
-        <!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-        body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:16px;line-height:1.55;color:rgba(232,237,245,0.95);background:transparent;margin:0;padding:0;}
-        h1,h2,h3{color:rgba(232,237,245,0.98);margin:0.8em 0 0.4em;}
-        p,ul,ol{margin:0.6em 0;}
-        ul,ol{padding-left:1.5em;}
-        img{max-width:100%;height:auto;border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.2);}
-        img:active{opacity:0.9;}
-        a{color:#F39C12;}
-        </style></head><body>\(wrappedHtml)
-        <script>
-        document.querySelectorAll('img').forEach(function(img){
-          img.onclick=function(){window.webkit.messageHandlers.imageTapped.postMessage(img.src);};
-        });
-        </script></body></html>
-        """
-        wv.loadHTMLString(fullHtml, baseURL: baseURL)
+        context.coordinator.lastHtml = html
+        wv.loadHTMLString(fullHTML(), baseURL: URL(string: "\(kServerURL)/"))
         return wv
     }
 
     func updateUIView(_ wv: WKWebView, context: Context) {
         if context.coordinator.lastHtml != html {
             context.coordinator.lastHtml = html
-            let body = html.trimmingCharacters(in: .whitespacesAndNewlines)
-            let hasHtml = body.contains("<") && body.contains(">")
-            let wrappedHtml = hasHtml ? body : "<p>\(body.replacingOccurrences(of: "\n", with: "<br>"))</p>"
-            let fullHtml = """
-            <!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1">
-            <style>body{font-family:-apple-system;font-size:16px;line-height:1.55;color:rgba(232,237,245,0.95);background:transparent;}img{max-width:100%;cursor:pointer;}</style></head><body>\(wrappedHtml)
-            <script>document.querySelectorAll('img').forEach(function(img){img.onclick=function(){window.webkit.messageHandlers.imageTapped.postMessage(img.src);};});</script></body></html>
-            """
-            wv.loadHTMLString(fullHtml, baseURL: URL(string: "\(kServerURL)/"))
+            wv.loadHTMLString(fullHTML(), baseURL: URL(string: "\(kServerURL)/"))
         }
     }
 
@@ -229,15 +268,23 @@ class LessonDetailViewModel: ObservableObject {
     @Published var completed = false
     @Published var hasScrolledToBottom = false
     @Published var videoFinished = false
+    @Published var acknowledged = false
+    @Published var signoffSubmitted = false
     @Published var error: String?
 
     let lessonId: Int
+    let moduleId: Int
 
-    init(lessonId: Int) { self.lessonId = lessonId }
+    init(lessonId: Int, moduleId: Int = 0) {
+        self.lessonId = lessonId
+        self.moduleId = moduleId
+    }
 
     var canComplete: Bool {
         if completed { return false }
         guard let lesson = lesson else { return false }
+        if lesson.isLocked { return false }
+        if lesson.requireAcknowledgement && !acknowledged { return false }
         let youtubeId = extractYouTubeId(from: lesson.content ?? "")
         if youtubeId != nil {
             return videoFinished
@@ -248,23 +295,43 @@ class LessonDetailViewModel: ObservableObject {
     func load() async {
         isLoading = true
         defer { isLoading = false }
-        guard let token = KeychainHelper.readToken(),
-              let url = URL(string: "\(kServerURL)/api/lms/lesson.php?id=\(lessonId)") else { return }
+        guard let token = KeychainHelper.readToken() else { return }
+        var components = URLComponents(string: "\(kServerURL)/api/lms/lesson.php")
+        var query = [URLQueryItem(name: "id", value: "\(lessonId)")]
+        if moduleId > 0 {
+            query.append(URLQueryItem(name: "module_id", value: "\(moduleId)"))
+        }
+        components?.queryItems = query
+        guard let url = components?.url else { return }
         var req = URLRequest(url: url)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         do {
-            let (data, _) = try await URLSession.shared.data(for: req)
-            let resp = try JSONDecoder().decode(LessonDetailResponse.self, from: data)
-            if let l = resp.lesson {
-                lesson = l
-                completed = l.completed
-                if l.completed { hasScrolledToBottom = true; videoFinished = true }
+            let (data, response) = try await URLSession.shared.data(for: req)
+            if let http = response as? HTTPURLResponse, http.statusCode == 401 {
+                self.error = "Session expired — sign in again."
+                return
             }
-        } catch { self.error = error.localizedDescription }
+            let resp = try JSONDecoder().decode(LessonDetailResponse.self, from: data)
+            guard resp.ok, let l = resp.lesson else {
+                self.error = resp.error ?? "Could not load this lesson."
+                return
+            }
+            lesson = l
+            completed = l.completed
+            if l.completed {
+                hasScrolledToBottom = true
+                videoFinished = true
+                acknowledged = true
+            }
+        } catch {
+            self.error = "Could not load lesson. Pull to refresh or check your connection."
+        }
     }
 
     func markComplete(courseId: Int) async {
         guard !completed else { return }
+        guard let lesson = lesson else { return }
+        if lesson.requireAcknowledgement && !acknowledged { return }
         isMarkingComplete = true
         defer { isMarkingComplete = false }
         guard let token = KeychainHelper.readToken(),
@@ -272,8 +339,13 @@ class LessonDetailViewModel: ObservableObject {
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try? JSONEncoder().encode(LessonCompleteBody(acknowledged: acknowledged))
         do {
-            let (_, _) = try await URLSession.shared.data(for: req)
+            let (data, _) = try await URLSession.shared.data(for: req)
+            if let resp = try? JSONDecoder().decode(LessonCompleteResponse.self, from: data) {
+                signoffSubmitted = resp.signoffRequested == true
+            }
             completed = true
         } catch { self.error = error.localizedDescription }
     }
@@ -286,20 +358,27 @@ struct LessonDetailView: View {
     let lessonTitle: String
     var allLessons: [LMSLesson] = []
     var courseId: Int = 0
+    var moduleId: Int = 0
 
     @StateObject private var vm: LessonDetailViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
     @State private var safariVideoURL: IdentifiableURL?
     @State private var enlargedImageURL: URL?
     @State private var htmlContentHeight: CGFloat = 300
 
-    init(lessonId: Int, lessonTitle: String, allLessons: [LMSLesson] = [], courseId: Int = 0) {
+    init(lessonId: Int, lessonTitle: String, allLessons: [LMSLesson] = [], courseId: Int = 0, moduleId: Int = 0) {
         self.lessonId    = lessonId
         self.lessonTitle = lessonTitle
         self.allLessons  = allLessons
         self.courseId    = courseId
-        _vm = StateObject(wrappedValue: LessonDetailViewModel(lessonId: lessonId))
+        self.moduleId    = moduleId
+        _vm = StateObject(wrappedValue: LessonDetailViewModel(lessonId: lessonId, moduleId: moduleId))
+    }
+
+    private var isJumpSignoffLesson: Bool {
+        isJumpSignoffLessonTitle(vm.lesson?.title ?? lessonTitle)
     }
 
     private var currentIndex: Int? { allLessons.firstIndex(where: { $0.id == lessonId }) }
@@ -320,9 +399,13 @@ struct LessonDetailView: View {
                 // ── Top bar ──────────────────────────────────
                 HStack(spacing: 12) {
                     Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(colors.amber)
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 16, weight: .semibold))
+                            Text("Module")
+                                .font(.system(size: 14, weight: .semibold))
+                        }
+                        .foregroundColor(colors.amber)
                     }
                     VStack(alignment: .leading, spacing: 2) {
                         Text(vm.lesson?.title ?? lessonTitle)
@@ -441,12 +524,36 @@ struct LessonDetailView: View {
                                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
                             if !cleanText.isEmpty {
+                                let htmlStyle = lessonHTMLStyle(colors: colors, scheme: mdzColorScheme)
                                 HTMLLessonWebView(
                                     html: cleanText,
+                                    textColorHex: htmlStyle.text,
+                                    headingColorHex: htmlStyle.heading,
+                                    linkColorHex: htmlStyle.link,
+                                    imageBorderColor: htmlStyle.imageBorder,
                                     onImageTapped: { url in enlargedImageURL = url },
                                     onContentHeightChanged: { htmlContentHeight = max(200, $0) }
                                 )
                                 .frame(height: htmlContentHeight)
+                            }
+
+                            if isJumpSignoffLesson && moduleId > 0 {
+                                if vm.lesson?.isLocked == true {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Label("Jump sign-off locked", systemImage: "lock.fill")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundColor(colors.amber)
+                                        Text(vm.lesson?.lockReason ?? "Waiting for instructor review approval.")
+                                            .font(.system(size: 13))
+                                            .foregroundColor(colors.muted)
+                                    }
+                                    .padding(16)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(colors.card)
+                                    .cornerRadius(12)
+                                } else {
+                                    JumpSignoffLessonSection(lessonId: lessonId, moduleId: moduleId)
+                                }
                             }
 
                             // ── Bottom sentinel ───────────────
@@ -464,12 +571,52 @@ struct LessonDetailView: View {
                         Divider().background(colors.border)
                         VStack(spacing: 10) {
 
+                            if lesson.requireAcknowledgement && !vm.completed {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text("Acknowledgement required")
+                                        .font(.system(size: 13, weight: .bold))
+                                        .foregroundColor(colors.text)
+                                    Button {
+                                        vm.acknowledged.toggle()
+                                    } label: {
+                                        HStack(alignment: .top, spacing: 10) {
+                                            Image(systemName: vm.acknowledged ? "checkmark.square.fill" : "square")
+                                                .font(.system(size: 20))
+                                                .foregroundColor(vm.acknowledged ? colors.green : colors.muted)
+                                            Text("I confirm I have read and understand the material in this lesson.")
+                                                .font(.system(size: 13))
+                                                .foregroundColor(colors.text)
+                                                .multilineTextAlignment(.leading)
+                                        }
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                .padding(12)
+                                .background(colors.card)
+                                .cornerRadius(10)
+                                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
+                            }
+
+                            if vm.signoffSubmitted {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "paperplane.fill")
+                                        .foregroundColor(colors.amber)
+                                    Text("Sent to your instructor for review")
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundColor(colors.amber)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+
+                            if !isJumpSignoffLesson {
                             Button {
                                 Task { await vm.markComplete(courseId: courseId) }
                             } label: {
                                 HStack(spacing: 8) {
                                     if vm.isMarkingComplete {
                                         ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white)).scaleEffect(0.8)
+                                    } else if lesson.requireAcknowledgement && vm.canComplete && !vm.completed {
+                                        Image(systemName: "paperplane.fill")
                                     } else {
                                         Image(systemName: vm.completed ? "checkmark.circle.fill" : "checkmark.circle")
                                     }
@@ -487,6 +634,23 @@ struct LessonDetailView: View {
                                 .cornerRadius(10)
                             }
                             .disabled(!vm.canComplete && !vm.completed || vm.isMarkingComplete)
+                            }
+
+                            Button { dismiss() } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "square.stack.fill")
+                                        .font(.system(size: 12))
+                                    Text("Back to Module")
+                                        .font(.system(size: 13, weight: .semibold))
+                                }
+                                .foregroundColor(colors.amber)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 40)
+                                .background(colors.card)
+                                .cornerRadius(8)
+                                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+                            }
+                            .buttonStyle(.plain)
 
                             // Prev / Next
                             if !allLessons.isEmpty {
@@ -523,8 +687,26 @@ struct LessonDetailView: View {
         } message: { Text(vm.error ?? "") }
     }
 
+    private func lessonHTMLStyle(colors: MDZColorSet, scheme: ColorScheme) -> (text: String, heading: String, link: String, imageBorder: String) {
+        if scheme == .light {
+            return ("#1A2830", "#1E2D38", "#C87810", "rgba(42,58,71,0.15)")
+        }
+        return ("#E8EDF5", "#FFFFFF", "#F39C12", "rgba(255,255,255,0.2)")
+    }
+
     private func completeButtonLabel(lesson: LessonDetail, youtubeId: String?) -> String {
-        if vm.completed   { return "Completed" }
+        if vm.completed {
+            if lesson.requireAcknowledgement && vm.signoffSubmitted {
+                return "Sent for Review"
+            }
+            return "Completed"
+        }
+        if lesson.requireAcknowledgement && !vm.acknowledged {
+            return "Acknowledge to continue"
+        }
+        if vm.canComplete && lesson.requireAcknowledgement {
+            return "Send for Review"
+        }
         if vm.canComplete { return "Mark as Complete" }
         if youtubeId != nil { return "Watch video to complete" }
         return "Scroll to the end to complete"
@@ -537,7 +719,8 @@ struct LessonDetailView: View {
                 lessonId: lesson.id,
                 lessonTitle: lesson.title,
                 allLessons: allLessons,
-                courseId: courseId
+                courseId: courseId,
+                moduleId: moduleId
             )) {
                 HStack(spacing: 6) {
                     if isLeft { Image(systemName: icon).font(.system(size: 12)) }

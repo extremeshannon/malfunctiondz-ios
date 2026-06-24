@@ -73,16 +73,16 @@ struct MyRigsView: View {
         .task { await vm.load() }
         .refreshable { await vm.load() }
         .sheet(isPresented: $showAddRig) {
-            CreateRigSheet(vm: logbookVm) {
+            CreateRigSheet(vm: logbookVm, onComplete: {
                 showAddRig = false
                 Task { await vm.load() }
-            }
+            })
         }
         .sheet(item: $rigToEdit) { rig in
-            CreateRigSheet(vm: logbookVm, editingRig: rig) {
+            CreateRigSheet(vm: logbookVm, onComplete: {
                 rigToEdit = nil
                 Task { await vm.load() }
-            }
+            }, editingRig: rig)
         }
         .alert("Error", isPresented: Binding(
             get: { vm.error != nil || logbookVm.error != nil },

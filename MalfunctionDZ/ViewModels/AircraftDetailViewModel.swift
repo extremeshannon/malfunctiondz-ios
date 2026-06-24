@@ -189,7 +189,7 @@ class AircraftDetailViewModel: ObservableObject {
         req.setValue("\(body.count)", forHTTPHeaderField: "Content-Length")
         req.httpBody = body
         guard let (data, response) = try? await URLSession.shared.data(for: req),
-              let http = response as? HTTPURLResponse else { return (nil, "Network error") }
+              response is HTTPURLResponse else { return (nil, "Network error") }
         guard let decoded = try? JSONDecoder().decode(CreateResponse.self, from: data) else {
             return (nil, "Invalid response")
         }
@@ -224,7 +224,7 @@ class AircraftDetailViewModel: ObservableObject {
     }
 
     func postLogbook(aircraftId: Int, entryDate: String, description: String, bookType: String, tachTime: String, hobbsTime: String, mechanicName: String, mechanicRating: String, imageData: Data?) async -> (id: Int?, error: String?) {
-        var fields: [String: String] = [
+        let fields: [String: String] = [
             "id": "\(aircraftId)",
             "entry_date": entryDate,
             "description": description,
