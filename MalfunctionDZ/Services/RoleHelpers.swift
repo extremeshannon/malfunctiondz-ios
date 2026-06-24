@@ -26,7 +26,7 @@ extension User {
     }
 
     var isInstructorRole: Bool {
-        hasAnyRole(["instructor", "lms_instructor"]) || isAdminLevel
+        hasAnyRole(["instructor", "lms_instructor", "chief_pilot", "ops_admin"]) || isAdminLevel
     }
 
     var isStudentRole: Bool {

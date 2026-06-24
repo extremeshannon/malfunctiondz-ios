@@ -148,7 +148,15 @@ final class InstructorDashboardViewModel: ObservableObject {
         var req = URLRequest(url: url)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         do {
-            let (data, _) = try await URLSession.shared.data(for: req)
+            let (data, response) = try await URLSession.shared.data(for: req)
+            if let http = response as? HTTPURLResponse, http.statusCode == 401 {
+                error = "Session expired — sign in again."
+                return
+            }
+            if let http = response as? HTTPURLResponse, http.statusCode == 403 {
+                error = "LMS instructor access required for this account."
+                return
+            }
             let resp = try JSONDecoder().decode(InstructorDashboardResponse.self, from: data)
             guard resp.ok else {
                 error = resp.error ?? "Could not load dashboard"
@@ -192,6 +200,30 @@ struct InstructorDashboardView: View {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 12) {
                             instructorHeader
+                            NavigationLink(destination: InstructorProfileView()) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "person.text.rectangle")
+                                        .font(.system(size: 18))
+                                        .foregroundColor(colors.accent)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Instructor Profile")
+                                            .font(.system(size: 15, weight: .bold))
+                                            .foregroundColor(colors.textPrimary)
+                                        Text("License, initials, and signature for sign-offs")
+                                            .font(.system(size: 12))
+                                            .foregroundColor(colors.muted)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundColor(colors.muted)
+                                }
+                                .padding(14)
+                                .background(colors.card)
+                                .cornerRadius(10)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal, 16)
                             if let err = dashVm.error {
                                 Text(err)
                                     .font(.system(size: 12))
