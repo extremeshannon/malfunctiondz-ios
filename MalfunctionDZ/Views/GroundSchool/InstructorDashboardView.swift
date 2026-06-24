@@ -170,6 +170,9 @@ final class InstructorDashboardViewModel: ObservableObject {
             myCourseRefs = resp.myCourses ?? []
             error = nil
         } catch {
+            guard !Task.isCancelled else { return }
+            if let url = error as? URLError, url.code == .cancelled { return }
+            if error is CancellationError { return }
             self.error = "Could not load instructor dashboard."
         }
     }
@@ -285,11 +288,14 @@ struct InstructorDashboardView: View {
             }
             .navigationBarHidden(true)
             .refreshable {
-                await dashVm.load()
-                await coursesVm.load()
+                async let dashboard: Void = dashVm.load()
+                async let courses: Void = coursesVm.load()
+                _ = await (dashboard, courses)
             }
             .task {
-                await dashVm.load()
+                async let dashboard: Void = dashVm.load()
+                async let courses: Void = coursesVm.load()
+                _ = await (dashboard, courses)
             }
             .onChange(of: tabSelect.openInstructorReviews) { _, open in
                 if open { tabSelect.openInstructorReviews = false }

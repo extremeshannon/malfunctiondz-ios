@@ -125,8 +125,10 @@ struct InstructorProfileView: View {
     @StateObject private var vm = InstructorProfileViewModel()
     @State private var canvasView = PKCanvasView()
     @State private var drewNewSignature = false
+    @State private var showSignaturePad = false
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     var body: some View {
         ZStack {
@@ -197,41 +199,41 @@ struct InstructorProfileView: View {
                                     }
                                 }
                             }
-                            InstructorSignaturePadRepresentable(canvas: $canvasView)
-                                .frame(height: 140)
-                                .background(Color.white)
-                                .cornerRadius(8)
-                                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.gray.opacity(0.35), lineWidth: 1))
-                                .onChange(of: canvasView.drawing) { _, _ in
-                                    drewNewSignature = !canvasView.drawing.bounds.isEmpty
-                                }
-                            Button("Clear pad") {
-                                canvasView.drawing = PKDrawing()
-                                drewNewSignature = false
+
+                            if drewNewSignature {
+                                Text("New signature captured — save profile or open the pad again to change it.")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(colors.green)
                             }
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(colors.amber)
+
+                            Button {
+                                showSignaturePad = true
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "signature")
+                                        .font(.system(size: 18, weight: .semibold))
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(vm.signatureUrl.isEmpty ? "Add signature" : "Update signature")
+                                            .font(.system(size: 15, weight: .bold))
+                                        Text("Turn phone sideways for full-screen signing")
+                                            .font(.system(size: 11))
+                                            .foregroundColor(colors.muted)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                        .font(.system(size: 14, weight: .semibold))
+                                }
+                                .foregroundColor(colors.text)
+                                .padding(14)
+                                .background(colors.card2)
+                                .cornerRadius(10)
+                                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.primary.opacity(0.45), lineWidth: 1))
+                            }
+                            .buttonStyle(.plain)
                         }
 
                         Button {
-                            Task {
-                                var sigB64: String?
-                                if drewNewSignature {
-                                    let rect = canvasView.drawing.bounds
-                                    guard !rect.isEmpty else {
-                                        vm.error = "Draw your signature on the pad."
-                                        return
-                                    }
-                                    let img = canvasView.drawing.image(from: rect, scale: 2)
-                                    sigB64 = img.pngData()?.base64EncodedString()
-                                } else if vm.signatureUrl.isEmpty {
-                                    vm.error = "Draw your signature on the pad."
-                                    return
-                                }
-                                if await vm.save(signatureBase64: sigB64) {
-                                    drewNewSignature = false
-                                }
-                            }
+                            Task { await saveProfileFromForm() }
                         } label: {
                             Text(vm.isSaving ? "Saving…" : "Save profile")
                                 .font(.system(size: 16, weight: .bold))
@@ -252,6 +254,43 @@ struct InstructorProfileView: View {
         .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
         .task { await vm.load() }
+        .onChange(of: verticalSizeClass) { _, sizeClass in
+            if sizeClass == .compact, !showSignaturePad, !vm.isLoading {
+                showSignaturePad = true
+            }
+        }
+        .fullScreenCover(isPresented: $showSignaturePad) {
+            InstructorFullScreenSignatureView(
+                canvasView: $canvasView,
+                drewNewSignature: $drewNewSignature,
+                vm: vm,
+                onDismiss: { showSignaturePad = false }
+            )
+        }
+    }
+
+    private func saveProfileFromForm() async {
+        var sigB64: String?
+        if drewNewSignature {
+            guard let b64 = signatureBase64FromCanvas() else {
+                vm.error = "Draw your signature on the pad."
+                return
+            }
+            sigB64 = b64
+        } else if vm.signatureUrl.isEmpty {
+            vm.error = "Add your signature first."
+            return
+        }
+        if await vm.save(signatureBase64: sigB64) {
+            drewNewSignature = false
+        }
+    }
+
+    private func signatureBase64FromCanvas() -> String? {
+        let rect = canvasView.drawing.bounds
+        guard !rect.isEmpty else { return nil }
+        let img = canvasView.drawing.image(from: rect, scale: 2)
+        return img.pngData()?.base64EncodedString()
     }
 
     private var licenseEmpty: Bool {
@@ -277,5 +316,137 @@ struct InstructorProfileView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(colors.card)
         .cornerRadius(12)
+    }
+}
+
+// MARK: - Full-screen landscape signature pad
+
+struct InstructorFullScreenSignatureView: View {
+    @Binding var canvasView: PKCanvasView
+    @Binding var drewNewSignature: Bool
+    @ObservedObject var vm: InstructorProfileViewModel
+    let onDismiss: () -> Void
+
+    @Environment(\.mdzColors) private var colors
+    @State private var localError: String?
+
+    var body: some View {
+        GeometryReader { geo in
+            let isWide = geo.size.width > geo.size.height
+
+            ZStack {
+                colors.background.ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    HStack {
+                        Button("Cancel") { onDismiss() }
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(colors.amber)
+                        Spacer()
+                        Text("INSTRUCTOR SIGNATURE")
+                            .font(.system(size: 12, weight: .black))
+                            .foregroundColor(colors.muted)
+                            .tracking(1.2)
+                        Spacer()
+                        Button("Clear") {
+                            canvasView.drawing = PKDrawing()
+                            drewNewSignature = false
+                            localError = nil
+                        }
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(colors.amber)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 14)
+                    .background(colors.navyMid)
+
+                    ZStack(alignment: .bottom) {
+                        Color.white
+
+                        InstructorSignaturePadRepresentable(canvas: $canvasView)
+                            .onChange(of: canvasView.drawing) { _, _ in
+                                drewNewSignature = !canvasView.drawing.bounds.isEmpty
+                                localError = nil
+                            }
+
+                        VStack(spacing: 8) {
+                            Text("Sign on the line")
+                                .font(.system(size: isWide ? 14 : 13, weight: .semibold))
+                                .foregroundColor(Color.black.opacity(0.45))
+                            Rectangle()
+                                .fill(Color.black.opacity(0.55))
+                                .frame(height: 2)
+                                .padding(.horizontal, isWide ? 48 : 28)
+                        }
+                        .padding(.bottom, isWide ? 36 : 28)
+                        .allowsHitTesting(false)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                    VStack(spacing: 10) {
+                        if let localError {
+                            Text(localError)
+                                .font(.system(size: 12))
+                                .foregroundColor(colors.danger)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        } else if let err = vm.error {
+                            Text(err)
+                                .font(.system(size: 12))
+                                .foregroundColor(colors.danger)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        Button {
+                            Task { await saveSignature() }
+                        } label: {
+                            Text(vm.isSaving ? "Saving…" : "Save signature")
+                                .font(.system(size: 17, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 52)
+                                .background(colors.green)
+                                .cornerRadius(12)
+                        }
+                        .disabled(vm.isSaving)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 16)
+                    .background(colors.navyMid)
+                }
+            }
+        }
+        .ignoresSafeArea()
+    }
+
+    private func saveSignature() async {
+        localError = nil
+        vm.error = nil
+
+        let lic = vm.licenseNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+        let initls = vm.initials.trimmingCharacters(in: .whitespacesAndNewlines)
+        if lic.isEmpty {
+            localError = "Enter your instructor license number on the profile screen first."
+            return
+        }
+        if initls.isEmpty {
+            localError = "Enter your instructor initials on the profile screen first."
+            return
+        }
+
+        let rect = canvasView.drawing.bounds
+        guard !rect.isEmpty else {
+            localError = "Draw your signature on the line."
+            return
+        }
+        let img = canvasView.drawing.image(from: rect, scale: 2)
+        guard let b64 = img.pngData()?.base64EncodedString() else {
+            localError = "Could not capture signature."
+            return
+        }
+
+        if await vm.save(signatureBase64: b64) {
+            drewNewSignature = false
+            onDismiss()
+        }
     }
 }

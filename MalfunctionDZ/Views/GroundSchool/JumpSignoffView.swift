@@ -813,6 +813,10 @@ struct InstructorJumpReviewDetailView: View {
                         if vm.detail?.canResolve == true {
                             HStack(spacing: 10) {
                                 Button {
+                                    guard vm.detail?.instructorProfileReady != false else {
+                                        vm.error = "Complete your instructor profile (license, initials, and signature) before Pass or Retake."
+                                        return
+                                    }
                                     Task { if await vm.resolve(result: "pass") { dismiss() } }
                                 } label: {
                                     Text(vm.isSubmitting ? "Saving…" : "Pass")
@@ -820,17 +824,21 @@ struct InstructorJumpReviewDetailView: View {
                                         .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
                                         .frame(height: 50)
-                                        .background(colors.green)
+                                        .background(colors.green.opacity(vm.detail?.instructorProfileReady == false ? 0.45 : 1))
                                         .cornerRadius(10)
                                 }
                                 .disabled(vm.isSubmitting)
 
                                 Button {
+                                    guard vm.detail?.instructorProfileReady != false else {
+                                        vm.error = "Complete your instructor profile (license, initials, and signature) before Pass or Retake."
+                                        return
+                                    }
                                     Task { if await vm.resolve(result: "retake") { dismiss() } }
                                 } label: {
                                     Text("Retake")
                                         .font(.system(size: 16, weight: .bold))
-                                        .foregroundColor(colors.danger)
+                                        .foregroundColor(colors.danger.opacity(vm.detail?.instructorProfileReady == false ? 0.55 : 1))
                                         .frame(maxWidth: .infinity)
                                         .frame(height: 50)
                                         .background(colors.card)
@@ -1260,33 +1268,49 @@ struct InstructorStudentJumpSignoffView: View {
     }
 
     private var passRetakeButtons: some View {
-        HStack(spacing: 12) {
-            Button {
-                Task { if await vm.finalize(result: "pass") { dismiss() } }
-            } label: {
-                Text(vm.isSubmitting ? "Saving…" : "Pass")
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(colors.green)
-                    .cornerRadius(12)
+        VStack(spacing: 8) {
+            if !vm.instructorProfileReady {
+                Text("Pass and Retake require license, initials, and signature on your instructor profile.")
+                    .font(.system(size: 11))
+                    .foregroundColor(colors.amber)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .disabled(vm.isSubmitting || !vm.instructorProfileReady)
+            HStack(spacing: 12) {
+                Button {
+                    guard vm.instructorProfileReady else {
+                        vm.error = "Complete your instructor profile (license, initials, and signature) before Pass or Retake."
+                        return
+                    }
+                    Task { if await vm.finalize(result: "pass") { dismiss() } }
+                } label: {
+                    Text(vm.isSubmitting ? "Saving…" : "Pass")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(colors.green.opacity(vm.instructorProfileReady ? 1 : 0.45))
+                        .cornerRadius(12)
+                }
+                .disabled(vm.isSubmitting)
 
-            Button {
-                Task { _ = await vm.finalize(result: "retake") }
-            } label: {
-                Text("Retake")
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundColor(colors.danger)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(colors.card)
-                    .cornerRadius(12)
-                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.danger.opacity(0.45), lineWidth: 1.5))
+                Button {
+                    guard vm.instructorProfileReady else {
+                        vm.error = "Complete your instructor profile (license, initials, and signature) before Pass or Retake."
+                        return
+                    }
+                    Task { _ = await vm.finalize(result: "retake") }
+                } label: {
+                    Text("Retake")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(colors.danger.opacity(vm.instructorProfileReady ? 1 : 0.55))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(colors.card)
+                        .cornerRadius(12)
+                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.danger.opacity(vm.instructorProfileReady ? 0.45 : 0.2), lineWidth: 1.5))
+                }
+                .disabled(vm.isSubmitting)
             }
-            .disabled(vm.isSubmitting || !vm.instructorProfileReady)
         }
     }
 

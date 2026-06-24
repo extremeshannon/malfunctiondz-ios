@@ -21,8 +21,11 @@ struct GroundSchoolView: View {
                 GroundSchoolStackView(vm: vm)
             }
         }
-        .task { await vm.load() }
-        .refreshable { await vm.load() }
+        .task(id: auth.currentUser?.id) {
+            if auth.currentUser?.isInstructorRole != true {
+                await vm.load()
+            }
+        }
         .alert("Error", isPresented: Binding(
             get: { vm.error != nil },
             set: { if !$0 { vm.error = nil } }
@@ -116,6 +119,7 @@ struct GroundSchoolWideLayout: View {
                 }
             }
         }
+        .refreshable { await vm.load() }
     }
 
     private var groundSchoolHeader: some View {
@@ -392,6 +396,7 @@ struct GroundSchoolStackView: View {
                     tabSelect.openInstructorReviews = false
                 }
             }
+            .refreshable { await vm.load() }
         }
     }
 }

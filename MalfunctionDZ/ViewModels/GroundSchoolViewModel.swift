@@ -3,6 +3,13 @@ import Foundation
 import SwiftUI
 import MalfunctionDZCore
 
+private func isBenignLoadCancellation(_ error: Error) -> Bool {
+    if error is CancellationError { return true }
+    if let url = error as? URLError, url.code == .cancelled { return true }
+    let ns = error as NSError
+    return ns.domain == NSURLErrorDomain && ns.code == NSURLErrorCancelled
+}
+
 @MainActor
 class GroundSchoolViewModel: ObservableObject {
     @Published var courses:   [LMSCourse] = []
@@ -37,10 +44,12 @@ class GroundSchoolViewModel: ObservableObject {
             let resp = try JSONDecoder().decode(LMSCoursesResponse.self, from: data)
             if resp.ok {
                 courses = (resp.courses ?? []).sorted { $0.isActive && !$1.isActive }
+                error = nil
             } else {
                 error = resp.error ?? "Failed to load courses"
             }
         } catch {
+            guard !isBenignLoadCancellation(error) else { return }
             self.error = error.localizedDescription
         }
         await loadPendingInstructorReviews()
