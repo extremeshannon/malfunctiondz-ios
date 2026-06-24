@@ -211,7 +211,7 @@ struct InstructorDashboardView: View {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("Instructor Profile")
                                             .font(.system(size: 15, weight: .bold))
-                                            .foregroundColor(colors.textPrimary)
+                                            .foregroundColor(colors.text)
                                         Text("License, initials, and signature for sign-offs")
                                             .font(.system(size: 12))
                                             .foregroundColor(colors.muted)

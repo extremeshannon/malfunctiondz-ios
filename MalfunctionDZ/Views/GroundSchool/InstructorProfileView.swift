@@ -9,6 +9,7 @@ struct InstructorProfilePayload: Codable {
     let licenseNumber: String?
     let initials: String?
     let signatureUrl: String?
+    let signaturePath: String?
     let readyForSignoff: Bool?
 
     enum CodingKeys: String, CodingKey {
@@ -17,6 +18,7 @@ struct InstructorProfilePayload: Codable {
         case displayName = "display_name"
         case licenseNumber = "license_number"
         case signatureUrl = "signature_url"
+        case signaturePath = "signature_path"
         case readyForSignoff = "ready_for_signoff"
     }
 }
@@ -27,16 +29,47 @@ struct InstructorProfileResponse: Codable {
     let error: String?
 }
 
+enum InstructorProfileURL {
+    static func absolute(_ path: String, cacheBuster: Int = 0) -> URL? {
+        let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") {
+            return URL(string: trimmed)
+        }
+        let base = kServerURL.hasSuffix("/") ? String(kServerURL.dropLast()) : kServerURL
+        let p = trimmed.hasPrefix("/") ? trimmed : "/\(trimmed)"
+        var urlString = "\(base)\(p)"
+        if cacheBuster > 0 {
+            urlString += p.contains("?") ? "&v=\(cacheBuster)" : "?v=\(cacheBuster)"
+        }
+        return URL(string: urlString)
+    }
+}
+
+func signatureImageFromCanvas(_ canvas: PKCanvasView) -> UIImage? {
+    let rect = canvas.drawing.bounds
+    guard !rect.isEmpty else { return nil }
+    let padded = rect.insetBy(dx: -24, dy: -16)
+    return canvas.drawing.image(from: padded, scale: 2)
+}
+
 @MainActor
 final class InstructorProfileViewModel: ObservableObject {
     @Published var licenseNumber = ""
     @Published var initials = ""
     @Published var signatureUrl = ""
+    @Published var signaturePath = ""
     @Published var readyForSignoff = false
     @Published var isLoading = false
     @Published var isSaving = false
     @Published var saved = false
     @Published var error: String?
+
+    var resolvedSignaturePath: String {
+        let url = signatureUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !url.isEmpty { return url }
+        return signaturePath.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 
     func load() async {
         isLoading = true
@@ -46,16 +79,18 @@ final class InstructorProfileViewModel: ObservableObject {
         var req = URLRequest(url: url)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         do {
-            let (data, _) = try await URLSession.shared.data(for: req)
+            let (data, response) = try await URLSession.shared.data(for: req)
+            if let http = response as? HTTPURLResponse, http.statusCode == 401 {
+                error = "Session expired — sign in again."
+                return
+            }
             let resp = try JSONDecoder().decode(InstructorProfileResponse.self, from: data)
             guard resp.ok, let p = resp.profile else {
                 error = resp.error ?? "Could not load instructor profile"
                 return
             }
-            licenseNumber = p.licenseNumber ?? ""
-            initials = p.initials ?? ""
-            signatureUrl = p.signatureUrl ?? ""
-            readyForSignoff = p.readyForSignoff ?? false
+            applyProfile(p)
+            error = nil
         } catch {
             self.error = "Could not load instructor profile."
         }
@@ -101,22 +136,112 @@ final class InstructorProfileViewModel: ObservableObject {
             signatureData: sigData
         ))
         do {
-            let (data, _) = try await URLSession.shared.data(for: req)
+            let (data, response) = try await URLSession.shared.data(for: req)
             let resp = try JSONDecoder().decode(InstructorProfileResponse.self, from: data)
-            guard resp.ok, let p = resp.profile else {
+            if let http = response as? HTTPURLResponse, http.statusCode >= 400 || !resp.ok {
+                error = resp.error ?? "Could not save profile (HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0))"
+                return false
+            }
+            guard let p = resp.profile else {
                 error = resp.error ?? "Could not save profile"
                 return false
             }
-            licenseNumber = p.licenseNumber ?? lic
-            initials = p.initials ?? initls
-            signatureUrl = p.signatureUrl ?? signatureUrl
-            readyForSignoff = p.readyForSignoff ?? false
+            applyProfile(p)
             saved = true
             error = nil
             return true
         } catch {
             self.error = "Could not save profile."
             return false
+        }
+    }
+
+    private func applyProfile(_ p: InstructorProfilePayload) {
+        licenseNumber = p.licenseNumber ?? licenseNumber
+        initials = p.initials ?? initials
+        signatureUrl = p.signatureUrl ?? ""
+        signaturePath = p.signaturePath ?? ""
+        readyForSignoff = p.readyForSignoff ?? false
+    }
+}
+
+private struct InstructorSignaturePreview: View {
+    let localImage: UIImage?
+    let remotePath: String
+    let cacheBuster: Int
+    @Environment(\.mdzColors) private var colors
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Current signature")
+                .font(.system(size: 11))
+                .foregroundColor(colors.muted)
+
+            Group {
+                if let localImage {
+                    Image(uiImage: localImage)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxHeight: 90)
+                } else if !remotePath.isEmpty {
+                    InstructorRemoteSignatureImage(path: remotePath, cacheBuster: cacheBuster)
+                        .frame(maxHeight: 90)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(10)
+            .background(Color.white)
+            .cornerRadius(8)
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.gray.opacity(0.35), lineWidth: 1))
+        }
+    }
+}
+
+private struct InstructorRemoteSignatureImage: View {
+    let path: String
+    let cacheBuster: Int
+    @Environment(\.mdzColors) private var colors
+    @State private var image: UIImage?
+    @State private var failed = false
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+            } else if failed {
+                Text("Could not load saved signature")
+                    .font(.system(size: 11))
+                    .foregroundColor(colors.danger)
+                    .multilineTextAlignment(.center)
+            } else {
+                ProgressView()
+                    .tint(colors.amber)
+            }
+        }
+        .task(id: "\(path)-\(cacheBuster)") {
+            await load()
+        }
+    }
+
+    private func load() async {
+        image = nil
+        failed = false
+        guard let url = InstructorProfileURL.absolute(path, cacheBuster: cacheBuster) else {
+            failed = true
+            return
+        }
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode),
+                  let img = UIImage(data: data) else {
+                failed = true
+                return
+            }
+            image = img
+        } catch {
+            failed = true
         }
     }
 }
@@ -126,9 +251,14 @@ struct InstructorProfileView: View {
     @State private var canvasView = PKCanvasView()
     @State private var drewNewSignature = false
     @State private var showSignaturePad = false
+    @State private var localSignaturePreview: UIImage?
+    @State private var signatureCacheBuster = 0
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
-    @Environment(\.verticalSizeClass) private var verticalSizeClass
+
+    private var hasSignatureOnFile: Bool {
+        localSignaturePreview != nil || !vm.resolvedSignaturePath.isEmpty
+    }
 
     var body: some View {
         ZStack {
@@ -182,26 +312,16 @@ struct InstructorProfileView: View {
                         }
 
                         fieldBlock("Signature *") {
-                            if !vm.signatureUrl.isEmpty {
-                                Text("Current signature")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(colors.muted)
-                                AsyncImage(url: signatureImageURL) { phase in
-                                    switch phase {
-                                    case .success(let img):
-                                        img.resizable().scaledToFit().frame(maxHeight: 80)
-                                            .padding(8)
-                                            .background(Color.white)
-                                            .cornerRadius(8)
-                                            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.gray.opacity(0.35), lineWidth: 1))
-                                    default:
-                                        EmptyView()
-                                    }
-                                }
+                            if hasSignatureOnFile {
+                                InstructorSignaturePreview(
+                                    localImage: localSignaturePreview,
+                                    remotePath: vm.resolvedSignaturePath,
+                                    cacheBuster: signatureCacheBuster
+                                )
                             }
 
-                            if drewNewSignature {
-                                Text("New signature captured — save profile or open the pad again to change it.")
+                            if drewNewSignature, localSignaturePreview == nil {
+                                Text("New signature captured — tap Save profile to upload.")
                                     .font(.system(size: 11))
                                     .foregroundColor(colors.green)
                             }
@@ -213,14 +333,14 @@ struct InstructorProfileView: View {
                                     Image(systemName: "signature")
                                         .font(.system(size: 18, weight: .semibold))
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(vm.signatureUrl.isEmpty ? "Add signature" : "Update signature")
+                                        Text(hasSignatureOnFile ? "Update signature" : "Add signature")
                                             .font(.system(size: 15, weight: .bold))
-                                        Text("Turn phone sideways for full-screen signing")
+                                        Text("Opens full-screen signing pad")
                                             .font(.system(size: 11))
                                             .foregroundColor(colors.muted)
                                     }
                                     Spacer()
-                                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                    Image(systemName: "pencil.and.scribble")
                                         .font(.system(size: 14, weight: .semibold))
                                 }
                                 .foregroundColor(colors.text)
@@ -248,60 +368,52 @@ struct InstructorProfileView: View {
                     .padding(16)
                 }
             }
+
+            if showSignaturePad {
+                InstructorFullScreenSignatureView(
+                    canvasView: $canvasView,
+                    drewNewSignature: $drewNewSignature,
+                    localSignaturePreview: $localSignaturePreview,
+                    signatureCacheBuster: $signatureCacheBuster,
+                    vm: vm,
+                    onDismiss: { showSignaturePad = false }
+                )
+                .transition(.opacity)
+                .zIndex(1)
+            }
         }
+        .animation(.easeInOut(duration: 0.2), value: showSignaturePad)
         .navigationTitle("Instructor Profile")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
         .task { await vm.load() }
-        .onChange(of: verticalSizeClass) { _, sizeClass in
-            if sizeClass == .compact, !showSignaturePad, !vm.isLoading {
-                showSignaturePad = true
-            }
-        }
-        .fullScreenCover(isPresented: $showSignaturePad) {
-            InstructorFullScreenSignatureView(
-                canvasView: $canvasView,
-                drewNewSignature: $drewNewSignature,
-                vm: vm,
-                onDismiss: { showSignaturePad = false }
-            )
-        }
     }
 
     private func saveProfileFromForm() async {
         var sigB64: String?
         if drewNewSignature {
-            guard let b64 = signatureBase64FromCanvas() else {
+            guard let img = localSignaturePreview ?? signatureImageFromCanvas(canvasView),
+                  let b64 = img.pngData()?.base64EncodedString() else {
                 vm.error = "Draw your signature on the pad."
                 return
             }
             sigB64 = b64
-        } else if vm.signatureUrl.isEmpty {
+        } else if !hasSignatureOnFile {
             vm.error = "Add your signature first."
             return
         }
         if await vm.save(signatureBase64: sigB64) {
             drewNewSignature = false
+            if sigB64 != nil {
+                signatureCacheBuster += 1
+            }
+            await vm.load()
         }
     }
 
-    private func signatureBase64FromCanvas() -> String? {
-        let rect = canvasView.drawing.bounds
-        guard !rect.isEmpty else { return nil }
-        let img = canvasView.drawing.image(from: rect, scale: 2)
-        return img.pngData()?.base64EncodedString()
-    }
-
     private var licenseEmpty: Bool {
-        vm.licenseNumber.isEmpty && vm.initials.isEmpty && vm.signatureUrl.isEmpty
-    }
-
-    private var signatureImageURL: URL? {
-        let path = vm.signatureUrl.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !path.isEmpty else { return nil }
-        if path.hasPrefix("http") { return URL(string: path) }
-        return URL(string: "\(kServerURL)\(path)")
+        vm.licenseNumber.isEmpty && vm.initials.isEmpty && !hasSignatureOnFile
     }
 
     private func fieldBlock<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
@@ -319,11 +431,13 @@ struct InstructorProfileView: View {
     }
 }
 
-// MARK: - Full-screen landscape signature pad
+// MARK: - Full-screen signature pad (overlay — survives rotation)
 
 struct InstructorFullScreenSignatureView: View {
     @Binding var canvasView: PKCanvasView
     @Binding var drewNewSignature: Bool
+    @Binding var localSignaturePreview: UIImage?
+    @Binding var signatureCacheBuster: Int
     @ObservedObject var vm: InstructorProfileViewModel
     let onDismiss: () -> Void
 
@@ -351,6 +465,7 @@ struct InstructorFullScreenSignatureView: View {
                         Button("Clear") {
                             canvasView.drawing = PKDrawing()
                             drewNewSignature = false
+                            localSignaturePreview = nil
                             localError = nil
                         }
                         .font(.system(size: 16, weight: .semibold))
@@ -433,19 +548,17 @@ struct InstructorFullScreenSignatureView: View {
             return
         }
 
-        let rect = canvasView.drawing.bounds
-        guard !rect.isEmpty else {
+        guard let img = signatureImageFromCanvas(canvasView),
+              let b64 = img.pngData()?.base64EncodedString() else {
             localError = "Draw your signature on the line."
-            return
-        }
-        let img = canvasView.drawing.image(from: rect, scale: 2)
-        guard let b64 = img.pngData()?.base64EncodedString() else {
-            localError = "Could not capture signature."
             return
         }
 
         if await vm.save(signatureBase64: b64) {
+            localSignaturePreview = img
             drewNewSignature = false
+            signatureCacheBuster += 1
+            await vm.load()
             onDismiss()
         }
     }
