@@ -72,7 +72,7 @@ struct PackerAppAccessDeniedView: View {
                 Text("ASC Packers")
                     .font(.system(size: 24, weight: .black))
                     .foregroundColor(colors.text)
-                Text("This app is for ASC packers and riggers. Use ASC Staff for full operations, or the ASC app if you are a student or skydiver.")
+                Text("This app is for ASC packers, riggers, and inspectors. Use ASC Staff for full operations, or the ASC app if you are a student or skydiver.")
                     .font(.system(size: 15))
                     .foregroundColor(colors.muted)
                     .multilineTextAlignment(.center)
@@ -104,30 +104,23 @@ struct ASCPackersTabView: View {
         a.backgroundColor = UIColor(Color(hex: "1E2D38"))
         UITabBar.appearance().standardAppearance = a
         UITabBar.appearance().scrollEdgeAppearance = a
+        TabSelection.shared.selected = 0
     }
 
     var body: some View {
         TabView(selection: $tabSelect.selected) {
-            HomeView()
-                .tabItem { Label("Home", systemImage: "house.fill") }
-                .tag(0)
-
-            if auth.currentUser?.canAccessDzRigs == true {
-                DzRigsView()
-                    .tabItem { Label("DZ Rigs", systemImage: "square.stack.3d.up.fill") }
-                    .tag(7)
+            NavigationStack {
+                PackerGearRoomRootView()
             }
+            .tabItem { Label("Gear Room", systemImage: "square.stack.3d.up.fill") }
+            .tag(0)
 
-            if auth.currentUser?.canAccessLoft == true {
-                LoftRootView()
-                    .tabItem { Label(config.moduleLoft, systemImage: "backpack.fill") }
-                    .tag(2)
-            }
-
-            if auth.currentUser?.canAccessCalendar == true {
-                CalendarRootView()
-                    .tabItem { Label("Events", systemImage: "calendar") }
-                    .tag(5)
+            if auth.currentUser?.canInspectDzRigs == true {
+                NavigationStack {
+                    PackerJumpCheckRootView()
+                }
+                .tabItem { Label("25 Jump Check", systemImage: "figure.fall") }
+                .tag(1)
             }
 
             ProfileView()

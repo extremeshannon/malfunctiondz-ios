@@ -17,7 +17,7 @@ struct LoginView: View {
                 Spacer()
 
                 // ── Logo ──────────────────────────────────────
-                Image("ASCLogo")
+                Image(AppBranding.loginLogoName)
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: 320)

@@ -133,6 +133,9 @@ struct MDZSplitView: View {
                     if auth.currentUser?.canAccessGroundSchool == true {
                         SidebarButton(icon: "graduationcap.fill", title: config.moduleGroundSchool, selected: selectedModule == .groundSchool, moduleAccent: colors.groundSchool) { selectedModule = .groundSchool }
                     }
+                    if auth.currentUser?.showsStaffComplianceCard == true && auth.currentUser?.isPilotRole != true {
+                        SidebarButton(icon: "person.badge.shield.checkmark.fill", title: "Staff Card", selected: selectedModule == .staffCard) { selectedModule = .staffCard }
+                    }
                     if auth.currentUser?.canAccessLogbook == true {
                         SidebarButton(icon: "book.closed.fill", title: "Logbook", selected: selectedModule == .logbook) { selectedModule = .logbook }
                     }
@@ -188,6 +191,7 @@ struct MDZSplitView: View {
                 case .dzRigs:       DzRigsView()
                 case .jumpCheck:    DzRigsView()
                 case .groundSchool: GroundSchoolView()
+                case .staffCard:    StaffCardRootView()
                 case .logbook:      LogbookRootView()
                 case .calendar:     CalendarRootView()
                 case .shifts:       ShiftsRootView()
@@ -241,7 +245,7 @@ struct SidebarButton: View {
 
 // MARK: - AppModule enum (maps tab tags)
 enum AppModule: Hashable {
-    case home, aviation, loft, rigs, myRigs, dzRigs, groundSchool, logbook, jumpCheck, calendar, shifts, users, manageLMS, profile
+    case home, aviation, loft, rigs, myRigs, dzRigs, groundSchool, logbook, jumpCheck, calendar, shifts, users, manageLMS, staffCard, profile
 
     /// Map fixed tab tags → module
     init?(tag: Int) {
@@ -258,6 +262,7 @@ enum AppModule: Hashable {
         case 12: self = .shifts
         case 8:  self = .users
         case 10: self = .manageLMS
+        case 13: self = .staffCard
         case 9:  self = .profile
         default: return nil
         }
@@ -278,6 +283,7 @@ enum AppModule: Hashable {
         case .shifts:       return 12
         case .users:        return 8
         case .manageLMS:    return 10
+        case .staffCard:    return 13
         case .profile:      return 9
         }
     }
@@ -337,6 +343,12 @@ struct MDZTabView: View {
                 GroundSchoolView()
                     .tabItem { Label(config.moduleGroundSchool, systemImage: "graduationcap.fill") }
                     .tag(3)
+            }
+
+            if auth.currentUser?.showsStaffComplianceCard == true && auth.currentUser?.isPilotRole != true {
+                StaffCardRootView()
+                    .tabItem { Label("Staff Card", systemImage: "person.badge.shield.checkmark.fill") }
+                    .tag(13)
             }
 
             if auth.currentUser?.canAccessLogbook == true {

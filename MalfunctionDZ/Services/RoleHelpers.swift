@@ -73,9 +73,38 @@ extension User {
         hasAnyRole(["pilot", "chief_pilot", "chief pilot", "admin", "master", "godmode"])
     }
 
-    /// ASC Packers app — DZ rig packing and loft tools.
+    /// Operational staff (non-pilot) — W-9, waiver, and role-based LMS on the Staff Card.
+    var showsStaffComplianceCard: Bool {
+        if isPilotRole && !hasAnyRole([
+            "staff", "manifest", "packer", "rigger", "master_rigger", "loft",
+            "coach", "tandem_instructor", "aff_instructor", "lms_instructor",
+            "ops", "ops_admin", "videographer", "truck_driver", "inspector",
+        ]) {
+            return false
+        }
+        return hasAnyRole([
+            "staff", "manifest", "packer", "rigger", "master_rigger", "loft",
+            "coach", "tandem_instructor", "aff_instructor", "lms_instructor",
+            "ops", "ops_admin", "videographer", "truck_driver", "inspector",
+        ]) || isAdminLevel || isOpsRole || isOpsAdminRole || isManifestRole || isLoftRole
+    }
+
+    /// ASC Staff app — all operational staff accounts.
+    var canAccessASCStaffApp: Bool {
+        showsStaffComplianceCard || isAdminLevel
+    }
+
+    /// ASC Packers app — DZ Gear Room: packers, riggers, inspectors, loft.
     var canAccessASCPackersApp: Bool {
-        hasAnyRole(["packer", "rigger", "master_rigger", "loft", "admin", "master", "godmode"])
+        hasAnyRole(["packer", "rigger", "master_rigger", "loft", "inspector", "admin", "master", "godmode"])
+    }
+
+    var isPackerRole: Bool {
+        hasAnyRole(["packer", "rigger", "master_rigger"]) || isAdminLevel
+    }
+
+    var isInspectorRole: Bool {
+        hasAnyRole(["inspector", "ops", "ops_admin"]) || isAdminLevel
     }
 
     // MARK: - Tab access
@@ -104,19 +133,26 @@ extension User {
         hasAnyRole(["ops_admin", "manifest"])
     }
 
-    /// DZ-owned rigs: Ops, Packers, or 25+ jumps. Ops Admin and Manifest use consolidated Rigs tab instead.
+    /// DZ-owned rigs in Gear Room — packers, riggers, inspectors, loft, ops, or 25+ jumps.
     var canAccessDzRigs: Bool {
-        hasAnyRole(["packer", "ops"]) || ((totalJumps ?? 0) >= 25 && !isManifestOnly)
+        hasAnyRole(["packer", "rigger", "master_rigger", "loft", "inspector", "ops"])
+            || ((totalJumps ?? 0) >= 25 && !isManifestOnly)
+            || isAdminLevel
     }
 
-    /// 25 Jump Check tab: Ops, Ops Admin, Admin (Manifest sees widget on Home only)
+    /// 25 Jump Check — inspectors clear rigs at 25 pack jobs; ops/admin may also inspect.
     var canAccess25JumpCheck: Bool {
-        hasAnyRole(["ops", "ops_admin", "admin", "master", "godmode"])
+        canInspectDzRigs
     }
 
-    /// Can mark DZ rigs as packed (parity with API roles): packer, rigger, or 25+ jumps — UI should prefer `can_mark_packed` from GET /api/loft/dz_rigs.
+    /// Inspector & clear at 25 pack jobs (matches API `can_inspect`).
+    var canInspectDzRigs: Bool {
+        hasAnyRole(["inspector", "ops", "ops_admin", "admin", "master", "godmode"])
+    }
+
+    /// Can mark DZ rigs as packed (parity with API `can_mark_packed`); prefer API flag in UI.
     var canMarkPackedDzRigs: Bool {
-        hasAnyRole(["packer", "rigger"]) || (totalJumps ?? 0) >= 25
+        hasAnyRole(["packer", "rigger", "master_rigger"]) || isAdminLevel
     }
 
     var canAccessGroundSchool: Bool {

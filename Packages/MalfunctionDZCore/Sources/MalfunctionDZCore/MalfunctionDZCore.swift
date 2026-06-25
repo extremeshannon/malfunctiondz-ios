@@ -15,7 +15,12 @@ public var kServerURL: String {
         return t.hasSuffix("/") ? String(t.dropLast()) : t
     }
     #if DEBUG
-    return "http://localhost:8000"
+    // Legacy MalfunctionDZ staff target uses local Docker; ASC suite apps use production by default.
+    let bundle = Bundle.main.bundleIdentifier ?? ""
+    if bundle == "com.malfunctiondz.app.MalfunctionDZ" {
+        return "http://localhost:8000"
+    }
+    return "https://malfunctiondz.com"
     #else
     return "https://malfunctiondz.com"
     #endif
@@ -607,7 +612,8 @@ public actor APIClient {
                 return
             }
             if !ok {
-                errorMessage = (json["error"] as? String) ?? "Invalid login"
+                let err = (json["error"] as? String) ?? (json["detail"] as? String) ?? "Invalid login"
+                errorMessage = "\(err) (\(kServerURL))"
                 return
             }
             if (json["mfa_required"] as? Bool) == true,

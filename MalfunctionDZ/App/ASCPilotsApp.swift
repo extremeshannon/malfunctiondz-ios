@@ -77,6 +77,13 @@ struct PilotAppAccessDeniedView: View {
                     .foregroundColor(colors.muted)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
+                if let user = auth.currentUser {
+                    Text("Signed in as \(user.username) — roles: \((user.roles ?? [user.role ?? "none"]).joined(separator: ", "))")
+                        .font(.system(size: 12))
+                        .foregroundColor(colors.muted)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 24)
+                }
                 Button("Sign Out") { auth.logout() }
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.white)

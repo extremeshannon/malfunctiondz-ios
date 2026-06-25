@@ -81,7 +81,7 @@ struct PilotDocRow: Identifiable, Decodable {
 
     var uploadDocumentKey: String { uploadKey ?? docKey }
     var hasFile: Bool { !(file ?? "").isEmpty || !(fileUrl ?? "").isEmpty }
-    var allowsUpload: Bool { canUpload == true && docKey != "jump" && isWaiver != true }
+    var allowsUpload: Bool { canUpload == true && docKey != "jump" && !docKey.hasPrefix("lms_") && isWaiver != true }
 }
 
 struct PilotSignoff: Identifiable, Decodable {
@@ -441,12 +441,17 @@ struct PilotCurrencyCard: View {
 
 // MARK: - Full card rows
 
-private struct PilotDocRowView: View {
+struct PilotDocRowView: View {
     let row: PilotDocRow
     let isUploading: Bool
     let onUpload: () -> Void
     let onPreview: () -> Void
+    var onOpenTraining: (() -> Void)? = nil
     @Environment(\.mdzColors) private var colors
+
+    private var isTrainingRow: Bool {
+        row.docKey == "jump" || row.docKey.hasPrefix("lms_")
+    }
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
@@ -459,7 +464,7 @@ private struct PilotDocRowView: View {
                 Text(row.label)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(colors.text)
-                if row.docKey == "jump" {
+                if isTrainingRow {
                     Text(row.statusText ?? "Not Started")
                         .font(.system(size: 11))
                         .foregroundColor(colors.muted)
@@ -481,10 +486,17 @@ private struct PilotDocRowView: View {
 
             Spacer(minLength: 8)
 
-            if row.docKey == "jump" {
-                Text("Training")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(colors.muted)
+            if isTrainingRow {
+                if let onOpenTraining {
+                    Button(action: onOpenTraining) {
+                        actionLabel("Training", systemImage: "graduationcap.fill", filled: false)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Text("Training")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(colors.muted)
+                }
             } else if isUploading {
                 ProgressView().tint(colors.primary).scaleEffect(0.75)
             } else if row.hasFile {
@@ -611,7 +623,7 @@ private struct FlexibleChipLayout: Layout {
     }
 }
 
-private struct SafariView: UIViewControllerRepresentable {
+struct SafariView: UIViewControllerRepresentable {
     let url: URL
     func makeUIViewController(context: Context) -> SFSafariViewController {
         SFSafariViewController(url: url)

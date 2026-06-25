@@ -15,6 +15,7 @@ struct DzRigsView: View {
         return t.isEmpty ? "Unknown error." : t
     }
     @Environment(\.horizontalSizeClass) private var hSizeClass
+    @Environment(\.appShell) private var appShell
     @Environment(\.mdzColors) private var colors
 
     var body: some View {
@@ -113,13 +114,13 @@ struct DzRigsView: View {
     private var gearRoomHeader: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text("MODULE · RIGS")
+                Text(appShell.isPackerShell ? "GEAR ROOM" : "MODULE · RIGS")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(colors.muted)
                     .tracking(1.5)
                 Spacer()
             }
-            Text("Gear Check")
+            Text(appShell.isPackerShell ? "Dropzone Rigs" : "Gear Check")
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(colors.text)
             if let s = vm.summary {
@@ -128,25 +129,33 @@ struct DzRigsView: View {
                     .font(.system(size: 13))
                     .foregroundColor(colors.muted)
             }
-            if vm.canMarkPacked {
+            if vm.canMarkPacked || vm.canInspect {
                 HStack(spacing: 8) {
-                    Text("Tap a rig to add pack jobs")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(colors.muted)
-                    NavigationLink {
-                        JumpCheckView(vm: vm)
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "figure.fall")
-                                .font(.system(size: 11, weight: .semibold))
-                            Text("25 Jump Check")
-                                .font(.system(size: 11, weight: .semibold))
+                    if vm.canMarkPacked {
+                        Text("Tap a rig to record pack jobs")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(colors.muted)
+                    } else if vm.canInspect && appShell.isPackerShell {
+                        Text("Open 25 Jump Check to inspect locked rigs")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(colors.muted)
+                    }
+                    if vm.canInspect, !appShell.isPackerShell {
+                        NavigationLink {
+                            JumpCheckView(vm: vm)
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "figure.fall")
+                                    .font(.system(size: 11, weight: .semibold))
+                                Text("25 Jump Check")
+                                    .font(.system(size: 11, weight: .semibold))
+                            }
+                            .foregroundColor(colors.dz)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(colors.dz.opacity(0.15))
+                            .cornerRadius(8)
                         }
-                        .foregroundColor(colors.dz)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(colors.dz.opacity(0.15))
-                        .cornerRadius(8)
                     }
                 }
                 .padding(.top, 4)

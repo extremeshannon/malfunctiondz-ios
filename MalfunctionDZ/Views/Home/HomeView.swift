@@ -105,6 +105,14 @@ struct HomeView: View {
                                 .padding(.bottom, 16)
                         }
 
+                        // ── Staff compliance card (ASC Staff app; pilots use Pilot Card) ──
+                        if !isPilot && auth.currentUser?.showsStaffComplianceCard == true
+                            && !isPilotShell && !isMemberShell && !isPackerShell {
+                            StaffComplianceCard(compact: true)
+                                .padding(.horizontal, hPad)
+                                .padding(.bottom, 16)
+                        }
+
                         // ── My rigs (reserve / AAD expiry) ─────────────
                         if !vm.myRigs.isEmpty {
                             RigExpiryCard(rigs: vm.myRigs) {
