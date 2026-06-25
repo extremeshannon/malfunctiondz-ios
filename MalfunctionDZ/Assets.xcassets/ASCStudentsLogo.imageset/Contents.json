@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "ASCStudent.png",
+      "filename" : "ASCStudentsLogo.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "ASCStudent 1.png",
+      "filename" : "ASCStudentsLogo@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "ASCStudent 2.png",
+      "filename" : "ASCStudentsLogo@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
