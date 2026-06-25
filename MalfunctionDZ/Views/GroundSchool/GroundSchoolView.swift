@@ -682,8 +682,11 @@ struct CourseDetailView: View {
                 lessonTitle: nav.lessonTitle,
                 allLessons: nav.allLessons,
                 courseId: nav.courseId,
-                moduleId: nav.moduleId
+                moduleId: nav.moduleId,
+                onBackToModule: { lessonNav = nil },
+                onGoToLesson: { lessonNav = $0 }
             )
+            .id(nav.lessonId)
         }
     }
 
