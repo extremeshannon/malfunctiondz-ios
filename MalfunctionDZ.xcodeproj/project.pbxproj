@@ -31,11 +31,6 @@
 		186C80B496647ACE947A695E /* LoftViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF42F521B5100227638 /* LoftViewModel.swift */; };
 		192AF3B87760A93B5AF75C8B /* LMSEditModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E002F56000100022763 /* LMSEditModels.swift */; };
 		1C4A1BEF26696F595FAC5EB5 /* RoleHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1B2F54AB7600227638 /* RoleHelpers.swift */; };
-		FF7D8F2F65884ACFF3C3E4CF /* AppBranding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */; };
-		7716BB20B1118173086954ED /* AppBranding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */; };
-		EC36063EACFA2E61BEEFC045 /* AppBranding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */; };
-		359D818A042C2727C64C6400 /* AppBranding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */; };
-		A592D229E732001DAF27FC0C /* AppBranding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */; };
 		1CA4B55AC43E76ADBD072CC2 /* RigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D422F54BB270227638 /* RigsView.swift */; };
 		1CFE902BEC2C0D40C2845F37 /* CalendarModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F012F56000200022763 /* CalendarModels.swift */; };
 		1D205D4B3004C55A6FB66FAC /* UsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D292F54BB100227638 /* UsersView.swift */; };
@@ -56,23 +51,15 @@
 		2A8B318C96E09F1D47621902 /* UserAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2E2F54BB130227638 /* UserAddView.swift */; };
 		2C5F0DE94693DFE172669331 /* LoftViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF42F521B5100227638 /* LoftViewModel.swift */; };
 		2D53AEDFF4F25F7C3D31F0D3 /* FlightLoad.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D152F53F69A00227638 /* FlightLoad.swift */; };
+		2E77716DE4B69F4904FB4539 /* PackerGearRoomRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 681FBD3163B41BF49E8DC0CE /* PackerGearRoomRootView.swift */; };
 		2E7E7B5300EAC6A34E5A8109 /* QuizLaunchCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D112F52D4EC00227638 /* QuizLaunchCard.swift */; };
 		2EB224C889AC7ACC2D9CFE8F /* GroundSchoolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE32F52191600227638 /* GroundSchoolView.swift */; };
 		2FA64ABAD15827F7B556C751 /* CalendarAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F032F56000200022763 /* CalendarAPIService.swift */; };
 		31416E09DFD57BBED348B649 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCE2F5201DB00FBAD05 /* HomeView.swift */; };
 		3256B9E768DA2746E2995B87 /* PilotCurrencyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */; };
-		9BF9449281DEC20CF1FFA9E5 /* PackerGearRoomRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 681FBD3163B41BF49E8DC0CE /* PackerGearRoomRootView.swift */; };
-		2E77716DE4B69F4904FB4539 /* PackerGearRoomRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 681FBD3163B41BF49E8DC0CE /* PackerGearRoomRootView.swift */; };
-		DB6B5EAE60CAD6092BFEB899 /* PackerGearRoomRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 681FBD3163B41BF49E8DC0CE /* PackerGearRoomRootView.swift */; };
-		73049C306E645EA4C12D8DCC /* PackerGearRoomRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 681FBD3163B41BF49E8DC0CE /* PackerGearRoomRootView.swift */; };
-		5544748C02D686DD6DC736DE /* PackerGearRoomRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 681FBD3163B41BF49E8DC0CE /* PackerGearRoomRootView.swift */; };
-		C7B2A5220C4FEEC2C727DEC9 /* StaffComplianceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E04D415B453665F983311672 /* StaffComplianceCard.swift */; };
-		D660BD03037C43BA76BB58B7 /* StaffComplianceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E04D415B453665F983311672 /* StaffComplianceCard.swift */; };
-		E4ED1B25BB332B000971B9F9 /* StaffComplianceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E04D415B453665F983311672 /* StaffComplianceCard.swift */; };
-		BC61D756833273CB23E8DA40 /* StaffComplianceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E04D415B453665F983311672 /* StaffComplianceCard.swift */; };
-		ED42FFD2701BB0E7F8C21CC9 /* StaffComplianceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E04D415B453665F983311672 /* StaffComplianceCard.swift */; };
 		334B04B1E3A96961A2BF3CD2 /* DzRigDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D3E2F54BB250227638 /* DzRigDetailView.swift */; };
 		359AA57006CB679675F2D67C /* AircraftDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEC2F521AFF00227638 /* AircraftDetailView.swift */; };
+		359D818A042C2727C64C6400 /* AppBranding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */; };
 		36AC855C931997430E028A97 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0D2F52C9CE00227638 /* ProfileView.swift */; };
 		3771697563876CB7CA0D1542 /* MyRigsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D352F54BB220227638 /* MyRigsViewModel.swift */; };
 		38BCF6C780045E861BD275D0 /* LMSEditRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E052F56000100022763 /* LMSEditRootView.swift */; };
@@ -96,6 +83,7 @@
 		4DB13B5D86FC0D3E9E0F691D /* LogbookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D242F54BB030227638 /* LogbookView.swift */; };
 		530761E78C5C6F5ADD6115F0 /* SkydiverLogbook.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */; };
 		54C24B9E7AED400C44B7BC50 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0F2F56000200022765 /* NotificationsView.swift */; };
+		5544748C02D686DD6DC736DE /* PackerGearRoomRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 681FBD3163B41BF49E8DC0CE /* PackerGearRoomRootView.swift */; };
 		554D6335BE977A56384DA40E /* GroundSchoolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */; };
 		55840C174AC0AC4E36F83E8C /* LoftViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF42F521B5100227638 /* LoftViewModel.swift */; };
 		5628EB9BC3489E4EA0ED17C8 /* QuizAttemptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D042F52AD7F00227638 /* QuizAttemptView.swift */; };
@@ -133,8 +121,10 @@
 		71352277F6A69510A1DE2905 /* PilotCurrencyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */; };
 		722A0069B321EA5D7803FEE2 /* UserAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2E2F54BB130227638 /* UserAddView.swift */; };
 		72E64FF5BCD10FCA4E7DD078 /* PilotCurrencyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */; };
+		73049C306E645EA4C12D8DCC /* PackerGearRoomRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 681FBD3163B41BF49E8DC0CE /* PackerGearRoomRootView.swift */; };
 		746FB5C1D66A58D5997519FD /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCE2F5201DB00FBAD05 /* HomeView.swift */; };
 		7708911475D559A9050B224F /* LMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD42F52169D00FBAD05 /* LMS.swift */; };
+		7716BB20B1118173086954ED /* AppBranding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */; };
 		772C3A9D93412CB1F9C34DA1 /* CalendarRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F072F56000200022763 /* CalendarRootView.swift */; };
 		788143A80451357978872E0F /* AircraftDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEC2F521AFF00227638 /* AircraftDetailView.swift */; };
 		78B0CDCDCDF9F360DCADB87E /* LogbookRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D252F54BB040227638 /* LogbookRootView.swift */; };
@@ -176,6 +166,7 @@
 		9984ED42BB535E203CB044F7 /* LMSEditService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E032F56000100022763 /* LMSEditService.swift */; };
 		9A0D42B5EB9F3973B85CF4C5 /* EventsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F092F56000200022763 /* EventsView.swift */; };
 		9A510EBAE26DF60E20386F76 /* AircraftListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEF2F521B2900227638 /* AircraftListView.swift */; };
+		9BF9449281DEC20CF1FFA9E5 /* PackerGearRoomRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 681FBD3163B41BF49E8DC0CE /* PackerGearRoomRootView.swift */; };
 		9CFEBB63913CDF5890FC0D3C /* GroundSchoolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */; };
 		9D7E273D712D87195A0AC7AC /* AircraftViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF02F521B3A00227638 /* AircraftViewModel.swift */; };
 		A0A8138F933C5ECE70062E1E /* DzRigDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D3E2F54BB250227638 /* DzRigDetailView.swift */; };
@@ -185,6 +176,7 @@
 		A2430F4EE1B673465A02C57E /* LoftRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEA2F521AD900227638 /* LoftRootView.swift */; };
 		A3F297EF9A88B5042ED0130C /* PaxViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D172F53F6CF00227638 /* PaxViewModel.swift */; };
 		A561BF24075948AF85D9AE39 /* DzRigDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D3E2F54BB250227638 /* DzRigDetailView.swift */; };
+		A592D229E732001DAF27FC0C /* AppBranding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */; };
 		A5B087C44988AAFDDCBA562E /* AircraftViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF02F521B3A00227638 /* AircraftViewModel.swift */; };
 		A5E4B2555648B9447772D897 /* ASCPackersApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD722EEBB084606F8238F25A /* ASCPackersApp.swift */; };
 		A64F3E9783F7461BF6087EC2 /* TodosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F132F56000200022763 /* TodosView.swift */; };
@@ -220,6 +212,7 @@
 		B881326BD59C2EFAF790642C /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF22F521B4B00227638 /* HomeViewModel.swift */; };
 		B9040CB191A59DC1BB964F82 /* LoftRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEA2F521AD900227638 /* LoftRootView.swift */; };
 		BC46EDE689086F2DCDA796B8 /* PushNavigationSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC016AC305ACC94B41FEF6 /* PushNavigationSupport.swift */; };
+		BC61D756833273CB23E8DA40 /* StaffComplianceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E04D415B453665F983311672 /* StaffComplianceCard.swift */; };
 		BD827DD6C38EE8D85CA879D8 /* DZStatusUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0D2F56000200022764 /* DZStatusUpdateView.swift */; };
 		BE0EC5A6275B54723D11F79D /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0D2F52C9CE00227638 /* ProfileView.swift */; };
 		C0AC03F01E227BA813B65AA3 /* UsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D292F54BB100227638 /* UsersView.swift */; };
@@ -228,6 +221,7 @@
 		C40A2289B4ED69583D026455 /* RoleHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1B2F54AB7600227638 /* RoleHelpers.swift */; };
 		C487E32D150C6271B2B6F486 /* ALicenseProgressViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0A5C042F60020100022763 /* ALicenseProgressViewModel.swift */; };
 		C7A2B0DAEDD68F35DDB49D3C /* LessonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0F2F52D10B00227638 /* LessonDetailView.swift */; };
+		C7B2A5220C4FEEC2C727DEC9 /* StaffComplianceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E04D415B453665F983311672 /* StaffComplianceCard.swift */; };
 		C7B5AB9273ABF52B6F6A3F07 /* Foundation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD02F52032300FBAD05 /* Foundation.swift */; };
 		C7DBEEA1E12048BEA1F74593 /* Loft.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE72F521A8800227638 /* Loft.swift */; };
 		C8004EB8CC385248518CD3A0 /* Aircraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE52F521A7400227638 /* Aircraft.swift */; };
@@ -248,6 +242,7 @@
 		D5929D0DD9AA53D86CAEBE08 /* LogbookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D242F54BB030227638 /* LogbookView.swift */; };
 		D5F10BF397BB02238CB7C426 /* LessonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0F2F52D10B00227638 /* LessonDetailView.swift */; };
 		D65C2ED077014BDA29C3B137 /* LogbookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D242F54BB030227638 /* LogbookView.swift */; };
+		D660BD03037C43BA76BB58B7 /* StaffComplianceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E04D415B453665F983311672 /* StaffComplianceCard.swift */; };
 		D75E6F444F6B9DDAF005E974 /* ALicenseProgressViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0A5C042F60020100022763 /* ALicenseProgressViewModel.swift */; };
 		D811EAADFAF86E53675E2CB4 /* LMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD42F52169D00FBAD05 /* LMS.swift */; };
 		D860A3134E5C57A5EB6FC95F /* UserDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2C2F54BB120227638 /* UserDetailView.swift */; };
@@ -255,12 +250,14 @@
 		D96343A7AB4C0AB0C860018C /* GroundSchoolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE32F52191600227638 /* GroundSchoolView.swift */; };
 		DA5E06075A6A200F0898A773 /* JumpCheckViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D3B2F54BB280227638 /* JumpCheckViewModel.swift */; };
 		DACF73D614411FB1A8263821 /* Quiz.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CFF2F52ACE600227638 /* Quiz.swift */; };
+		DB6B5EAE60CAD6092BFEB899 /* PackerGearRoomRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 681FBD3163B41BF49E8DC0CE /* PackerGearRoomRootView.swift */; };
 		DC93E901D21A18CEA2F11A12 /* ALicenseProgressViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0A5C042F60020100022763 /* ALicenseProgressViewModel.swift */; };
 		DD942BE85B16368E7EFB1740 /* CalendarAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F032F56000200022763 /* CalendarAPIService.swift */; };
 		E14191D42A5C1795CC4D5B7F /* MalfunctionDZCore in Frameworks */ = {isa = PBXBuildFile; productRef = FB063FAB2F60000100022763 /* MalfunctionDZCore */; };
 		E2DCB9E69B84FA538E75BF04 /* JumpCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D392F54BB260227638 /* JumpCheckView.swift */; };
 		E2E449FB2EB52A2466558461 /* GroundSchoolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */; };
 		E486E0F3DE4BBDD77E274CA6 /* JumpCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D392F54BB260227638 /* JumpCheckView.swift */; };
+		E4ED1B25BB332B000971B9F9 /* StaffComplianceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E04D415B453665F983311672 /* StaffComplianceCard.swift */; };
 		E54ACA1606B508F5879B51DE /* CalendarRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F072F56000200022763 /* CalendarRootView.swift */; };
 		E5F607182F57000500022763 /* InstructorDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E172F57000500022763 /* InstructorDashboardView.swift */; };
 		E661318A372F2FAFCDDD1127 /* ShiftsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0B2F56000200022763 /* ShiftsView.swift */; };
@@ -271,6 +268,8 @@
 		E9733796060DDA0EA1F1825A /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF22F521B4B00227638 /* HomeViewModel.swift */; };
 		EABBC7036BAABDA0DD2634DC /* SkydiverLogbook.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */; };
 		EBE6EEA356039E84022492B5 /* RoleHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1B2F54AB7600227638 /* RoleHelpers.swift */; };
+		EC36063EACFA2E61BEEFC045 /* AppBranding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */; };
+		ED42FFD2701BB0E7F8C21CC9 /* StaffComplianceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E04D415B453665F983311672 /* StaffComplianceCard.swift */; };
 		EE8AAEF184ED2B0836107E2C /* LMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD42F52169D00FBAD05 /* LMS.swift */; };
 		EF7862787860DC0382A85F65 /* InstructorDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E172F57000500022763 /* InstructorDashboardView.swift */; };
 		F018AA29CA8A5E1577D89B87 /* PaxViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D172F53F6CF00227638 /* PaxViewModel.swift */; };
@@ -371,6 +370,7 @@
 		FCF0CE261E3AC8B07AB0CD8B /* JumpCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D392F54BB260227638 /* JumpCheckView.swift */; };
 		FD856064C927134B63B883E1 /* LMSEditService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E032F56000100022763 /* LMSEditService.swift */; };
 		FE6736E5D629DA45AA58E2AF /* DzRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D332F54BB210227638 /* DzRigsView.swift */; };
+		FF7D8F2F65884ACFF3C3E4CF /* AppBranding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -383,12 +383,15 @@
 		450E32E73B9723DB390B67D8 /* ASCPackers.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ASCPackers.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		61CB6D321063D4BE7B7C506C /* ASCPilotsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCPilotsApp.swift; sourceTree = "<group>"; };
 		636ACA25B0FB6724F62901C9 /* ASCApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCApp.swift; sourceTree = "<group>"; };
+		681FBD3163B41BF49E8DC0CE /* PackerGearRoomRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackerGearRoomRootView.swift; sourceTree = "<group>"; };
 		6FDC016AC305ACC94B41FEF6 /* PushNavigationSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNavigationSupport.swift; sourceTree = "<group>"; };
 		778B38E747A173E34FDA6D1D /* ASCPilots.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ASCPilots.entitlements; sourceTree = "<group>"; };
 		791AC4A30F02E343582C9539 /* ASCStaffApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCStaffApp.swift; sourceTree = "<group>"; };
+		92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBranding.swift; sourceTree = "<group>"; };
 		9DDF778B7F3CE90083F398FC /* ASCStaff.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ASCStaff.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE4CA289BC591040DD92EBD6 /* DocumentScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentScannerView.swift; sourceTree = "<group>"; };
 		DD722EEBB084606F8238F25A /* ASCPackersApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCPackersApp.swift; sourceTree = "<group>"; };
+		E04D415B453665F983311672 /* StaffComplianceCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffComplianceCard.swift; sourceTree = "<group>"; };
 		FB063CE32F52191600227638 /* GroundSchoolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroundSchoolView.swift; sourceTree = "<group>"; };
 		FB063CE52F521A7400227638 /* Aircraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Aircraft.swift; sourceTree = "<group>"; };
 		FB063CE72F521A8800227638 /* Loft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Loft.swift; sourceTree = "<group>"; };
@@ -412,7 +415,6 @@
 		FB063D172F53F6CF00227638 /* PaxViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaxViewModel.swift; sourceTree = "<group>"; };
 		FB063D192F53F92300227638 /* PaxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaxView.swift; sourceTree = "<group>"; };
 		FB063D1B2F54AB7600227638 /* RoleHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoleHelpers.swift; sourceTree = "<group>"; };
-		92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBranding.swift; sourceTree = "<group>"; };
 		FB063D1D2F54AB9B00227638 /* AviationRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AviationRootView.swift; sourceTree = "<group>"; };
 		FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkydiverLogbook.swift; sourceTree = "<group>"; };
 		FB063D232F54BB020227638 /* LogbookViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogbookViewModel.swift; sourceTree = "<group>"; };
@@ -458,8 +460,6 @@
 		FB367DD42F52169D00FBAD05 /* LMS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMS.swift; sourceTree = "<group>"; };
 		FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroundSchoolViewModel.swift; sourceTree = "<group>"; };
 		FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotCurrencyCard.swift; sourceTree = "<group>"; };
-		681FBD3163B41BF49E8DC0CE /* PackerGearRoomRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackerGearRoomRootView.swift; sourceTree = "<group>"; };
-		E04D415B453665F983311672 /* StaffComplianceCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffComplianceCard.swift; sourceTree = "<group>"; };
 		FBFFF0E42F58BC1F009895AE /* MalfunctionDZ.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MalfunctionDZ.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1766,7 +1766,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/MalfunctionDZ.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 46;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1801,7 +1801,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/MalfunctionDZ.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 46;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
