@@ -14,6 +14,10 @@
 		184F0B7368EDA97E0A0A66E0 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0F2F56000200022765 /* NotificationsView.swift */; };
 		2A8B318C96E09F1D47621902 /* UserAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2E2F54BB130227638 /* UserAddView.swift */; };
 		2EB224C889AC7ACC2D9CFE8F /* GroundSchoolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE32F52191600227638 /* GroundSchoolView.swift */; };
+		FB0A5C022F60020100022763 /* ALicenseProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0A5C012F60020100022763 /* ALicenseProgressView.swift */; };
+		FB0A5C052F60020100022763 /* ALicenseProgressViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0A5C042F60020100022763 /* ALicenseProgressViewModel.swift */; };
+		FB0A5C062F60020100022763 /* ALicenseProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0A5C012F60020100022763 /* ALicenseProgressView.swift */; };
+		FB0A5C072F60020100022763 /* ALicenseProgressViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0A5C042F60020100022763 /* ALicenseProgressViewModel.swift */; };
 		31416E09DFD57BBED348B649 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCE2F5201DB00FBAD05 /* HomeView.swift */; };
 		359AA57006CB679675F2D67C /* AircraftDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEC2F521AFF00227638 /* AircraftDetailView.swift */; };
 		36AC855C931997430E028A97 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0D2F52C9CE00227638 /* ProfileView.swift */; };
@@ -150,6 +154,8 @@
 		636ACA25B0FB6724F62901C9 /* ASCApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCApp.swift; sourceTree = "<group>"; };
 		6FDC016AC305ACC94B41FEF6 /* PushNavigationSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNavigationSupport.swift; sourceTree = "<group>"; };
 		FB063CE32F52191600227638 /* GroundSchoolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroundSchoolView.swift; sourceTree = "<group>"; };
+		FB0A5C012F60020100022763 /* ALicenseProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ALicenseProgressView.swift; sourceTree = "<group>"; };
+		FB0A5C042F60020100022763 /* ALicenseProgressViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ALicenseProgressViewModel.swift; sourceTree = "<group>"; };
 		FB063CE52F521A7400227638 /* Aircraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Aircraft.swift; sourceTree = "<group>"; };
 		FB063CE72F521A8800227638 /* Loft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Loft.swift; sourceTree = "<group>"; };
 		FB063CEA2F521AD900227638 /* LoftRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoftRootView.swift; sourceTree = "<group>"; };
@@ -242,6 +248,7 @@
 			isa = PBXGroup;
 			children = (
 				FB063CE32F52191600227638 /* GroundSchoolView.swift */,
+				FB0A5C012F60020100022763 /* ALicenseProgressView.swift */,
 				FB063D0F2F52D10B00227638 /* LessonDetailView.swift */,
 				FB063D242F54BB030227638 /* LogbookView.swift */,
 				FB063D112F52D4EC00227638 /* QuizLaunchCard.swift */,
@@ -464,6 +471,7 @@
 				FB063CF02F521B3A00227638 /* AircraftViewModel.swift */,
 				FB063F052F56000200022763 /* CalendarViewModel.swift */,
 				FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */,
+				FB0A5C042F60020100022763 /* ALicenseProgressViewModel.swift */,
 				FB063D232F54BB020227638 /* LogbookViewModel.swift */,
 				FB063CF22F521B4B00227638 /* HomeViewModel.swift */,
 				FB063CF42F521B5100227638 /* LoftViewModel.swift */,
@@ -623,6 +631,8 @@
 				FA99E17BC7AEC5BEB24CAB3C /* QuizAttemptView.swift in Sources */,
 				49502B1F722DE37895EBDD37 /* PaxView.swift in Sources */,
 				82C30F1994ACC623CEDAAE9E /* GroundSchoolViewModel.swift in Sources */,
+				FB0A5C052F60020100022763 /* ALicenseProgressViewModel.swift in Sources */,
+				FB0A5C022F60020100022763 /* ALicenseProgressView.swift in Sources */,
 				876A0CAD8FFAAB6580564272 /* AviationRootView.swift in Sources */,
 				C40A2289B4ED69583D026455 /* RoleHelpers.swift in Sources */,
 				9D7E273D712D87195A0AC7AC /* AircraftViewModel.swift in Sources */,
@@ -694,6 +704,8 @@
 				FB063D052F52AD7F00227638 /* QuizAttemptView.swift in Sources */,
 				FB063D1A2F53F92300227638 /* PaxView.swift in Sources */,
 				FBD783602F5217F800F5EBCD /* GroundSchoolViewModel.swift in Sources */,
+				FB0A5C072F60020100022763 /* ALicenseProgressViewModel.swift in Sources */,
+				FB0A5C062F60020100022763 /* ALicenseProgressView.swift in Sources */,
 				FB063D1E2F54AB9B00227638 /* AviationRootView.swift in Sources */,
 				FB367DCC2F52007600FBAD05 /* MalfunctionDZApp.swift in Sources */,
 				B83076D835D072689F69CE77 /* AppShellKind.swift in Sources */,
@@ -735,7 +747,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASC.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -771,7 +783,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASC.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -929,7 +941,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/MalfunctionDZ.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 44;
+				CURRENT_PROJECT_VERSION = 46;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -964,7 +976,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/MalfunctionDZ.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 44;
+				CURRENT_PROJECT_VERSION = 46;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;

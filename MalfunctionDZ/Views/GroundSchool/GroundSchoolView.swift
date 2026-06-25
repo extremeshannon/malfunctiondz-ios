@@ -7,13 +7,18 @@ import MalfunctionDZCore
 
 struct GroundSchoolView: View {
     @EnvironmentObject private var auth: AuthManager
+    @Environment(\.appShell) private var appShell
     @StateObject private var vm = GroundSchoolViewModel()
     @State private var selectedCourse: LMSCourse?
     @Environment(\.horizontalSizeClass) private var hSizeClass
 
+    private var showInstructorDashboard: Bool {
+        auth.currentUser?.isInstructorRole == true && !appShell.hidesStaffOpsUI
+    }
+
     var body: some View {
         Group {
-            if auth.currentUser?.isInstructorRole == true {
+            if showInstructorDashboard {
                 InstructorDashboardView(coursesVm: vm)
             } else if hSizeClass == .regular {
                 GroundSchoolWideLayout(vm: vm, selectedCourse: $selectedCourse)
@@ -22,7 +27,7 @@ struct GroundSchoolView: View {
             }
         }
         .task(id: auth.currentUser?.id) {
-            if auth.currentUser?.isInstructorRole != true {
+            if !showInstructorDashboard {
                 await vm.load()
             }
         }
@@ -39,6 +44,7 @@ struct GroundSchoolView: View {
 struct GroundSchoolWideLayout: View {
     @EnvironmentObject private var auth: AuthManager
     @EnvironmentObject private var tabSelect: TabSelection
+    @Environment(\.appShell) private var appShell
     @ObservedObject var vm: GroundSchoolViewModel
     @Binding var selectedCourse: LMSCourse?
     @State private var showInstructorReviews = false
@@ -111,7 +117,7 @@ struct GroundSchoolWideLayout: View {
             InstructorReviewListView()
         }
         .toolbar {
-            if auth.currentUser?.canManageLMS == true {
+            if auth.currentUser?.canManageLMS == true && !appShell.hidesStaffOpsUI {
                 ToolbarItem(placement: .primaryAction) {
                     NavigationLink(destination: LMSEditRootView()) {
                         Label("Manage LMS", systemImage: "pencil.and.list.clipboard")
@@ -153,6 +159,7 @@ struct GroundSchoolWideLayout: View {
 struct GroundSchoolSplitView: View {
     @EnvironmentObject private var auth: AuthManager
     @EnvironmentObject private var tabSelect: TabSelection
+    @Environment(\.appShell) private var appShell
     @ObservedObject var vm: GroundSchoolViewModel
     @Binding var selectedCourse: LMSCourse?
     @State private var showInstructorReviews = false
@@ -175,7 +182,7 @@ struct GroundSchoolSplitView: View {
                         Spacer()
                     } else {
                         List(selection: $selectedCourse) {
-                            if auth.currentUser?.isInstructorRole == true {
+                            if auth.currentUser?.isInstructorRole == true && !appShell.hidesStaffOpsUI {
                                 NavigationLink(destination: InstructorReviewListView()) {
                                     InstructorReviewEntryCard(pendingCount: vm.pendingInstructorReviews)
                                 }
@@ -210,7 +217,7 @@ struct GroundSchoolSplitView: View {
                 InstructorReviewListView()
             }
             .toolbar {
-                if auth.currentUser?.canManageLMS == true {
+                if auth.currentUser?.canManageLMS == true && !appShell.hidesStaffOpsUI {
                     ToolbarItem(placement: .primaryAction) {
                         NavigationLink(destination: LMSEditRootView()) {
                             Label("Manage LMS", systemImage: "pencil.and.list.clipboard")
@@ -293,6 +300,7 @@ struct GroundSchoolCourseRow: View {
 struct GroundSchoolStackView: View {
     @EnvironmentObject private var auth: AuthManager
     @EnvironmentObject private var tabSelect: TabSelection
+    @Environment(\.appShell) private var appShell
     @ObservedObject var vm: GroundSchoolViewModel
     @State private var showInstructorReviews = false
     @Environment(\.mdzColors) private var colors
@@ -339,14 +347,13 @@ struct GroundSchoolStackView: View {
                     } else {
                         ScrollView(showsIndicators: false) {
                             VStack(spacing: 12) {
-                                if auth.currentUser?.isInstructorRole == true {
+                                if auth.currentUser?.isInstructorRole == true && !appShell.hidesStaffOpsUI {
                                     NavigationLink(destination: InstructorReviewListView()) {
                                         InstructorReviewEntryCard(pendingCount: vm.pendingInstructorReviews)
                                     }
                                     .buttonStyle(.plain)
                                 }
-                                // Manage LMS card for admins/instructors
-                                if auth.currentUser?.canManageLMS == true {
+                                if auth.currentUser?.canManageLMS == true && !appShell.hidesStaffOpsUI {
                                     NavigationLink(destination: LMSEditRootView()) {
                                         HStack(spacing: 12) {
                                             Image(systemName: "pencil.and.list.clipboard")

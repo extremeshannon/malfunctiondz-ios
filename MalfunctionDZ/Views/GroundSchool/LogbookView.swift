@@ -13,6 +13,7 @@ struct LogbookView: View {
 
     @StateObject private var vm = LogbookViewModel()
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appShell) private var appShell
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
     @State private var showAddEntry = false
@@ -66,10 +67,11 @@ struct LogbookView: View {
                         if vm.entries.isEmpty {
                             EmptyStateView(
                                 icon: "book.closed",
-                                title: "No logbook entries yet",
-                                subtitle: courseId == nil
-                                    ? "Tap Add Jump to log a jump, or entries appear when an instructor signs off."
-                                    : "Jump sign-offs from this course will appear here. Entries are added when an instructor signs off a jump."
+                                title: vm.error != nil ? "Could not load logbook" : "No logbook entries yet",
+                                subtitle: vm.error
+                                    ?? (courseId == nil
+                                        ? "Tap Add Jump to log a jump, or entries appear when an instructor signs off."
+                                        : "Jump sign-offs from this course will appear here. Entries are added when an instructor signs off a jump.")
                             )
                             .padding(.vertical, 24)
                         } else {
@@ -117,13 +119,11 @@ struct LogbookView: View {
         .toolbar {
             if isStandalone && isStandaloneRoot {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
+                    Button("Gear") {
                         showConfigSheet = true
-                    } label: {
-                        Image(systemName: "gearshape.fill")
-                            .font(.system(size: 18))
-                            .foregroundColor(colors.muted)
                     }
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(colors.amber)
                 }
             }
             if !isStandaloneRoot {
@@ -255,8 +255,11 @@ struct LogbookConfigSheet: View {
     @State private var draftJumpType = ""
     @State private var draftHomeDz = ""
 
+    @Environment(\.appShell) private var appShell
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
+
+    private var sheetTitle: String { appShell.hidesStaffOpsUI ? "Gear" : "Logbook Config" }
 
     var body: some View {
         NavigationStack {
@@ -335,7 +338,7 @@ struct LogbookConfigSheet: View {
                     .padding(20)
                 }
             }
-            .navigationTitle("Logbook Config")
+            .navigationTitle(sheetTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
             .toolbarBackground(colors.navyMid, for: .navigationBar)

@@ -10,7 +10,7 @@ struct CalendarRootView: View {
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
 
-    private var isMemberShell: Bool { appShell == .member }
+    private var isMemberShell: Bool { appShell.hidesStaffOpsUI }
 
     var body: some View {
         NavigationStack {

@@ -30,6 +30,16 @@ class LogbookViewModel: ObservableObject {
 
     private var currentCourseId: Int?
 
+    private static let logbookLoadPaths = [
+        "/api/lms/logbook",
+        "/api/lms/logbook.php",
+    ]
+
+    private static let logbookSettingsPaths = [
+        "/api/lms/logbook_settings",
+        "/api/lms/logbook_settings.php",
+    ]
+
     /// Load logbook. Pass courseId to filter by course (LMS flow); pass nil for all entries (standalone, skydivers without LMS).
     func load(courseId: Int? = nil, userId: Int? = nil) async {
         isLoading = true
@@ -37,70 +47,87 @@ class LogbookViewModel: ObservableObject {
         currentCourseId = courseId
         defer { isLoading = false }
 
-        var components = URLComponents(string: "\(kServerURL)/api/lms/logbook.php")
-        var items: [URLQueryItem] = []
+        guard let token = KeychainHelper.readToken() else { return }
+
+        var queryItems: [URLQueryItem] = []
         if let cid = courseId, cid > 0 {
-            items.append(URLQueryItem(name: "course_id", value: "\(cid)"))
+            queryItems.append(URLQueryItem(name: "course_id", value: "\(cid)"))
         }
         if let uid = userId {
-            items.append(URLQueryItem(name: "user_id", value: "\(uid)"))
+            queryItems.append(URLQueryItem(name: "user_id", value: "\(uid)"))
         }
-        if !items.isEmpty { components?.queryItems = items }
 
-        guard let token = KeychainHelper.readToken(),
-              let url = components?.url else { return }
+        var lastStatus = 0
+        for path in Self.logbookLoadPaths {
+            var components = URLComponents(string: "\(kServerURL)\(path)")
+            if !queryItems.isEmpty { components?.queryItems = queryItems }
+            guard let url = components?.url else { continue }
 
-        var req = URLRequest(url: url)
-        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            var req = URLRequest(url: url)
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-        do {
-            let (data, response) = try await URLSession.shared.data(for: req)
-            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
-            if statusCode == 404 {
+            do {
+                let (data, response) = try await URLSession.shared.data(for: req)
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+                lastStatus = statusCode
+                if statusCode == 404 { continue }
+                if statusCode == 401 {
+                    AuthManager.shared.logout()
+                    error = "Session expired"
+                    return
+                }
+                if statusCode == 403 {
+                    error = "You don't have permission to view this logbook"
+                    return
+                }
+                let decoded = try? JSONDecoder().decode(SkydiverLogbookResponse.self, from: data)
+                if let resp = decoded, resp.ok {
+                    applyLogbookResponse(resp)
+                    return
+                }
                 entries = []
-                otherTrainingNotes = ""
-                priorFreefallSeconds = 0
-                totalFreefallSeconds = 0
+                resetLogbookFields()
+            } catch {
+                self.error = error.localizedDescription
                 return
             }
-            let decoded = try? JSONDecoder().decode(SkydiverLogbookResponse.self, from: data)
-            if let resp = decoded, resp.ok {
-                entries = resp.entries ?? []
-                otherTrainingNotes = resp.otherTrainingNotes ?? ""
-                priorJumpCount = resp.priorJumpCount ?? 0
-                priorFreefallSeconds = resp.priorFreefallSeconds ?? 0
-                totalFreefallSeconds = resp.totalFreefallSeconds ?? 0
-                startFreefallTime = resp.startFreefallTime ?? ""
-                defaultJumpType = resp.defaultJumpType ?? ""
-                homeDropzone = resp.homeDropzone ?? ""
-                totalJumps = resp.totalJumps ?? priorJumpCount
-                isStudent = resp.isStudent ?? false
-                isSkydiver = resp.isSkydiver ?? false
-                nextJumpNumber = resp.nextJumpNumber ?? (priorJumpCount + 1)
-            } else {
-                entries = []
-                otherTrainingNotes = ""
-                priorJumpCount = 0
-                priorFreefallSeconds = 0
-                totalFreefallSeconds = 0
-                startFreefallTime = ""
-                defaultJumpType = ""
-                homeDropzone = ""
-                totalJumps = 0
-                isStudent = false
-                isSkydiver = false
-                nextJumpNumber = 1
-            }
-        } catch {
-            entries = []
-            otherTrainingNotes = ""
-            priorFreefallSeconds = 0
-            totalFreefallSeconds = 0
-            startFreefallTime = ""
-            defaultJumpType = ""
-            homeDropzone = ""
-            self.error = error.localizedDescription
         }
+
+        entries = []
+        resetLogbookFields()
+        if lastStatus == 404 {
+            error = "Logbook API not found — the server needs a platform update. Try again after deploy."
+        }
+    }
+
+    private func applyLogbookResponse(_ resp: SkydiverLogbookResponse) {
+        entries = resp.entries ?? []
+        otherTrainingNotes = resp.otherTrainingNotes ?? ""
+        priorJumpCount = resp.priorJumpCount ?? 0
+        priorFreefallSeconds = resp.priorFreefallSeconds ?? 0
+        totalFreefallSeconds = resp.totalFreefallSeconds ?? 0
+        startFreefallTime = resp.startFreefallTime ?? ""
+        defaultJumpType = resp.defaultJumpType ?? ""
+        homeDropzone = resp.homeDropzone ?? ""
+        totalJumps = resp.totalJumps ?? priorJumpCount
+        isStudent = resp.isStudent ?? false
+        isSkydiver = resp.isSkydiver ?? false
+        nextJumpNumber = resp.nextJumpNumber ?? (priorJumpCount + 1)
+        error = nil
+    }
+
+    private func resetLogbookFields() {
+        otherTrainingNotes = ""
+        priorJumpCount = 0
+        priorFreefallSeconds = 0
+        totalFreefallSeconds = 0
+        startFreefallTime = ""
+        defaultJumpType = ""
+        homeDropzone = ""
+        totalJumps = 0
+        isStudent = false
+        isSkydiver = false
+        nextJumpNumber = 1
     }
 
     /// Saves all logbook settings in one request (recommended for the config screen).
@@ -116,8 +143,7 @@ class LogbookViewModel: ObservableObject {
         isSaving = true
         error = nil
         defer { isSaving = false }
-        guard let token = KeychainHelper.readToken(),
-              let url = URL(string: "\(kServerURL)/api/lms/logbook_settings.php") else { return false }
+        guard let token = KeychainHelper.readToken() else { return false }
         let body: [String: Any] = [
             "prior_jump_count": pj,
             "prior_freefall_seconds": pff,
@@ -126,35 +152,41 @@ class LogbookViewModel: ObservableObject {
             "default_jump_type": defaultJumpType.isEmpty ? NSNull() : defaultJumpType,
         ]
         guard let jsonData = try? JSONSerialization.data(withJSONObject: body) else { return false }
-        var req = URLRequest(url: url)
-        req.httpMethod = "POST"
-        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = jsonData
-        do {
-            let (data, response) = try await URLSession.shared.data(for: req)
-            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-            if status != 200 {
-                let msg = String(data: data, encoding: .utf8) ?? "HTTP \(status)"
-                error = String(msg.prefix(200))
+        for path in Self.logbookSettingsPaths {
+            guard let url = URL(string: "\(kServerURL)\(path)") else { continue }
+            var req = URLRequest(url: url)
+            req.httpMethod = "POST"
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            req.httpBody = jsonData
+            do {
+                let (data, response) = try await URLSession.shared.data(for: req)
+                let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+                if status == 404 { continue }
+                if status != 200 {
+                    let msg = String(data: data, encoding: .utf8) ?? "HTTP \(status)"
+                    error = String(msg.prefix(200))
+                    return false
+                }
+                let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+                if (json?["ok"] as? Bool) == true {
+                    self.priorJumpCount = pj
+                    self.priorFreefallSeconds = pff
+                    self.startFreefallTime = startFreefallTime
+                    self.defaultJumpType = defaultJumpType
+                    self.homeDropzone = homeDropzone
+                    await load(courseId: currentCourseId, userId: nil)
+                    return true
+                }
+                error = (json?["error"] as? String) ?? "Failed to save settings"
+                return false
+            } catch {
+                self.error = error.localizedDescription
                 return false
             }
-            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-            if (json?["ok"] as? Bool) == true {
-                self.priorJumpCount = pj
-                self.priorFreefallSeconds = pff
-                self.startFreefallTime = startFreefallTime
-                self.defaultJumpType = defaultJumpType
-                self.homeDropzone = homeDropzone
-                await load(courseId: currentCourseId, userId: nil)
-                return true
-            }
-            error = (json?["error"] as? String) ?? "Failed to save settings"
-            return false
-        } catch {
-            self.error = error.localizedDescription
-            return false
         }
+        error = "Logbook settings API not found — the server needs a platform update."
+        return false
     }
 
     /// Set prior jump count (jumps before this system). Standalone only.

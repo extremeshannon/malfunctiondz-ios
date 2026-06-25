@@ -26,7 +26,7 @@ struct HomeView: View {
     @State private var showDzAnnouncementModal = false
     @AppStorage("mdz_dismissed_announcement") private var dismissedAnnouncementKey = ""
 
-    private var isMemberShell: Bool { appShell == .member }
+    private var isMemberShell: Bool { appShell.hidesStaffOpsUI }
 
     // iPad uses more columns and wider padding
     private var isWide: Bool { hSizeClass == .regular }
@@ -106,10 +106,11 @@ struct HomeView: View {
                         // ── My rigs (reserve / AAD expiry) ─────────────
                         if !vm.myRigs.isEmpty {
                             RigExpiryCard(rigs: vm.myRigs) {
-                                if auth.currentUser?.canAccessMyRigs == true
-                                    || (isMemberShell && auth.currentUser?.canAccessLogbook == true) {
+                                if auth.currentUser?.canAccessGearRoom == true {
                                     tabSelect.selected = 6
-                                } else {
+                                } else if auth.currentUser?.canAccessMyRigs == true {
+                                    tabSelect.selected = 6
+                                } else if auth.currentUser?.canAccessLogbook == true {
                                     tabSelect.selected = 4
                                 }
                             }
@@ -117,8 +118,8 @@ struct HomeView: View {
                             .padding(.bottom, 16)
                         }
 
-                        // ── Logbook config (Start Freefall, Home DZ) for skydivers ──
-                        if (showLogbook || showGroundSchool) && !isAdmin {
+                        // ── Logbook config on Home (staff app only; ASC uses Logbook → Gear) ──
+                        if (showLogbook || showGroundSchool) && !isAdmin && !isMemberShell {
                             LogbookConfigCard(vm: vm)
                                 .padding(.horizontal, hPad)
                                 .padding(.bottom, 16)
@@ -155,9 +156,19 @@ struct HomeView: View {
                                     badges: [],
                                     wide: isWide
                                 ) { tabSelect.selected = 6 }
+                            } else if isMemberShell {
+                                if auth.currentUser?.canAccessGearRoom == true {
+                                    ModuleTile(
+                                        icon: "briefcase.fill",
+                                        title: "GEAR ROOM",
+                                        subtitle: "Your harness, reserve & AAD",
+                                        accentColor: colors.green,
+                                        badges: [],
+                                        wide: isWide
+                                    ) { tabSelect.selected = 6 }
+                                }
                             } else {
-                                if auth.currentUser?.canAccessMyRigs == true
-                                    || (isMemberShell && auth.currentUser?.canAccessLogbook == true) {
+                                if auth.currentUser?.canAccessMyRigs == true {
                                     ModuleTile(
                                         icon: "briefcase.fill",
                                         title: "MY RIGS",
@@ -167,7 +178,7 @@ struct HomeView: View {
                                         wide: isWide
                                     ) { tabSelect.selected = 6 }
                                 }
-                                if auth.currentUser?.canAccessDzRigs == true && !isMemberShell {
+                                if auth.currentUser?.canAccessDzRigs == true {
                                     ModuleTile(
                                         icon: "square.stack.3d.up.fill",
                                         title: "DZ RIGS",
@@ -416,7 +427,7 @@ struct HomeView: View {
             PilotQuickWidget(data: vm.pilotData) {
                 tabSelect.selected = 1
             }
-        } else if isInstructor {
+        } else if isInstructor && !isMemberShell {
             InstructorQuickWidget(
                 data: vm.instructorData,
                 onTapGroundSchool: (vm.instructorData?.pendingSignoffs ?? 0) > 0 ? {
@@ -561,8 +572,12 @@ struct HomeView: View {
     private var showAviation:     Bool { auth.currentUser?.canAccessAviation    == true }
     private var showLoft:         Bool { auth.currentUser?.canAccessLoft        == true }
     private var showGroundSchool: Bool { auth.currentUser?.canAccessGroundSchool == true }
-    /// Logbook tile on Home — for skydivers without Ground School access
-    private var showLogbook:      Bool { auth.currentUser?.canAccessLogbook == true && !showGroundSchool }
+    /// Logbook tile on Home — ASC shows whenever role allows; staff app only when no Ground School tab.
+    private var showLogbook: Bool {
+        guard auth.currentUser?.canAccessLogbook == true else { return false }
+        if isMemberShell { return true }
+        return !showGroundSchool
+    }
     private var showManifest:     Bool { auth.currentUser?.canSeeManifestTile == true }
 
     // MARK: - Helpers
@@ -1239,16 +1254,22 @@ struct AlertRow: View {
 struct RigExpiryCard: View {
     let rigs: [JumperRig]
     let onTapLogbook: () -> Void
+    @Environment(\.appShell) private var appShell
     @Environment(\.mdzColors) private var colors
+
+    private var sectionTitle: String { appShell.hidesStaffOpsUI ? "GEAR ROOM" : "MY RIGS" }
+    private var missingDatesHint: String {
+        appShell.hidesStaffOpsUI ? "Add dates in Gear Room" : "Add dates in Logbook"
+    }
 
     var body: some View {
         Button(action: onTapLogbook) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Image(systemName: "backpack.fill")
+                    Image(systemName: "briefcase.fill")
                         .font(.system(size: 18))
                         .foregroundColor(colors.green)
-                    Text("MY RIGS")
+                    Text(sectionTitle)
                         .font(.system(size: 10, weight: .black))
                         .foregroundColor(colors.muted)
                         .tracking(2)
@@ -1270,7 +1291,7 @@ struct RigExpiryCard: View {
                                 labelVal("AAD DOM", dom)
                             }
                             if (rig.reserveDomDisplay ?? "").isEmpty && (rig.aadDomDisplay ?? "").isEmpty {
-                                Text("Add dates in Logbook")
+                                Text(missingDatesHint)
                                     .font(.system(size: 11))
                                     .foregroundColor(colors.muted)
                             }

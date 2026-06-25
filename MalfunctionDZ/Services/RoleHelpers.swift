@@ -33,6 +33,15 @@ extension User {
         hasAnyRole(["student", "lms_student"])
     }
 
+    var isSkydiverRole: Bool {
+        hasAnyRole(["skydiver"])
+    }
+
+    /// Primary Alaska Skydive Center app audience.
+    var isSkydiverOrStudent: Bool {
+        isStudentRole || isSkydiverRole
+    }
+
     var isLoftRole: Bool {
         hasAnyRole(["loft", "rigger"]) || isAdminLevel
     }
@@ -72,6 +81,12 @@ extension User {
     /// Rig owners see their own rigs only. Ops/Ops Admin always get Rigs tab; skydivers when they own rigs (not manifest-only).
     var canAccessMyRigs: Bool {
         hasAnyRole(["ops", "ops_admin"]) || (!canAccessLoft && !isManifestOnly && (totalRigs ?? 0) > 0)
+    }
+
+    /// ASC member app — personal Gear Room (own rigs). Not DZ loft inventory or packer tools.
+    var canAccessGearRoom: Bool {
+        if isManifestOnly || hasAnyRole(["ops", "ops_admin"]) { return false }
+        return canAccessLogbook || isSkydiverOrStudent || (totalRigs ?? 0) > 0
     }
 
     /// Consolidated Rigs tab: Ops Admin and Manifest get ONE "Rigs" tab with all rigs (personal + DZ). DZ rigs read-only.

@@ -51,7 +51,8 @@ struct ASCContentRootView: View {
     }
 }
 
-// MARK: - Member tabs (same tab tags as staff app where possible so HomeView tile taps work)
+// MARK: - Member tabs (skydivers & students — role-gated, same tags as staff app for Home tiles)
+
 struct ASCMemberTabView: View {
     @EnvironmentObject private var auth: AuthManager
     @EnvironmentObject private var config: AppConfig
@@ -73,28 +74,33 @@ struct ASCMemberTabView: View {
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(0)
 
-            if auth.currentUser?.canAccessLogbook == true {
-                LogbookRootView()
-                    .tabItem { Label("Logbook", systemImage: "book.closed.fill") }
-                    .tag(4)
-            }
-
-            // Member app: personal rigs only — show tab for skydivers (logbook) even if login omitted totalRigs.
-            if let u = auth.currentUser, u.canAccessLogbook || u.canAccessMyRigs {
-                MyRigsView()
-                    .tabItem { Label("My Rigs", systemImage: "briefcase.fill") }
-                    .tag(6)
-            }
-
             if auth.currentUser?.canAccessGroundSchool == true {
                 GroundSchoolView()
                     .tabItem { Label(config.moduleGroundSchool, systemImage: "graduationcap.fill") }
                     .tag(3)
             }
 
+            if auth.currentUser?.canAccessGroundSchool == true {
+                ALicenseProgressView()
+                    .tabItem { Label("A-License", systemImage: "checklist.checked") }
+                    .tag(2)
+            }
+
+            if auth.currentUser?.canAccessLogbook == true {
+                LogbookRootView()
+                    .tabItem { Label("Logbook", systemImage: "book.closed.fill") }
+                    .tag(4)
+            }
+
+            if auth.currentUser?.canAccessGearRoom == true {
+                MyRigsView()
+                    .tabItem { Label("Gear Room", systemImage: "briefcase.fill") }
+                    .tag(6)
+            }
+
             if auth.currentUser?.canAccessCalendar == true {
                 CalendarRootView()
-                    .tabItem { Label("Calendar", systemImage: "calendar") }
+                    .tabItem { Label("Events", systemImage: "calendar") }
                     .tag(5)
             }
 
@@ -138,13 +144,17 @@ final class ASCAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationC
         print("⚠️ Push registration failed: \(error.localizedDescription)")
     }
 
-    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) -> UNNotificationPresentationOptions {
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
         let userInfo = notification.request.content.userInfo
         let type = (userInfo["type"] as? String) ?? ""
         if type == "dz_status" {
             NotificationCenter.default.post(name: .dzStatusDidUpdateFromPush, object: nil)
         }
-        return [.banner, .sound, .badge]
+        completionHandler([.banner, .sound, .badge])
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {

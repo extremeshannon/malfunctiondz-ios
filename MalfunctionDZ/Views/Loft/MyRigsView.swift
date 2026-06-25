@@ -1,5 +1,4 @@
-// File: ASC/Views/Loft/MyRigsView.swift
-// My Rigs — list of rig owner's rigs; tap a rig to edit.
+// Gear Room — logged-in member's personal rig(s).
 import SwiftUI
 import MalfunctionDZCore
 
@@ -27,7 +26,7 @@ struct MyRigsView: View {
                     VStack(spacing: 20) {
                         EmptyStateView(
                             icon: "briefcase.fill",
-                            title: "No Rigs",
+                            title: "No Rigs Yet",
                             subtitle: "Add your harness and reserve here, or when logging a jump in Logbook."
                         )
                         Button {
@@ -129,7 +128,7 @@ struct MyRigsView: View {
                 Image(systemName: "briefcase.fill")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(colors.green)
-                Text("MY RIGS")
+                Text("GEAR ROOM")
                     .font(.system(size: 11, weight: .black))
                     .foregroundColor(colors.green)
                     .tracking(2)
@@ -148,7 +147,7 @@ struct MyRigsView: View {
                 }
                 .buttonStyle(.plain)
             }
-            Text(myRigsDateString)
+            Text("Your personal rigs")
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(colors.muted)
         }
@@ -156,12 +155,6 @@ struct MyRigsView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
         .background(colors.navyMid)
-    }
-
-    private var myRigsDateString: String {
-        let f = DateFormatter()
-        f.dateFormat = "EEEE, MMMM d"
-        return f.string(from: Date())
     }
 }
 
