@@ -415,7 +415,7 @@ class HomeViewModel: ObservableObject {
               let resp = try? JSONDecoder().decode(ListResp.self, from: data),
               resp.ok, let all = resp.aircraft else { return }
         airworthyAircraft = all
-            .filter { ["airworthy", "active"].contains($0.status.lowercased()) }
+            .filter { ($0.isJumpable ?? true) && ["airworthy", "active"].contains($0.status.lowercased()) }
             .map    { AircraftBrief(id: $0.id, tailNumber: $0.tailNumber, model: $0.model, status: $0.status) }
     }
 

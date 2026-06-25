@@ -12,7 +12,7 @@ struct ProfileView: View {
     @ObservedObject private var pushReg  = PushRegistration.shared
     @Environment(\.horizontalSizeClass) private var hSizeClass
     private var isWide: Bool { hSizeClass == .regular }
-    private var isMemberShell: Bool { appShell.hidesStaffOpsUI }
+    private var isMemberShell: Bool { appShell.isMemberShell }
 
     var body: some View {
         NavigationStack {

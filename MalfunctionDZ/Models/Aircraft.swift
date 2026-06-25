@@ -31,6 +31,8 @@ struct Aircraft: Codable, Identifiable, Hashable {
     /// Manifest / load limits (web edit form); drives flight-log PAX picker when set.
     let minPaxPerLoad: Int?
     let maxPaxPerLoad: Int?
+    /// Jump fleet flag from API (`is_jumpable`); non-jump aircraft hidden from pilot My Flights.
+    let isJumpable: Bool?
 
     enum CodingKeys: String, CodingKey {
         case id, model, status, make, year
@@ -50,6 +52,7 @@ struct Aircraft: Codable, Identifiable, Hashable {
         case slotsMax      = "slots_max"
         case minPaxPerLoad = "min_pax_per_load"
         case maxPaxPerLoad = "max_pax_per_load"
+        case isJumpable    = "is_jumpable"
     }
 
     init(from decoder: Decoder) throws {
@@ -84,6 +87,7 @@ struct Aircraft: Codable, Identifiable, Hashable {
         slotsMax = try? c.decodeIfPresent(Int.self, forKey: .slotsMax)
         minPaxPerLoad = try? c.decodeIfPresent(Int.self, forKey: .minPaxPerLoad)
         maxPaxPerLoad = try? c.decodeIfPresent(Int.self, forKey: .maxPaxPerLoad)
+        isJumpable = try? c.decodeIfPresent(Bool.self, forKey: .isJumpable)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -108,6 +112,7 @@ struct Aircraft: Codable, Identifiable, Hashable {
         try c.encodeIfPresent(slotsMax, forKey: .slotsMax)
         try c.encodeIfPresent(minPaxPerLoad, forKey: .minPaxPerLoad)
         try c.encodeIfPresent(maxPaxPerLoad, forKey: .maxPaxPerLoad)
+        try c.encodeIfPresent(isJumpable, forKey: .isJumpable)
     }
 
     var statusColor: Color {

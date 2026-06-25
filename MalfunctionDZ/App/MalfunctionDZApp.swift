@@ -7,7 +7,9 @@ import UIKit
 import UserNotifications
 import MalfunctionDZCore
 
+#if !ASC_STAFF && !ASC_PILOTS && !ASC_PACKERS
 @main
+#endif
 struct MalfunctionDZApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var auth       = AuthManager.shared

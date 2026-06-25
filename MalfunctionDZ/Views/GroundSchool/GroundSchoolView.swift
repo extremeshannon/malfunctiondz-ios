@@ -13,7 +13,7 @@ struct GroundSchoolView: View {
     @Environment(\.horizontalSizeClass) private var hSizeClass
 
     private var showInstructorDashboard: Bool {
-        auth.currentUser?.isInstructorRole == true && !appShell.hidesStaffOpsUI
+        auth.currentUser?.isInstructorRole == true && appShell == .staff
     }
 
     var body: some View {
@@ -28,7 +28,7 @@ struct GroundSchoolView: View {
         }
         .task(id: auth.currentUser?.id) {
             if !showInstructorDashboard {
-                await vm.load()
+                await vm.load(scope: appShell.groundSchoolScope)
             }
         }
         .alert("Error", isPresented: Binding(
@@ -117,7 +117,7 @@ struct GroundSchoolWideLayout: View {
             InstructorReviewListView()
         }
         .toolbar {
-            if auth.currentUser?.canManageLMS == true && !appShell.hidesStaffOpsUI {
+            if auth.currentUser?.canManageLMS == true && appShell == .staff {
                 ToolbarItem(placement: .primaryAction) {
                     NavigationLink(destination: LMSEditRootView()) {
                         Label("Manage LMS", systemImage: "pencil.and.list.clipboard")
@@ -182,7 +182,7 @@ struct GroundSchoolSplitView: View {
                         Spacer()
                     } else {
                         List(selection: $selectedCourse) {
-                            if auth.currentUser?.isInstructorRole == true && !appShell.hidesStaffOpsUI {
+                            if auth.currentUser?.isInstructorRole == true && appShell == .staff {
                                 NavigationLink(destination: InstructorReviewListView()) {
                                     InstructorReviewEntryCard(pendingCount: vm.pendingInstructorReviews)
                                 }
@@ -217,7 +217,7 @@ struct GroundSchoolSplitView: View {
                 InstructorReviewListView()
             }
             .toolbar {
-                if auth.currentUser?.canManageLMS == true && !appShell.hidesStaffOpsUI {
+                if auth.currentUser?.canManageLMS == true && appShell == .staff {
                     ToolbarItem(placement: .primaryAction) {
                         NavigationLink(destination: LMSEditRootView()) {
                             Label("Manage LMS", systemImage: "pencil.and.list.clipboard")
@@ -347,13 +347,13 @@ struct GroundSchoolStackView: View {
                     } else {
                         ScrollView(showsIndicators: false) {
                             VStack(spacing: 12) {
-                                if auth.currentUser?.isInstructorRole == true && !appShell.hidesStaffOpsUI {
+                                if auth.currentUser?.isInstructorRole == true && appShell == .staff {
                                     NavigationLink(destination: InstructorReviewListView()) {
                                         InstructorReviewEntryCard(pendingCount: vm.pendingInstructorReviews)
                                     }
                                     .buttonStyle(.plain)
                                 }
-                                if auth.currentUser?.canManageLMS == true && !appShell.hidesStaffOpsUI {
+                                if auth.currentUser?.canManageLMS == true && appShell == .staff {
                                     NavigationLink(destination: LMSEditRootView()) {
                                         HStack(spacing: 12) {
                                             Image(systemName: "pencil.and.list.clipboard")

@@ -28,9 +28,11 @@ struct LMSCourse: Codable, Identifiable, Hashable {
     let progressPct: Double
     let modules: [LMSModule]
     let quizzes: [LMSQuizSummary]?
+    let courseCategory: String?
 
     enum CodingKeys: String, CodingKey {
         case id, slug, title, description, enrolled, status, modules, quizzes
+        case courseCategory  = "course_category"
         case isActive        = "is_active"
         case enrolledAt     = "enrolled_at"
         case completedAt    = "completed_at"
@@ -55,6 +57,17 @@ struct LMSCourse: Codable, Identifiable, Hashable {
         progressPct = (try? c.decode(Double.self, forKey: .progressPct)) ?? 0
         modules = (try? c.decode([LMSModule].self, forKey: .modules)) ?? []
         quizzes = try? c.decodeIfPresent([LMSQuizSummary].self, forKey: .quizzes)
+        courseCategory = try? c.decodeIfPresent(String.self, forKey: .courseCategory)
+    }
+
+    /// Pilot / aircraft training courses (jump-plane, etc.).
+    var isPilotTraining: Bool {
+        if courseCategory?.lowercased() == "pilot" { return true }
+        let s = slug.lowercased()
+        if s.contains("jump-plane") || s.contains("jump_plane") { return true }
+        let t = title.lowercased()
+        return t.contains("jump plane") || t.contains("jump pilot")
+            || t.contains("cessna 206") && t.contains("jump")
     }
 
     var enrollmentStatus: EnrollmentStatus {

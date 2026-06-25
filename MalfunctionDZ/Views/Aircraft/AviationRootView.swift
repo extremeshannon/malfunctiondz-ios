@@ -8,11 +8,13 @@ import MalfunctionDZCore
 struct AviationRootView: View {
     @EnvironmentObject private var auth: AuthManager
     @Environment(\.horizontalSizeClass) private var hSizeClass
+    @Environment(\.appShell) private var appShell
 
     var body: some View {
-        if auth.currentUser?.aviationViewMode == .adminFull {
+        let mode = auth.currentUser?.aviationViewMode(for: appShell) ?? .pilotRestricted
+        if mode == .adminFull {
             AircraftListView(isReadOnly: false)
-        } else if auth.currentUser?.aviationViewMode == .opsReadOnly {
+        } else if mode == .opsReadOnly {
             AircraftListView(isReadOnly: true)
         } else {
             if hSizeClass == .regular {
@@ -56,7 +58,7 @@ struct PilotAviationSplitView: View {
 
                             // Aircraft
                             if !vm.airworthyAircraft.isEmpty {
-                                Section("AIRWORTHY AIRCRAFT") {
+                                Section("JUMP AIRCRAFT") {
                                     ForEach(vm.airworthyAircraft) { ac in
                                         PilotAircraftRow(aircraft: ac)
                                             .listRowBackground(colors.card)
@@ -253,7 +255,7 @@ struct PilotAviationView: View {
 
                                 if !vm.airworthyAircraft.isEmpty {
                                     VStack(alignment: .leading, spacing: 10) {
-                                        sectionLabel("AIRCRAFT")
+                                        sectionLabel("JUMP AIRCRAFT")
                                         ForEach(vm.airworthyAircraft) { aircraft in
                                             NavigationLink(destination: PaxView(aircraft: aircraft)) {
                                                 PilotAircraftRow(aircraft: aircraft)
@@ -315,7 +317,7 @@ struct PilotAviationView: View {
     private var noAircraftWarning: some View {
         HStack {
             Image(systemName: "exclamationmark.triangle.fill").foregroundColor(colors.amber)
-            Text("No airworthy aircraft available")
+            Text("No jump aircraft available")
                 .font(.system(size: 14, weight: .medium)).foregroundColor(colors.muted)
         }
         .frame(maxWidth: .infinity).padding(16)
@@ -498,7 +500,14 @@ class PilotAviationViewModel: ObservableObject {
             }
             struct ListResp: Decodable { let ok: Bool; let aircraft: [Aircraft]? }
             guard let resp = try? JSONDecoder().decode(ListResp.self, from: data), resp.ok, let all = resp.aircraft else { return }
-            airworthyAircraft = all.filter { ["airworthy", "active"].contains($0.status.lowercased()) }
+            var seen = Set<Int>()
+            airworthyAircraft = all.filter { aircraft in
+                guard (aircraft.isJumpable ?? true),
+                      ["airworthy", "active"].contains(aircraft.status.lowercased()) else { return false }
+                if seen.contains(aircraft.id) { return false }
+                seen.insert(aircraft.id)
+                return true
+            }
         } catch { /* network error */ }
     }
 

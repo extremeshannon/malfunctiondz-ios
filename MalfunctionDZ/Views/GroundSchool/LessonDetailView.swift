@@ -4,6 +4,7 @@
 import SwiftUI
 import WebKit
 import SafariServices
+import PDFKit
 import MalfunctionDZCore
 
 // MARK: - Models
@@ -130,6 +131,96 @@ struct SafariVideoView: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
+}
+
+// MARK: - PDF lesson viewer
+
+private struct LMSPDFKitRepresentable: UIViewRepresentable {
+    let document: PDFDocument
+
+    func makeUIView(context: Context) -> PDFView {
+        let view = PDFView()
+        view.document = document
+        view.autoScales = true
+        view.displayMode = .singlePageContinuous
+        view.displayDirection = .vertical
+        view.backgroundColor = .clear
+        return view
+    }
+
+    func updateUIView(_ uiView: PDFView, context: Context) {
+        if uiView.document !== document {
+            uiView.document = document
+        }
+    }
+}
+
+private struct LMSPDFLessonView: View {
+    let url: URL
+    var onLoaded: () -> Void
+
+    @Environment(\.mdzColors) private var colors
+    @State private var document: PDFDocument?
+    @State private var failed = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let document {
+                LMSPDFKitRepresentable(document: document)
+                    .frame(minHeight: 520)
+                    .cornerRadius(10)
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
+            } else if failed {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("PDF not available", systemImage: "exclamationmark.triangle.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(colors.amber)
+                    Text("This document is not on the server yet. Ask your DZ admin to upload it, or use the web course in a browser.")
+                        .font(.system(size: 13))
+                        .foregroundColor(colors.muted)
+                    Link(destination: url) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "arrow.up.right.square")
+                            Text("Try opening in browser")
+                                .font(.system(size: 13, weight: .semibold))
+                        }
+                        .foregroundColor(colors.amber)
+                    }
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(colors.card)
+                .cornerRadius(10)
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
+            } else {
+                HStack {
+                    Spacer()
+                    ProgressView().tint(colors.amber)
+                    Spacer()
+                }
+                .frame(minHeight: 200)
+            }
+        }
+        .task(id: url) {
+            document = nil
+            failed = false
+            do {
+                let (data, response) = try await URLSession.shared.data(from: url)
+                if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+                    failed = true
+                    return
+                }
+                if let doc = PDFDocument(data: data), doc.pageCount > 0 {
+                    document = doc
+                    onLoaded()
+                } else {
+                    failed = true
+                }
+            } catch {
+                failed = true
+            }
+        }
+    }
 }
 
 // MARK: - HTML Lesson Content (with clickable images)
@@ -262,6 +353,22 @@ struct EnlargeableImageSheet: View {
 
 // MARK: - Helpers
 
+func lessonYouTubeId(from lesson: LessonDetail) -> String? {
+    extractYouTubeId(from: lesson.content ?? "")
+        ?? extractYouTubeId(from: lesson.contentUrl ?? "")
+}
+
+func lmsAbsoluteURL(_ path: String?) -> URL? {
+    guard var path = path?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else { return nil }
+    if path.lowercased().hasPrefix("http") { return URL(string: path) }
+    let base = kServerURL.hasSuffix("/") ? String(kServerURL.dropLast()) : kServerURL
+    return URL(string: "\(base)\(path.hasPrefix("/") ? path : "/\(path)")")
+}
+
+func isPDFLessonType(_ type: String) -> Bool {
+    type == "pdf" || type == "manual"
+}
+
 func extractYouTubeId(from text: String) -> String? {
     // Patterns: youtu.be/ID, youtube.com/watch?v=ID, youtube.com/embed/ID
     let patterns = [
@@ -292,6 +399,7 @@ class LessonDetailViewModel: ObservableObject {
     @Published var slideshowFinished = false
     @Published var acknowledged = false
     @Published var signoffSubmitted = false
+    @Published var pdfLoaded = false
     @Published var error: String?
 
     let lessonId: Int
@@ -314,17 +422,30 @@ class LessonDetailViewModel: ObservableObject {
         return LMSPlannerParser.parse(lesson.content ?? "") != nil
     }
 
+    var isQuizLesson: Bool {
+        guard let lesson = lesson else { return false }
+        return lesson.lessonType == "quiz" && (lesson.quizId ?? 0) > 0
+    }
+
+    var isPDFLesson: Bool {
+        guard let lesson = lesson else { return false }
+        return isPDFLessonType(lesson.lessonType)
+    }
+
     var canComplete: Bool {
         if completed { return false }
         guard let lesson = lesson else { return false }
         if lesson.isLocked { return false }
+        if isQuizLesson { return false }
         if lesson.requireAcknowledgement && !acknowledged { return false }
         if isSlideshowLesson {
             if let qid = lesson.quizId, qid > 0 { return false }
             return slideshowFinished
         }
-        let youtubeId = extractYouTubeId(from: lesson.content ?? "")
-        if youtubeId != nil {
+        if isPDFLesson {
+            return pdfLoaded
+        }
+        if lessonYouTubeId(from: lesson) != nil {
             return videoFinished
         }
         return hasScrolledToBottom
@@ -356,10 +477,12 @@ class LessonDetailViewModel: ObservableObject {
             }
             lesson = l
             completed = l.completed
+            pdfLoaded = false
             if l.completed {
                 hasScrolledToBottom = true
                 videoFinished = true
                 slideshowFinished = true
+                pdfLoaded = true
                 acknowledged = true
             } else {
                 slideshowFinished = false
@@ -419,6 +542,7 @@ struct LessonDetailView: View {
     @State private var slideshowSlideIndex = 0
     @State private var slideshowHotspots: [Int: Set<String>] = [:]
     @State private var showSlideshowQuiz = false
+    @State private var showQuizLesson = false
 
     init(
         lessonId: Int,
@@ -522,7 +646,8 @@ struct LessonDetailView: View {
                     ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.amber))
                     Spacer()
                 } else if let lesson = vm.lesson {
-                    let youtubeId = extractYouTubeId(from: lesson.content ?? "")
+                    let youtubeId = lessonYouTubeId(from: lesson)
+                    let pdfURL = vm.isPDFLesson ? lmsAbsoluteURL(lesson.contentUrl) : nil
 
                     ScrollView(showsIndicators: false) {
                         VStack(alignment: .leading, spacing: 20) {
@@ -605,6 +730,90 @@ struct LessonDetailView: View {
                                 }
                             }
 
+                            // ── Quiz lesson (written test, knowledge check) ──
+                            if vm.isQuizLesson, let qid = lesson.quizId {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    if let intro = lesson.content?.trimmingCharacters(in: .whitespacesAndNewlines), !intro.isEmpty {
+                                        let htmlStyle = lessonHTMLStyle(colors: colors, scheme: mdzColorScheme)
+                                        HTMLLessonWebView(
+                                            html: intro,
+                                            textColorHex: htmlStyle.text,
+                                            headingColorHex: htmlStyle.heading,
+                                            linkColorHex: htmlStyle.link,
+                                            imageBorderColor: htmlStyle.imageBorder,
+                                            onContentHeightChanged: { h in
+                                                if h > 0 && h < UIScreen.main.bounds.height * 0.72 {
+                                                    vm.hasScrolledToBottom = true
+                                                }
+                                            }
+                                        )
+                                        .frame(height: max(120, htmlContentHeight))
+                                    }
+                                    Button {
+                                        showQuizLesson = true
+                                    } label: {
+                                        HStack(spacing: 10) {
+                                            Image(systemName: vm.completed ? "checkmark.circle.fill" : "pencil.and.list.clipboard")
+                                                .font(.system(size: 22))
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(vm.completed ? "Quiz passed" : "Take quiz")
+                                                    .font(.system(size: 16, weight: .bold))
+                                                    .foregroundColor(colors.text)
+                                                Text(vm.completed ? "You can review or retake if allowed" : "Pass the quiz to complete this lesson")
+                                                    .font(.system(size: 11))
+                                                    .foregroundColor(colors.muted)
+                                            }
+                                            Spacer()
+                                            if !vm.completed {
+                                                Image(systemName: "chevron.right")
+                                                    .font(.system(size: 14, weight: .semibold))
+                                                    .foregroundColor(colors.amber)
+                                            }
+                                        }
+                                        .padding(14)
+                                        .background(colors.card)
+                                        .cornerRadius(12)
+                                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .disabled(vm.completed)
+                                }
+                            }
+
+                            // ── PDF / manual document ─────────────────
+                            if let pdfURL {
+                                if let intro = lesson.content?.trimmingCharacters(in: .whitespacesAndNewlines), !intro.isEmpty {
+                                    let htmlStyle = lessonHTMLStyle(colors: colors, scheme: mdzColorScheme)
+                                    HTMLLessonWebView(
+                                        html: intro,
+                                        textColorHex: htmlStyle.text,
+                                        headingColorHex: htmlStyle.heading,
+                                        linkColorHex: htmlStyle.link,
+                                        imageBorderColor: htmlStyle.imageBorder,
+                                        onContentHeightChanged: { h in
+                                            htmlContentHeight = max(80, h)
+                                        }
+                                    )
+                                    .frame(height: max(80, min(htmlContentHeight, 220)))
+                                }
+
+                                LMSPDFLessonView(url: pdfURL) {
+                                    vm.pdfLoaded = true
+                                }
+
+                                Button {
+                                    safariVideoURL = IdentifiableURL(url: pdfURL)
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "arrow.up.right.square")
+                                        Text("Open PDF in Safari")
+                                            .font(.system(size: 12, weight: .medium))
+                                    }
+                                    .foregroundColor(colors.muted)
+                                }
+                                .buttonStyle(.plain)
+                            }
+
                             // ── Slideshow (Landing Area, Malfunctions, etc.) ──
                             if let slides = slideshowSlides, vm.isSlideshowLesson {
                                 LessonSlideshowView(
@@ -642,7 +851,7 @@ struct LessonDetailView: View {
                                 .replacingOccurrences(of: "<!--.*?-->", with: "", options: .regularExpression)
                                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
-                            if !cleanText.isEmpty, slideshowSlides == nil, plannerPayload == nil {
+                            if !cleanText.isEmpty, slideshowSlides == nil, plannerPayload == nil, !vm.isPDFLesson, !vm.isQuizLesson {
                                 let htmlStyle = lessonHTMLStyle(colors: colors, scheme: mdzColorScheme)
                                 HTMLLessonWebView(
                                     html: cleanText,
@@ -739,7 +948,7 @@ struct LessonDetailView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             }
 
-                            if !isJumpSignoffLesson {
+                            if !isJumpSignoffLesson && !vm.isQuizLesson {
                             Button {
                                 Task { await vm.markComplete(courseId: courseId) }
                             } label: {
@@ -807,6 +1016,15 @@ struct LessonDetailView: View {
                 }
             }
         }
+        .sheet(isPresented: $showQuizLesson, onDismiss: {
+            Task { await vm.load() }
+        }) {
+            if let qid = vm.lesson?.quizId {
+                NavigationStack {
+                    QuizAttemptView(quizId: qid)
+                }
+            }
+        }
         .sheet(item: $safariVideoURL, onDismiss: { safariVideoURL = nil }) { item in
             SafariVideoView(url: item.url)
         }
@@ -852,6 +1070,9 @@ struct LessonDetailView: View {
                 return vm.slideshowFinished ? "Take quiz to complete" : "View all slides to complete"
             }
             return "View all slides to complete"
+        }
+        if vm.isPDFLesson {
+            return vm.pdfLoaded ? "Mark as Complete" : "Open the PDF to complete"
         }
         if youtubeId != nil { return "Watch video to complete" }
         return "Scroll to the end to complete"

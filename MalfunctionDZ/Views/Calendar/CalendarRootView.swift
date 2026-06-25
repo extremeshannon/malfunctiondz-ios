@@ -10,7 +10,7 @@ struct CalendarRootView: View {
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
 
-    private var isMemberShell: Bool { appShell.hidesStaffOpsUI }
+    private var isSlimCalendarShell: Bool { appShell.hidesStaffOpsUI }
 
     var body: some View {
         NavigationStack {
@@ -18,7 +18,7 @@ struct CalendarRootView: View {
                 colors.background.ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    if !isMemberShell {
+                    if !isSlimCalendarShell {
                         CalendarSegmentPicker(selectedTab: $selectedTab)
                             .padding(.horizontal, 16)
                             .padding(.top, 8)
@@ -27,7 +27,7 @@ struct CalendarRootView: View {
                     }
 
                     Group {
-                        if isMemberShell {
+                        if isSlimCalendarShell {
                             EventsView()
                         } else if selectedTab == 0 {
                             TodosView()
@@ -39,7 +39,7 @@ struct CalendarRootView: View {
                     .transition(.opacity)
                 }
             }
-            .navigationTitle(isMemberShell ? "Events" : "Calendar")
+            .navigationTitle(isSlimCalendarShell ? "Events" : "Calendar")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
             .toolbarBackground(colors.navyMid, for: .navigationBar)

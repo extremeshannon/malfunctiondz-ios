@@ -8,7 +8,7 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Used to photograph logbook pages and STC/337 documents for aircraft records.</string>
+	<string>Used to scan and photograph pilot documents, logbook pages, and aircraft records.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Used to attach existing photos or scans of logbook pages and STC/337 documents.</string>
 </dict>

@@ -26,7 +26,9 @@ struct HomeView: View {
     @State private var showDzAnnouncementModal = false
     @AppStorage("mdz_dismissed_announcement") private var dismissedAnnouncementKey = ""
 
-    private var isMemberShell: Bool { appShell.hidesStaffOpsUI }
+    private var isMemberShell: Bool { appShell.isMemberShell }
+    private var isPilotShell: Bool { appShell.isPilotShell }
+    private var isPackerShell: Bool { appShell.isPackerShell }
 
     // iPad uses more columns and wider padding
     private var isWide: Bool { hSizeClass == .regular }
@@ -90,15 +92,15 @@ struct HomeView: View {
                         }
 
                         // ── Students awaiting check-offs (instructors) ──
-                        if isInstructor, let pending = vm.instructorData?.pendingSignoffs, pending > 0 {
+                        if isInstructor, let pending = vm.instructorData?.pendingSignoffs, pending > 0, !isPilotShell {
                             studentsAwaitingCard(pending: pending)
                                 .padding(.horizontal, hPad)
                                 .padding(.bottom, 16)
                         }
 
-                        // ── Pilot currency card ───────────────────────
-                        if isPilot {
-                            PilotCurrencyCard()
+                        // ── Pilot currency card (staff/member Home; ASC Pilots has dedicated tab) ──
+                        if isPilot && !isPilotShell {
+                            PilotCurrencyCard(compact: true)
                                 .padding(.horizontal, hPad)
                                 .padding(.bottom, 16)
                         }
@@ -127,7 +129,7 @@ struct HomeView: View {
 
                         // ── Module tiles ──────────────────────────────
                         LazyVGrid(columns: gridColumns, spacing: 14) {
-                            if showAviation && !isMemberShell {
+                            if showAviation && (!isMemberShell || isPilotShell) && !isPackerShell {
                                 ModuleTile(
                                     icon: "airplane",
                                     title: config.moduleAviation.uppercased(),
@@ -189,17 +191,17 @@ struct HomeView: View {
                                     ) { tabSelect.selected = 7 }
                                 }
                             }
-                            if showGroundSchool {
+                            if showGroundSchool && !isPackerShell {
                                 ModuleTile(
                                     icon: "graduationcap.fill",
-                                    title: config.moduleGroundSchool.uppercased(),
-                                    subtitle: vm.groundSchoolSummary,
+                                    title: isPilotShell ? "TRAINING" : config.moduleGroundSchool.uppercased(),
+                                    subtitle: isPilotShell ? "Aircraft & jump-plane courses" : vm.groundSchoolSummary,
                                     accentColor: colors.groundSchool,
                                     badges: vm.groundSchoolBadges,
                                     wide: isWide
                                 ) { tabSelect.selected = 3 }
                             }
-                            if showLogbook {
+                            if showLogbook && !isPackerShell {
                                 ModuleTile(
                                     icon: "book.closed.fill",
                                     title: "LOGBOOK",
@@ -218,7 +220,7 @@ struct HomeView: View {
                                     badges: [],
                                     wide: isWide
                                 ) { tabSelect.selected = 5 }
-                                if !isMemberShell {
+                                if !isMemberShell && !isPilotShell && !isPackerShell {
                                     ModuleTile(
                                         icon: "square.grid.3x3.fill",
                                         title: "SHIFTS",
@@ -229,7 +231,7 @@ struct HomeView: View {
                                     ) { tabSelect.selected = 12 }
                                 }
                             }
-                            if showManifest && !isMemberShell {
+                            if showManifest && !isMemberShell && !isPackerShell {
                                 ModuleTile(
                                     icon: "list.clipboard.fill",
                                     title: config.moduleManifest.uppercased(),
@@ -239,7 +241,7 @@ struct HomeView: View {
                                     wide: isWide
                                 ) { /* manifest TBD */ }
                             }
-                            if auth.currentUser?.canManageUsers == true && !isMemberShell {
+                            if auth.currentUser?.canManageUsers == true && !isMemberShell && !isPackerShell {
                                 ModuleTile(
                                     icon: "person.2.fill",
                                     title: "USERS",
@@ -253,7 +255,7 @@ struct HomeView: View {
                         .padding(.horizontal, hPad)
 
                         // ── Airworthy aircraft (pilot) — staff app only ──
-                        if isPilot && !vm.airworthyAircraft.isEmpty && !isMemberShell {
+                        if isPilot && !vm.airworthyAircraft.isEmpty && (!isMemberShell || isPilotShell) {
                             aircraftSection
                                 .padding(.horizontal, hPad)
                                 .padding(.top, 24)
@@ -423,11 +425,11 @@ struct HomeView: View {
     private var roleWidget: some View {
         if isAdmin {
             EmptyView()
-        } else if isPilot && !isMemberShell {
+        } else if isPilot && (!isMemberShell || isPilotShell) {
             PilotQuickWidget(data: vm.pilotData) {
                 tabSelect.selected = 1
             }
-        } else if isInstructor && !isMemberShell {
+        } else if isInstructor && !isMemberShell && !isPilotShell {
             InstructorQuickWidget(
                 data: vm.instructorData,
                 onTapGroundSchool: (vm.instructorData?.pendingSignoffs ?? 0) > 0 ? {
@@ -560,7 +562,7 @@ struct HomeView: View {
         ((auth.currentUser?.roles ?? []) + [auth.currentUser?.role ?? ""]).map { $0.lowercased() }
     }
     private var isAdmin:      Bool { allRoles.contains(where: { ["admin","master","godmode","ops","ops_admin"].contains($0) }) }
-    private var isPilot:      Bool { allRoles.contains("pilot") }
+    private var isPilot:      Bool { auth.currentUser?.isPilotRole == true || auth.currentUser?.isChiefPilotRole == true }
     private var isInstructor: Bool { allRoles.contains(where: { ["instructor","lms_instructor"].contains($0) }) }
     private var isStudent:    Bool { allRoles.contains(where: { ["student","lms_student"].contains($0) }) }
     private var isOps:        Bool { allRoles.contains("ops") }
@@ -571,7 +573,10 @@ struct HomeView: View {
     private var showDzStatus: Bool { true }
     private var showAviation:     Bool { auth.currentUser?.canAccessAviation    == true }
     private var showLoft:         Bool { auth.currentUser?.canAccessLoft        == true }
-    private var showGroundSchool: Bool { auth.currentUser?.canAccessGroundSchool == true }
+    private var showGroundSchool: Bool {
+        if isPilotShell { return auth.currentUser?.canAccessASCPilotsApp == true }
+        return auth.currentUser?.canAccessGroundSchool == true
+    }
     /// Logbook tile on Home — ASC shows whenever role allows; staff app only when no Ground School tab.
     private var showLogbook: Bool {
         guard auth.currentUser?.canAccessLogbook == true else { return false }
@@ -1257,9 +1262,9 @@ struct RigExpiryCard: View {
     @Environment(\.appShell) private var appShell
     @Environment(\.mdzColors) private var colors
 
-    private var sectionTitle: String { appShell.hidesStaffOpsUI ? "GEAR ROOM" : "MY RIGS" }
+    private var sectionTitle: String { appShell.isMemberShell ? "GEAR ROOM" : "MY RIGS" }
     private var missingDatesHint: String {
-        appShell.hidesStaffOpsUI ? "Add dates in Gear Room" : "Add dates in Logbook"
+        appShell.isMemberShell ? "Add dates in Gear Room" : "Add dates in Logbook"
     }
 
     var body: some View {

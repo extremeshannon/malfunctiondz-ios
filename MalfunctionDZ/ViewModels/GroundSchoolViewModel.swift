@@ -17,7 +17,7 @@ class GroundSchoolViewModel: ObservableObject {
     @Published var error:     String?
     @Published var pendingInstructorReviews = 0
 
-    func load() async {
+    func load(scope: GroundSchoolScope = .all) async {
         isLoading = true
         defer { isLoading = false }
         guard let token = KeychainHelper.readToken(),
@@ -43,7 +43,11 @@ class GroundSchoolViewModel: ObservableObject {
             }
             let resp = try JSONDecoder().decode(LMSCoursesResponse.self, from: data)
             if resp.ok {
-                courses = (resp.courses ?? []).sorted { $0.isActive && !$1.isActive }
+                var list = resp.courses ?? []
+                if scope == .pilotTrainingOnly {
+                    list = list.filter(\.isPilotTraining)
+                }
+                courses = list.sorted { $0.isActive && !$1.isActive }
                 error = nil
             } else {
                 error = resp.error ?? "Failed to load courses"

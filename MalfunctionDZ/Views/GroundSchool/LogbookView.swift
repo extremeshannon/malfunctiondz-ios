@@ -259,7 +259,7 @@ struct LogbookConfigSheet: View {
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
 
-    private var sheetTitle: String { appShell.hidesStaffOpsUI ? "Gear" : "Logbook Config" }
+    private var sheetTitle: String { appShell.isMemberShell ? "Gear" : "Logbook Config" }
 
     var body: some View {
         NavigationStack {

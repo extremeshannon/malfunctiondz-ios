@@ -68,9 +68,19 @@ extension User {
         hasAnyRole(["chief_pilot", "chief pilot"]) || isAdminLevel
     }
 
+    /// ASC Pilots app — line pilots, chief pilot, and admin (testing & training).
+    var canAccessASCPilotsApp: Bool {
+        hasAnyRole(["pilot", "chief_pilot", "chief pilot", "admin", "master", "godmode"])
+    }
+
+    /// ASC Packers app — DZ rig packing and loft tools.
+    var canAccessASCPackersApp: Bool {
+        hasAnyRole(["packer", "rigger", "master_rigger", "loft", "admin", "master", "godmode"])
+    }
+
     // MARK: - Tab access
     var canAccessAviation: Bool {
-        hasAnyRole(["admin", "master", "godmode", "pilot", "ops", "ops_admin"])
+        hasAnyRole(["admin", "master", "godmode", "pilot", "chief_pilot", "chief pilot", "ops", "ops_admin"])
     }
 
     /// Full Loft access: Admin and Master Rigger only (not ops_admin — they use Rigs)
@@ -184,6 +194,15 @@ extension User {
         if canManageAircraft { return .adminFull }
         if isAviationReadOnly { return .opsReadOnly }
         return .pilotRestricted
+    }
+
+    /// Aviation UI mode for ASC Pilots vs staff app (chief pilot & admin get full aircraft in pilot app).
+    func aviationViewMode(for shell: AppShellKind) -> AviationViewMode {
+        if shell == .pilot {
+            if canManageAircraft || isChiefPilotRole { return .adminFull }
+            return .pilotRestricted
+        }
+        return aviationViewMode
     }
 
     /// Shift positions map 1:1 to roles. User can pick shifts only for positions they have.
