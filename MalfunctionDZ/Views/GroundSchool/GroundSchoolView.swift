@@ -898,8 +898,9 @@ struct ModuleSection: View {
                                 .disabled(lesson.isLocked)
 
                                 if lesson.id != module.lessons.last?.id {
-                                    Divider()
-                                        .background(colors.border)
+                                    Rectangle()
+                                        .fill(colors.border.opacity(0.4))
+                                        .frame(height: 1)
                                         .padding(.leading, 48)
                                 }
                             }
@@ -1037,6 +1038,7 @@ struct LessonRow: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
+        .background(colors.card)
         .opacity(lesson.isLocked ? 0.65 : 1)
     }
 }

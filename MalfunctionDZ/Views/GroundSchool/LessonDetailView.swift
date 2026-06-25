@@ -651,7 +651,12 @@ struct LessonDetailView: View {
                                     linkColorHex: htmlStyle.link,
                                     imageBorderColor: htmlStyle.imageBorder,
                                     onImageTapped: { url in enlargedImageURL = url },
-                                    onContentHeightChanged: { htmlContentHeight = max(200, $0) }
+                                    onContentHeightChanged: { h in
+                                        htmlContentHeight = max(200, h)
+                                        if h > 0 && h < UIScreen.main.bounds.height * 0.72 {
+                                            vm.hasScrolledToBottom = true
+                                        }
+                                    }
                                 )
                                 .frame(height: htmlContentHeight)
                             }
@@ -684,6 +689,13 @@ struct LessonDetailView: View {
                         .padding(.bottom, 120)
                     }
                     .refreshable { await vm.load() }
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            if htmlContentHeight > 0 && htmlContentHeight < UIScreen.main.bounds.height * 0.72 {
+                                vm.hasScrolledToBottom = true
+                            }
+                        }
+                    }
 
                     // ── Bottom bar ────────────────────────────
                     VStack(spacing: 0) {
