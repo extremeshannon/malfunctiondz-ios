@@ -45,8 +45,7 @@ struct ASCPilotsContentRootView: View {
             }
         }
         .environment(\.appShell, .pilot)
-        .environment(\.mdzColors, MDZColorSet.for(config.theme))
-        .environment(\.mdzColorScheme, config.theme == "slate_fire" ? .light : .dark)
+        .mdzThemed(config.theme)
         .task { await config.loadConfig() }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active, auth.isAuthenticated, auth.currentUser?.canAccessASCPilotsApp == true {
@@ -63,36 +62,35 @@ struct PilotAppAccessDeniedView: View {
     @Environment(\.mdzColors) private var colors
 
     var body: some View {
-        ZStack {
-            colors.background.ignoresSafeArea()
-            VStack(spacing: 24) {
-                Image(systemName: "airplane.circle")
-                    .font(.system(size: 56))
-                    .foregroundColor(colors.primary)
+        VStack(spacing: 28) {
+            MDZIconChip("airplane", color: colors.aviation, size: 72)
+            VStack(spacing: 12) {
                 Text("ASC Pilots")
-                    .font(.system(size: 24, weight: .black))
-                    .foregroundColor(colors.text)
+                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(colors: [.white, colors.primary], startPoint: .leading, endPoint: .trailing)
+                    )
                 Text("This app is for ASC pilots, chief pilot, and admin training. Use the ASC app for student and skydiver features, or MalfunctionDZ for full operations.")
                     .font(.system(size: 15))
                     .foregroundColor(colors.muted)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-                if let user = auth.currentUser {
-                    Text("Signed in as \(user.username) — roles: \((user.roles ?? [user.role ?? "none"]).joined(separator: ", "))")
-                        .font(.system(size: 12))
-                        .foregroundColor(colors.muted)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 24)
-                }
-                Button("Sign Out") { auth.logout() }
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 28)
-                    .padding(.vertical, 12)
-                    .background(colors.primary)
-                    .clipShape(Capsule())
+                    .padding(.horizontal, 16)
             }
+            if let user = auth.currentUser {
+                Text("Signed in as \(user.username) — roles: \((user.roles ?? [user.role ?? "none"]).joined(separator: ", "))")
+                    .font(.system(size: 12))
+                    .foregroundColor(colors.muted)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+            MDZPrimaryButton("Sign Out") { auth.logout() }
+                .padding(.horizontal, 40)
         }
+        .padding(28)
+        .mdzContentCard(gloryBar: true, glass: true)
+        .padding(.horizontal, 24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .mdzScreenBackground()
     }
 }
 
@@ -106,11 +104,7 @@ struct ASCPilotsTabView: View {
     @Environment(\.mdzColors) private var colors
 
     init() {
-        let a = UITabBarAppearance()
-        a.configureWithOpaqueBackground()
-        a.backgroundColor = UIColor(Color(hex: "1E2D38"))
-        UITabBar.appearance().standardAppearance = a
-        UITabBar.appearance().scrollEdgeAppearance = a
+        MDZChrome.applyTabBar()
     }
 
     var body: some View {
@@ -148,7 +142,7 @@ struct ASCPilotsTabView: View {
                 .tag(9)
         }
         .accentColor(colors.accent)
-        .preferredColorScheme(config.theme == "slate_fire" ? .light : .dark)
+        .preferredColorScheme(MDZTheme.colorScheme(for: config.theme))
         .task { await config.loadConfig() }
         .onChange(of: pushNav.pendingTap?.id) { _, _ in
             if pushNav.pendingTap != nil { tabSelect.selected = 0 }
@@ -164,14 +158,7 @@ struct ASCPilotsTabView: View {
 final class ASCPilotsAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
-        let navAppearance = UINavigationBarAppearance()
-        navAppearance.configureWithOpaqueBackground()
-        navAppearance.backgroundColor = UIColor(red: 12/255, green: 29/255, blue: 53/255, alpha: 1)
-        navAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
-        navAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
-        UINavigationBar.appearance().standardAppearance = navAppearance
-        UINavigationBar.appearance().scrollEdgeAppearance = navAppearance
-        UINavigationBar.appearance().compactAppearance = navAppearance
+        MDZChrome.applyNavigationBar()
         return true
     }
 

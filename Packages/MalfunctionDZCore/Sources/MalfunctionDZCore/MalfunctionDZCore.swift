@@ -111,7 +111,23 @@ public extension Color {
     public static let ascLoginOrangeDark = Color(hex:"B83D12")
 }
 
-// MARK: - Theme-based color set (from server: theme "slate_fire" vs "old_glory")
+// MARK: - Theme-based color set (slate_fire | old_glory | asc_mountain)
+public enum MDZTheme {
+    public static let slateFire = "slate_fire"
+    public static let oldGlory = "old_glory"
+    public static let ascMountain = "asc_mountain"
+
+    public static var defaultKey: String { ascMountain }
+
+    public static func colorScheme(for theme: String) -> ColorScheme {
+        theme == slateFire ? .light : .dark
+    }
+
+    public static func usesMountainBackground(_ theme: String) -> Bool {
+        theme == ascMountain
+    }
+}
+
 public struct MDZColorSet {
     public let background: Color
     public let card: Color
@@ -175,8 +191,33 @@ public struct MDZColorSet {
         groundSchool: Color(hex: "7C3AED")
     )
 
+    public static let ascMountain = MDZColorSet(
+        background: Color(hex: "071628"),
+        card: Color(hex: "0E2648"),
+        card2: Color(hex: "132F58"),
+        text: Color(hex: "F4F8FC"),
+        muted: Color(hex: "8AA4C4"),
+        primary: Color(hex: "5EC8F2"),
+        accent: Color(hex: "F2B705"),
+        border: Color(hex: "2A5A8A").opacity(0.55),
+        green: Color(hex: "34D399"),
+        amber: Color(hex: "F2B705"),
+        danger: Color(hex: "F87171"),
+        navy: Color(hex: "061220"),
+        navyMid: Color(hex: "0A1830"),
+        aviation: Color(hex: "4DA8FF"),
+        loft: Color(hex: "5EC8F2"),
+        dz: Color(hex: "F2B705"),
+        groundSchool: Color(hex: "7CB9FF")
+    )
+
     public static func `for`(_ theme: String) -> MDZColorSet {
-        theme == "old_glory" ? .oldGlory : .slateFire
+        switch theme {
+        case MDZTheme.oldGlory: return .oldGlory
+        case MDZTheme.ascMountain: return .ascMountain
+        case MDZTheme.slateFire: return .slateFire
+        default: return .ascMountain
+        }
     }
 
     public init(
@@ -205,12 +246,19 @@ public struct MDZColorSet {
 }
 
 private struct MDZColorsKey: EnvironmentKey {
-    static let defaultValue = MDZColorSet.slateFire
+    static let defaultValue = MDZColorSet.ascMountain
+}
+private struct MDZThemeKey: EnvironmentKey {
+    static let defaultValue = MDZTheme.ascMountain
 }
 public extension EnvironmentValues {
     public var mdzColors: MDZColorSet {
         get { self[MDZColorsKey.self] }
         set { self[MDZColorsKey.self] = newValue }
+    }
+    public var mdzThemeKey: String {
+        get { self[MDZThemeKey.self] }
+        set { self[MDZThemeKey.self] = newValue }
     }
     public var mdzColorScheme: ColorScheme {
         get { self[MDZColorSchemeKey.self] }
@@ -252,7 +300,156 @@ public extension View {
     public func mdzCard() -> some View { modifier(MDZCardModifier()) }
     public func mdzPill(_ color: Color = Color(hex: "5AACCA")) -> some View { modifier(MDZPillModifier(color: color)) }
     public func mdzInputStyle() -> some View { modifier(MDZInputStyleModifier()) }
+
+    /// Apply palette + color scheme from a theme key (e.g. `asc_mountain`).
+    public func mdzThemed(_ theme: String) -> some View {
+        environment(\.mdzThemeKey, theme)
+            .environment(\.mdzColors, MDZColorSet.for(theme))
+            .environment(\.mdzColorScheme, MDZTheme.colorScheme(for: theme))
+    }
+
+    /// Full-screen themed background (mountain gradient or flat palette).
+    public func mdzScreenBackground() -> some View {
+        modifier(MDZScreenBackgroundModifier())
+    }
 }
+
+public struct MDZScreenBackgroundModifier: ViewModifier {
+    @Environment(\.mdzThemeKey) private var themeKey
+    @Environment(\.mdzColors) private var colors
+
+    public init() {}
+
+    public func body(content: Content) -> some View {
+        ZStack {
+            if MDZTheme.usesMountainBackground(themeKey) {
+                ASCMountainBackground()
+            } else {
+                colors.background.ignoresSafeArea()
+            }
+            content
+        }
+    }
+}
+
+// MARK: - ASC Mountain background (matches icon art: navy sky + ice glow + peaks)
+public struct ASCMountainBackground: View {
+    public init() {}
+
+    public var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(hex: "04101F"),
+                    Color(hex: "071628"),
+                    Color(hex: "0A2848"),
+                    Color(hex: "061220"),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            RadialGradient(
+                colors: [Color(hex: "5EC8F2").opacity(0.22), .clear],
+                center: UnitPoint(x: 0.5, y: 0.08),
+                startRadius: 0,
+                endRadius: 480
+            )
+            RadialGradient(
+                colors: [Color(hex: "F2B705").opacity(0.06), .clear],
+                center: UnitPoint(x: 0.85, y: 0.15),
+                startRadius: 0,
+                endRadius: 200
+            )
+            // Stylized mountain silhouette (icon art)
+            GeometryReader { geo in
+                let w = geo.size.width
+                let h = geo.size.height
+                Path { p in
+                    p.move(to: CGPoint(x: 0, y: h * 0.72))
+                    p.addLine(to: CGPoint(x: w * 0.12, y: h * 0.58))
+                    p.addLine(to: CGPoint(x: w * 0.22, y: h * 0.65))
+                    p.addLine(to: CGPoint(x: w * 0.35, y: h * 0.48))
+                    p.addLine(to: CGPoint(x: w * 0.48, y: h * 0.55))
+                    p.addLine(to: CGPoint(x: w * 0.58, y: h * 0.42))
+                    p.addLine(to: CGPoint(x: w * 0.72, y: h * 0.52))
+                    p.addLine(to: CGPoint(x: w * 0.88, y: h * 0.38))
+                    p.addLine(to: CGPoint(x: w, y: h * 0.5))
+                    p.addLine(to: CGPoint(x: w, y: h))
+                    p.addLine(to: CGPoint(x: 0, y: h))
+                    p.closeSubpath()
+                }
+                .fill(
+                    LinearGradient(
+                        colors: [Color(hex: "0E2648").opacity(0.9), Color(hex: "061220")],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                // Snow caps
+                Path { p in
+                    p.move(to: CGPoint(x: w * 0.33, y: h * 0.48))
+                    p.addLine(to: CGPoint(x: w * 0.35, y: h * 0.48))
+                    p.addLine(to: CGPoint(x: w * 0.37, y: h * 0.52))
+                    p.addLine(to: CGPoint(x: w * 0.31, y: h * 0.52))
+                    p.closeSubpath()
+                }
+                .fill(Color.white.opacity(0.12))
+                Path { p in
+                    p.move(to: CGPoint(x: w * 0.56, y: h * 0.42))
+                    p.addLine(to: CGPoint(x: w * 0.58, y: h * 0.42))
+                    p.addLine(to: CGPoint(x: w * 0.60, y: h * 0.46))
+                    p.addLine(to: CGPoint(x: w * 0.54, y: h * 0.46))
+                    p.closeSubpath()
+                }
+                .fill(Color.white.opacity(0.15))
+            }
+        }
+        .ignoresSafeArea()
+    }
+}
+
+#if canImport(UIKit)
+import UIKit
+
+public enum MDZChrome {
+    public static func applyTabBar(theme: String = MDZTheme.defaultKey) {
+        let colors = MDZColorSet.for(theme)
+        let a = UITabBarAppearance()
+        a.configureWithDefaultBackground()
+        a.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterialDark)
+        a.backgroundColor = UIColor(colors.navyMid.opacity(0.88))
+        a.shadowColor = UIColor(colors.primary.opacity(0.35))
+        a.shadowImage = UIImage()
+        let normal = a.stackedLayoutAppearance.normal
+        normal.iconColor = UIColor(colors.muted)
+        normal.titleTextAttributes = [.foregroundColor: UIColor(colors.muted)]
+        let selected = a.stackedLayoutAppearance.selected
+        selected.iconColor = UIColor(colors.accent)
+        selected.titleTextAttributes = [
+            .foregroundColor: UIColor(colors.accent),
+            .font: UIFont.systemFont(ofSize: 10, weight: .bold),
+        ]
+        UITabBar.appearance().standardAppearance = a
+        UITabBar.appearance().scrollEdgeAppearance = a
+        UITabBar.appearance().tintColor = UIColor(colors.accent)
+        UITabBar.appearance().unselectedItemTintColor = UIColor(colors.muted)
+    }
+
+    public static func applyNavigationBar(theme: String = MDZTheme.defaultKey) {
+        let colors = MDZColorSet.for(theme)
+        let nav = UINavigationBarAppearance()
+        nav.configureWithDefaultBackground()
+        nav.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterialDark)
+        nav.backgroundColor = UIColor(colors.navy.opacity(0.88))
+        nav.shadowColor = UIColor(colors.primary.opacity(0.2))
+        nav.titleTextAttributes = [.foregroundColor: UIColor.white]
+        nav.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+        UINavigationBar.appearance().standardAppearance = nav
+        UINavigationBar.appearance().scrollEdgeAppearance = nav
+        UINavigationBar.appearance().compactAppearance = nav
+    }
+}
+#endif
 
 // MARK: - Shared UI Components
 public struct StatusPill: View {
@@ -508,7 +705,7 @@ public actor APIClient {
     @Published public var moduleLoft         = "Rigs"
     @Published public var moduleGroundSchool = "Ground School"
     @Published public var moduleManifest     = "Manifest"
-    @Published public var theme              = "slate_fire"
+    @Published public var theme              = MDZTheme.defaultKey
     public let poweredBy = "Alaska Skydive Center"
     public func loadConfig() async {
         guard let url = URL(string:"\(kServerURL)/api/config.php") else { return }
@@ -551,7 +748,11 @@ public actor APIClient {
         if let v=ud.string(forKey:"cfg_loft"),!v.isEmpty{moduleLoft=v}
         if let v=ud.string(forKey:"cfg_gs"),!v.isEmpty{moduleGroundSchool=v}
         if let v=ud.string(forKey:"cfg_mf"),!v.isEmpty{moduleManifest=v}
-        if let v=ud.string(forKey:"cfg_theme"),!v.isEmpty{theme=v}
+        if let v=ud.string(forKey:"cfg_theme"),!v.isEmpty{
+            // Migrate legacy light theme to ASC Mountain (icon-matched dark palette).
+            theme = v == MDZTheme.slateFire ? MDZTheme.ascMountain : v
+            if theme != v { ud.set(theme, forKey: "cfg_theme") }
+        }
     }
 }
 

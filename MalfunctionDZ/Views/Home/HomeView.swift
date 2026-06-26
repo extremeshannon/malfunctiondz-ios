@@ -18,6 +18,7 @@ struct HomeView: View {
     @Environment(\.appShell) private var appShell
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
+    @Environment(\.mdzThemeKey) private var themeKey
     @StateObject private var vm = HomeViewModel()
     @State private var dzStatusJustUpdated = false
     @Environment(\.horizontalSizeClass) private var hSizeClass
@@ -37,11 +38,14 @@ struct HomeView: View {
         return Array(repeating: GridItem(.flexible(), spacing: 14), count: count)
     }
     private var hPad: CGFloat { isWide ? 32 : 20 }
+    private var mountainTheme: Bool { MDZTheme.usesMountainBackground(themeKey) }
 
     var body: some View {
         NavigationStack {
             ZStack {
-                colors.background.ignoresSafeArea()
+                if MDZTheme.usesMountainBackground(themeKey) {
+                    ASCMountainBackground()
+                }
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 0) {
 
@@ -334,52 +338,57 @@ struct HomeView: View {
 
     // MARK: - Header
     private var headerSection: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 6) {
+        HStack(alignment: .top, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text(dateString)
                     .font(.system(size: isWide ? 12 : 11, weight: .semibold))
-                    .foregroundColor(colors.muted)
+                    .foregroundColor(colors.primary.opacity(0.85))
                     .tracking(2)
                     .textCase(.uppercase)
 
                 Text(config.dzName.uppercased())
-                    .font(.system(size: isWide ? 36 : 28, weight: .black, design: .rounded))
-                    .foregroundColor(colors.text)
+                    .font(.system(size: isWide ? 34 : 26, weight: .black, design: .rounded))
+                    .foregroundStyle(
+                        mountainTheme
+                            ? LinearGradient(
+                                colors: [.white, Color(hex: "5EC8F2").opacity(0.95)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                            : LinearGradient(colors: [colors.text, colors.text], startPoint: .leading, endPoint: .trailing)
+                    )
                     .lineLimit(2)
 
-                HStack(spacing: 6) {
+                HStack(spacing: 8) {
                     Text(greeting)
                         .font(.system(size: isWide ? 15 : 13, weight: .medium))
                         .foregroundColor(colors.muted)
-                    Text("·").foregroundColor(colors.border)
+                    Circle().fill(colors.border).frame(width: 4, height: 4)
                     Text(auth.currentUser?.roleDisplayLabel ?? "")
-                        .font(.system(size: isWide ? 15 : 13, weight: .semibold))
-                        .foregroundColor(colors.primary)
+                        .font(.system(size: isWide ? 15 : 13, weight: .bold))
+                        .foregroundColor(colors.accent)
                 }
             }
-            Spacer(minLength: 12)
+            Spacer(minLength: 8)
             if showDzStatus {
-                if auth.currentUser?.canUpdateDzStatus == true && !isMemberShell {
-                    HStack(spacing: 10) {
-                        Button {
-                            showDzStatusModal = true
-                        } label: {
+                VStack(alignment: .trailing, spacing: 10) {
+                    if auth.currentUser?.canUpdateDzStatus == true && !isMemberShell {
+                        Button { showDzStatusModal = true } label: {
                             DZStatusPill(status: vm.dzStatus)
                         }
                         .buttonStyle(.plain)
-                        Button {
-                            showDzAnnouncementModal = true
-                        } label: {
-                            Image(systemName: "megaphone.fill")
-                                .font(.system(size: 12))
-                                .foregroundColor(colors.amber)
+                        Button { showDzAnnouncementModal = true } label: {
+                            MDZIconChip("megaphone.fill", color: colors.amber, size: 36)
                         }
+                        .buttonStyle(.plain)
+                    } else {
+                        DZStatusPill(status: vm.dzStatus)
                     }
-                } else {
-                    DZStatusPill(status: vm.dzStatus)
                 }
             }
         }
+        .padding(isWide ? 22 : 18)
+        .mdzContentCard(gloryBar: mountainTheme, glass: mountainTheme)
     }
 
     @ViewBuilder
@@ -401,10 +410,8 @@ struct HomeView: View {
                     .foregroundColor(colors.muted)
             }
         }
-        .padding(12)
-        .background(colors.card)
-        .cornerRadius(10)
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
+        .padding(14)
+        .mdzContentCard(accent: colors.amber, glass: true, radius: 12)
     }
 
     // MARK: - Manifest home section (DZ Rigs + Aviation status)
@@ -726,9 +733,7 @@ struct MetarWidget: View {
             }
         }
         .padding(wide ? 20 : 14)
-        .background(colors.card)
-        .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
+        .mdzContentCard(accent: colors.aviation, glass: true)
     }
 }
 
@@ -847,16 +852,7 @@ struct StaffCheckInCard: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(colors.card)
-        .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
-        .overlay(
-            Rectangle()
-                .fill(colors.primary)
-                .frame(height: 3)
-                .cornerRadius(2),
-            alignment: .top
-        )
+        .mdzContentCard(accent: colors.primary, glass: true, radius: 14)
         .task { await loadUsers() }
     }
 
@@ -939,18 +935,9 @@ struct ManifestStatusCard: View {
                 }
             }
         }
-        .padding(14)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(colors.card)
-        .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
-        .overlay(
-            Rectangle()
-                .fill(accentColor)
-                .frame(height: 3)
-                .cornerRadius(2),
-            alignment: .top
-        )
+        .mdzContentCard(accent: accentColor, glass: true, radius: 14)
     }
 
     private func badgeColor(_ b: DashBadge) -> Color {
@@ -1047,9 +1034,7 @@ struct PilotQuickWidget: View {
             }
         }
         .padding(isWide ? 20 : 14)
-        .background(colors.card)
-        .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
+        .mdzContentCard(accent: colors.aviation, glass: true)
     }
 }
 
@@ -1112,8 +1097,7 @@ struct StudentProgressWidget: View {
             }
         }
         .padding(isWide ? 20 : 14)
-        .background(colors.card).cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
+        .mdzContentCard(accent: colors.groundSchool, glass: true)
     }
 }
 
@@ -1152,8 +1136,7 @@ struct InstructorQuickWidget: View {
             }
             .padding(isWide ? 20 : 14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(colors.card).cornerRadius(14)
-            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
+            .mdzContentCard(accent: colors.loft, glass: true)
         }
         .buttonStyle(.plain)
         .disabled(onTapGroundSchool == nil)
@@ -1171,19 +1154,22 @@ struct ModuleTile: View {
     let onTap:       () -> Void
     @State private var pressed = false
     @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzThemeKey) private var themeKey
+
+    private var mountainTheme: Bool { MDZTheme.usesMountainBackground(themeKey) }
 
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: wide ? 14 : 10) {
-                HStack {
-                    Image(systemName: icon)
-                        .font(.system(size: wide ? 28 : 22, weight: .semibold))
-                        .foregroundColor(accentColor)
+                HStack(alignment: .top) {
+                    MDZIconChip(icon, color: accentColor, size: wide ? 48 : 40)
                     Spacer()
-                    Circle().fill(accentColor).frame(width: 6, height: 6)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(accentColor.opacity(0.7))
                 }
                 Text(title)
-                    .font(.system(size: wide ? 15 : 13, weight: .black))
+                    .font(.system(size: wide ? 16 : 13, weight: .black, design: .rounded))
                     .foregroundColor(colors.text)
                     .tracking(0.5).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 Text(subtitle)
@@ -1196,19 +1182,49 @@ struct ModuleTile: View {
                             Text(b.label)
                                 .font(.system(size: wide ? 11 : 10, weight: .bold))
                                 .foregroundColor(c)
-                                .padding(.horizontal, 7).padding(.vertical, 3)
-                                .background(c.opacity(0.15)).clipShape(Capsule())
+                                .padding(.horizontal, 8).padding(.vertical, 4)
+                                .background(c.opacity(0.18)).clipShape(Capsule())
+                                .overlay(Capsule().strokeBorder(c.opacity(0.3), lineWidth: 1))
                         }
                     }
                 }
             }
-            .padding(wide ? 20 : 14)
-            .frame(maxWidth: .infinity, minHeight: wide ? 160 : 130, alignment: .topLeading)
-            .background(colors.card).cornerRadius(14)
-            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
-            .overlay(VStack { Rectangle().fill(accentColor).frame(height: 3).cornerRadius(14); Spacer() })
-            .scaleEffect(pressed ? 0.97 : 1.0)
-            .animation(.easeOut(duration: 0.15), value: pressed)
+            .padding(wide ? 20 : 16)
+            .frame(maxWidth: .infinity, minHeight: wide ? 168 : 138, alignment: .topLeading)
+            .background(tileBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: mountainTheme
+                                ? [accentColor.opacity(0.5), colors.primary.opacity(0.2), colors.border.opacity(0.5)]
+                                : [colors.border, colors.border],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: mountainTheme ? 1.5 : 1
+                    )
+            )
+            .overlay(alignment: .top) {
+                accentColor
+                    .frame(height: 4)
+                    .shadow(color: mountainTheme ? accentColor.opacity(0.7) : .clear, radius: 10, y: 3)
+            }
+            .overlay {
+                if mountainTheme {
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.07), .clear, .clear],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .allowsHitTesting(false)
+                }
+            }
+            .shadow(color: accentColor.opacity(mountainTheme ? 0.2 : 0.06), radius: mountainTheme ? 16 : 6, y: 6)
+            .scaleEffect(pressed ? 0.96 : 1.0)
+            .animation(.spring(response: 0.28, dampingFraction: 0.72), value: pressed)
         }
         .buttonStyle(.plain)
         .simultaneousGesture(
@@ -1216,6 +1232,18 @@ struct ModuleTile: View {
                 .onChanged { _ in pressed = true }
                 .onEnded   { _ in pressed = false }
         )
+    }
+
+    @ViewBuilder
+    private var tileBackground: some View {
+        if mountainTheme {
+            ZStack {
+                colors.card.opacity(0.85)
+                Rectangle().fill(.ultraThinMaterial)
+            }
+        } else {
+            colors.card
+        }
     }
 
     private func badgeColor(_ b: DashBadge) -> Color {
@@ -1455,13 +1483,17 @@ struct DZStatusPill: View {
     }
 
     var body: some View {
-        Text(pillLabel)
-            .font(.system(size: 11, weight: .bold))
-            .foregroundColor(status == nil ? colors.text : .white)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(pillColor)
-            .cornerRadius(8)
+        if status == nil {
+            Text(pillLabel)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(colors.muted)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .background(colors.card2.opacity(0.8))
+                .clipShape(Capsule())
+        } else {
+            MDZStatusCapsule(pillLabel, color: pillColor, pulse: isOpen)
+        }
     }
 }
 

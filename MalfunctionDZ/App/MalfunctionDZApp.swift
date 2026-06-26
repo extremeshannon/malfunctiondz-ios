@@ -44,8 +44,7 @@ struct ContentRootView: View {
             }
         }
         .environment(\.appShell, .staff)
-        .environment(\.mdzColors, MDZColorSet.for(config.theme))
-        .environment(\.mdzColorScheme, config.theme == "slate_fire" ? .light : .dark)
+        .mdzThemed(config.theme)
         .task { await config.loadConfig() }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active, auth.isAuthenticated {
@@ -206,7 +205,7 @@ struct MDZSplitView: View {
             }
         }
         .accentColor(colors.accent)
-        .preferredColorScheme(config.theme == "slate_fire" ? .light : .dark)
+        .preferredColorScheme(MDZTheme.colorScheme(for: config.theme))
     }
 }
 
@@ -297,11 +296,7 @@ struct MDZTabView: View {
     @Environment(\.mdzColors) private var colors
 
     init() {
-        let a = UITabBarAppearance()
-        a.configureWithOpaqueBackground()
-        a.backgroundColor = UIColor(Color(hex: "1E2D38"))
-        UITabBar.appearance().standardAppearance   = a
-        UITabBar.appearance().scrollEdgeAppearance = a
+        MDZChrome.applyTabBar()
     }
 
     var body: some View {
@@ -383,7 +378,7 @@ struct MDZTabView: View {
                 .tag(9)
         }
         .accentColor(colors.accent)
-        .preferredColorScheme(config.theme == "slate_fire" ? .light : .dark)
+        .preferredColorScheme(MDZTheme.colorScheme(for: config.theme))
     }
 }
 
@@ -391,15 +386,7 @@ struct MDZTabView: View {
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
-        // Brighter navigation titles on dark backgrounds
-        let navAppearance = UINavigationBarAppearance()
-        navAppearance.configureWithOpaqueBackground()
-        navAppearance.backgroundColor = UIColor(red: 12/255, green: 29/255, blue: 53/255, alpha: 1)
-        navAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
-        navAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
-        UINavigationBar.appearance().standardAppearance = navAppearance
-        UINavigationBar.appearance().scrollEdgeAppearance = navAppearance
-        UINavigationBar.appearance().compactAppearance = navAppearance
+        MDZChrome.applyNavigationBar()
         return true
     }
 

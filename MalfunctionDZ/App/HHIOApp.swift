@@ -44,8 +44,7 @@ struct HHIOContentRootView: View {
             }
         }
         .environment(\.appShell, .hhio)
-        .environment(\.mdzColors, MDZColorSet.for(config.theme))
-        .environment(\.mdzColorScheme, config.theme == "slate_fire" ? .light : .dark)
+        .mdzThemed(config.theme)
         .task { await config.loadConfig() }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active, auth.isAuthenticated, auth.currentUser?.canAccessHHIOApp == true {
@@ -60,29 +59,28 @@ struct HHIOAccessDeniedView: View {
     @Environment(\.mdzColors) private var colors
 
     var body: some View {
-        ZStack {
-            colors.background.ignoresSafeArea()
-            VStack(spacing: 24) {
-                Image(systemName: "backpack.circle.fill")
-                    .font(.system(size: 56))
-                    .foregroundColor(colors.loft)
+        VStack(spacing: 28) {
+            MDZIconChip("backpack.fill", color: colors.loft, size: 72)
+            VStack(spacing: 12) {
                 Text("HHIO Loft")
-                    .font(.system(size: 24, weight: .black))
-                    .foregroundColor(colors.text)
+                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(colors: [.white, colors.loft], startPoint: .leading, endPoint: .trailing)
+                    )
                 Text("This app is for parachute loft staff — riggers and master riggers. Use MalfunctionDZ for dropzone operations or ASC Packers for DZ pack jobs.")
                     .font(.system(size: 15))
                     .foregroundColor(colors.muted)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-                Button("Sign Out") { auth.logout() }
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 28)
-                    .padding(.vertical, 12)
-                    .background(colors.loft)
-                    .clipShape(Capsule())
+                    .padding(.horizontal, 16)
             }
+            MDZPrimaryButton("Sign Out") { auth.logout() }
+                .padding(.horizontal, 40)
         }
+        .padding(28)
+        .mdzContentCard(gloryBar: true, glass: true)
+        .padding(.horizontal, 24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .mdzScreenBackground()
     }
 }
 
@@ -92,11 +90,7 @@ struct HHIOTabView: View {
     @Environment(\.mdzColors) private var colors
 
     init() {
-        let a = UITabBarAppearance()
-        a.configureWithOpaqueBackground()
-        a.backgroundColor = UIColor(Color(hex: "1E2D38"))
-        UITabBar.appearance().standardAppearance = a
-        UITabBar.appearance().scrollEdgeAppearance = a
+        MDZChrome.applyTabBar()
         TabSelection.shared.selected = 0
     }
 
@@ -119,7 +113,7 @@ struct HHIOTabView: View {
                 .tag(9)
         }
         .accentColor(colors.loft)
-        .preferredColorScheme(config.theme == "slate_fire" ? .light : .dark)
+        .preferredColorScheme(MDZTheme.colorScheme(for: config.theme))
         .task { await config.loadConfig() }
     }
 }
@@ -127,14 +121,7 @@ struct HHIOTabView: View {
 final class HHIOAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
-        let navAppearance = UINavigationBarAppearance()
-        navAppearance.configureWithOpaqueBackground()
-        navAppearance.backgroundColor = UIColor(red: 12/255, green: 29/255, blue: 53/255, alpha: 1)
-        navAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
-        navAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
-        UINavigationBar.appearance().standardAppearance = navAppearance
-        UINavigationBar.appearance().scrollEdgeAppearance = navAppearance
-        UINavigationBar.appearance().compactAppearance = navAppearance
+        MDZChrome.applyNavigationBar()
         return true
     }
 

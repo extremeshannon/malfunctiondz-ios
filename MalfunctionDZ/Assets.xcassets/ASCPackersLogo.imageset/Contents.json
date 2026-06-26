@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "ASCPackersLogo.png",
+      "filename" : "ASCPackers 2.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "ASCPackersLogo@2x.png",
+      "filename" : "ASCPackers 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "ASCPackersLogo@3x.png",
+      "filename" : "ASCPackers.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
