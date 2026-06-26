@@ -15,7 +15,8 @@ public var kServerURL: String {
         return t.hasSuffix("/") ? String(t.dropLast()) : t
     }
     #if DEBUG
-    // Legacy MalfunctionDZ staff target uses local Docker; ASC suite apps use production by default.
+    // ASC suite apps (including HHIO) use production unless Profile overrides API Base URL.
+    // MalfunctionDZ staff target uses local Docker for day-to-day ops development.
     let bundle = Bundle.main.bundleIdentifier ?? ""
     if bundle == "com.malfunctiondz.app.MalfunctionDZ" {
         return "http://localhost:8000"

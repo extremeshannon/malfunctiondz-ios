@@ -359,7 +359,7 @@ func lessonYouTubeId(from lesson: LessonDetail) -> String? {
 }
 
 func lmsAbsoluteURL(_ path: String?) -> URL? {
-    guard var path = path?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else { return nil }
+    guard let path = path?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else { return nil }
     if path.lowercased().hasPrefix("http") { return URL(string: path) }
     let base = kServerURL.hasSuffix("/") ? String(kServerURL.dropLast()) : kServerURL
     return URL(string: "\(base)\(path.hasPrefix("/") ? path : "/\(path)")")
@@ -439,7 +439,7 @@ class LessonDetailViewModel: ObservableObject {
         if isQuizLesson { return false }
         if lesson.requireAcknowledgement && !acknowledged { return false }
         if isSlideshowLesson {
-            if let qid = lesson.quizId, qid > 0 { return false }
+            if (lesson.quizId ?? 0) > 0 { return false }
             return slideshowFinished
         }
         if isPDFLesson {
@@ -731,7 +731,7 @@ struct LessonDetailView: View {
                             }
 
                             // ── Quiz lesson (written test, knowledge check) ──
-                            if vm.isQuizLesson, let qid = lesson.quizId {
+                            if vm.isQuizLesson, (lesson.quizId ?? 0) > 0 {
                                 VStack(alignment: .leading, spacing: 12) {
                                     if let intro = lesson.content?.trimmingCharacters(in: .whitespacesAndNewlines), !intro.isEmpty {
                                         let htmlStyle = lessonHTMLStyle(colors: colors, scheme: mdzColorScheme)
@@ -1066,7 +1066,7 @@ struct LessonDetailView: View {
         }
         if vm.canComplete { return "Mark as Complete" }
         if vm.isSlideshowLesson {
-            if let qid = lesson.quizId, qid > 0 {
+            if (lesson.quizId ?? 0) > 0 {
                 return vm.slideshowFinished ? "Take quiz to complete" : "View all slides to complete"
             }
             return "View all slides to complete"
@@ -1564,12 +1564,12 @@ enum LMSSlideshowParser {
     }
 
     static func absoluteURL(_ path: String?) -> URL? {
-        guard var path = path?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else { return nil }
+        guard let trimmed = path?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmed.isEmpty else { return nil }
         let staticFallbacks: [String: String] = [
             "/uploads/lms/asp/0eaa863a-landing-to-south-paq.jpg": "/static/lms/asp/landing-south-hotspot-base.jpg",
             "/uploads/lms/asp/a486c37f-landing-to-north-paq.jpg": "/static/lms/asp/landing-north-hotspot-base.jpg",
         ]
-        if let fallback = staticFallbacks[path] { path = fallback }
+        let path = staticFallbacks[trimmed] ?? trimmed
         if path.hasPrefix("http") { return URL(string: path) }
         let base = kServerURL.hasSuffix("/") ? String(kServerURL.dropLast()) : kServerURL
         return URL(string: "\(base)\(path.hasPrefix("/") ? path : "/\(path)")")

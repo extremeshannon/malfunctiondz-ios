@@ -141,4 +141,5 @@ struct LoftListResponse: Codable {
     let ok: Bool
     let summary: LoftSummary?
     let rigs: [LoftRig]?
+    let error: String?
 }

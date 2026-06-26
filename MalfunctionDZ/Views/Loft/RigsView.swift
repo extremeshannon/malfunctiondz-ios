@@ -15,11 +15,15 @@ struct RigsView: View {
         }
         .task {
             await myRigsVm.load()
-            await dzRigsVm.load()
+            if auth.currentUser?.canAccessDzRigs == true {
+                await dzRigsVm.load()
+            }
         }
         .refreshable {
             await myRigsVm.load()
-            await dzRigsVm.load()
+            if auth.currentUser?.canAccessDzRigs == true {
+                await dzRigsVm.load()
+            }
         }
         .alert("Error", isPresented: Binding(
             get: { dzRigsVm.error != nil },
@@ -48,7 +52,7 @@ struct RigsView: View {
                             if !myRigsVm.rigs.isEmpty {
                                 myRigsSection
                             }
-                            if !dzRigsVm.rigs.isEmpty {
+                            if !dzRigsVm.rigs.isEmpty, auth.currentUser?.canAccessDzRigs == true {
                                 dzRigsSection
                             }
                         }
@@ -79,7 +83,9 @@ struct RigsView: View {
             Text(rigsDateString)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(colors.muted)
-            Text("Read-only — personal rigs and DZ rigs")
+            Text(auth.currentUser?.canAccessDzRigs == true
+                 ? "Read-only — personal rigs and DZ rigs"
+                 : "Read-only — personal rigs")
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(colors.amber)
             if auth.currentUser?.canAccess25JumpCheck == true {

@@ -10,6 +10,8 @@ enum AppBranding {
         "ASCStaffLogo"
         #elseif ASC_PACKERS
         "ASCPackersLogo"
+        #elseif ASC_HHIO
+        "HHIOLogo"
         #elseif ASC_STUDENTS
         "ASCStudentsLogo"
         #else

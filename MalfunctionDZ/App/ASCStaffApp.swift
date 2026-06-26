@@ -1,4 +1,4 @@
-// ASC Staff — full operations app for manifest, loft, rigs, aircraft, and admin staff.
+// ASC Staff — operations app for manifest, training, calendar, and admin staff (no Aviation / DZ rigs).
 import SwiftUI
 import UIKit
 import UserNotifications

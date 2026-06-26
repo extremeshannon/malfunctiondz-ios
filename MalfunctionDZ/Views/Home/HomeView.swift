@@ -85,7 +85,8 @@ struct HomeView: View {
                         }
 
                         // ── Manifest-only: 25 Jump Check + Aviation status (staff app only) ──
-                        if isManifestOnly && !isMemberShell {
+                        if isManifestOnly && !isMemberShell
+                            && (auth.currentUser?.canAccessDzRigs == true || auth.currentUser?.canAccessAviation == true) {
                             manifestHomeSection
                                 .padding(.horizontal, hPad)
                                 .padding(.bottom, 16)
@@ -263,7 +264,7 @@ struct HomeView: View {
                         .padding(.horizontal, hPad)
 
                         // ── Airworthy aircraft (pilot) — staff app only ──
-                        if isPilot && !vm.airworthyAircraft.isEmpty && (!isMemberShell || isPilotShell) {
+                        if isPilot && showAviation && !vm.airworthyAircraft.isEmpty && (!isMemberShell || isPilotShell) {
                             aircraftSection
                                 .padding(.horizontal, hPad)
                                 .padding(.top, 24)
@@ -410,7 +411,7 @@ struct HomeView: View {
     @ViewBuilder
     private var manifestHomeSection: some View {
         VStack(spacing: 14) {
-            if let dr = vm.dzRigsSummary {
+            if auth.currentUser?.canAccessDzRigs == true, let dr = vm.dzRigsSummary {
                 ManifestStatusCard(
                     icon: "square.stack.3d.up.fill",
                     title: "DZ RIGS",
@@ -418,13 +419,15 @@ struct HomeView: View {
                     accentColor: colors.dz
                 )
             }
-            ManifestStatusCard(
-                icon: "airplane",
-                title: config.moduleAviation.uppercased(),
-                subtitle: vm.aviationSummary,
-                accentColor: colors.aviation,
-                badges: vm.aviationBadges
-            )
+            if auth.currentUser?.canAccessAviation == true {
+                ManifestStatusCard(
+                    icon: "airplane",
+                    title: config.moduleAviation.uppercased(),
+                    subtitle: vm.aviationSummary,
+                    accentColor: colors.aviation,
+                    badges: vm.aviationBadges
+                )
+            }
         }
     }
 
@@ -433,7 +436,7 @@ struct HomeView: View {
     private var roleWidget: some View {
         if isAdmin {
             EmptyView()
-        } else if isPilot && (!isMemberShell || isPilotShell) {
+        } else if isPilot && showAviation && (!isMemberShell || isPilotShell) {
             PilotQuickWidget(data: vm.pilotData) {
                 tabSelect.selected = 1
             }

@@ -57,6 +57,7 @@
 		2FA64ABAD15827F7B556C751 /* CalendarAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F032F56000200022763 /* CalendarAPIService.swift */; };
 		31416E09DFD57BBED348B649 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCE2F5201DB00FBAD05 /* HomeView.swift */; };
 		3256B9E768DA2746E2995B87 /* PilotCurrencyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */; };
+		330E8D24154BA168CA2E65FE /* HHIOApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA34F3ACF17100D862F25095 /* HHIOApp.swift */; };
 		334B04B1E3A96961A2BF3CD2 /* DzRigDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D3E2F54BB250227638 /* DzRigDetailView.swift */; };
 		359AA57006CB679675F2D67C /* AircraftDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEC2F521AFF00227638 /* AircraftDetailView.swift */; };
 		359D818A042C2727C64C6400 /* AppBranding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */; };
@@ -114,6 +115,7 @@
 		6B52DE71F7582E818FC3827E /* LogbookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D232F54BB020227638 /* LogbookViewModel.swift */; };
 		6BC093E7605898E1F8BD039D /* MalfunctionDZCore in Frameworks */ = {isa = PBXBuildFile; productRef = FB063FAB2F60000100022763 /* MalfunctionDZCore */; };
 		6C301A9C84C4539229CE2301 /* QuizViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D012F52AD1E00227638 /* QuizViewModel.swift */; };
+		6CF67022A6770713C70FAA07 /* MalfunctionDZCore in Frameworks */ = {isa = PBXBuildFile; productRef = FB063FAB2F60000100022763 /* MalfunctionDZCore */; };
 		6D787DCA27EE488DA7FB58F1 /* CalendarRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F072F56000200022763 /* CalendarRootView.swift */; };
 		6DD199BF7C0183FF4DFF97AD /* InstructorDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E172F57000500022763 /* InstructorDashboardView.swift */; };
 		6F3B0C44D0EB312ED1BB8029 /* CalendarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F052F56000200022763 /* CalendarViewModel.swift */; };
@@ -179,6 +181,7 @@
 		A592D229E732001DAF27FC0C /* AppBranding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */; };
 		A5B087C44988AAFDDCBA562E /* AircraftViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF02F521B3A00227638 /* AircraftViewModel.swift */; };
 		A5E4B2555648B9447772D897 /* ASCPackersApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD722EEBB084606F8238F25A /* ASCPackersApp.swift */; };
+		A61A990B3C8E787217DFBBE3 /* LoftRecordsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D46F6F29BACBF20F5030A382 /* LoftRecordsViewModel.swift */; };
 		A64F3E9783F7461BF6087EC2 /* TodosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F132F56000200022763 /* TodosView.swift */; };
 		A73938DB865B871A7BD90F5B /* LoftRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEA2F521AD900227638 /* LoftRootView.swift */; };
 		A829D4DE9A53EB41F03B9F67 /* ShiftsRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F172F56000200022763 /* ShiftsRootView.swift */; };
@@ -259,6 +262,7 @@
 		E486E0F3DE4BBDD77E274CA6 /* JumpCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D392F54BB260227638 /* JumpCheckView.swift */; };
 		E4ED1B25BB332B000971B9F9 /* StaffComplianceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E04D415B453665F983311672 /* StaffComplianceCard.swift */; };
 		E54ACA1606B508F5879B51DE /* CalendarRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F072F56000200022763 /* CalendarRootView.swift */; };
+		E5823F8FD41D12A297B1DAB1 /* LoftRecordsRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFCF6D317B933936421DC27 /* LoftRecordsRootView.swift */; };
 		E5F607182F57000500022763 /* InstructorDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E172F57000500022763 /* InstructorDashboardView.swift */; };
 		E661318A372F2FAFCDDD1127 /* ShiftsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0B2F56000200022763 /* ShiftsView.swift */; };
 		E7008BD09B5DA53180BD6EAD /* ShiftsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0B2F56000200022763 /* ShiftsView.swift */; };
@@ -366,6 +370,78 @@
 		FB60263C2FECFF3E004D2532 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
 		FBC8582030379412EA76F7A1 /* MalfunctionDZCore in Frameworks */ = {isa = PBXBuildFile; productRef = FB063FAB2F60000100022763 /* MalfunctionDZCore */; };
 		FBD783602F5217F800F5EBCD /* GroundSchoolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */; };
+		FBF4CB992FEE36F700D692CD /* ModuleSignoffBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D132F534F9E00227638 /* ModuleSignoffBlock.swift */; };
+		FBF4CB9A2FEE36F700D692CD /* InstructorReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E112F57000200022763 /* InstructorReviewView.swift */; };
+		FBF4CB9B2FEE36F700D692CD /* JumpSignoffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E132F57000300022763 /* JumpSignoffView.swift */; };
+		FBF4CB9C2FEE36F700D692CD /* InstructorProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E152F57000400022763 /* InstructorProfileView.swift */; };
+		FBF4CB9D2FEE36F700D692CD /* InstructorDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E172F57000500022763 /* InstructorDashboardView.swift */; };
+		FBF4CB9E2FEE36F700D692CD /* PilotCurrencyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */; };
+		FBF4CB9F2FEE36F700D692CD /* PackerGearRoomRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 681FBD3163B41BF49E8DC0CE /* PackerGearRoomRootView.swift */; };
+		FBF4CBA02FEE36F700D692CD /* StaffComplianceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E04D415B453665F983311672 /* StaffComplianceCard.swift */; };
+		FBF4CBA12FEE36F700D692CD /* DocumentScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4CA289BC591040DD92EBD6 /* DocumentScannerView.swift */; };
+		FBF4CBA22FEE36F700D692CD /* LoftViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF42F521B5100227638 /* LoftViewModel.swift */; };
+		FBF4CBA32FEE36F700D692CD /* LoftRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEA2F521AD900227638 /* LoftRootView.swift */; };
+		FBF4CBA42FEE36F700D692CD /* LoftRecordsRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFCF6D317B933936421DC27 /* LoftRecordsRootView.swift */; };
+		FBF4CBA52FEE36F700D692CD /* LoftRecordsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D46F6F29BACBF20F5030A382 /* LoftRecordsViewModel.swift */; };
+		FBF4CBA62FEE36F700D692CD /* Foundation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD02F52032300FBAD05 /* Foundation.swift */; };
+		FBF4CBA72FEE36F700D692CD /* LessonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0F2F52D10B00227638 /* LessonDetailView.swift */; };
+		FBF4CBA82FEE36F700D692CD /* AircraftDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CED2F521B1A00227638 /* AircraftDetailViewModel.swift */; };
+		FBF4CBA92FEE36F700D692CD /* PaxViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D172F53F6CF00227638 /* PaxViewModel.swift */; };
+		FBF4CBAA2FEE36F700D692CD /* AircraftDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEC2F521AFF00227638 /* AircraftDetailView.swift */; };
+		FBF4CBAB2FEE36F700D692CD /* Aircraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE52F521A7400227638 /* Aircraft.swift */; };
+		FBF4CBAC2FEE36F700D692CD /* AircraftListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEF2F521B2900227638 /* AircraftListView.swift */; };
+		FBF4CBAD2FEE36F700D692CD /* Loft.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE72F521A8800227638 /* Loft.swift */; };
+		FBF4CBAE2FEE36F700D692CD /* QuizViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D012F52AD1E00227638 /* QuizViewModel.swift */; };
+		FBF4CBAF2FEE36F700D692CD /* QuizResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D062F52ADD000227638 /* QuizResultView.swift */; };
+		FBF4CBB02FEE36F700D692CD /* FlightLoad.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D152F53F69A00227638 /* FlightLoad.swift */; };
+		FBF4CBB12FEE36F700D692CD /* Quiz.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CFF2F52ACE600227638 /* Quiz.swift */; };
+		FBF4CBB22FEE36F700D692CD /* LMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD42F52169D00FBAD05 /* LMS.swift */; };
+		FBF4CBB32FEE36F700D692CD /* QuizLaunchCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D112F52D4EC00227638 /* QuizLaunchCard.swift */; };
+		FBF4CBB42FEE36F700D692CD /* QuizAttemptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D042F52AD7F00227638 /* QuizAttemptView.swift */; };
+		FBF4CBB52FEE36F700D692CD /* PaxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D192F53F92300227638 /* PaxView.swift */; };
+		FBF4CBB62FEE36F700D692CD /* GroundSchoolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */; };
+		FBF4CBB72FEE36F700D692CD /* ALicenseProgressViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0A5C042F60020100022763 /* ALicenseProgressViewModel.swift */; };
+		FBF4CBB82FEE36F700D692CD /* ALicenseProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0A5C012F60020100022763 /* ALicenseProgressView.swift */; };
+		FBF4CBB92FEE36F700D692CD /* AviationRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1D2F54AB9B00227638 /* AviationRootView.swift */; };
+		FBF4CBBA2FEE36F700D692CD /* AppBranding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */; };
+		FBF4CBBB2FEE36F700D692CD /* RoleHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1B2F54AB7600227638 /* RoleHelpers.swift */; };
+		FBF4CBBC2FEE36F700D692CD /* AircraftViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF02F521B3A00227638 /* AircraftViewModel.swift */; };
+		FBF4CBBD2FEE36F700D692CD /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF22F521B4B00227638 /* HomeViewModel.swift */; };
+		FBF4CBBE2FEE36F700D692CD /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF72F521B7300227638 /* LoginView.swift */; };
+		FBF4CBBF2FEE36F700D692CD /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCE2F5201DB00FBAD05 /* HomeView.swift */; };
+		FBF4CBC02FEE36F700D692CD /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0D2F52C9CE00227638 /* ProfileView.swift */; };
+		FBF4CBC12FEE36F700D692CD /* GroundSchoolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CE32F52191600227638 /* GroundSchoolView.swift */; };
+		FBF4CBC22FEE36F700D692CD /* LMSEditModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E002F56000100022763 /* LMSEditModels.swift */; };
+		FBF4CBC32FEE36F700D692CD /* LMSEditService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E032F56000100022763 /* LMSEditService.swift */; };
+		FBF4CBC42FEE36F700D692CD /* LMSEditRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E052F56000100022763 /* LMSEditRootView.swift */; };
+		FBF4CBC52FEE36F700D692CD /* CalendarModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F012F56000200022763 /* CalendarModels.swift */; };
+		FBF4CBC62FEE36F700D692CD /* CalendarAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F032F56000200022763 /* CalendarAPIService.swift */; };
+		FBF4CBC72FEE36F700D692CD /* CalendarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F052F56000200022763 /* CalendarViewModel.swift */; };
+		FBF4CBC82FEE36F700D692CD /* CalendarRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F072F56000200022763 /* CalendarRootView.swift */; };
+		FBF4CBC92FEE36F700D692CD /* EventsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F092F56000200022763 /* EventsView.swift */; };
+		FBF4CBCA2FEE36F700D692CD /* ShiftsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0B2F56000200022763 /* ShiftsView.swift */; };
+		FBF4CBCB2FEE36F700D692CD /* TodosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F132F56000200022763 /* TodosView.swift */; };
+		FBF4CBCC2FEE36F700D692CD /* ShiftsRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F172F56000200022763 /* ShiftsRootView.swift */; };
+		FBF4CBCD2FEE36F700D692CD /* DZStatusUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0D2F56000200022764 /* DZStatusUpdateView.swift */; };
+		FBF4CBCE2FEE36F700D692CD /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F0F2F56000200022765 /* NotificationsView.swift */; };
+		FBF4CBCF2FEE36F700D692CD /* AppShellKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = 082E7E54562843BAEE626099 /* AppShellKind.swift */; };
+		FBF4CBD02FEE36F700D692CD /* PushNavigationSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC016AC305ACC94B41FEF6 /* PushNavigationSupport.swift */; };
+		FBF4CBD12FEE36F700D692CD /* DzRigDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D3E2F54BB250227638 /* DzRigDetailView.swift */; };
+		FBF4CBD22FEE36F700D692CD /* DzRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D332F54BB210227638 /* DzRigsView.swift */; };
+		FBF4CBD32FEE36F700D692CD /* DzRigsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D372F54BB230227638 /* DzRigsViewModel.swift */; };
+		FBF4CBD42FEE36F700D692CD /* JumpCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D392F54BB260227638 /* JumpCheckView.swift */; };
+		FBF4CBD52FEE36F700D692CD /* JumpCheckViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D3B2F54BB280227638 /* JumpCheckViewModel.swift */; };
+		FBF4CBD62FEE36F700D692CD /* LogbookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D242F54BB030227638 /* LogbookView.swift */; };
+		FBF4CBD72FEE36F700D692CD /* LogbookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D232F54BB020227638 /* LogbookViewModel.swift */; };
+		FBF4CBD82FEE36F700D692CD /* MyRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2F2F54BB200227638 /* MyRigsView.swift */; };
+		FBF4CBD92FEE36F700D692CD /* MyRigsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D352F54BB220227638 /* MyRigsViewModel.swift */; };
+		FBF4CBDA2FEE36F700D692CD /* RigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D422F54BB270227638 /* RigsView.swift */; };
+		FBF4CBDB2FEE36F700D692CD /* SkydiverLogbook.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */; };
+		FBF4CBDC2FEE36F700D692CD /* UserAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2E2F54BB130227638 /* UserAddView.swift */; };
+		FBF4CBDD2FEE36F700D692CD /* UserDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2C2F54BB120227638 /* UserDetailView.swift */; };
+		FBF4CBDE2FEE36F700D692CD /* UsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D292F54BB100227638 /* UsersView.swift */; };
+		FBF4CBDF2FEE36F700D692CD /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */; };
+		FBF4CBE02FEE36F700D692CD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
 		FBFAB35A2F54FF3E0046027A /* PilotCurrencyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */; };
 		FCF0CE261E3AC8B07AB0CD8B /* JumpCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D392F54BB260227638 /* JumpCheckView.swift */; };
 		FD856064C927134B63B883E1 /* LMSEditService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E032F56000100022763 /* LMSEditService.swift */; };
@@ -378,8 +454,11 @@
 		082E7E54562843BAEE626099 /* AppShellKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellKind.swift; sourceTree = "<group>"; };
 		0D708EA0597452135AF3B10A /* AlaskaSkydiveCenter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AlaskaSkydiveCenter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1575E88620C58F23C5063938 /* ASC.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ASC.entitlements; sourceTree = "<group>"; };
+		24B41199D0C2322B091FF839 /* HHIOApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HHIOApp.swift; sourceTree = "<group>"; };
 		2BB191F126E430FD39FEA389 /* ASCPilots.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ASCPilots.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2CFCF6D317B933936421DC27 /* LoftRecordsRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoftRecordsRootView.swift; sourceTree = "<group>"; };
 		39B1C7C8C4AA1F02BEBE2EE4 /* ASCPackers.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ASCPackers.entitlements; sourceTree = "<group>"; };
+		4495C4F591D4A762F0DD2E50 /* HHIO.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HHIO.entitlements; sourceTree = "<group>"; };
 		450E32E73B9723DB390B67D8 /* ASCPackers.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ASCPackers.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		61CB6D321063D4BE7B7C506C /* ASCPilotsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCPilotsApp.swift; sourceTree = "<group>"; };
 		636ACA25B0FB6724F62901C9 /* ASCApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCApp.swift; sourceTree = "<group>"; };
@@ -390,8 +469,11 @@
 		92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBranding.swift; sourceTree = "<group>"; };
 		9DDF778B7F3CE90083F398FC /* ASCStaff.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ASCStaff.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE4CA289BC591040DD92EBD6 /* DocumentScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentScannerView.swift; sourceTree = "<group>"; };
+		D46F6F29BACBF20F5030A382 /* LoftRecordsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoftRecordsViewModel.swift; sourceTree = "<group>"; };
 		DD722EEBB084606F8238F25A /* ASCPackersApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCPackersApp.swift; sourceTree = "<group>"; };
 		E04D415B453665F983311672 /* StaffComplianceCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffComplianceCard.swift; sourceTree = "<group>"; };
+		E220D6F53F728BF24E4C7925 /* HHIO.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HHIO.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA34F3ACF17100D862F25095 /* HHIOApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HHIOApp.swift; sourceTree = "<group>"; };
 		FB063CE32F52191600227638 /* GroundSchoolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroundSchoolView.swift; sourceTree = "<group>"; };
 		FB063CE52F521A7400227638 /* Aircraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Aircraft.swift; sourceTree = "<group>"; };
 		FB063CE72F521A8800227638 /* Loft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Loft.swift; sourceTree = "<group>"; };
@@ -496,6 +578,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A4AEF00F9268C4A382CFEBDD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6CF67022A6770713C70FAA07 /* MalfunctionDZCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FB367C492F510E6000FBAD05 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -533,6 +623,7 @@
 				FB063D332F54BB210227638 /* DzRigsView.swift */,
 				FB063D3E2F54BB250227638 /* DzRigDetailView.swift */,
 				681FBD3163B41BF49E8DC0CE /* PackerGearRoomRootView.swift */,
+				2CFCF6D317B933936421DC27 /* LoftRecordsRootView.swift */,
 				FB063D422F54BB270227638 /* RigsView.swift */,
 			);
 			path = Loft;
@@ -637,6 +728,7 @@
 				2BB191F126E430FD39FEA389 /* ASCPilots.app */,
 				9DDF778B7F3CE90083F398FC /* ASCStaff.app */,
 				450E32E73B9723DB390B67D8 /* ASCPackers.app */,
+				E220D6F53F728BF24E4C7925 /* HHIO.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -647,6 +739,7 @@
 				FBFFF0E42F58BC1F009895AE /* MalfunctionDZ.entitlements */,
 				02B54E918A707B49D210D4D8 /* ASCStaff.entitlements */,
 				39B1C7C8C4AA1F02BEBE2EE4 /* ASCPackers.entitlements */,
+				4495C4F591D4A762F0DD2E50 /* HHIO.entitlements */,
 				1575E88620C58F23C5063938 /* ASC.entitlements */,
 				778B38E747A173E34FDA6D1D /* ASCPilots.entitlements */,
 				FB367DC52F51FECB00FBAD05 /* App */,
@@ -713,6 +806,8 @@
 				61CB6D321063D4BE7B7C506C /* ASCPilotsApp.swift */,
 				791AC4A30F02E343582C9539 /* ASCStaffApp.swift */,
 				DD722EEBB084606F8238F25A /* ASCPackersApp.swift */,
+				FA34F3ACF17100D862F25095 /* HHIOApp.swift */,
+				24B41199D0C2322B091FF839 /* HHIOApp.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -754,6 +849,7 @@
 				FB063D352F54BB220227638 /* MyRigsViewModel.swift */,
 				FB063D372F54BB230227638 /* DzRigsViewModel.swift */,
 				FB063D3B2F54BB280227638 /* JumpCheckViewModel.swift */,
+				D46F6F29BACBF20F5030A382 /* LoftRecordsViewModel.swift */,
 				FB063D012F52AD1E00227638 /* QuizViewModel.swift */,
 				FB063D172F53F6CF00227638 /* PaxViewModel.swift */,
 			);
@@ -763,6 +859,26 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		266E315C3441057DB0C83AA8 /* HHIO */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 875C31EDF31B1BB995386795 /* Build configuration list for PBXNativeTarget "HHIO" */;
+			buildPhases = (
+				1E2720C9C32FC10791AD237C /* Sources */,
+				A4AEF00F9268C4A382CFEBDD /* Frameworks */,
+				6F132DCDC0BF3D3432E92B73 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HHIO;
+			packageProductDependencies = (
+				FB063FAB2F60000100022763 /* MalfunctionDZCore */,
+			);
+			productName = HHIO;
+			productReference = E220D6F53F728BF24E4C7925 /* HHIO.app */;
+			productType = "com.apple.product-type.application";
+		};
 		42247FA7975C756EE372F226 /* ASCStaff */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 6A72901A9C834DC9C8AD4F75 /* Build configuration list for PBXNativeTarget "ASCStaff" */;
@@ -903,6 +1019,7 @@
 				58E1A3BBEA07CF5DB62EE6E3 /* ASCPilots */,
 				42247FA7975C756EE372F226 /* ASCStaff */,
 				72F4045A7D3B1B1A1A33A1A7 /* ASCPackers */,
+				266E315C3441057DB0C83AA8 /* HHIO */,
 			);
 		};
 /* End PBXProject section */
@@ -923,6 +1040,15 @@
 			files = (
 				FB60263B2FECFF3E004D2532 /* Preview Assets.xcassets in Resources */,
 				FB60263C2FECFF3E004D2532 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6F132DCDC0BF3D3432E92B73 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FBF4CBDF2FEE36F700D692CD /* Preview Assets.xcassets in Resources */,
+				FBF4CBE02FEE36F700D692CD /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1031,6 +1157,84 @@
 				D860A3134E5C57A5EB6FC95F /* UserDetailView.swift in Sources */,
 				C0AC03F01E227BA813B65AA3 /* UsersView.swift in Sources */,
 				6644DE212236B4912594B8B8 /* ASCStaffApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1E2720C9C32FC10791AD237C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FBF4CB992FEE36F700D692CD /* ModuleSignoffBlock.swift in Sources */,
+				FBF4CB9A2FEE36F700D692CD /* InstructorReviewView.swift in Sources */,
+				FBF4CB9B2FEE36F700D692CD /* JumpSignoffView.swift in Sources */,
+				FBF4CB9C2FEE36F700D692CD /* InstructorProfileView.swift in Sources */,
+				FBF4CB9D2FEE36F700D692CD /* InstructorDashboardView.swift in Sources */,
+				FBF4CB9E2FEE36F700D692CD /* PilotCurrencyCard.swift in Sources */,
+				FBF4CB9F2FEE36F700D692CD /* PackerGearRoomRootView.swift in Sources */,
+				FBF4CBA02FEE36F700D692CD /* StaffComplianceCard.swift in Sources */,
+				FBF4CBA12FEE36F700D692CD /* DocumentScannerView.swift in Sources */,
+				FBF4CBA22FEE36F700D692CD /* LoftViewModel.swift in Sources */,
+				FBF4CBA32FEE36F700D692CD /* LoftRootView.swift in Sources */,
+				FBF4CBA42FEE36F700D692CD /* LoftRecordsRootView.swift in Sources */,
+				FBF4CBA52FEE36F700D692CD /* LoftRecordsViewModel.swift in Sources */,
+				FBF4CBA62FEE36F700D692CD /* Foundation.swift in Sources */,
+				FBF4CBA72FEE36F700D692CD /* LessonDetailView.swift in Sources */,
+				FBF4CBA82FEE36F700D692CD /* AircraftDetailViewModel.swift in Sources */,
+				FBF4CBA92FEE36F700D692CD /* PaxViewModel.swift in Sources */,
+				FBF4CBAA2FEE36F700D692CD /* AircraftDetailView.swift in Sources */,
+				FBF4CBAB2FEE36F700D692CD /* Aircraft.swift in Sources */,
+				FBF4CBAC2FEE36F700D692CD /* AircraftListView.swift in Sources */,
+				FBF4CBAD2FEE36F700D692CD /* Loft.swift in Sources */,
+				FBF4CBAE2FEE36F700D692CD /* QuizViewModel.swift in Sources */,
+				FBF4CBAF2FEE36F700D692CD /* QuizResultView.swift in Sources */,
+				FBF4CBB02FEE36F700D692CD /* FlightLoad.swift in Sources */,
+				FBF4CBB12FEE36F700D692CD /* Quiz.swift in Sources */,
+				FBF4CBB22FEE36F700D692CD /* LMS.swift in Sources */,
+				FBF4CBB32FEE36F700D692CD /* QuizLaunchCard.swift in Sources */,
+				FBF4CBB42FEE36F700D692CD /* QuizAttemptView.swift in Sources */,
+				FBF4CBB52FEE36F700D692CD /* PaxView.swift in Sources */,
+				FBF4CBB62FEE36F700D692CD /* GroundSchoolViewModel.swift in Sources */,
+				FBF4CBB72FEE36F700D692CD /* ALicenseProgressViewModel.swift in Sources */,
+				FBF4CBB82FEE36F700D692CD /* ALicenseProgressView.swift in Sources */,
+				FBF4CBB92FEE36F700D692CD /* AviationRootView.swift in Sources */,
+				FBF4CBBA2FEE36F700D692CD /* AppBranding.swift in Sources */,
+				FBF4CBBB2FEE36F700D692CD /* RoleHelpers.swift in Sources */,
+				FBF4CBBC2FEE36F700D692CD /* AircraftViewModel.swift in Sources */,
+				FBF4CBBD2FEE36F700D692CD /* HomeViewModel.swift in Sources */,
+				FBF4CBBE2FEE36F700D692CD /* LoginView.swift in Sources */,
+				FBF4CBBF2FEE36F700D692CD /* HomeView.swift in Sources */,
+				FBF4CBC02FEE36F700D692CD /* ProfileView.swift in Sources */,
+				FBF4CBC12FEE36F700D692CD /* GroundSchoolView.swift in Sources */,
+				FBF4CBC22FEE36F700D692CD /* LMSEditModels.swift in Sources */,
+				FBF4CBC32FEE36F700D692CD /* LMSEditService.swift in Sources */,
+				FBF4CBC42FEE36F700D692CD /* LMSEditRootView.swift in Sources */,
+				FBF4CBC52FEE36F700D692CD /* CalendarModels.swift in Sources */,
+				FBF4CBC62FEE36F700D692CD /* CalendarAPIService.swift in Sources */,
+				FBF4CBC72FEE36F700D692CD /* CalendarViewModel.swift in Sources */,
+				FBF4CBC82FEE36F700D692CD /* CalendarRootView.swift in Sources */,
+				FBF4CBC92FEE36F700D692CD /* EventsView.swift in Sources */,
+				FBF4CBCA2FEE36F700D692CD /* ShiftsView.swift in Sources */,
+				FBF4CBCB2FEE36F700D692CD /* TodosView.swift in Sources */,
+				FBF4CBCC2FEE36F700D692CD /* ShiftsRootView.swift in Sources */,
+				FBF4CBCD2FEE36F700D692CD /* DZStatusUpdateView.swift in Sources */,
+				FBF4CBCE2FEE36F700D692CD /* NotificationsView.swift in Sources */,
+				FBF4CBCF2FEE36F700D692CD /* AppShellKind.swift in Sources */,
+				FBF4CBD02FEE36F700D692CD /* PushNavigationSupport.swift in Sources */,
+				FBF4CBD12FEE36F700D692CD /* DzRigDetailView.swift in Sources */,
+				FBF4CBD22FEE36F700D692CD /* DzRigsView.swift in Sources */,
+				FBF4CBD32FEE36F700D692CD /* DzRigsViewModel.swift in Sources */,
+				FBF4CBD42FEE36F700D692CD /* JumpCheckView.swift in Sources */,
+				FBF4CBD52FEE36F700D692CD /* JumpCheckViewModel.swift in Sources */,
+				FBF4CBD62FEE36F700D692CD /* LogbookView.swift in Sources */,
+				FBF4CBD72FEE36F700D692CD /* LogbookViewModel.swift in Sources */,
+				FBF4CBD82FEE36F700D692CD /* MyRigsView.swift in Sources */,
+				FBF4CBD92FEE36F700D692CD /* MyRigsViewModel.swift in Sources */,
+				FBF4CBDA2FEE36F700D692CD /* RigsView.swift in Sources */,
+				FBF4CBDB2FEE36F700D692CD /* SkydiverLogbook.swift in Sources */,
+				FBF4CBDC2FEE36F700D692CD /* UserAddView.swift in Sources */,
+				FBF4CBDD2FEE36F700D692CD /* UserDetailView.swift in Sources */,
+				FBF4CBDE2FEE36F700D692CD /* UsersView.swift in Sources */,
+				330E8D24154BA168CA2E65FE /* HHIOApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1202,6 +1406,8 @@
 				B86442C570E0275290ED2902 /* DocumentScannerView.swift in Sources */,
 				55840C174AC0AC4E36F83E8C /* LoftViewModel.swift in Sources */,
 				A2430F4EE1B673465A02C57E /* LoftRootView.swift in Sources */,
+				E5823F8FD41D12A297B1DAB1 /* LoftRecordsRootView.swift in Sources */,
+				A61A990B3C8E787217DFBBE3 /* LoftRecordsViewModel.swift in Sources */,
 				C7B5AB9273ABF52B6F6A3F07 /* Foundation.swift in Sources */,
 				C7A2B0DAEDD68F35DDB49D3C /* LessonDetailView.swift in Sources */,
 				D35BB3DB0384383DC027B31A /* AircraftDetailViewModel.swift in Sources */,
@@ -1387,7 +1593,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASCPilots.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
@@ -1446,6 +1652,43 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.malfunctiondz.app.ASC.Packers;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "ASC_PACKERS $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		6B1F05E61B7EA63963C83889 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = HHIO;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/HHIO.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
+				DEVELOPMENT_TEAM = 8D9BFVLLPF;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "HHIO Loft";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.malfunctiondz.app.HHIO.Loft;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "ASC_HHIO $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -1534,7 +1777,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASCPilots.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
@@ -1598,6 +1841,42 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
+		};
+		EAE8C4DF39D95D74E463B2C5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = HHIO;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/HHIO.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
+				DEVELOPMENT_TEAM = 8D9BFVLLPF;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "HHIO Loft";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.malfunctiondz.app.HHIO.Loft;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "ASC_HHIO $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
 		};
 		F21178F640F9D8E41B3905E2 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -1766,7 +2045,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/MalfunctionDZ.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1801,7 +2080,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/MalfunctionDZ.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1853,6 +2132,15 @@
 			buildConfigurations = (
 				E403047F4E350C88EFE6D234 /* Debug */,
 				118D9862E582508AE65CFD58 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		875C31EDF31B1BB995386795 /* Build configuration list for PBXNativeTarget "HHIO" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6B1F05E61B7EA63963C83889 /* Debug */,
+				EAE8C4DF39D95D74E463B2C5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

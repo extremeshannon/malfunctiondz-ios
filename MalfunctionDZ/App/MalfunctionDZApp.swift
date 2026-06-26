@@ -7,7 +7,7 @@ import UIKit
 import UserNotifications
 import MalfunctionDZCore
 
-#if !ASC_STAFF && !ASC_PILOTS && !ASC_PACKERS
+#if !ASC_STAFF && !ASC_PILOTS && !ASC_PACKERS && !ASC_HHIO
 @main
 #endif
 struct MalfunctionDZApp: App {

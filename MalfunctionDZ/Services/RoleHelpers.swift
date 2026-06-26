@@ -107,19 +107,32 @@ extension User {
         hasAnyRole(["inspector", "ops", "ops_admin"]) || isAdminLevel
     }
 
-    // MARK: - Tab access
-    var canAccessAviation: Bool {
-        hasAnyRole(["admin", "master", "godmode", "pilot", "chief_pilot", "chief pilot", "ops", "ops_admin"])
+    /// HHIO parachute loft app — full inventory, reserve repacks, pack record stats.
+    var canAccessHHIOApp: Bool {
+        hasAnyRole(["admin", "master", "godmode", "master_rigger", "loft", "rigger"])
     }
 
-    /// Full Loft access: Admin and Master Rigger only (not ops_admin — they use Rigs)
+    // MARK: - Tab access
+    var canAccessAviation: Bool {
+        #if ASC_STAFF
+        return false
+        #else
+        return hasAnyRole(["admin", "master", "godmode", "pilot", "chief_pilot", "chief pilot", "ops", "ops_admin"])
+        #endif
+    }
+
+    /// Full loft inventory — HHIO app only (removed from MalfunctionDZ / ASC Staff).
     var canAccessLoft: Bool {
-        hasAnyRole(["admin", "master", "godmode", "master_rigger"])
+        #if ASC_HHIO
+        return canAccessHHIOApp
+        #else
+        return false
+        #endif
     }
 
     /// Rig owners see their own rigs only. Ops/Ops Admin always get Rigs tab; skydivers when they own rigs (not manifest-only).
     var canAccessMyRigs: Bool {
-        hasAnyRole(["ops", "ops_admin"]) || (!canAccessLoft && !isManifestOnly && (totalRigs ?? 0) > 0)
+        hasAnyRole(["ops", "ops_admin"]) || (!canAccessHHIOApp && !isManifestOnly && (totalRigs ?? 0) > 0)
     }
 
     /// ASC member app — personal Gear Room (own rigs). Not DZ loft inventory or packer tools.
@@ -135,14 +148,22 @@ extension User {
 
     /// DZ-owned rigs in Gear Room — packers, riggers, inspectors, loft, ops, or 25+ jumps.
     var canAccessDzRigs: Bool {
-        hasAnyRole(["packer", "rigger", "master_rigger", "loft", "inspector", "ops"])
+        #if ASC_STAFF
+        return false
+        #else
+        return hasAnyRole(["packer", "rigger", "master_rigger", "loft", "inspector", "ops"])
             || ((totalJumps ?? 0) >= 25 && !isManifestOnly)
             || isAdminLevel
+        #endif
     }
 
     /// 25 Jump Check — inspectors clear rigs at 25 pack jobs; ops/admin may also inspect.
     var canAccess25JumpCheck: Bool {
-        canInspectDzRigs
+        #if ASC_STAFF
+        return false
+        #else
+        return canInspectDzRigs
+        #endif
     }
 
     /// Inspector & clear at 25 pack jobs (matches API `can_inspect`).

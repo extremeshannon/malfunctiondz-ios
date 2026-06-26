@@ -1,16 +1,18 @@
 import SwiftUI
 
-/// Staff = full operations app (MalfunctionDZ). Member = ASC (skydivers & students). Pilot = ASC Pilots. Packer = ASC Packers.
+/// Staff = full operations app (MalfunctionDZ). Member = ASC. Pilot / Packer / HHIO = focused apps.
 enum AppShellKind: Equatable {
     case staff
     case member
     case pilot
     case packer
+    case hhio
 
     var hidesStaffOpsUI: Bool { self != .staff }
     var isMemberShell: Bool { self == .member }
     var isPilotShell: Bool { self == .pilot }
     var isPackerShell: Bool { self == .packer }
+    var isHHIOShell: Bool { self == .hhio }
 
     var groundSchoolScope: GroundSchoolScope {
         switch self {
