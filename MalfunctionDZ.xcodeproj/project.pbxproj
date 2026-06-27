@@ -358,6 +358,11 @@
 		FB367DCF2F5201DB00FBAD05 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCE2F5201DB00FBAD05 /* HomeView.swift */; };
 		FB367DD12F52032300FBAD05 /* Foundation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD02F52032300FBAD05 /* Foundation.swift */; };
 		F506243904DCBB69A91F6FF6 /* ASCTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAFA59A0C63C402D44BF16D /* ASCTheme.swift */; };
+		AC0DE0012F60010100022763 /* ASCTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAFA59A0C63C402D44BF16D /* ASCTheme.swift */; };
+		AC0DE0022F60010100022764 /* ASCTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAFA59A0C63C402D44BF16D /* ASCTheme.swift */; };
+		AC0DE0032F60010100022765 /* ASCTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAFA59A0C63C402D44BF16D /* ASCTheme.swift */; };
+		AC0DE0042F60010100022766 /* ASCTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAFA59A0C63C402D44BF16D /* ASCTheme.swift */; };
+		AC0DE0052F60010100022767 /* ASCTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAFA59A0C63C402D44BF16D /* ASCTheme.swift */; };
 		FB367DD52F52169D00FBAD05 /* LMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD42F52169D00FBAD05 /* LMS.swift */; };
 		FB49DE9602FB5DBB07B0D2A9 /* MyRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2F2F54BB200227638 /* MyRigsView.swift */; };
 		FB6026302FECFF3E004D2532 /* DocumentScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4CA289BC591040DD92EBD6 /* DocumentScannerView.swift */; };
@@ -1101,6 +1106,7 @@
 				186C80B496647ACE947A695E /* LoftViewModel.swift in Sources */,
 				B9040CB191A59DC1BB964F82 /* LoftRootView.swift in Sources */,
 				793B7FC9C52B26A3386ACDA9 /* Foundation.swift in Sources */,
+				AC0DE0012F60010100022763 /* ASCTheme.swift in Sources */,
 				D5F10BF397BB02238CB7C426 /* LessonDetailView.swift in Sources */,
 				5C81A4E3F10C5B137E917BC2 /* AircraftDetailViewModel.swift in Sources */,
 				80CCB20A24CAAFF645DA961B /* PaxViewModel.swift in Sources */,
@@ -1181,6 +1187,7 @@
 				FBF4CBA42FEE36F700D692CD /* LoftRecordsRootView.swift in Sources */,
 				FBF4CBA52FEE36F700D692CD /* LoftRecordsViewModel.swift in Sources */,
 				FBF4CBA62FEE36F700D692CD /* Foundation.swift in Sources */,
+				AC0DE0022F60010100022764 /* ASCTheme.swift in Sources */,
 				FBF4CBA72FEE36F700D692CD /* LessonDetailView.swift in Sources */,
 				FBF4CBA82FEE36F700D692CD /* AircraftDetailViewModel.swift in Sources */,
 				FBF4CBA92FEE36F700D692CD /* PaxViewModel.swift in Sources */,
@@ -1269,6 +1276,7 @@
 				E486E0F3DE4BBDD77E274CA6 /* JumpCheckView.swift in Sources */,
 				0277D6EAB987CF43A48519A6 /* JumpCheckViewModel.swift in Sources */,
 				5E5D42ED3A1152BCDC6E35BE /* Foundation.swift in Sources */,
+				AC0DE0032F60010100022765 /* ASCTheme.swift in Sources */,
 				AEAEACA5866C6C87065E9A90 /* LessonDetailView.swift in Sources */,
 				633D5C73E56D5A997419139F /* AircraftDetailViewModel.swift in Sources */,
 				F018AA29CA8A5E1577D89B87 /* PaxViewModel.swift in Sources */,
@@ -1348,6 +1356,7 @@
 				2C5F0DE94693DFE172669331 /* LoftViewModel.swift in Sources */,
 				A73938DB865B871A7BD90F5B /* LoftRootView.swift in Sources */,
 				2128D2763E21F4936D761581 /* Foundation.swift in Sources */,
+				AC0DE0042F60010100022766 /* ASCTheme.swift in Sources */,
 				87AF97384C3DA005BAC0E079 /* LessonDetailView.swift in Sources */,
 				17F1C8915ACD79FBCD0B294E /* AircraftDetailViewModel.swift in Sources */,
 				A3F297EF9A88B5042ED0130C /* PaxViewModel.swift in Sources */,
@@ -1412,6 +1421,7 @@
 				E5823F8FD41D12A297B1DAB1 /* LoftRecordsRootView.swift in Sources */,
 				A61A990B3C8E787217DFBBE3 /* LoftRecordsViewModel.swift in Sources */,
 				C7B5AB9273ABF52B6F6A3F07 /* Foundation.swift in Sources */,
+				AC0DE0052F60010100022767 /* ASCTheme.swift in Sources */,
 				C7A2B0DAEDD68F35DDB49D3C /* LessonDetailView.swift in Sources */,
 				D35BB3DB0384383DC027B31A /* AircraftDetailViewModel.swift in Sources */,
 				65570D35F7088037775FD35D /* PaxViewModel.swift in Sources */,
