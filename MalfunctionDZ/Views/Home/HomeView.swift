@@ -465,10 +465,7 @@ struct HomeView: View {
     // MARK: - Aircraft section
     private var aircraftSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("AIRWORTHY AIRCRAFT")
-                .font(.system(size: 10, weight: .black))
-                .foregroundColor(colors.muted)
-                .tracking(2)
+            ASCWingHeader(title: "Airworthy Aircraft")
 
             // 2 columns on iPad, 1 on iPhone
             let acCols = isWide
@@ -507,9 +504,7 @@ struct HomeView: View {
                                 .font(.system(size: 11))
                         }
                         .padding(12)
-                        .background(colors.card)
-                        .cornerRadius(12)
-                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
+                        .ascCard()
                     }
                     .buttonStyle(.plain)
                 }
@@ -520,10 +515,7 @@ struct HomeView: View {
     // MARK: - Alerts section
     private var alertsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("TODAY AT A GLANCE")
-                .font(.system(size: 10, weight: .black))
-                .foregroundColor(colors.muted)
-                .tracking(2)
+            ASCWingHeader(title: "Today at a Glance")
 
             let alertCols = isWide
                 ? [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
@@ -630,15 +622,7 @@ struct MetarWidget: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                HStack(spacing: 6) {
-                    Image(systemName: "cloud.sun.fill")
-                        .font(.system(size: 11, weight: .black))
-                        .foregroundColor(colors.primary)
-                    Text("PAAQ PALMER — WEATHER")
-                        .font(.system(size: 11, weight: .black))
-                        .foregroundColor(colors.primary)
-                        .tracking(1.5)
-                }
+                ASCWingHeader(title: "PAAQ Palmer — Weather", color: .mdzBlue)
                 Spacer()
                 Button(action: onRefresh) {
                     Image(systemName: "arrow.clockwise")
@@ -733,7 +717,7 @@ struct MetarWidget: View {
             }
         }
         .padding(wide ? 20 : 14)
-        .mdzContentCard(accent: colors.aviation, glass: true)
+        .ascCard()
     }
 }
 
@@ -965,12 +949,7 @@ struct PilotQuickWidget: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                HStack(spacing: 6) {
-                    Image(systemName: "airplane.departure")
-                        .font(.system(size: 11, weight: .black)).foregroundColor(colors.primary)
-                    Text("TODAY'S FLIGHTS")
-                        .font(.system(size: 11, weight: .black)).foregroundColor(colors.primary).tracking(1.5)
-                }
+                ASCWingHeader(title: "Today's Flights", color: .mdzBlue)
                 Spacer()
                 Button(action: onTapMore) {
                     HStack(spacing: 4) {
@@ -1034,7 +1013,7 @@ struct PilotQuickWidget: View {
             }
         }
         .padding(isWide ? 20 : 14)
-        .mdzContentCard(accent: colors.aviation, glass: true)
+        .ascCard()
     }
 }
 
@@ -1048,56 +1027,33 @@ struct StudentProgressWidget: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 6) {
-                Image(systemName: "graduationcap.fill")
-                    .font(.system(size: 11, weight: .black)).foregroundColor(colors.amber)
-                Text("MY PROGRESS")
-                    .font(.system(size: 11, weight: .black)).foregroundColor(colors.amber).tracking(1.5)
-            }
+            ASCWingHeader(title: "My Progress", color: Palette.gold)
             if let d = data {
-                HStack {
-                    Text(d.courseTitle)
-                        .font(.system(size: isWide ? 16 : 14, weight: .bold))
-                        .foregroundColor(colors.text)
-                    Spacer()
-                    Text("Level \(d.currentLevel)")
-                        .font(.system(size: isWide ? 14 : 12, weight: .semibold)).foregroundColor(colors.primary)
-                        .padding(.horizontal, 10).padding(.vertical, 4)
-                        .background(colors.primary.opacity(0.12)).clipShape(Capsule())
-                }
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4).fill(colors.border).frame(height: 8)
-                        RoundedRectangle(cornerRadius: 4).fill(colors.amber)
-                            .frame(width: geo.size.width * CGFloat(d.progressPct / 100), height: 8)
-                            .animation(.easeOut(duration: 0.8), value: d.progressPct)
+                HStack(spacing: Space.lg) {
+                    ASCAltimeter(progress: d.progressPct / 100, label: "Done", size: isWide ? 76 : 64)
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(d.courseTitle)
+                                .font(.system(size: isWide ? 16 : 14, weight: .bold))
+                                .foregroundColor(AscText.primary)
+                            Spacer()
+                            ASCStatusPill(label: "Level \(d.currentLevel)", color: Palette.beaconBlue)
+                        }
+                        Text("\(d.completedLessons) / \(d.totalLessons) lessons")
+                            .font(.system(size: isWide ? 13 : 11)).foregroundColor(AscText.muted)
                     }
-                }.frame(height: 8)
-                HStack {
-                    Text("\(d.completedLessons) / \(d.totalLessons) lessons")
-                        .font(.system(size: isWide ? 13 : 11)).foregroundColor(colors.muted)
-                    Spacer()
-                    Text("\(Int(d.progressPct))%")
-                        .font(.system(size: isWide ? 13 : 11, weight: .bold)).foregroundColor(colors.amber)
                 }
-                Button(action: onContinue) {
-                    HStack {
-                        Image(systemName: "arrow.right.circle.fill")
-                        Text(d.nextModuleTitle.map { "Continue: \($0)" } ?? "Go to Ground School")
-                            .font(.system(size: isWide ? 15 : 13, weight: .bold))
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: isWide ? 50 : 40)
-                    .background(colors.amber).cornerRadius(10)
-                }
-                .buttonStyle(.plain)
+                ASCPrimaryButton(
+                    title: d.nextModuleTitle.map { "Continue: \($0)" } ?? "Go to Ground School",
+                    icon: "arrow.right.circle.fill",
+                    action: onContinue
+                )
             } else {
-                Text("Loading progress…").font(.system(size: 13)).foregroundColor(colors.muted)
+                Text("Loading progress…").font(.system(size: 13)).foregroundColor(AscText.muted)
             }
         }
-        .padding(isWide ? 20 : 14)
-        .mdzContentCard(accent: colors.groundSchool, glass: true)
+        .padding(isWide ? Space.xl : Space.lg)
+        .ascCard()
     }
 }
 
@@ -1112,11 +1068,8 @@ struct InstructorQuickWidget: View {
     var body: some View {
         Button(action: { onTapGroundSchool?() }) {
             VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 6) {
-                    Image(systemName: "person.2.fill")
-                        .font(.system(size: 11, weight: .black)).foregroundColor(colors.green)
-                    Text("INSTRUCTOR OVERVIEW")
-                        .font(.system(size: 11, weight: .black)).foregroundColor(colors.green).tracking(1.5)
+                HStack {
+                    ASCWingHeader(title: "Instructor Overview", color: .mdzGreen)
                     if (data?.pendingSignoffs ?? 0) > 0 {
                         Spacer()
                         Text("Tap to view")
@@ -1136,7 +1089,7 @@ struct InstructorQuickWidget: View {
             }
             .padding(isWide ? 20 : 14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .mdzContentCard(accent: colors.loft, glass: true)
+            .ascCard()
         }
         .buttonStyle(.plain)
         .disabled(onTapGroundSchool == nil)
@@ -1290,6 +1243,7 @@ struct AlertRow: View {
         case "primary": return colors.primary
         default: return a.color
         }
+        .padding(12).ascStatTile()
     }
 }
 
@@ -1312,11 +1266,8 @@ struct RigExpiryCard: View {
                 HStack {
                     Image(systemName: "briefcase.fill")
                         .font(.system(size: 18))
-                        .foregroundColor(colors.green)
-                    Text(sectionTitle)
-                        .font(.system(size: 10, weight: .black))
-                        .foregroundColor(colors.muted)
-                        .tracking(2)
+                        .foregroundColor(.mdzGreen)
+                    ASCWingHeader(title: "My Rigs", color: .mdzGreen)
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.system(size: 12))
@@ -1343,15 +1294,11 @@ struct RigExpiryCard: View {
                     }
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(colors.card2)
-                    .cornerRadius(8)
-                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+                    .ascStatTile()
                 }
             }
             .padding(16)
-            .background(colors.card)
-            .cornerRadius(14)
-            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
+            .ascCard()
             .overlay(
                 Rectangle()
                     .fill(colors.green)
@@ -1388,16 +1335,8 @@ struct LogbookConfigCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "book.closed.fill")
-                    .font(.system(size: 18))
-                    .foregroundColor(colors.amber)
-                Text("LOGBOOK CONFIG")
-                    .font(.system(size: 10, weight: .black))
-                    .foregroundColor(colors.muted)
-                    .tracking(2)
-            }
-            configRow("Default freefall per jump", vm.startFreefallTime.isEmpty ? "Not set" : vm.startFreefallTime) {
+            ASCWingHeader(title: "Logbook Config", color: .mdzAmber)
+            configRow("Start Freefall Time", vm.startFreefallTime.isEmpty ? "Not set" : vm.startFreefallTime) {
                 freefallEditorValue = vm.startFreefallTime
                 showFreefallEditor = true
             }
@@ -1407,9 +1346,7 @@ struct LogbookConfigCard: View {
             }
         }
         .padding(16)
-        .background(colors.card)
-        .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(colors.border, lineWidth: 1))
+        .ascCard()
         .sheet(isPresented: $showFreefallEditor) {
             ConfigEditorSheet(
                 title: "Default freefall per jump",
@@ -1449,9 +1386,7 @@ struct LogbookConfigCard: View {
                     .foregroundColor(colors.muted)
             }
             .padding(12)
-            .background(colors.card2)
-            .cornerRadius(10)
-            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
+            .ascStatTile()
         }
         .buttonStyle(.plain)
         .disabled(vm.logbookSettingsSaving)

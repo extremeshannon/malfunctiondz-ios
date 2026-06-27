@@ -3,6 +3,7 @@
 // role-specific screen. Additive — does not replace the existing `mdz*` color
 // extensions in Foundation.swift until individual screens are migrated.
 import SwiftUI
+import MalfunctionDZCore
 
 // MARK: - Palette
 enum Palette {

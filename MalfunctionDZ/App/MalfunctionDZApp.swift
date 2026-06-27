@@ -5,13 +5,17 @@
 import SwiftUI
 import UIKit
 import UserNotifications
+import MalfunctionDZCore
 
+#if !ASC_STAFF && !ASC_PILOTS && !ASC_PACKERS && !ASC_HHIO
 @main
+#endif
 struct MalfunctionDZApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    @StateObject private var auth      = AuthManager.shared
-    @StateObject private var config    = AppConfig()
-    @StateObject private var tabSelect = TabSelection.shared
+    @StateObject private var auth       = AuthManager.shared
+    @StateObject private var config     = AppConfig()
+    @StateObject private var tabSelect  = TabSelection.shared
+    @StateObject private var pushNav    = PushNavigationTarget.shared
 
     var body: some Scene {
         WindowGroup {
@@ -19,19 +23,33 @@ struct MalfunctionDZApp: App {
                 .environmentObject(auth)
                 .environmentObject(config)
                 .environmentObject(tabSelect)
+                .environmentObject(pushNav)
         }
     }
 }
 
 // MARK: - Content Root
 struct ContentRootView: View {
-    @EnvironmentObject private var auth: AuthManager
+    @EnvironmentObject private var auth:    AuthManager
+    @EnvironmentObject private var config:  AppConfig
+    @EnvironmentObject private var pushNav: PushNavigationTarget
+    @Environment(\.scenePhase) private var scenePhase
     var body: some View {
-        if auth.isAuthenticated {
-            MDZRootView()
-                .id(auth.sessionID)
-        } else {
-            LoginView()
+        Group {
+            if auth.isAuthenticated {
+                MDZRootView()
+                    .id(auth.sessionID)
+            } else {
+                LoginView()
+            }
+        }
+        .environment(\.appShell, .staff)
+        .mdzThemed(config.theme)
+        .task { await config.loadConfig() }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active, auth.isAuthenticated {
+                PushRegistration.shared.requestPermissionAndRegister()
+            }
         }
     }
 }
@@ -42,6 +60,7 @@ struct MDZRootView: View {
     @EnvironmentObject private var auth:      AuthManager
     @EnvironmentObject private var config:    AppConfig
     @EnvironmentObject private var tabSelect: TabSelection
+    @EnvironmentObject private var pushNav:   PushNavigationTarget
 
     var body: some View {
         Group {
@@ -52,14 +71,21 @@ struct MDZRootView: View {
             }
         }
         .task { await config.loadConfig() }
+        .onChange(of: pushNav.pendingTap?.id) { _, _ in
+            if pushNav.pendingTap != nil { tabSelect.selected = 0 }
+        }
+        .sheet(item: $pushNav.pendingTap) { tap in
+            NotificationDetailSheet(tap: tap) { pushNav.dismiss() }
+        }
     }
 }
 
 // MARK: - iPad: NavigationSplitView
 struct MDZSplitView: View {
     @EnvironmentObject private var auth:      AuthManager
-    @EnvironmentObject private var config:    AppConfig
+    @EnvironmentObject private var config:   AppConfig
     @EnvironmentObject private var tabSelect: TabSelection
+    @Environment(\.mdzColors) private var colors
 
     // Maps our tab tags to a stable selection type
     @State private var selectedModule: AppModule = .home
@@ -73,12 +99,12 @@ struct MDZSplitView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(config.dzName.uppercased())
                             .font(.system(size: 13, weight: .black))
-                            .foregroundColor(.mdzText.opacity(0.9))
+                            .foregroundColor(colors.text.opacity(0.9))
                             .tracking(1)
                         if let user = auth.currentUser {
                             Text(user.roleDisplayLabel)
                                 .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(.mdzMuted)
+                                .foregroundColor(colors.muted)
                         }
                     }
                     .padding(.vertical, 4)
@@ -88,16 +114,33 @@ struct MDZSplitView: View {
                 Section("OPERATIONS") {
                     SidebarButton(icon: "house.fill",         title: "Home",                  selected: selectedModule == .home)        { selectedModule = .home }
                     if auth.currentUser?.canAccessAviation == true {
-                        SidebarButton(icon: "airplane",       title: config.moduleAviation,   selected: selectedModule == .aviation)    { selectedModule = .aviation }
+                        SidebarButton(icon: "airplane",       title: config.moduleAviation,   selected: selectedModule == .aviation,    moduleAccent: colors.aviation)    { selectedModule = .aviation }
                     }
                     if auth.currentUser?.canAccessLoft == true {
-                        SidebarButton(icon: "backpack.fill",  title: config.moduleLoft,       selected: selectedModule == .loft)        { selectedModule = .loft }
+                        SidebarButton(icon: "backpack.fill",  title: config.moduleLoft,       selected: selectedModule == .loft,        moduleAccent: colors.loft)        { selectedModule = .loft }
+                    }
+                    if auth.currentUser?.canAccessRigs == true {
+                        SidebarButton(icon: "briefcase.fill", title: "Rigs",                  selected: selectedModule == .rigs)        { selectedModule = .rigs }
+                    } else {
+                        if auth.currentUser?.canAccessMyRigs == true {
+                            SidebarButton(icon: "briefcase.fill", title: "My Rigs",            selected: selectedModule == .myRigs)     { selectedModule = .myRigs }
+                        }
+                        if auth.currentUser?.canAccessDzRigs == true {
+                            SidebarButton(icon: "square.stack.3d.up.fill", title: "DZ Rigs",   selected: selectedModule == .dzRigs,     moduleAccent: colors.dz)     { selectedModule = .dzRigs }
+                        }
                     }
                     if auth.currentUser?.canAccessGroundSchool == true {
-                        SidebarButton(icon: "graduationcap.fill", title: config.moduleGroundSchool, selected: selectedModule == .groundSchool) { selectedModule = .groundSchool }
+                        SidebarButton(icon: "graduationcap.fill", title: config.moduleGroundSchool, selected: selectedModule == .groundSchool, moduleAccent: colors.groundSchool) { selectedModule = .groundSchool }
+                    }
+                    if auth.currentUser?.showsStaffComplianceCard == true && auth.currentUser?.isPilotRole != true {
+                        SidebarButton(icon: "person.badge.shield.checkmark.fill", title: "Staff Card", selected: selectedModule == .staffCard) { selectedModule = .staffCard }
                     }
                     if auth.currentUser?.canAccessLogbook == true {
                         SidebarButton(icon: "book.closed.fill", title: "Logbook", selected: selectedModule == .logbook) { selectedModule = .logbook }
+                    }
+                    if auth.currentUser?.canAccessCalendar == true {
+                        SidebarButton(icon: "calendar", title: "Calendar", selected: selectedModule == .calendar) { selectedModule = .calendar }
+                        SidebarButton(icon: "square.grid.3x3.fill", title: "Shifts", selected: selectedModule == .shifts) { selectedModule = .shifts }
                     }
                     if auth.currentUser?.canManageUsers == true {
                         SidebarButton(icon: "person.2.fill", title: "Users", selected: selectedModule == .users) { selectedModule = .users }
@@ -109,12 +152,30 @@ struct MDZSplitView: View {
 
                 Section("ACCOUNT") {
                     SidebarButton(icon: "person.fill", title: "Profile", selected: selectedModule == .profile) { selectedModule = .profile }
+                    Button {
+                        auth.logout()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(colors.danger)
+                                .frame(width: 22)
+                            Text("Sign Out")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(colors.danger)
+                            Spacer()
+                        }
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 8)
+                    }
+                    .buttonStyle(.plain)
+                    .listRowBackground(Color.clear)
                 }
             }
             .listStyle(.sidebar)
-            .navigationTitle("MalfunctionDZ")
+            .navigationTitle(config.dzName)
             .navigationBarTitleDisplayMode(.inline)
-            .background(Color.mdzBackground)
+            .background(colors.background)
             .scrollContentBackground(.hidden)
 
         } detail: {
@@ -124,20 +185,27 @@ struct MDZSplitView: View {
                 case .home:         HomeView()
                 case .aviation:     AviationRootView()
                 case .loft:         LoftRootView()
+                case .rigs:         RigsView()
+                case .myRigs:       MyRigsView()
+                case .dzRigs:       DzRigsView()
+                case .jumpCheck:    DzRigsView()
                 case .groundSchool: GroundSchoolView()
+                case .staffCard:    StaffCardRootView()
                 case .logbook:      LogbookRootView()
+                case .calendar:     CalendarRootView()
+                case .shifts:       ShiftsRootView()
                 case .users:        UsersView()
                 case .manageLMS:    LMSEditRootView()
                 case .profile:      ProfileView()
                 }
             }
             // Sync tab selection from home-screen tile taps
-            .onChange(of: tabSelect.selected) { tag in
+            .onChange(of: tabSelect.selected) { _, tag in
                 selectedModule = AppModule(tag: tag) ?? .home
             }
         }
-        .accentColor(.mdzGold)
-        .preferredColorScheme(.dark)
+        .accentColor(colors.accent)
+        .preferredColorScheme(MDZTheme.colorScheme(for: config.theme))
     }
 }
 
@@ -146,23 +214,27 @@ struct SidebarButton: View {
     let icon:     String
     let title:    String
     let selected: Bool
+    var moduleAccent: Color? = nil  // When set, use for selected state (aviation=blue, loft=teal, etc.)
     let action:   () -> Void
+    @Environment(\.mdzColors) private var colors
+
+    private var effectiveAccent: Color { moduleAccent ?? colors.accent }
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(selected ? .mdzGold : .mdzMuted)
+                    .foregroundColor(selected ? effectiveAccent : colors.muted)
                     .frame(width: 22)
                 Text(title)
                     .font(.system(size: 15, weight: selected ? .bold : .regular))
-                    .foregroundColor(selected ? .mdzText : .mdzMuted)
+                    .foregroundColor(selected ? colors.text : colors.muted)
                 Spacer()
             }
             .padding(.vertical, 6)
             .padding(.horizontal, 8)
-            .background(selected ? Color.mdzGold.opacity(0.12) : Color.clear)
+            .background(selected ? effectiveAccent.opacity(0.12) : Color.clear)
             .cornerRadius(8)
         }
         .buttonStyle(.plain)
@@ -172,7 +244,7 @@ struct SidebarButton: View {
 
 // MARK: - AppModule enum (maps tab tags)
 enum AppModule: Hashable {
-    case home, aviation, loft, groundSchool, logbook, users, manageLMS, profile
+    case home, aviation, loft, rigs, myRigs, dzRigs, groundSchool, logbook, jumpCheck, calendar, shifts, users, manageLMS, staffCard, profile
 
     /// Map fixed tab tags → module
     init?(tag: Int) {
@@ -180,10 +252,16 @@ enum AppModule: Hashable {
         case 0:  self = .home
         case 1:  self = .aviation
         case 2:  self = .loft
+        case 6:  self = .rigs   // Rigs (consolidated) or My Rigs — tag 6 for both
+        case 7:  self = .dzRigs
         case 3:  self = .groundSchool
         case 4:  self = .logbook
+        case 11: self = .jumpCheck
+        case 5:  self = .calendar
+        case 12: self = .shifts
         case 8:  self = .users
         case 10: self = .manageLMS
+        case 13: self = .staffCard
         case 9:  self = .profile
         default: return nil
         }
@@ -194,10 +272,17 @@ enum AppModule: Hashable {
         case .home:         return 0
         case .aviation:     return 1
         case .loft:         return 2
+        case .rigs:         return 6
+        case .myRigs:       return 6
+        case .dzRigs:       return 7
         case .groundSchool: return 3
         case .logbook:      return 4
+        case .jumpCheck:    return 11
+        case .calendar:     return 5
+        case .shifts:       return 12
         case .users:        return 8
         case .manageLMS:    return 10
+        case .staffCard:    return 13
         case .profile:      return 9
         }
     }
@@ -208,13 +293,10 @@ struct MDZTabView: View {
     @EnvironmentObject private var auth:      AuthManager
     @EnvironmentObject private var config:    AppConfig
     @EnvironmentObject private var tabSelect: TabSelection
+    @Environment(\.mdzColors) private var colors
 
     init() {
-        let a = UITabBarAppearance()
-        a.configureWithOpaqueBackground()
-        a.backgroundColor = UIColor(Color.mdzNavyMid)
-        UITabBar.appearance().standardAppearance   = a
-        UITabBar.appearance().scrollEdgeAppearance = a
+        MDZChrome.applyTabBar()
     }
 
     var body: some View {
@@ -235,16 +317,48 @@ struct MDZTabView: View {
                     .tag(2)
             }
 
+            if auth.currentUser?.canAccessRigs == true {
+                RigsView()
+                    .tabItem { Label("Rigs", systemImage: "briefcase.fill") }
+                    .tag(6)
+            } else {
+                if auth.currentUser?.canAccessMyRigs == true {
+                    MyRigsView()
+                        .tabItem { Label("My Rigs", systemImage: "briefcase.fill") }
+                        .tag(6)
+                }
+                if auth.currentUser?.canAccessDzRigs == true {
+                    DzRigsView()
+                        .tabItem { Label("DZ Rigs", systemImage: "square.stack.3d.up.fill") }
+                        .tag(7)
+                }
+            }
+
             if auth.currentUser?.canAccessGroundSchool == true {
                 GroundSchoolView()
                     .tabItem { Label(config.moduleGroundSchool, systemImage: "graduationcap.fill") }
                     .tag(3)
             }
 
+            if auth.currentUser?.showsStaffComplianceCard == true && auth.currentUser?.isPilotRole != true {
+                StaffCardRootView()
+                    .tabItem { Label("Staff Card", systemImage: "person.badge.shield.checkmark.fill") }
+                    .tag(13)
+            }
+
             if auth.currentUser?.canAccessLogbook == true {
                 LogbookRootView()
                     .tabItem { Label("Logbook", systemImage: "book.closed.fill") }
                     .tag(4)
+            }
+
+            if auth.currentUser?.canAccessCalendar == true {
+                CalendarRootView()
+                    .tabItem { Label("Calendar", systemImage: "calendar") }
+                    .tag(5)
+                ShiftsRootView()
+                    .tabItem { Label("Shifts", systemImage: "square.grid.3x3.fill") }
+                    .tag(12)
             }
 
             if auth.currentUser?.canManageUsers == true {
@@ -263,7 +377,8 @@ struct MDZTabView: View {
                 .tabItem { Label("Profile", systemImage: "person.fill") }
                 .tag(9)
         }
-        .accentColor(.mdzGold)
+        .accentColor(colors.accent)
+        .preferredColorScheme(MDZTheme.colorScheme(for: config.theme))
     }
 }
 
@@ -271,20 +386,13 @@ struct MDZTabView: View {
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
-        // Brighter navigation titles on dark backgrounds
-        let navAppearance = UINavigationBarAppearance()
-        navAppearance.configureWithOpaqueBackground()
-        navAppearance.backgroundColor = UIColor(red: 12/255, green: 29/255, blue: 53/255, alpha: 1)
-        navAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
-        navAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
-        UINavigationBar.appearance().standardAppearance = navAppearance
-        UINavigationBar.appearance().scrollEdgeAppearance = navAppearance
-        UINavigationBar.appearance().compactAppearance = navAppearance
+        MDZChrome.applyNavigationBar()
         return true
     }
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+        print("📲 PUSH: Device token received (\(tokenString.count) chars), sending to backend...")
         Task { await PushRegistration.shared.sendTokenToBackend(tokenString) }
     }
 
@@ -292,7 +400,38 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         print("⚠️ Push registration failed: \(error.localizedDescription)")
     }
 
-    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) -> UNNotificationPresentationOptions {
-        return [.banner, .sound, .badge]
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        let userInfo = notification.request.content.userInfo
+        let type = (userInfo["type"] as? String) ?? ""
+        if type == "dz_status" {
+            NotificationCenter.default.post(name: .dzStatusDidUpdateFromPush, object: nil)
+        }
+        completionHandler([.banner, .sound, .badge])
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+        let userInfo = response.notification.request.content.userInfo
+        let type = (userInfo["type"] as? String) ?? ""
+        if type == "dz_status" {
+            NotificationCenter.default.post(name: .dzStatusDidUpdateFromPush, object: nil)
+        }
+        guard let aps = userInfo["aps"] as? [String: Any],
+              let alert = aps["alert"] as? [String: Any] else { return }
+        let title = (alert["title"] as? String) ?? "Notification"
+        let body  = (alert["body"]  as? String) ?? ""
+        var payload: [String: Any] = [:]
+        for (k, v) in userInfo {
+            if let key = k as? String, key != "aps" {
+                payload[key] = v
+            }
+        }
+        let pushType = type.isEmpty ? "unknown" : type
+        await MainActor.run {
+            PushNavigationTarget.shared.handleTap(type: pushType, title: title, body: body, payload: payload)
+        }
     }
 }
