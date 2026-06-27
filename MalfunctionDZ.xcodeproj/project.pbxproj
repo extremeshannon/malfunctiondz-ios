@@ -43,6 +43,7 @@
 		FB367DCC2F52007600FBAD05 /* MalfunctionDZApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */; };
 		FB367DCF2F5201DB00FBAD05 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCE2F5201DB00FBAD05 /* HomeView.swift */; };
 		FB367DD12F52032300FBAD05 /* Foundation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD02F52032300FBAD05 /* Foundation.swift */; };
+		F506243904DCBB69A91F6FF6 /* ASCTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAFA59A0C63C402D44BF16D /* ASCTheme.swift */; };
 		FB367DD52F52169D00FBAD05 /* LMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD42F52169D00FBAD05 /* LMS.swift */; };
 		FBD783602F5217F800F5EBCD /* GroundSchoolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */; };
 		FBFAB35A2F54FF3E0046027A /* PilotCurrencyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */; };
@@ -89,6 +90,7 @@
 		FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MalfunctionDZApp.swift; sourceTree = "<group>"; };
 		FB367DCE2F5201DB00FBAD05 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		FB367DD02F52032300FBAD05 /* Foundation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Foundation.swift; path = ../App/Foundation.swift; sourceTree = "<group>"; };
+		7CAFA59A0C63C402D44BF16D /* ASCTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ASCTheme.swift; path = ../App/ASCTheme.swift; sourceTree = "<group>"; };
 		FB367DD42F52169D00FBAD05 /* LMS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMS.swift; sourceTree = "<group>"; };
 		FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroundSchoolViewModel.swift; sourceTree = "<group>"; };
 		FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotCurrencyCard.swift; sourceTree = "<group>"; };
@@ -263,6 +265,7 @@
 			isa = PBXGroup;
 			children = (
 				FB367DD02F52032300FBAD05 /* Foundation.swift */,
+				7CAFA59A0C63C402D44BF16D /* ASCTheme.swift */,
 				FB063D1B2F54AB7600227638 /* RoleHelpers.swift */,
 				FB063E032F56000100022763 /* LMSEditService.swift */,
 			);
@@ -373,6 +376,7 @@
 				FB063CF52F521B5100227638 /* LoftViewModel.swift in Sources */,
 				FB063CFB2F52305C00227638 /* LoftRootView.swift in Sources */,
 				FB367DD12F52032300FBAD05 /* Foundation.swift in Sources */,
+				F506243904DCBB69A91F6FF6 /* ASCTheme.swift in Sources */,
 				FB063D102F52D10B00227638 /* LessonDetailView.swift in Sources */,
 				FB063CEE2F521B1A00227638 /* AircraftDetailViewModel.swift in Sources */,
 				FB063D182F53F6CF00227638 /* PaxViewModel.swift in Sources */,
