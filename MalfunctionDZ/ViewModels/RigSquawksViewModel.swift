@@ -24,17 +24,26 @@ private func rigSquawksApiErrorMessage(_ slice: Data) -> String? {
     return nil
 }
 
+private func responseHasRigsWithoutSquawks(_ slice: Data) -> Bool {
+    guard let obj = try? JSONSerialization.jsonObject(with: slice) as? [String: Any] else { return false }
+    return obj["rigs"] != nil && obj["squawks"] == nil
+}
+
 private func humanizeRigSquawksApiMessage(_ raw: String?) -> String {
     let t = raw?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     if t.caseInsensitiveCompare("not found") == .orderedSame {
-        return "Squawks API not found. Update the MalfunctionDZ server, then restart the API container so GET /api/loft/dz_rigs?squawks=1 is available."
+        return serverUpdateRequiredMessage
     }
     return t.isEmpty ? "Failed to load squawks" : t
 }
 
+private let serverUpdateRequiredMessage =
+    "Squawks API is not on the server yet. On the VPS run: git pull && docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build platform_py"
+
+/// Production FastAPI first (malfunctiondz.com), then .php aliases.
 private func rigSquawksCandidateURLs(status: String?) -> [URL] {
     var urls: [URL] = []
-    for usePhp in [true, false] {
+    for usePhp in [false, true] {
         for endpoint in ["dz_rigs", "rig_squawks"] {
             let leaf = usePhp ? "\(endpoint).php" : endpoint
             var c = URLComponents(string: "\(kServerURL)/api/loft/\(leaf)")
@@ -101,6 +110,7 @@ class RigSquawksViewModel: ObservableObject {
             error = "Not configured"
             return
         }
+        var sawUnsupportedRigsPayload = false
         do {
             attemptLoop: for (index, url) in urls.enumerated() {
                 var req = URLRequest(url: url)
@@ -112,9 +122,18 @@ class RigSquawksViewModel: ObservableObject {
                 }
                 let slice = rigSquawksExtractJsonPrefix(data)
                 if let http, !(200 ... 299).contains(http.statusCode) {
+                    if http.statusCode == 404, index + 1 < urls.count {
+                        continue attemptLoop
+                    }
                     let parsedErr = (try? JSONDecoder().decode(RigSquawksResponse.self, from: slice))?.error
                     let combined = rigSquawksApiErrorMessage(slice) ?? parsedErr
                     error = humanizeRigSquawksApiMessage(combined ?? "Server error (HTTP \(http.statusCode))")
+                    return
+                }
+                if responseHasRigsWithoutSquawks(slice) {
+                    sawUnsupportedRigsPayload = true
+                    if index + 1 < urls.count { continue attemptLoop }
+                    error = serverUpdateRequiredMessage
                     return
                 }
                 let decoded = try JSONDecoder().decode(RigSquawksResponse.self, from: slice)
@@ -122,12 +141,15 @@ class RigSquawksViewModel: ObservableObject {
                     error = humanizeRigSquawksApiMessage(decoded.error)
                     return
                 }
-                squawks = decoded.squawks ?? []
-                total = decoded.total ?? squawks.count
-                error = nil
-                return
+                if decoded.squawks != nil {
+                    squawks = decoded.squawks ?? []
+                    total = decoded.total ?? squawks.count
+                    error = nil
+                    return
+                }
+                if index + 1 < urls.count { continue attemptLoop }
             }
-            error = humanizeRigSquawksApiMessage("Not Found")
+            error = sawUnsupportedRigsPayload ? serverUpdateRequiredMessage : humanizeRigSquawksApiMessage("Not Found")
         } catch {
             self.error = error.localizedDescription
         }
