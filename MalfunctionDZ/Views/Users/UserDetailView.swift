@@ -1,6 +1,7 @@
 // File: ASC/Views/Users/UserDetailView.swift
 // View/edit user. Chief Pilot/Ops: admin users are read-only + Send reset only.
 import SwiftUI
+import MalfunctionDZCore
 
 struct UserDetailView: View {
     let user: PlatformUser
@@ -39,6 +40,8 @@ struct UserDetailView: View {
 struct AdminReadOnlyView: View {
     let user: PlatformUser
     let onDismiss: () -> Void
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
     @StateObject private var vm = UserDetailViewModel()
 
     var body: some View {
@@ -46,22 +49,22 @@ struct AdminReadOnlyView: View {
             VStack(alignment: .leading, spacing: 24) {
                 Text("You can view admin users but cannot edit them.")
                     .font(.system(size: 14))
-                    .foregroundColor(.mdzMuted)
+                    .foregroundColor(colors.muted)
 
                 userInfoCard
                 sendResetSection
             }
             .padding(20)
         }
-        .background(Color.mdzBackground)
+        .background(colors.background)
         .navigationTitle(user.fullName?.isEmpty == false ? user.fullName! : user.username)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+        .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+        .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Back", action: onDismiss)
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
             }
         }
         .alert("Error", isPresented: .init(get: { vm.error != nil }, set: { if !$0 { vm.error = nil } })) {
@@ -73,45 +76,45 @@ struct AdminReadOnlyView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 14) {
                 ZStack {
-                    Circle().fill(Color.mdzGold.opacity(0.15)).frame(width: 50, height: 50)
+                    Circle().fill(colors.accent.opacity(0.15)).frame(width: 50, height: 50)
                     Text(user.displayInitials)
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.mdzGold)
+                        .foregroundColor(colors.accent)
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text(user.fullName?.isEmpty == false ? user.fullName! : user.username)
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.mdzText)
+                        .foregroundColor(colors.text)
                     Text(user.username)
                         .font(.system(size: 13))
-                        .foregroundColor(.mdzMuted)
+                        .foregroundColor(colors.muted)
                     if let email = user.email, !email.isEmpty {
                         Text(email)
                             .font(.system(size: 13))
-                            .foregroundColor(.mdzMuted)
+                            .foregroundColor(colors.muted)
                     }
                 }
                 Spacer()
             }
             Text("Admin")
                 .font(.system(size: 12, weight: .bold))
-                .foregroundColor(.mdzBlue)
+                .foregroundColor(colors.primary)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
-                .background(Color.mdzBlue.opacity(0.15))
+                .background(colors.primary.opacity(0.15))
                 .clipShape(Capsule())
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private var sendResetSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Send password reset link to user's email.")
                 .font(.system(size: 14))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
             Button {
                 Task { await vm.sendReset(userId: user.id) }
             } label: {
@@ -120,10 +123,10 @@ struct AdminReadOnlyView: View {
                     Text("Send reset")
                 }
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.mdzNavy)
+                .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 44)
-                .background(Color.mdzGold)
+                .background(colors.accent)
                 .cornerRadius(10)
             }
             .buttonStyle(.plain)
@@ -131,13 +134,13 @@ struct AdminReadOnlyView: View {
             if vm.resetSent {
                 Text("Reset link sent.")
                     .font(.system(size: 13))
-                    .foregroundColor(.mdzGreen)
+                    .foregroundColor(colors.green)
             }
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 }
 
@@ -148,6 +151,8 @@ struct UserEditView: View {
     let onSave: (PlatformUserEditPayload) async -> Void
     let onDismiss: () -> Void
     @EnvironmentObject private var auth: AuthManager
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
     @StateObject private var vm = UserDetailViewModel()
     @State private var username: String = ""
     @State private var firstName: String = ""
@@ -170,15 +175,15 @@ struct UserEditView: View {
             }
             .padding(20)
         }
-        .background(Color.mdzBackground)
+        .background(colors.background)
         .navigationTitle(user.fullName?.isEmpty == false ? user.fullName! : user.username)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+        .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+        .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel", action: onDismiss)
-                    .foregroundColor(.mdzAmber)
+                    .foregroundColor(colors.amber)
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
@@ -196,7 +201,7 @@ struct UserEditView: View {
                     }
                 }
                 .fontWeight(.semibold)
-                .foregroundColor(.mdzAmber)
+                .foregroundColor(colors.amber)
             }
         }
         .onAppear {
@@ -225,27 +230,27 @@ struct UserEditView: View {
             fieldRow("Phone", $phone)
                 .keyboardType(.phonePad)
             Toggle("Active", isOn: $isActive)
-                .tint(.mdzGold)
+                .tint(colors.accent)
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private func fieldRow(_ label: String, _ binding: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label.uppercased())
                 .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(1)
             TextField("", text: binding)
                 .font(.system(size: 16))
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
                 .padding(12)
-                .background(Color.mdzBackground)
+                .background(colors.background)
                 .cornerRadius(8)
-                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
         }
     }
 
@@ -253,7 +258,7 @@ struct UserEditView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("ROLES")
                 .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(1)
             let allowed = availableRoles.filter { r in
                 guard (auth.currentUser?.canEditAdminUsers ?? false) else {
@@ -270,10 +275,11 @@ struct UserEditView: View {
                     } label: {
                         Text(r.label)
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(isSel ? .mdzNavy : .mdzBlue)
+                            .foregroundColor(isSel ? .white : colors.text)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .background(isSel ? Color.mdzGold : Color.mdzBlue.opacity(0.12))
+                            .background(isSel ? colors.accent : colors.navyMid)
+                            .overlay(Capsule().strokeBorder(isSel ? colors.accent : colors.border, lineWidth: isSel ? 2 : 1))
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
@@ -281,16 +287,16 @@ struct UserEditView: View {
             }
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private var sendResetSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Send password reset link to user's email.")
                 .font(.system(size: 14))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
             Button {
                 Task { await vm.sendReset(userId: user.id) }
             } label: {
@@ -299,10 +305,10 @@ struct UserEditView: View {
                     Text("Send reset")
                 }
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.mdzBlue)
+                .foregroundColor(colors.primary)
                 .frame(maxWidth: .infinity)
                 .frame(height: 44)
-                .background(Color.mdzBlue.opacity(0.15))
+                .background(colors.primary.opacity(0.15))
                 .cornerRadius(10)
             }
             .buttonStyle(.plain)
@@ -310,13 +316,13 @@ struct UserEditView: View {
             if vm.resetSent {
                 Text("Reset link sent.")
                     .font(.system(size: 13))
-                    .foregroundColor(.mdzGreen)
+                    .foregroundColor(colors.green)
             }
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private func loadRoles() async {
@@ -384,7 +390,7 @@ final class UserDetailViewModel: ObservableObject {
         do {
             let (data, response) = try await URLSession.shared.data(for: req)
             if let http = response as? HTTPURLResponse, http.statusCode == 401 {
-                await AuthManager.shared.logout()
+                AuthManager.shared.logout()
                 error = "Session expired"
                 return
             }
@@ -432,7 +438,7 @@ final class UserDetailViewModel: ObservableObject {
         do {
             let (data, response) = try await URLSession.shared.data(for: req)
             if let http = response as? HTTPURLResponse, http.statusCode == 401 {
-                await AuthManager.shared.logout()
+                AuthManager.shared.logout()
                 error = "Session expired"
                 return
             }

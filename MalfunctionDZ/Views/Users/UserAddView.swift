@@ -1,18 +1,24 @@
 // File: ASC/Views/Users/UserAddView.swift
 // Add new user. Chief Pilot/Ops cannot assign admin role.
 import SwiftUI
+import MalfunctionDZCore
 
 struct UserAddView: View {
     let onDismiss: () -> Void
     @EnvironmentObject private var auth: AuthManager
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
     @State private var username = ""
     @State private var email = ""
     @State private var password = ""
+    @State private var confirmPassword = ""
     @State private var firstName = ""
     @State private var lastName = ""
     @State private var phone = ""
     @State private var selectedRoles: Set<String> = []
     @State private var availableRoles: [(role: String, label: String)] = []
+    @State private var rolesLoading = true
+    @State private var rolesLoadError: String?
     @State private var saving = false
     @State private var error: String?
     @State private var created = false
@@ -26,23 +32,23 @@ struct UserAddView: View {
                 }
                 .padding(20)
             }
-            .background(Color.mdzBackground)
+            .background(colors.background)
             .navigationTitle("Add User")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
+            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+            .toolbarBackground(colors.navyMid, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel", action: onDismiss)
-                        .foregroundColor(.mdzAmber)
+                        .foregroundColor(colors.amber)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
                         Task { await createUser() }
                     }
                     .fontWeight(.semibold)
-                    .foregroundColor(.mdzAmber)
-                    .disabled(saving || selectedRoles.isEmpty)
+                    .foregroundColor((saving || rolesLoading || selectedRoles.isEmpty) ? colors.muted : colors.amber)
+                    .disabled(saving || rolesLoading || selectedRoles.isEmpty)
                 }
             }
             .task { await loadRoles() }
@@ -65,6 +71,8 @@ struct UserAddView: View {
                 .keyboardType(.emailAddress)
             fieldRow("Password", $password)
                 .textContentType(.password)
+            fieldRow("Confirm password", $confirmPassword)
+                .textContentType(.password)
             HStack(spacing: 12) {
                 fieldRow("First name", $firstName)
                 fieldRow("Last name", $lastName)
@@ -73,24 +81,24 @@ struct UserAddView: View {
                 .keyboardType(.phonePad)
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private func fieldRow(_ label: String, _ binding: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label.uppercased())
                 .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(1)
             TextField("", text: binding)
                 .font(.system(size: 16))
-                .foregroundColor(.mdzText)
+                .foregroundColor(colors.text)
                 .padding(12)
-                .background(Color.mdzBackground)
+                .background(colors.background)
                 .cornerRadius(8)
-                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.mdzBorder, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
         }
     }
 
@@ -98,8 +106,33 @@ struct UserAddView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("ROLES (at least one required)")
                 .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.mdzMuted)
+                .foregroundColor(colors.muted)
                 .tracking(1)
+            if rolesLoading {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: colors.primary))
+                        .scaleEffect(0.9)
+                    Text("Loading roles…")
+                        .font(.system(size: 14))
+                        .foregroundColor(colors.muted)
+                }
+                .padding(.vertical, 8)
+            } else if let err = rolesLoadError {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(err)
+                        .font(.system(size: 14))
+                        .foregroundColor(colors.danger)
+                    Button {
+                        Task { await loadRoles() }
+                    } label: {
+                        Text("Retry")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(colors.amber)
+                    }
+                }
+                .padding(.vertical, 8)
+            } else {
             let allowed = availableRoles.filter { r in
                 guard (auth.currentUser?.canEditAdminUsers ?? false) else {
                     return !["admin", "master", "godmode"].contains(r.role.lowercased())
@@ -115,31 +148,58 @@ struct UserAddView: View {
                     } label: {
                         Text(r.label)
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(isSel ? .mdzNavy : .mdzBlue)
+                            .foregroundColor(isSel ? Color.white : colors.text)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .background(isSel ? Color.mdzGold : Color.mdzBlue.opacity(0.12))
+                            .background(isSel ? colors.accent : colors.card2)
+                            .overlay(
+                                Capsule().strokeBorder(isSel ? colors.accent : colors.border.opacity(0.9), lineWidth: isSel ? 2 : 1)
+                            )
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
                 }
             }
+            }
         }
         .padding(16)
-        .background(Color.mdzCard)
+        .background(colors.card)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
     }
 
     private func loadRoles() async {
-        guard let token = KeychainHelper.readToken(),
-              let url = URL(string: "\(kServerURL)/api/roles.php") else { return }
-        var req = URLRequest(url: url)
-        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        guard let (data, _) = try? await URLSession.shared.data(for: req),
-              let json = try? JSONDecoder().decode(RolesResponse.self, from: data),
-              json.ok else { return }
-        availableRoles = json.roles.map { (role: $0.role, label: $0.label.isEmpty ? $0.role.capitalized : $0.label) }
+        rolesLoading = true
+        rolesLoadError = nil
+        defer { rolesLoading = false }
+
+        guard let token = KeychainHelper.readToken() else {
+            rolesLoadError = "Not signed in."
+            return
+        }
+
+        let urls = ["\(kServerURL)/api/roles", "\(kServerURL)/api/roles.php"]
+        for base in urls {
+            guard let url = URL(string: base) else { continue }
+            var req = URLRequest(url: url)
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            do {
+                let (data, response) = try await URLSession.shared.data(for: req)
+                if let http = response as? HTTPURLResponse, http.statusCode == 401 {
+                    rolesLoadError = "Session expired. Sign in again."
+                    return
+                }
+                let json = try JSONDecoder().decode(RolesResponse.self, from: data)
+                if json.ok {
+                    availableRoles = json.roles.map { (role: $0.role, label: $0.label.isEmpty ? $0.role.capitalized : $0.label) }
+                    rolesLoadError = nil
+                    return
+                }
+            } catch {
+                continue
+            }
+        }
+        rolesLoadError = "Could not load roles. Check connection and retry."
     }
 
     private func createUser() async {
@@ -157,13 +217,18 @@ struct UserAddView: View {
         if e.isEmpty { error = "Email is required"; return }
         if p.isEmpty { error = "Password is required"; return }
         if p.count < 6 { error = "Password must be at least 6 characters"; return }
+        if password != confirmPassword { error = "Passwords do not match"; return }
         if fn.isEmpty { error = "First name is required"; return }
         if ln.isEmpty { error = "Last name is required"; return }
         if selectedRoles.isEmpty { error = "At least one role is required"; return }
 
-        guard let token = KeychainHelper.readToken(),
-              let url = URL(string: "\(kServerURL)/api/users.php") else {
+        guard let token = KeychainHelper.readToken() else {
             error = "Not authenticated"
+            return
+        }
+        let urls = ["\(kServerURL)/api/users.php", "\(kServerURL)/api/users"]
+        guard let url = urls.compactMap({ URL(string: $0) }).first else {
+            error = "Invalid URL"
             return
         }
         var req = URLRequest(url: url)
@@ -185,17 +250,21 @@ struct UserAddView: View {
         do {
             let (data, response) = try await URLSession.shared.data(for: req)
             if let http = response as? HTTPURLResponse, http.statusCode == 401 {
-                await AuthManager.shared.logout()
+                AuthManager.shared.logout()
                 error = "Session expired"
                 return
             }
             struct R: Decodable { let ok: Bool; let error: String?; let id: Int? }
-            let r = try JSONDecoder().decode(R.self, from: data)
-            if r.ok {
-                created = true
-            } else {
-                error = r.error ?? "Create failed"
+            if let r = try? JSONDecoder().decode(R.self, from: data) {
+                if r.ok {
+                    created = true
+                } else {
+                    error = r.error ?? "Create failed"
+                }
+                return
             }
+            let raw = String(data: data, encoding: .utf8) ?? ""
+            error = raw.isEmpty ? "Unexpected server response" : raw
         } catch {
             self.error = error.localizedDescription
         }

@@ -1230,8 +1230,8 @@ struct AlertRow: View {
                 .padding(.horizontal, 8).padding(.vertical, 3)
                 .background(c.opacity(0.15)).clipShape(Capsule())
         }
-        .padding(12).background(colors.card).cornerRadius(10)
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
+        .padding(12)
+        .ascStatTile()
     }
     private func alertColor(_ a: DashAlert) -> Color {
         guard let k = a.semanticKey else { return a.color }
@@ -1243,7 +1243,6 @@ struct AlertRow: View {
         case "primary": return colors.primary
         default: return a.color
         }
-        .padding(12).ascStatTile()
     }
 }
 
