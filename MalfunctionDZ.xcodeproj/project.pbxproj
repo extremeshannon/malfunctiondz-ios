@@ -357,6 +357,7 @@
 		FB367DCC2F52007600FBAD05 /* MalfunctionDZApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */; };
 		FB367DCF2F5201DB00FBAD05 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCE2F5201DB00FBAD05 /* HomeView.swift */; };
 		FB367DD12F52032300FBAD05 /* Foundation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD02F52032300FBAD05 /* Foundation.swift */; };
+		F506243904DCBB69A91F6FF6 /* ASCTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAFA59A0C63C402D44BF16D /* ASCTheme.swift */; };
 		FB367DD52F52169D00FBAD05 /* LMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD42F52169D00FBAD05 /* LMS.swift */; };
 		FB49DE9602FB5DBB07B0D2A9 /* MyRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2F2F54BB200227638 /* MyRigsView.swift */; };
 		FB6026302FECFF3E004D2532 /* DocumentScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4CA289BC591040DD92EBD6 /* DocumentScannerView.swift */; };
@@ -539,6 +540,7 @@
 		FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MalfunctionDZApp.swift; sourceTree = "<group>"; };
 		FB367DCE2F5201DB00FBAD05 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		FB367DD02F52032300FBAD05 /* Foundation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Foundation.swift; path = ../App/Foundation.swift; sourceTree = "<group>"; };
+		7CAFA59A0C63C402D44BF16D /* ASCTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCTheme.swift; sourceTree = "<group>"; };
 		FB367DD42F52169D00FBAD05 /* LMS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMS.swift; sourceTree = "<group>"; };
 		FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroundSchoolViewModel.swift; sourceTree = "<group>"; };
 		FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotCurrencyCard.swift; sourceTree = "<group>"; };
@@ -800,6 +802,7 @@
 			isa = PBXGroup;
 			children = (
 				FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */,
+				7CAFA59A0C63C402D44BF16D /* ASCTheme.swift */,
 				082E7E54562843BAEE626099 /* AppShellKind.swift */,
 				6FDC016AC305ACC94B41FEF6 /* PushNavigationSupport.swift */,
 				636ACA25B0FB6724F62901C9 /* ASCApp.swift */,
@@ -1497,6 +1500,7 @@
 				FB063D3A2F54BB260227638 /* JumpCheckView.swift in Sources */,
 				FB063D3C2F54BB280227638 /* JumpCheckViewModel.swift in Sources */,
 				FB367DD12F52032300FBAD05 /* Foundation.swift in Sources */,
+				F506243904DCBB69A91F6FF6 /* ASCTheme.swift in Sources */,
 				FB063D102F52D10B00227638 /* LessonDetailView.swift in Sources */,
 				FB063CEE2F521B1A00227638 /* AircraftDetailViewModel.swift in Sources */,
 				FB063D182F53F6CF00227638 /* PaxViewModel.swift in Sources */,
