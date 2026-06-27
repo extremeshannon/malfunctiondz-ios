@@ -2,7 +2,6 @@
 // User management for Admin, Chief Pilot, Ops Manager.
 // Search, filters, Add User, edit by tapping name. Chief Pilot/Ops: see admin, cannot edit, Send reset only.
 import SwiftUI
-import MalfunctionDZCore
 
 struct PlatformUser: Identifiable, Codable, Hashable {
     let id: Int
@@ -47,19 +46,6 @@ struct UsersListResponse: Decodable {
     let ok: Bool
     let total: Int
     let users: [PlatformUser]
-    let error: String?
-
-    enum CodingKeys: String, CodingKey {
-        case ok, total, users, error
-    }
-
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        ok = try c.decode(Bool.self, forKey: .ok)
-        total = (try? c.decode(Int.self, forKey: .total)) ?? 0
-        users = (try? c.decode([PlatformUser].self, forKey: .users)) ?? []
-        error = try? c.decodeIfPresent(String.self, forKey: .error)
-    }
 }
 
 @MainActor
@@ -109,22 +95,17 @@ final class UsersViewModel: ObservableObject {
         do {
             let (data, response) = try await URLSession.shared.data(for: req)
             if let http = response as? HTTPURLResponse, http.statusCode == 401 {
-                AuthManager.shared.logout()
+                await AuthManager.shared.logout()
                 error = "Session expired"
                 return
             }
             if let http = response as? HTTPURLResponse, http.statusCode == 403 {
-                if let errBody = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                   let msg = errBody["error"] as? String {
-                    error = msg
-                } else {
-                    error = "You don't have permission to view users"
-                }
+                error = "You don't have permission to view users"
                 return
             }
             let decoded = try JSONDecoder().decode(UsersListResponse.self, from: data)
             guard decoded.ok else {
-                error = decoded.error ?? "Failed to load users"
+                error = "Failed to load users"
                 return
             }
             users = decoded.users
@@ -137,58 +118,17 @@ final class UsersViewModel: ObservableObject {
     func applyAndLoad() async {
         await load()
     }
-
-    func deleteUser(_ user: PlatformUser) async -> Bool {
-        guard let token = KeychainHelper.readToken() else {
-            error = "Not authenticated"
-            return false
-        }
-        guard let url = URL(string: "\(kServerURL)/api/user.php?id=\(user.id)") else {
-            error = "Invalid URL"
-            return false
-        }
-        var req = URLRequest(url: url)
-        req.httpMethod = "DELETE"
-        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        do {
-            let (data, response) = try await URLSession.shared.data(for: req)
-            if let http = response as? HTTPURLResponse, http.statusCode == 401 {
-                AuthManager.shared.logout()
-                error = "Session expired"
-                return false
-            }
-            if let http = response as? HTTPURLResponse, http.statusCode == 403 {
-                error = "You don't have permission to delete users"
-                return false
-            }
-            struct R: Decodable { let ok: Bool; let error: String? }
-            let r = try JSONDecoder().decode(R.self, from: data)
-            if r.ok {
-                return true
-            } else {
-                error = r.error ?? "Delete failed"
-                return false
-            }
-        } catch {
-            self.error = error.localizedDescription
-            return false
-        }
-    }
 }
 
 struct UsersView: View {
     @StateObject private var vm = UsersViewModel()
     @EnvironmentObject private var auth: AuthManager
-    @Environment(\.mdzColors) private var colors
-    @Environment(\.mdzColorScheme) private var mdzColorScheme
     @State private var showAddUser = false
-    @State private var userToDelete: PlatformUser?
-    @State private var deletedUserName: String?
 
     var body: some View {
         NavigationStack {
             ZStack {
-                colors.background.ignoresSafeArea()
+                Color.mdzBackground.ignoresSafeArea()
                 VStack(spacing: 0) {
                     // Search + filters toolbar
                     toolbarSection
@@ -196,10 +136,10 @@ struct UsersView: View {
                     if vm.isLoading && vm.users.isEmpty {
                         Spacer()
                         VStack {
-                            ProgressView().tint(colors.accent).scaleEffect(1.2)
+                            ProgressView().tint(.mdzGold).scaleEffect(1.2)
                             Text("Loading users…")
                                 .font(.system(size: 14))
-                                .foregroundColor(colors.muted)
+                                .foregroundColor(.mdzMuted)
                                 .padding(.top, 12)
                         }
                     } else if let err = vm.error {
@@ -207,25 +147,25 @@ struct UsersView: View {
                         VStack(spacing: 16) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.system(size: 40))
-                                .foregroundColor(colors.amber)
+                                .foregroundColor(.mdzAmber)
                             Text(err)
                                 .font(.system(size: 15))
-                                .foregroundColor(colors.text)
+                                .foregroundColor(.mdzText)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 32)
                             Button("Retry") { Task { await vm.load() } }
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(colors.accent)
+                                .foregroundColor(.mdzGold)
                         }
                     } else if vm.users.isEmpty {
                         Spacer()
                         VStack(spacing: 12) {
                             Image(systemName: "person.2.fill")
                                 .font(.system(size: 48))
-                                .foregroundColor(colors.muted.opacity(0.5))
+                                .foregroundColor(.mdzMuted.opacity(0.5))
                             Text("No users found")
                                 .font(.headline)
-                                .foregroundColor(colors.muted)
+                                .foregroundColor(.mdzMuted)
                         }
                     } else {
                         List {
@@ -233,15 +173,8 @@ struct UsersView: View {
                                 NavigationLink(value: u) {
                                     UserRow(user: u)
                                 }
-                                .listRowBackground(colors.card)
-                                .listRowSeparatorTint(colors.border)
-                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                    Button(role: .destructive) {
-                                        userToDelete = u
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
-                                }
+                                .listRowBackground(Color.mdzCard)
+                                .listRowSeparatorTint(Color.mdzBorder)
                             }
                         }
                         .listStyle(.plain)
@@ -251,8 +184,8 @@ struct UsersView: View {
             }
             .navigationTitle("Users")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
-            .toolbarBackground(colors.navyMid, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color.mdzNavyMid, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -265,7 +198,7 @@ struct UsersView: View {
                     if vm.total > 0 {
                         Text("Total: \(vm.total)")
                             .font(.system(size: 12))
-                            .foregroundColor(colors.muted)
+                            .foregroundColor(.mdzMuted)
                     }
                 }
             }
@@ -278,49 +211,6 @@ struct UsersView: View {
                     Task { await vm.load() }
                 })
             }
-            .alert("Delete User", isPresented: Binding(
-                get: { userToDelete != nil },
-                set: { if !$0 { userToDelete = nil } }
-            )) {
-                Button("Cancel", role: .cancel) { userToDelete = nil }
-                Button("Delete", role: .destructive) {
-                    guard let u = userToDelete else { return }
-                    Task {
-                        let ok = await vm.deleteUser(u)
-                        if ok {
-                            deletedUserName = u.username
-                            await vm.load()
-                            userToDelete = nil
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                                deletedUserName = nil
-                            }
-                        } else {
-                            userToDelete = nil
-                        }
-                    }
-                }
-            } message: {
-                Text("Are you sure you want to delete \(userToDelete?.username ?? "")? This cannot be undone.")
-            }
-            .overlay(alignment: .top) {
-                if let name = deletedUserName {
-                    HStack(spacing: 8) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(colors.green)
-                        Text("\(name) was deleted")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(colors.text)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(colors.card)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.green, lineWidth: 2))
-                    .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
-                    .padding(.top, 20)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                }
-            }
             .task { await vm.load() }
             .refreshable { await vm.load() }
         }
@@ -330,18 +220,18 @@ struct UsersView: View {
         VStack(spacing: 12) {
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(colors.muted)
+                    .foregroundColor(.mdzMuted)
                 TextField("username, name, email, phone", text: $vm.searchQuery)
                     .font(.system(size: 15))
-                    .foregroundColor(colors.text)
+                    .foregroundColor(.mdzText)
                     .textFieldStyle(.plain)
                     .autocapitalization(.none)
                     .autocorrectionDisabled()
             }
             .padding(12)
-            .background(colors.card)
+            .background(Color.mdzCard)
             .cornerRadius(10)
-            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.mdzBorder, lineWidth: 1))
 
             HStack(spacing: 10) {
                 Picker("Domain", selection: $vm.domainFilter) {
@@ -364,65 +254,61 @@ struct UsersView: View {
                     Task { await vm.applyAndLoad() }
                 }
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(.mdzNavy)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(colors.accent)
+                .background(Color.mdzGold)
                 .cornerRadius(8)
             }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
-        .background(colors.navyMid)
+        .background(Color.mdzNavyMid)
     }
 }
 
 struct UserRow: View {
     let user: PlatformUser
-    @Environment(\.mdzColors) private var colors
 
     var body: some View {
         HStack(spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(colors.accent.opacity(0.15))
+                    .fill(Color.mdzGold.opacity(0.15))
                     .frame(width: 44, height: 44)
                 Text(user.displayInitials)
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(colors.accent)
+                    .foregroundColor(.mdzGold)
             }
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
                     Text(user.fullName?.isEmpty == false ? user.fullName! : user.username)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(colors.text)
+                        .foregroundColor(.mdzText)
                     if user.isActive != 1 {
                         Text("Inactive")
                             .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(colors.muted)
+                            .foregroundColor(.mdzMuted)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(colors.muted.opacity(0.3))
+                            .background(Color.mdzMuted.opacity(0.3))
                             .clipShape(Capsule())
                     }
                 }
                 Text(user.username)
                     .font(.system(size: 12))
-                    .foregroundColor(colors.muted)
-                HStack(spacing: 4) {
-                    ForEach(roleLabels, id: \.self) { r in
-                        Text(r)
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(colors.primary)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(colors.primary.opacity(0.12))
-                            .clipShape(Capsule())
-                    }
-                    if roleLabels.isEmpty {
-                        Text("No roles")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(colors.muted)
+                    .foregroundColor(.mdzMuted)
+                if !roleLabels.isEmpty {
+                    HStack(spacing: 4) {
+                        ForEach(roleLabels, id: \.self) { r in
+                            Text(r)
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(.mdzBlue)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.mdzBlue.opacity(0.12))
+                                .clipShape(Capsule())
+                        }
                     }
                 }
             }
@@ -433,7 +319,7 @@ struct UserRow: View {
 
     private var roleLabels: [String] {
         let roles = user.roles ?? (user.role.map { [$0] } ?? [])
-        return roles.prefix(5).map { roleLabel($0) }
+        return roles.prefix(3).map { roleLabel($0) }
     }
 
     private func roleLabel(_ r: String) -> String {
@@ -445,7 +331,7 @@ struct UserRow: View {
         case "instructor", "lms_instructor": return "Instructor"
         case "student", "lms_student": return "Student"
         case "manifest": return "Manifest"
-        case "loft", "rigger", "rigs": return "Rigs"
+        case "loft", "rigger": return "Loft"
         case "loft_customer": return "Loft Customer"
         default: return r.replacingOccurrences(of: "_", with: " ").capitalized
         }

@@ -86,6 +86,7 @@ public extension Color {
     public static let mdzNavyLift   = Color(hex:"14406E")
     public static let mdzRed        = Color(hex:"C8102E")
     public static let mdzRedDark    = Color(hex:"8B0B1E")
+    public static let mdzGold       = Color(hex:"FCC628")
     public static let mdzBlue       = Color(hex:"8DC8FF")
     public static let mdzBlueLight  = Color(hex:"B8D9F5")
     public static let mdzBackground = Color(hex:"060D1A")
