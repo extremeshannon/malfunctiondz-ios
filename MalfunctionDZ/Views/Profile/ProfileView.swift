@@ -81,7 +81,7 @@ struct ProfileView: View {
                         .mdzContentCard(accent: colors.accent, glass: mountainTheme)
                     }
 
-                    if auth.currentUser?.canManageLMS == true && !isMemberShell {
+                    if auth.currentUser?.canManageLMS == true && appShell.isStaffShell {
                         NavigationLink(destination: LMSEditRootView()) {
                             MDZNavRow(
                                 icon: "pencil.and.list.clipboard",

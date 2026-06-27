@@ -988,6 +988,7 @@ struct CreateRigSheet: View {
     /// While true, manufacturer pickers must not clear dependent fields (populate from server).
     @State private var isApplyingRigSnapshot = false
     @State private var showDeleteConfirm = false
+    @State private var invalidFields: Set<RigFormField> = []
     @Environment(\.dismiss) private var dismiss
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
@@ -1035,202 +1036,280 @@ struct CreateRigSheet: View {
     }
 
     /// Required fields: harness, reserve, AAD; main optional block; main SN optional when main is on.
-    private var formIsValid: Bool {
-        let labelOk = !rigLabel.trimmingCharacters(in: .whitespaces).isEmpty
-        let harnessOk = !harnessMfr.isEmpty && !harnessModel.isEmpty && !harnessSn.isEmpty
-        let reserveOk = !reserveMfr.isEmpty && !reserveModel.isEmpty && !reserveSizeSqft.isEmpty && !reserveSn.isEmpty
-        let aadOk = !aadMfr.isEmpty && !aadModel.isEmpty && !aadSn.isEmpty
-        let mainOk: Bool
+    private enum RigFormField: Hashable {
+        case rigLabel
+        case harnessMfr, harnessModel, harnessSn
+        case reserveMfr, reserveModel, reserveSize, reserveSn
+        case mainMfr, mainModel, mainSize
+        case aadMfr, aadModel, aadSn
+    }
+
+    private func orderedMissingFields() -> [RigFormField] {
+        var missing: [RigFormField] = []
+        if rigLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { missing.append(.rigLabel) }
+        if harnessMfr.isEmpty { missing.append(.harnessMfr) }
+        if harnessModel.isEmpty { missing.append(.harnessModel) }
+        if harnessSn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { missing.append(.harnessSn) }
+        if reserveMfr.isEmpty { missing.append(.reserveMfr) }
+        if reserveModel.isEmpty { missing.append(.reserveModel) }
+        let reserveSz = Int(reserveSizeSqft.trimmingCharacters(in: .whitespaces)) ?? 0
+        if reserveSizeSqft.trimmingCharacters(in: .whitespaces).isEmpty || reserveSz <= 0 { missing.append(.reserveSize) }
+        if reserveSn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { missing.append(.reserveSn) }
         if includeMainParachute {
-            let sz = Int(mainSizeSqft.trimmingCharacters(in: .whitespaces)) ?? 0
-            mainOk = !mainMfr.isEmpty && !mainModel.isEmpty && sz > 0
-        } else {
-            mainOk = true
+            if mainMfr.isEmpty { missing.append(.mainMfr) }
+            if mainModel.isEmpty { missing.append(.mainModel) }
+            let mainSz = Int(mainSizeSqft.trimmingCharacters(in: .whitespaces)) ?? 0
+            if mainSizeSqft.trimmingCharacters(in: .whitespaces).isEmpty || mainSz <= 0 { missing.append(.mainSize) }
         }
-        return labelOk && harnessOk && reserveOk && aadOk && mainOk
+        if aadMfr.isEmpty { missing.append(.aadMfr) }
+        if aadModel.isEmpty { missing.append(.aadModel) }
+        if aadSn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { missing.append(.aadSn) }
+        return missing
+    }
+
+    private func fieldIsInvalid(_ field: RigFormField) -> Bool { invalidFields.contains(field) }
+
+    private func clearInvalid(_ field: RigFormField) {
+        if invalidFields.contains(field) { invalidFields.remove(field) }
     }
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                colors.background.ignoresSafeArea()
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text(editingRig == nil
-                             ? "Add a rig to select when logging jumps. All fields below are required except main canopy SN when main is included."
-                             : "Editing this rig. Catalog loads first so manufacturer/model pickers show saved values. Tap Save to update.")
-                            .font(.system(size: 13))
-                            .foregroundColor(colors.text.opacity(0.9))
-                            .padding(.bottom, 4)
+            ScrollViewReader { proxy in
+                ZStack {
+                    colors.background.ignoresSafeArea()
+                    ScrollView(showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: 14) {
+                            if !invalidFields.isEmpty {
+                                validationBanner
+                            }
 
-                        sectionTitle("Rig")
-                        addField("Rig label", text: $rigLabel, hint: "Required")
+                            Text(editingRig == nil
+                                 ? "Add a rig to select when logging jumps. All fields below are required except main canopy SN when main is included."
+                                 : "Editing this rig. Catalog loads first so manufacturer/model pickers show saved values. Tap Save to update.")
+                                .font(.system(size: 13))
+                                .foregroundColor(colors.text.opacity(0.9))
+                                .padding(.bottom, 4)
 
-                        sectionTitle("Harness & Container")
-                        pickerField("Harness Manufacturer", selection: $harnessMfr, options: harnessMfrs) { harnessModel = "" }
-                        pickerField(
-                            "Harness Model",
-                            selection: $harnessModel,
-                            options: harnessModels,
-                            dependencyHint: harnessMfr.isEmpty ? "Select harness manufacturer first." : nil
-                        )
-                        addField("Harness SN", text: $harnessSn, hint: "Required")
-                        domDateRow(
-                            label: "Harness DOM",
-                            hint: "Date of manufacture (required)",
-                            date: $harnessDomDate
-                        )
+                            sectionTitle("Rig")
+                            addField("Rig label", text: $rigLabel, field: .rigLabel, hint: "Required")
 
-                        sectionTitle("Reserve parachute")
-                        Text("Reserve canopy — catalog from the server.")
-                            .font(.system(size: 12))
-                            .foregroundColor(colors.muted)
-                        pickerField("Reserve manufacturer", selection: $reserveMfr, options: reserveMfrs) { reserveModel = ""; reserveSizeSqft = "" }
-                        pickerField(
-                            "Reserve model",
-                            selection: $reserveModel,
-                            options: reserveModels,
-                            dependencyHint: reserveMfr.isEmpty ? "Select reserve manufacturer first." : nil
-                        ) { reserveSizeSqft = "" }
-                        pickerField(
-                            "Reserve size (sq ft)",
-                            selection: $reserveSizeSqft,
-                            options: reserveSizes.map { "\($0)" },
-                            dependencyHint: {
-                                if reserveMfr.isEmpty { return "Select reserve manufacturer first." }
-                                if reserveModel.isEmpty { return "Select reserve model first." }
-                                return nil
-                            }()
-                        )
-                        addField("Reserve SN", text: $reserveSn, hint: "Required")
-                        domDateRow(
-                            label: "Reserve DOM",
-                            hint: "Date of manufacture (required)",
-                            date: $reserveDomDate
-                        )
+                            sectionTitle("Harness & Container")
+                            pickerField("Harness Manufacturer", selection: $harnessMfr, field: .harnessMfr, options: harnessMfrs) {
+                                harnessModel = ""
+                                clearInvalid(.harnessMfr)
+                            }
+                            pickerField(
+                                "Harness Model",
+                                selection: $harnessModel,
+                                field: .harnessModel,
+                                options: harnessModels,
+                                dependencyHint: harnessMfr.isEmpty ? "Select harness manufacturer first." : nil
+                            ) {
+                                clearInvalid(.harnessModel)
+                            }
+                            addField("Harness SN", text: $harnessSn, field: .harnessSn, hint: "Required")
+                            domDateRow(
+                                label: "Harness DOM",
+                                hint: "Date of manufacture (required)",
+                                date: $harnessDomDate
+                            )
 
-                        Toggle(isOn: $includeMainParachute) {
-                            Text("Include main parachute")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(colors.text)
-                        }
-                        .tint(colors.amber)
-                        .padding(.vertical, 4)
-
-                        if includeMainParachute {
-                            sectionTitle("Main parachute")
-                            Text("Sport / main canopy catalog (separate from reserve).")
+                            sectionTitle("Reserve parachute")
+                            Text("Reserve canopy — catalog from the server.")
                                 .font(.system(size: 12))
                                 .foregroundColor(colors.muted)
-                            pickerField("Main manufacturer", selection: $mainMfr, options: mainMfrs) { mainModel = ""; mainSizeSqft = "" }
+                            pickerField("Reserve manufacturer", selection: $reserveMfr, field: .reserveMfr, options: reserveMfrs) {
+                                reserveModel = ""
+                                reserveSizeSqft = ""
+                                clearInvalid(.reserveMfr)
+                            }
                             pickerField(
-                                "Main model",
-                                selection: $mainModel,
-                                options: mainModels,
-                                dependencyHint: mainMfr.isEmpty ? "Select main manufacturer first." : nil
-                            ) { mainSizeSqft = "" }
+                                "Reserve model",
+                                selection: $reserveModel,
+                                field: .reserveModel,
+                                options: reserveModels,
+                                dependencyHint: reserveMfr.isEmpty ? "Select reserve manufacturer first." : nil
+                            ) {
+                                reserveSizeSqft = ""
+                                clearInvalid(.reserveModel)
+                            }
                             pickerField(
-                                "Main size (sq ft)",
-                                selection: $mainSizeSqft,
-                                options: mainSizes.map { "\($0)" },
+                                "Reserve size (sq ft)",
+                                selection: $reserveSizeSqft,
+                                field: .reserveSize,
+                                options: reserveSizes.map { "\($0)" },
                                 dependencyHint: {
-                                    if mainMfr.isEmpty { return "Select main manufacturer first." }
-                                    if mainModel.isEmpty { return "Select main model first." }
+                                    if reserveMfr.isEmpty { return "Select reserve manufacturer first." }
+                                    if reserveModel.isEmpty { return "Select reserve model first." }
                                     return nil
                                 }()
-                            )
-                            addField("Main SN", text: $mainSn, hint: "Optional")
+                            ) {
+                                clearInvalid(.reserveSize)
+                            }
+                            addField("Reserve SN", text: $reserveSn, field: .reserveSn, hint: "Required")
                             domDateRow(
-                                label: "Main DOM",
-                                hint: "Date of manufacture (required when main is included)",
-                                date: $mainDomDate
+                                label: "Reserve DOM",
+                                hint: "Date of manufacture (required)",
+                                date: $reserveDomDate
                             )
-                        }
 
-                        sectionTitle("AAD")
-                        pickerField("AAD Manufacturer", selection: $aadMfr, options: aadMfrs) { aadModel = "" }
-                        pickerField(
-                            "AAD Model",
-                            selection: $aadModel,
-                            options: aadModels,
-                            dependencyHint: aadMfr.isEmpty ? "Select AAD manufacturer first." : nil
-                        )
-                        addField("AAD SN", text: $aadSn, hint: "Required")
-                        domDateRow(
-                            label: "AAD DOM",
-                            hint: "Date of manufacture (required)",
-                            date: $aadDomDate
-                        )
-
-                        sectionTitle("Notes")
-                        addField("Notes", text: $notes, hint: "Optional")
-
-                        if editingRig != nil {
-                            Button(role: .destructive) {
-                                showDeleteConfirm = true
-                            } label: {
-                                Text("Delete this rig")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
+                            Toggle(isOn: $includeMainParachute) {
+                                Text("Include main parachute")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(colors.text)
                             }
-                            .padding(.top, 8)
-                        }
-                    }
-                    .padding(20)
-                }
-                .scrollDismissesKeyboard(.interactively)
-            }
-            .navigationTitle(editingRig == nil ? "Add Rig" : "Edit Rig")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
-            .toolbarBackground(colors.navyMid, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        onComplete()
-                        dismiss()
-                    }
-                    .foregroundColor(colors.amber)
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        Task {
-                            let reserveSizeInt = Int(reserveSizeSqft.trimmingCharacters(in: .whitespaces))
-                            let mainSizeInt = Int(mainSizeSqft.trimmingCharacters(in: .whitespaces))
-                            let ok = await vm.createRig(
-                                rigId: rigIdForSave ?? editingRig?.id,
-                                rigLabel: rigLabel.trimmingCharacters(in: .whitespacesAndNewlines),
-                                harnessMfr: harnessMfr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : harnessMfr.trimmingCharacters(in: .whitespacesAndNewlines),
-                                harnessModel: harnessModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : harnessModel.trimmingCharacters(in: .whitespacesAndNewlines),
-                                harnessSn: harnessSn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : harnessSn.trimmingCharacters(in: .whitespacesAndNewlines),
-                                harnessDom: domISOString(from: harnessDomDate),
-                                mainMfr: includeMainParachute && !mainMfr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? mainMfr.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
-                                mainModel: includeMainParachute && !mainModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? mainModel.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
-                                mainSizeSqft: includeMainParachute && mainSizeInt != nil && mainSizeInt! > 0 ? mainSizeInt : nil,
-                                mainSn: includeMainParachute && !mainSn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? mainSn.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
-                                mainDom: includeMainParachute ? domISOString(from: mainDomDate) : nil,
-                                reserveMfr: reserveMfr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : reserveMfr.trimmingCharacters(in: .whitespacesAndNewlines),
-                                reserveModel: reserveModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : reserveModel.trimmingCharacters(in: .whitespacesAndNewlines),
-                                reserveSizeSqft: (reserveSizeInt != nil && reserveSizeInt! > 0) ? reserveSizeInt : nil,
-                                reserveSn: reserveSn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : reserveSn.trimmingCharacters(in: .whitespacesAndNewlines),
-                                reserveDom: domISOString(from: reserveDomDate),
-                                aadMfr: aadMfr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : aadMfr.trimmingCharacters(in: .whitespacesAndNewlines),
-                                aadModel: aadModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : aadModel.trimmingCharacters(in: .whitespacesAndNewlines),
-                                aadSn: aadSn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : aadSn.trimmingCharacters(in: .whitespacesAndNewlines),
-                                aadDom: domISOString(from: aadDomDate),
-                                notes: notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : notes.trimmingCharacters(in: .whitespacesAndNewlines)
+                            .tint(colors.amber)
+                            .padding(.vertical, 4)
+                            .onChange(of: includeMainParachute) { _, on in
+                                if !on {
+                                    invalidFields.remove(.mainMfr)
+                                    invalidFields.remove(.mainModel)
+                                    invalidFields.remove(.mainSize)
+                                }
+                            }
+
+                            if includeMainParachute {
+                                sectionTitle("Main parachute")
+                                Text("Sport / main canopy catalog (separate from reserve).")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(colors.muted)
+                                pickerField("Main manufacturer", selection: $mainMfr, field: .mainMfr, options: mainMfrs) {
+                                    mainModel = ""
+                                    mainSizeSqft = ""
+                                    clearInvalid(.mainMfr)
+                                }
+                                pickerField(
+                                    "Main model",
+                                    selection: $mainModel,
+                                    field: .mainModel,
+                                    options: mainModels,
+                                    dependencyHint: mainMfr.isEmpty ? "Select main manufacturer first." : nil
+                                ) {
+                                    mainSizeSqft = ""
+                                    clearInvalid(.mainModel)
+                                }
+                                pickerField(
+                                    "Main size (sq ft)",
+                                    selection: $mainSizeSqft,
+                                    field: .mainSize,
+                                    options: mainSizes.map { "\($0)" },
+                                    dependencyHint: {
+                                        if mainMfr.isEmpty { return "Select main manufacturer first." }
+                                        if mainModel.isEmpty { return "Select main model first." }
+                                        return nil
+                                    }()
+                                ) {
+                                    clearInvalid(.mainSize)
+                                }
+                                addField("Main SN", text: $mainSn, field: nil, hint: "Optional")
+                                domDateRow(
+                                    label: "Main DOM",
+                                    hint: "Date of manufacture (required when main is included)",
+                                    date: $mainDomDate
+                                )
+                            }
+
+                            sectionTitle("AAD")
+                            pickerField("AAD Manufacturer", selection: $aadMfr, field: .aadMfr, options: aadMfrs) {
+                                aadModel = ""
+                                clearInvalid(.aadMfr)
+                            }
+                            pickerField(
+                                "AAD Model",
+                                selection: $aadModel,
+                                field: .aadModel,
+                                options: aadModels,
+                                dependencyHint: aadMfr.isEmpty ? "Select AAD manufacturer first." : nil
+                            ) {
+                                clearInvalid(.aadModel)
+                            }
+                            addField("AAD SN", text: $aadSn, field: .aadSn, hint: "Required")
+                            domDateRow(
+                                label: "AAD DOM",
+                                hint: "Date of manufacture (required)",
+                                date: $aadDomDate
                             )
-                            if ok {
-                                onComplete()
-                                dismiss()
+
+                            sectionTitle("Notes")
+                            addField("Notes", text: $notes, field: nil, hint: "Optional")
+
+                            if editingRig != nil {
+                                Button(role: .destructive) {
+                                    showDeleteConfirm = true
+                                } label: {
+                                    Text("Delete this rig")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 14)
+                                }
+                                .padding(.top, 8)
                             }
                         }
+                        .padding(20)
                     }
-                    .fontWeight(.semibold)
-                    .foregroundColor(colors.amber)
-                    .disabled(!formIsValid || vm.isSaving)
+                    .scrollDismissesKeyboard(.interactively)
+                }
+                .navigationTitle(editingRig == nil ? "Add Rig" : "Edit Rig")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+                .toolbarBackground(colors.navyMid, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            onComplete()
+                            dismiss()
+                        }
+                        .foregroundColor(colors.amber)
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Save") {
+                            let missing = orderedMissingFields()
+                            if !missing.isEmpty {
+                                invalidFields = Set(missing)
+                                withAnimation(.easeInOut(duration: 0.25)) {
+                                    proxy.scrollTo(missing[0], anchor: .center)
+                                }
+                                return
+                            }
+                            invalidFields = []
+                            Task {
+                                let reserveSizeInt = Int(reserveSizeSqft.trimmingCharacters(in: .whitespaces))
+                                let mainSizeInt = Int(mainSizeSqft.trimmingCharacters(in: .whitespaces))
+                                let ok = await vm.createRig(
+                                    rigId: rigIdForSave ?? editingRig?.id,
+                                    rigLabel: rigLabel.trimmingCharacters(in: .whitespacesAndNewlines),
+                                    harnessMfr: harnessMfr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : harnessMfr.trimmingCharacters(in: .whitespacesAndNewlines),
+                                    harnessModel: harnessModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : harnessModel.trimmingCharacters(in: .whitespacesAndNewlines),
+                                    harnessSn: harnessSn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : harnessSn.trimmingCharacters(in: .whitespacesAndNewlines),
+                                    harnessDom: domISOString(from: harnessDomDate),
+                                    mainMfr: includeMainParachute && !mainMfr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? mainMfr.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
+                                    mainModel: includeMainParachute && !mainModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? mainModel.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
+                                    mainSizeSqft: includeMainParachute && mainSizeInt != nil && mainSizeInt! > 0 ? mainSizeInt : nil,
+                                    mainSn: includeMainParachute && !mainSn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? mainSn.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
+                                    mainDom: includeMainParachute ? domISOString(from: mainDomDate) : nil,
+                                    reserveMfr: reserveMfr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : reserveMfr.trimmingCharacters(in: .whitespacesAndNewlines),
+                                    reserveModel: reserveModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : reserveModel.trimmingCharacters(in: .whitespacesAndNewlines),
+                                    reserveSizeSqft: (reserveSizeInt != nil && reserveSizeInt! > 0) ? reserveSizeInt : nil,
+                                    reserveSn: reserveSn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : reserveSn.trimmingCharacters(in: .whitespacesAndNewlines),
+                                    reserveDom: domISOString(from: reserveDomDate),
+                                    aadMfr: aadMfr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : aadMfr.trimmingCharacters(in: .whitespacesAndNewlines),
+                                    aadModel: aadModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : aadModel.trimmingCharacters(in: .whitespacesAndNewlines),
+                                    aadSn: aadSn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : aadSn.trimmingCharacters(in: .whitespacesAndNewlines),
+                                    aadDom: domISOString(from: aadDomDate),
+                                    notes: notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : notes.trimmingCharacters(in: .whitespacesAndNewlines)
+                                )
+                                if ok {
+                                    onComplete()
+                                    dismiss()
+                                }
+                            }
+                        }
+                        .fontWeight(.semibold)
+                        .foregroundColor(colors.amber)
+                        .disabled(vm.isSaving)
+                    }
                 }
             }
             .task {
@@ -1257,6 +1336,27 @@ struct CreateRigSheet: View {
                 Text("This removes the rig from your list. Past jumps stay in your log.")
             }
         }
+    }
+
+    private var validationBanner: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.circle.fill")
+                .font(.system(size: 18))
+                .foregroundColor(colors.danger)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Missing required fields")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(colors.danger)
+                Text("Complete the highlighted fields below to save.")
+                    .font(.system(size: 12))
+                    .foregroundColor(colors.text.opacity(0.9))
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .background(colors.danger.opacity(0.12))
+        .cornerRadius(10)
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.danger.opacity(0.55), lineWidth: 1))
     }
 
     private func resetFormForNewRig() {
@@ -1381,14 +1481,19 @@ struct CreateRigSheet: View {
             .padding(.top, 8)
     }
 
-    private func addField(_ label: String, text: Binding<String>, hint: String? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+    private func addField(_ label: String, text: Binding<String>, field: RigFormField?, hint: String? = nil) -> some View {
+        let invalid = field.map { fieldIsInvalid($0) } ?? false
+        return VStack(alignment: .leading, spacing: 6) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(label.uppercased())
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(colors.amber)
+                    .foregroundColor(invalid ? colors.danger : colors.amber)
                     .tracking(1)
-                if let h = hint, !h.isEmpty {
+                if invalid {
+                    Text("Required")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(colors.danger)
+                } else if let h = hint, !h.isEmpty {
                     Text(h)
                         .font(.system(size: 12))
                         .foregroundColor(colors.text.opacity(0.9))
@@ -1397,18 +1502,26 @@ struct CreateRigSheet: View {
             TextField(label, text: text)
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(colors.text)
-                .tint(colors.amber)
+                .tint(invalid ? colors.danger : colors.amber)
+                .onChange(of: text.wrappedValue) { _, _ in
+                    if let field { clearInvalid(field) }
+                }
         }
         .padding(14)
-        .background(colors.card)
+        .background(invalid ? colors.danger.opacity(0.08) : colors.card)
         .cornerRadius(8)
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(invalid ? colors.danger : colors.border, lineWidth: invalid ? 1.5 : 1)
+        )
+        .modifier(RigFormScrollAnchor(field: field))
     }
 
     /// Inline `Menu` (dropdown) + loading / retry / dependency hints so the sheet is not empty by mistake.
     private func pickerField(
         _ label: String,
         selection: Binding<String>,
+        field: RigFormField,
         options: [String],
         dependencyHint: String? = nil,
         onChange: (() -> Void)? = nil
@@ -1416,17 +1529,34 @@ struct CreateRigSheet: View {
         RigCatalogPickerRow(
             label: label,
             selection: selection,
+            field: field,
+            isInvalid: fieldIsInvalid(field),
             options: options,
             dependencyHint: dependencyHint,
             isApplyingSnapshot: isApplyingRigSnapshot,
             onChange: onChange,
             vm: vm
         )
+        .modifier(RigFormScrollAnchor(field: field))
+    }
+
+    private struct RigFormScrollAnchor: ViewModifier {
+        let field: RigFormField?
+
+        func body(content: Content) -> some View {
+            if let field {
+                content.id(field)
+            } else {
+                content
+            }
+        }
     }
 
     private struct RigCatalogPickerRow: View {
         let label: String
         @Binding var selection: String
+        let field: RigFormField
+        let isInvalid: Bool
         let options: [String]
         var dependencyHint: String?
         var isApplyingSnapshot: Bool
@@ -1438,14 +1568,22 @@ struct CreateRigSheet: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(label.uppercased())
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(colors.amber)
+                    .foregroundColor(isInvalid ? colors.danger : colors.amber)
                     .tracking(1)
+                if isInvalid {
+                    Text("Required")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(colors.danger)
+                }
                 pickerContent
             }
             .padding(14)
-            .background(colors.card)
+            .background(isInvalid ? colors.danger.opacity(0.08) : colors.card)
             .cornerRadius(8)
-            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(isInvalid ? colors.danger : colors.border, lineWidth: isInvalid ? 1.5 : 1)
+            )
         }
 
         @ViewBuilder

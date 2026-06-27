@@ -9,6 +9,7 @@ struct AircraftDetailView: View {
     let aircraft: Aircraft
     var isReadOnly: Bool = false
     @EnvironmentObject private var config: AppConfig
+    @Environment(\.appShell) private var appShell
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
     @StateObject private var vm = AircraftDetailViewModel()
@@ -24,6 +25,9 @@ struct AircraftDetailView: View {
 
     // Logbook filters: single-engine only on detail page. Multi-engine is set only in Add/Edit Aircraft.
     private let logbookFilters: [(String, String)] = [("all", "All"), ("airframe", "Aircraft"), ("engine", "Engine"), ("prop", "Prop")]
+
+    /// Maintenance logbooks are staff-only; ASC Pilot uses squawks / ADs / PAX only.
+    private var showLogbookTab: Bool { appShell.isStaffShell }
 
     var body: some View {
         ZStack {
@@ -186,7 +190,9 @@ struct AircraftDetailView: View {
             .background(colors.navyMid)
             Picker("", selection: $selectedTab) {
                 Text("Squawks").tag(0)
-                Text("Logbooks").tag(1)
+                if showLogbookTab {
+                    Text("Logbooks").tag(1)
+                }
                 Text("ADs").tag(2)
                 Text("STC/337").tag(3)
                 Text("Pax").tag(4)
@@ -195,6 +201,9 @@ struct AircraftDetailView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(colors.navyMid.opacity(0.95))
+            .onChange(of: showLogbookTab) { _, visible in
+                if !visible && selectedTab == 1 { selectedTab = 0 }
+            }
         }
     }
 
@@ -230,7 +239,7 @@ struct AircraftDetailView: View {
             Button {
                 switch selectedTab {
                 case 0: showAddSquawk = true
-                case 1: showAddLogbookEntry = true
+                case 1 where showLogbookTab: showAddLogbookEntry = true
                 case 2: showAddAd = true
                 case 3: showAddStc337 = true
                 default: break

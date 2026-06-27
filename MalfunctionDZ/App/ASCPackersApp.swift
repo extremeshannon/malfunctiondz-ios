@@ -109,12 +109,18 @@ struct ASCPackersTabView: View {
             .tabItem { Label("Gear Room", systemImage: "square.stack.3d.up.fill") }
             .tag(0)
 
+            NavigationStack {
+                PackerSquawksView()
+            }
+            .tabItem { Label("Squawks", systemImage: "exclamationmark.triangle.fill") }
+            .tag(1)
+
             if auth.currentUser?.canInspectDzRigs == true {
                 NavigationStack {
                     PackerJumpCheckRootView()
                 }
                 .tabItem { Label("25 Jump Check", systemImage: "figure.fall") }
-                .tag(1)
+                .tag(2)
             }
 
             ProfileView()

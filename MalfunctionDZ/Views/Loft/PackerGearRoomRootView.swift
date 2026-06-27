@@ -1,17 +1,13 @@
 // ASC Packers — Gear Room (DZ rigs) and 25 Jump Check roots.
 import SwiftUI
+import MalfunctionDZCore
 
 struct PackerGearRoomRootView: View {
-  @Environment(\.mdzColors) private var colors
   @Environment(\.mdzColorScheme) private var mdzColorScheme
 
   var body: some View {
-    DzRigsView()
-      .navigationTitle("Gear Room")
-      .navigationBarTitleDisplayMode(.inline)
+    PackerGearRoomBrowseView()
       .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
-      .toolbarBackground(colors.navyMid, for: .navigationBar)
-      .toolbarBackground(.visible, for: .navigationBar)
   }
 }
 

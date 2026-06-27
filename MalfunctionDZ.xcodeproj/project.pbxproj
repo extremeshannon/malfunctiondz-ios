@@ -193,6 +193,48 @@
 		AE41C41D003F022018F23812 /* LogbookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D232F54BB020227638 /* LogbookViewModel.swift */; };
 		AEAEACA5866C6C87065E9A90 /* LessonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0F2F52D10B00227638 /* LessonDetailView.swift */; };
 		AF454A8E96A420D8E53B9E77 /* LMSEditRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E052F56000100022763 /* LMSEditRootView.swift */; };
+		ASC0HOME2F60020100022701 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
+		ASC0HOME2F60020100022702 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
+		ASC0HOME2F60020100022703 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
+		ASC0HOME2F60020100022704 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
+		ASC0HOME2F60020100022705 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
+		ASC0HOME2F60020100022706 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
+		ASC0PACK2F60050100022701 /* ASCPackersHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PACK2F60050100022700 /* ASCPackersHomeView.swift */; };
+		ASC0PACK2F60050100022702 /* ASCPackersHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PACK2F60050100022700 /* ASCPackersHomeView.swift */; };
+		ASC0PACK2F60050100022703 /* ASCPackersHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PACK2F60050100022700 /* ASCPackersHomeView.swift */; };
+		ASC0PACK2F60050100022704 /* ASCPackersHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PACK2F60050100022700 /* ASCPackersHomeView.swift */; };
+		ASC0PACK2F60050100022705 /* ASCPackersHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PACK2F60050100022700 /* ASCPackersHomeView.swift */; };
+		ASC0PACK2F60050100022706 /* ASCPackersHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PACK2F60050100022700 /* ASCPackersHomeView.swift */; };
+		ASC0PGRM2F60060100022701 /* PackerGearRoomBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */; };
+		ASC0PGRM2F60060100022702 /* PackerGearRoomBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */; };
+		ASC0PGRM2F60060100022703 /* PackerGearRoomBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */; };
+		ASC0PGRM2F60060100022704 /* PackerGearRoomBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */; };
+		ASC0PGRM2F60060100022705 /* PackerGearRoomBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */; };
+		ASC0PGRM2F60060100022706 /* PackerGearRoomBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */; };
+		ASC0PILOT2F60030100022701 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
+		ASC0PILOT2F60030100022702 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
+		ASC0PILOT2F60030100022703 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
+		ASC0PILOT2F60030100022704 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
+		ASC0PILOT2F60030100022705 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
+		ASC0PILOT2F60030100022706 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
+		ASC0PSQK2F60070100022701 /* PackerSquawksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */; };
+		ASC0PSQK2F60070100022702 /* PackerSquawksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */; };
+		ASC0PSQK2F60070100022703 /* PackerSquawksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */; };
+		ASC0PSQK2F60070100022704 /* PackerSquawksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */; };
+		ASC0PSQK2F60070100022705 /* PackerSquawksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */; };
+		ASC0PSQK2F60070100022706 /* PackerSquawksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */; };
+		ASC0RSVM2F60080100022701 /* RigSquawksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0RSVM2F60080100022700 /* RigSquawksViewModel.swift */; };
+		ASC0RSVM2F60080100022702 /* RigSquawksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0RSVM2F60080100022700 /* RigSquawksViewModel.swift */; };
+		ASC0RSVM2F60080100022703 /* RigSquawksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0RSVM2F60080100022700 /* RigSquawksViewModel.swift */; };
+		ASC0RSVM2F60080100022704 /* RigSquawksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0RSVM2F60080100022700 /* RigSquawksViewModel.swift */; };
+		ASC0RSVM2F60080100022705 /* RigSquawksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0RSVM2F60080100022700 /* RigSquawksViewModel.swift */; };
+		ASC0RSVM2F60080100022706 /* RigSquawksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0RSVM2F60080100022700 /* RigSquawksViewModel.swift */; };
+		ASC0STAF2F60040100022701 /* ASCStaffHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0STAF2F60040100022700 /* ASCStaffHomeView.swift */; };
+		ASC0STAF2F60040100022702 /* ASCStaffHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0STAF2F60040100022700 /* ASCStaffHomeView.swift */; };
+		ASC0STAF2F60040100022703 /* ASCStaffHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0STAF2F60040100022700 /* ASCStaffHomeView.swift */; };
+		ASC0STAF2F60040100022704 /* ASCStaffHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0STAF2F60040100022700 /* ASCStaffHomeView.swift */; };
+		ASC0STAF2F60040100022705 /* ASCStaffHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0STAF2F60040100022700 /* ASCStaffHomeView.swift */; };
+		ASC0STAF2F60040100022706 /* ASCStaffHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0STAF2F60040100022700 /* ASCStaffHomeView.swift */; };
 		B03C4105962FBEC45C6A6F41 /* RigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D422F54BB270227638 /* RigsView.swift */; };
 		B0F757AFF552633559DC4BF4 /* CalendarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F052F56000200022763 /* CalendarViewModel.swift */; };
 		B1369AA1931E62467A7626DB /* SkydiverLogbook.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1F2F54BB010227638 /* SkydiverLogbook.swift */; };
@@ -357,24 +399,6 @@
 		FB367DCC2F52007600FBAD05 /* MalfunctionDZApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */; };
 		FB367DCF2F5201DB00FBAD05 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DCE2F5201DB00FBAD05 /* HomeView.swift */; };
 		FB367DD12F52032300FBAD05 /* Foundation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD02F52032300FBAD05 /* Foundation.swift */; };
-		ASC0HOME2F60020100022701 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
-		ASC0HOME2F60020100022702 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
-		ASC0HOME2F60020100022703 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
-		ASC0HOME2F60020100022704 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
-		ASC0HOME2F60020100022705 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
-		ASC0HOME2F60020100022706 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
-		ASC0PILOT2F60030100022701 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
-		ASC0PILOT2F60030100022702 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
-		ASC0PILOT2F60030100022703 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
-		ASC0PILOT2F60030100022704 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
-		ASC0PILOT2F60030100022705 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
-		ASC0PILOT2F60030100022706 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
-		ASC0STAF2F60040100022701 /* ASCStaffHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0STAF2F60040100022700 /* ASCStaffHomeView.swift */; };
-		ASC0STAF2F60040100022702 /* ASCStaffHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0STAF2F60040100022700 /* ASCStaffHomeView.swift */; };
-		ASC0STAF2F60040100022703 /* ASCStaffHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0STAF2F60040100022700 /* ASCStaffHomeView.swift */; };
-		ASC0STAF2F60040100022704 /* ASCStaffHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0STAF2F60040100022700 /* ASCStaffHomeView.swift */; };
-		ASC0STAF2F60040100022705 /* ASCStaffHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0STAF2F60040100022700 /* ASCStaffHomeView.swift */; };
-		ASC0STAF2F60040100022706 /* ASCStaffHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0STAF2F60040100022700 /* ASCStaffHomeView.swift */; };
 		FB367DD52F52169D00FBAD05 /* LMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD42F52169D00FBAD05 /* LMS.swift */; };
 		FB49DE9602FB5DBB07B0D2A9 /* MyRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D2F2F54BB200227638 /* MyRigsView.swift */; };
 		FB6026302FECFF3E004D2532 /* DocumentScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4CA289BC591040DD92EBD6 /* DocumentScannerView.swift */; };
@@ -486,6 +510,13 @@
 		791AC4A30F02E343582C9539 /* ASCStaffApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCStaffApp.swift; sourceTree = "<group>"; };
 		92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBranding.swift; sourceTree = "<group>"; };
 		9DDF778B7F3CE90083F398FC /* ASCStaff.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ASCStaff.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCSkydiverHomeView.swift; sourceTree = "<group>"; };
+		ASC0PACK2F60050100022700 /* ASCPackersHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCPackersHomeView.swift; sourceTree = "<group>"; };
+		ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackerGearRoomBrowseView.swift; sourceTree = "<group>"; };
+		ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCPilotHomeView.swift; sourceTree = "<group>"; };
+		ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackerSquawksView.swift; sourceTree = "<group>"; };
+		ASC0RSVM2F60080100022700 /* RigSquawksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigSquawksViewModel.swift; sourceTree = "<group>"; };
+		ASC0STAF2F60040100022700 /* ASCStaffHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCStaffHomeView.swift; sourceTree = "<group>"; };
 		CE4CA289BC591040DD92EBD6 /* DocumentScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentScannerView.swift; sourceTree = "<group>"; };
 		D46F6F29BACBF20F5030A382 /* LoftRecordsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoftRecordsViewModel.swift; sourceTree = "<group>"; };
 		DD722EEBB084606F8238F25A /* ASCPackersApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCPackersApp.swift; sourceTree = "<group>"; };
@@ -557,9 +588,6 @@
 		FB367DCB2F52007600FBAD05 /* MalfunctionDZApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MalfunctionDZApp.swift; sourceTree = "<group>"; };
 		FB367DCE2F5201DB00FBAD05 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		FB367DD02F52032300FBAD05 /* Foundation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Foundation.swift; path = ../App/Foundation.swift; sourceTree = "<group>"; };
-		ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCSkydiverHomeView.swift; sourceTree = "<group>"; };
-		ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCPilotHomeView.swift; sourceTree = "<group>"; };
-		ASC0STAF2F60040100022700 /* ASCStaffHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCStaffHomeView.swift; sourceTree = "<group>"; };
 		FB367DD42F52169D00FBAD05 /* LMS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMS.swift; sourceTree = "<group>"; };
 		FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroundSchoolViewModel.swift; sourceTree = "<group>"; };
 		FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotCurrencyCard.swift; sourceTree = "<group>"; };
@@ -642,6 +670,9 @@
 				FB063CEA2F521AD900227638 /* LoftRootView.swift */,
 				FB063D2F2F54BB200227638 /* MyRigsView.swift */,
 				FB063D332F54BB210227638 /* DzRigsView.swift */,
+				ASC0PACK2F60050100022700 /* ASCPackersHomeView.swift */,
+				ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */,
+				ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */,
 				FB063D3E2F54BB250227638 /* DzRigDetailView.swift */,
 				681FBD3163B41BF49E8DC0CE /* PackerGearRoomRootView.swift */,
 				2CFCF6D317B933936421DC27 /* LoftRecordsRootView.swift */,
@@ -872,6 +903,7 @@
 				FB063CF42F521B5100227638 /* LoftViewModel.swift */,
 				FB063D352F54BB220227638 /* MyRigsViewModel.swift */,
 				FB063D372F54BB230227638 /* DzRigsViewModel.swift */,
+				ASC0RSVM2F60080100022700 /* RigSquawksViewModel.swift */,
 				FB063D3B2F54BB280227638 /* JumpCheckViewModel.swift */,
 				D46F6F29BACBF20F5030A382 /* LoftRecordsViewModel.swift */,
 				FB063D012F52AD1E00227638 /* QuizViewModel.swift */,
@@ -1125,6 +1157,10 @@
 				ASC0HOME2F60020100022701 /* ASCSkydiverHomeView.swift in Sources */,
 				ASC0PILOT2F60030100022701 /* ASCPilotHomeView.swift in Sources */,
 				ASC0STAF2F60040100022701 /* ASCStaffHomeView.swift in Sources */,
+				ASC0PACK2F60050100022701 /* ASCPackersHomeView.swift in Sources */,
+				ASC0PGRM2F60060100022701 /* PackerGearRoomBrowseView.swift in Sources */,
+				ASC0PSQK2F60070100022701 /* PackerSquawksView.swift in Sources */,
+				ASC0RSVM2F60080100022701 /* RigSquawksViewModel.swift in Sources */,
 				D5F10BF397BB02238CB7C426 /* LessonDetailView.swift in Sources */,
 				5C81A4E3F10C5B137E917BC2 /* AircraftDetailViewModel.swift in Sources */,
 				80CCB20A24CAAFF645DA961B /* PaxViewModel.swift in Sources */,
@@ -1208,6 +1244,10 @@
 				ASC0HOME2F60020100022702 /* ASCSkydiverHomeView.swift in Sources */,
 				ASC0PILOT2F60030100022702 /* ASCPilotHomeView.swift in Sources */,
 				ASC0STAF2F60040100022702 /* ASCStaffHomeView.swift in Sources */,
+				ASC0PACK2F60050100022702 /* ASCPackersHomeView.swift in Sources */,
+				ASC0PGRM2F60060100022702 /* PackerGearRoomBrowseView.swift in Sources */,
+				ASC0PSQK2F60070100022702 /* PackerSquawksView.swift in Sources */,
+				ASC0RSVM2F60080100022702 /* RigSquawksViewModel.swift in Sources */,
 				FBF4CBA72FEE36F700D692CD /* LessonDetailView.swift in Sources */,
 				FBF4CBA82FEE36F700D692CD /* AircraftDetailViewModel.swift in Sources */,
 				FBF4CBA92FEE36F700D692CD /* PaxViewModel.swift in Sources */,
@@ -1299,6 +1339,10 @@
 				ASC0HOME2F60020100022703 /* ASCSkydiverHomeView.swift in Sources */,
 				ASC0PILOT2F60030100022703 /* ASCPilotHomeView.swift in Sources */,
 				ASC0STAF2F60040100022703 /* ASCStaffHomeView.swift in Sources */,
+				ASC0PACK2F60050100022703 /* ASCPackersHomeView.swift in Sources */,
+				ASC0PGRM2F60060100022703 /* PackerGearRoomBrowseView.swift in Sources */,
+				ASC0PSQK2F60070100022703 /* PackerSquawksView.swift in Sources */,
+				ASC0RSVM2F60080100022703 /* RigSquawksViewModel.swift in Sources */,
 				AEAEACA5866C6C87065E9A90 /* LessonDetailView.swift in Sources */,
 				633D5C73E56D5A997419139F /* AircraftDetailViewModel.swift in Sources */,
 				F018AA29CA8A5E1577D89B87 /* PaxViewModel.swift in Sources */,
@@ -1381,6 +1425,10 @@
 				ASC0HOME2F60020100022704 /* ASCSkydiverHomeView.swift in Sources */,
 				ASC0PILOT2F60030100022704 /* ASCPilotHomeView.swift in Sources */,
 				ASC0STAF2F60040100022704 /* ASCStaffHomeView.swift in Sources */,
+				ASC0PACK2F60050100022704 /* ASCPackersHomeView.swift in Sources */,
+				ASC0PGRM2F60060100022704 /* PackerGearRoomBrowseView.swift in Sources */,
+				ASC0PSQK2F60070100022704 /* PackerSquawksView.swift in Sources */,
+				ASC0RSVM2F60080100022704 /* RigSquawksViewModel.swift in Sources */,
 				87AF97384C3DA005BAC0E079 /* LessonDetailView.swift in Sources */,
 				17F1C8915ACD79FBCD0B294E /* AircraftDetailViewModel.swift in Sources */,
 				A3F297EF9A88B5042ED0130C /* PaxViewModel.swift in Sources */,
@@ -1448,6 +1496,10 @@
 				ASC0HOME2F60020100022705 /* ASCSkydiverHomeView.swift in Sources */,
 				ASC0PILOT2F60030100022705 /* ASCPilotHomeView.swift in Sources */,
 				ASC0STAF2F60040100022705 /* ASCStaffHomeView.swift in Sources */,
+				ASC0PACK2F60050100022705 /* ASCPackersHomeView.swift in Sources */,
+				ASC0PGRM2F60060100022705 /* PackerGearRoomBrowseView.swift in Sources */,
+				ASC0PSQK2F60070100022705 /* PackerSquawksView.swift in Sources */,
+				ASC0RSVM2F60080100022705 /* RigSquawksViewModel.swift in Sources */,
 				C7A2B0DAEDD68F35DDB49D3C /* LessonDetailView.swift in Sources */,
 				D35BB3DB0384383DC027B31A /* AircraftDetailViewModel.swift in Sources */,
 				65570D35F7088037775FD35D /* PaxViewModel.swift in Sources */,
@@ -1539,6 +1591,10 @@
 				ASC0HOME2F60020100022706 /* ASCSkydiverHomeView.swift in Sources */,
 				ASC0PILOT2F60030100022706 /* ASCPilotHomeView.swift in Sources */,
 				ASC0STAF2F60040100022706 /* ASCStaffHomeView.swift in Sources */,
+				ASC0PACK2F60050100022706 /* ASCPackersHomeView.swift in Sources */,
+				ASC0PGRM2F60060100022706 /* PackerGearRoomBrowseView.swift in Sources */,
+				ASC0PSQK2F60070100022706 /* PackerSquawksView.swift in Sources */,
+				ASC0RSVM2F60080100022706 /* RigSquawksViewModel.swift in Sources */,
 				FB063D102F52D10B00227638 /* LessonDetailView.swift in Sources */,
 				FB063CEE2F521B1A00227638 /* AircraftDetailViewModel.swift in Sources */,
 				FB063D182F53F6CF00227638 /* PaxViewModel.swift in Sources */,
@@ -1599,7 +1655,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASCStaff.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
@@ -1607,6 +1663,7 @@
 				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "ASC Staff";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -1635,7 +1692,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASCPilots.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 31;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
@@ -1643,6 +1700,7 @@
 				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "ASC Pilots";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -1672,7 +1730,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASCPackers.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
@@ -1680,6 +1738,7 @@
 				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "ASC Packers";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -1709,7 +1768,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/HHIO.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
@@ -1717,6 +1776,7 @@
 				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "HHIO Loft";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -1746,7 +1806,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASC.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1783,7 +1843,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASC.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1819,7 +1879,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASCPilots.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 31;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
@@ -1827,6 +1887,7 @@
 				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "ASC Pilots";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -1855,7 +1916,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASCStaff.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
@@ -1863,6 +1924,7 @@
 				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "ASC Staff";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -1892,7 +1954,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/HHIO.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
@@ -1900,6 +1962,7 @@
 				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "HHIO Loft";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -1928,7 +1991,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASCPackers.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				DEVELOPMENT_TEAM = 8D9BFVLLPF;
 				ENABLE_PREVIEWS = YES;
@@ -1936,6 +1999,7 @@
 				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "ASC Packers";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -2087,13 +2151,14 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/MalfunctionDZ.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 50;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Malfunction DZ";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -2122,13 +2187,14 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/MalfunctionDZ.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 50;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Malfunction DZ";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

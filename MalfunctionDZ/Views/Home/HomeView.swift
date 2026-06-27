@@ -8,6 +8,8 @@ class TabSelection: ObservableObject {
     @Published var selected: Int = 0
     /// When true, Ground School tab opens the instructor review queue.
     @Published var openInstructorReviews = false
+    /// ASC Packers: open Gear Room tab on this rig (from Squawks list).
+    @Published var pendingGearRoomRigId: Int?
     static let shared = TabSelection()
 }
 
@@ -207,8 +209,8 @@ struct HomeView: View {
                             .padding(.bottom, 16)
                         }
 
-                        // ── Logbook config on Home (staff app only; ASC uses Logbook → Gear) ──
-                        if (showLogbook || showGroundSchool) && !isAdmin && !isMemberShell {
+                        // ── Logbook config on Home (staff app only) ──
+                        if (showLogbook || showGroundSchool) && !isAdmin && !isMemberShell && !isPilotShell {
                             LogbookConfigCard(vm: vm)
                                 .padding(.horizontal, hPad)
                                 .padding(.bottom, 16)
@@ -328,7 +330,7 @@ struct HomeView: View {
                                     wide: isWide
                                 ) { /* manifest TBD */ }
                             }
-                            if auth.currentUser?.canManageUsers == true && !isMemberShell && !isPackerShell {
+                            if auth.currentUser?.canManageUsers == true && !isMemberShell && !isPilotShell && !isPackerShell {
                                 ModuleTile(
                                     icon: "person.2.fill",
                                     title: "USERS",
@@ -617,10 +619,10 @@ struct HomeView: View {
         if isPilotShell { return auth.currentUser?.canAccessASCPilotsApp == true }
         return auth.currentUser?.canAccessGroundSchool == true
     }
-    /// Logbook tile on Home — ASC shows whenever role allows; staff app only when no Ground School tab.
+    /// Logbook tile on Home — staff app only (not ASC Pilot / Skydiver / Packers shells).
     private var showLogbook: Bool {
+        guard !isPilotShell && !isMemberShell && !isPackerShell else { return false }
         guard auth.currentUser?.canAccessLogbook == true else { return false }
-        if isMemberShell { return true }
         return !showGroundSchool
     }
     private var showManifest:     Bool { auth.currentUser?.canSeeManifestTile == true }

@@ -143,3 +143,46 @@ struct LoftListResponse: Codable {
     let rigs: [LoftRig]?
     let error: String?
 }
+
+struct RigSquawk: Codable, Identifiable, Hashable {
+    let id: Int
+    let rigId: Int
+    let rigLabel: String
+    let title: String
+    let description: String
+    let status: String
+    let priority: String
+    let component: String
+    let squawkDate: String
+    let resolution: String
+    let closedDate: String
+    let closedByName: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, description, status, priority, component, resolution
+        case rigId = "rig_id"
+        case rigLabel = "rig_label"
+        case squawkDate = "squawk_date"
+        case closedDate = "closed_date"
+        case closedByName = "closed_by_name"
+    }
+
+    var statusLabel: String {
+        switch status.lowercased() {
+        case "open": return "OPEN"
+        case "deferred": return "DEFERRED"
+        case "closed": return "CLOSED"
+        default: return status.uppercased()
+        }
+    }
+
+    var componentLabel: String {
+        let c = component.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !c.isEmpty else { return "Harness" }
+        return c.prefix(1).uppercased() + c.dropFirst()
+    }
+
+    var priorityLabel: String { priority.uppercased() }
+
+    var isOpen: Bool { status.lowercased() == "open" }
+}

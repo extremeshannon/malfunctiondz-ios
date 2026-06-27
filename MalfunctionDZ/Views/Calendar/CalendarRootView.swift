@@ -10,7 +10,7 @@ struct CalendarRootView: View {
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
 
-    private var isSlimCalendarShell: Bool { appShell.hidesStaffOpsUI }
+    private var isSlimCalendarShell: Bool { !appShell.isStaffShell }
 
     var body: some View {
         NavigationStack {

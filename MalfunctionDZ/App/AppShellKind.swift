@@ -9,6 +9,7 @@ enum AppShellKind: Equatable {
     case hhio
 
     var hidesStaffOpsUI: Bool { self != .staff }
+    var isStaffShell: Bool { self == .staff }
     var isMemberShell: Bool { self == .member }
     var isPilotShell: Bool { self == .pilot }
     var isPackerShell: Bool { self == .packer }

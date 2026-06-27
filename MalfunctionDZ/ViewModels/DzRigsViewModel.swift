@@ -292,6 +292,9 @@ class DzRigsViewModel: ObservableObject {
                 if let json = try? JSONSerialization.jsonObject(with: slice) as? [String: Any],
                    (json["ok"] as? Bool) == true {
                     await load()
+                    if detailRig?.id == rigId {
+                        await loadDetail(rigId: rigId)
+                    }
                 } else if let json = try? JSONSerialization.jsonObject(with: slice) as? [String: Any],
                           let err = json["error"] as? String {
                     error = humanizeDzRigsApiMessage(err)
