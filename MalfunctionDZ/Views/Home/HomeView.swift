@@ -43,11 +43,68 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                if MDZTheme.usesMountainBackground(themeKey) {
-                    ASCMountainBackground()
+                ASCScreenBackground()
+                if isMemberShell {
+                    ASCSkydiverHomeView(vm: vm)
+                } else {
+                    legacyHomeContent
                 }
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 0) {
+            }
+            .navigationTitle(isMemberShell ? "" : "Home")
+            .navigationBarTitleDisplayMode(isMemberShell ? .inline : .large)
+            .toolbar(isMemberShell ? .hidden : .visible, for: .navigationBar)
+            .task { await vm.loadDashboard(user: auth.currentUser) }
+            .task(id: "dz") { await vm.loadDzStatus() }
+            .refreshable {
+                await vm.loadDashboard(user: auth.currentUser)
+                await vm.loadDzStatus()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .dzStatusDidUpdateFromPush)) { _ in
+                Task { await vm.loadDzStatus() }
+            }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active {
+                    Task {
+                        await vm.loadDashboard(user: auth.currentUser)
+                        await vm.loadDzStatus()
+                    }
+                }
+            }
+            .onReceive(Timer.publish(every: 120, on: .main, in: .common).autoconnect()) { _ in
+                Task {
+                    await vm.loadDzStatus()
+                    if showMetar { await vm.loadMetar() }
+                }
+            }
+            .overlay(alignment: .top) {
+                if !isMemberShell && dzStatusJustUpdated {
+                    DZStatusUpdatedBanner(onDismiss: { dzStatusJustUpdated = false })
+                        .padding(.horizontal, hPad)
+                        .padding(.top, 12)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .zIndex(100)
+                }
+            }
+            .animation(.easeOut(duration: 0.3), value: dzStatusJustUpdated)
+            .sheet(isPresented: $showDzStatusModal) {
+                DZStatusModalView(onSaved: {
+                    Task { await vm.loadDzStatus() }
+                    dzStatusJustUpdated = true
+                })
+            }
+            .sheet(isPresented: $showDzAnnouncementModal) {
+                DZAnnouncementModalView(onSaved: {
+                    Task { await vm.loadDzStatus() }
+                    dzStatusJustUpdated = true
+                })
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var legacyHomeContent: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 0) {
 
                         // ── Header ──────────────────────────────────
                         headerSection
@@ -283,57 +340,13 @@ struct HomeView: View {
 
                         Spacer(minLength: 40)
                     }
-                    // On iPad cap the max width so content doesn't over-stretch
                     .frame(maxWidth: isWide ? 1100 : .infinity)
-                    .frame(maxWidth: .infinity) // centre it
+                    .frame(maxWidth: .infinity)
                 }
                 .refreshable {
                     await vm.loadDashboard(user: auth.currentUser)
                     await vm.loadDzStatus()
                 }
-            }
-            .navigationBarHidden(true)
-            .task { await vm.loadDashboard(user: auth.currentUser) }
-            .task(id: "dz") { await vm.loadDzStatus() }
-            .onReceive(NotificationCenter.default.publisher(for: .dzStatusDidUpdateFromPush)) { _ in
-                Task { await vm.loadDzStatus() }
-            }
-            .onChange(of: scenePhase) { _, newPhase in
-                if newPhase == .active {
-                    Task { await vm.loadDzStatus() }
-                }
-            }
-            .onReceive(Timer.publish(every: 120, on: .main, in: .common).autoconnect()) { _ in
-                Task {
-                    await vm.loadDzStatus()
-                    if showMetar { await vm.loadMetar() }
-                }
-            }
-            .overlay(alignment: .top) {
-                if dzStatusJustUpdated {
-                    DZStatusUpdatedBanner(onDismiss: {
-                        dzStatusJustUpdated = false
-                    })
-                    .padding(.horizontal, hPad)
-                    .padding(.top, 12)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                    .zIndex(100)
-                }
-            }
-            .animation(.easeOut(duration: 0.3), value: dzStatusJustUpdated)
-            .sheet(isPresented: $showDzStatusModal) {
-                DZStatusModalView(onSaved: {
-                    Task { await vm.loadDzStatus() }
-                    dzStatusJustUpdated = true
-                })
-            }
-            .sheet(isPresented: $showDzAnnouncementModal) {
-                DZAnnouncementModalView(onSaved: {
-                    Task { await vm.loadDzStatus() }
-                    dzStatusJustUpdated = true
-                })
-            }
-        }
     }
 
     // MARK: - Header
@@ -622,7 +635,7 @@ struct MetarWidget: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                ASCWingHeader(title: "PAAQ Palmer — Weather", color: .mdzBlue)
+                ASCWingHeader(title: "PAAQ Palmer — Weather")
                 Spacer()
                 Button(action: onRefresh) {
                     Image(systemName: "arrow.clockwise")
@@ -949,7 +962,7 @@ struct PilotQuickWidget: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                ASCWingHeader(title: "Today's Flights", color: .mdzBlue)
+                ASCWingHeader(title: "Today's Flights")
                 Spacer()
                 Button(action: onTapMore) {
                     HStack(spacing: 4) {
@@ -1027,32 +1040,37 @@ struct StudentProgressWidget: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            ASCWingHeader(title: "My Progress", color: Palette.gold)
+            ASCWingHeader(title: "My Progress")
             if let d = data {
-                HStack(spacing: Space.lg) {
-                    ASCAltimeter(progress: d.progressPct / 100, label: "Done", size: isWide ? 76 : 64)
+                HStack(spacing: ASC.Space.lg) {
+                    ASCAltimeter(
+                        progress: d.progressPct / 100,
+                        readout: "\(d.completedLessons) / \(d.totalLessons)",
+                        label: "Done",
+                        size: isWide ? 76 : 64
+                    )
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
                             Text(d.courseTitle)
                                 .font(.system(size: isWide ? 16 : 14, weight: .bold))
-                                .foregroundColor(AscText.primary)
+                                .foregroundColor(ASC.Text.primary)
                             Spacer()
-                            ASCStatusPill(label: "Level \(d.currentLevel)", color: Palette.beaconBlue)
+                            ASCStatusPill(kind: .level("Level \(d.currentLevel)"))
                         }
                         Text("\(d.completedLessons) / \(d.totalLessons) lessons")
-                            .font(.system(size: isWide ? 13 : 11)).foregroundColor(AscText.muted)
+                            .font(.system(size: isWide ? 13 : 11)).foregroundColor(ASC.Text.muted)
                     }
                 }
                 ASCPrimaryButton(
-                    title: d.nextModuleTitle.map { "Continue: \($0)" } ?? "Go to Ground School",
-                    icon: "arrow.right.circle.fill",
-                    action: onContinue
-                )
+                    title: d.nextModuleTitle.map { "Continue: \($0)" } ?? "Go to Ground School"
+                ) {
+                    onContinue()
+                }
             } else {
-                Text("Loading progress…").font(.system(size: 13)).foregroundColor(AscText.muted)
+                Text("Loading progress…").font(.system(size: 13)).foregroundColor(ASC.Text.muted)
             }
         }
-        .padding(isWide ? Space.xl : Space.lg)
+        .padding(isWide ? ASC.Space.xxl : ASC.Space.lg)
         .ascCard()
     }
 }
@@ -1069,7 +1087,7 @@ struct InstructorQuickWidget: View {
         Button(action: { onTapGroundSchool?() }) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    ASCWingHeader(title: "Instructor Overview", color: .mdzGreen)
+                    ASCWingHeader(title: "Instructor Overview")
                     if (data?.pendingSignoffs ?? 0) > 0 {
                         Spacer()
                         Text("Tap to view")
@@ -1266,7 +1284,7 @@ struct RigExpiryCard: View {
                     Image(systemName: "briefcase.fill")
                         .font(.system(size: 18))
                         .foregroundColor(.mdzGreen)
-                    ASCWingHeader(title: "My Rigs", color: .mdzGreen)
+                    ASCWingHeader(title: "My Rigs")
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.system(size: 12))
@@ -1334,7 +1352,7 @@ struct LogbookConfigCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            ASCWingHeader(title: "Logbook Config", color: .mdzAmber)
+            ASCWingHeader(title: "Logbook Config")
             configRow("Start Freefall Time", vm.startFreefallTime.isEmpty ? "Not set" : vm.startFreefallTime) {
                 freefallEditorValue = vm.startFreefallTime
                 showFreefallEditor = true
