@@ -157,6 +157,10 @@ struct ASCPilotsTabView: View {
 
 final class ASCPilotsAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        ASC.role = .pilot
+        #if DEBUG
+        ASCFontDiagnostics.logRegisteredASCFonts()
+        #endif
         UNUserNotificationCenter.current().delegate = self
         MDZChrome.applyNavigationBar()
         return true

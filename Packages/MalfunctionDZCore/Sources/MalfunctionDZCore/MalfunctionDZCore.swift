@@ -116,9 +116,12 @@ public extension Color {
 public enum MDZTheme {
     public static let slateFire = "slate_fire"
     public static let oldGlory = "old_glory"
+    /// Flat midnight navy — matches ASC icon / mockup (no mountain gradient).
+    public static let ascMidnight = "asc_midnight"
+    /// Midnight + Alaska mountain gradient + glass cards (legacy premium look).
     public static let ascMountain = "asc_mountain"
 
-    public static var defaultKey: String { ascMountain }
+    public static var defaultKey: String { ascMidnight }
 
     public static func colorScheme(for theme: String) -> ColorScheme {
         theme == slateFire ? .light : .dark
@@ -126,6 +129,18 @@ public enum MDZTheme {
 
     public static func usesMountainBackground(_ theme: String) -> Bool {
         theme == ascMountain
+    }
+
+    public static let selectableKeys: [String] = [ascMidnight, ascMountain, oldGlory]
+
+    public static func displayName(for theme: String) -> String {
+        switch theme {
+        case ascMidnight:  return "ASC Midnight"
+        case ascMountain:  return "ASC Mountain"
+        case oldGlory:     return "Old Glory"
+        case slateFire:    return "Slate & Fire"
+        default:           return theme
+        }
     }
 }
 
@@ -192,6 +207,26 @@ public struct MDZColorSet {
         groundSchool: Color(hex: "7C3AED")
     )
 
+    public static let ascMidnight = MDZColorSet(
+        background: ASC.Palette.midnight,
+        card: ASC.Surface.card,
+        card2: ASC.Surface.elevated,
+        text: ASC.Text.primary,
+        muted: ASC.Text.muted,
+        primary: ASC.Palette.daylight,
+        accent: ASC.Palette.hiVis,
+        border: ASC.Border.hair,
+        green: ASC.Palette.jumpReady,
+        amber: ASC.Palette.caution,
+        danger: ASC.Palette.cutaway,
+        navy: ASC.Palette.midnight,
+        navyMid: ASC.Surface.deep,
+        aviation: ASC.Palette.beacon,
+        loft: ASC.Palette.daylight,
+        dz: ASC.Palette.hiVis,
+        groundSchool: ASC.Palette.beacon
+    )
+
     public static let ascMountain = MDZColorSet(
         background: Color(hex: "071628"),
         card: Color(hex: "0E2648"),
@@ -216,8 +251,9 @@ public struct MDZColorSet {
         switch theme {
         case MDZTheme.oldGlory: return .oldGlory
         case MDZTheme.ascMountain: return .ascMountain
+        case MDZTheme.ascMidnight: return .ascMidnight
         case MDZTheme.slateFire: return .slateFire
-        default: return .ascMountain
+        default: return .ascMidnight
         }
     }
 
@@ -247,10 +283,10 @@ public struct MDZColorSet {
 }
 
 private struct MDZColorsKey: EnvironmentKey {
-    static let defaultValue = MDZColorSet.ascMountain
+    static let defaultValue = MDZColorSet.ascMidnight
 }
 private struct MDZThemeKey: EnvironmentKey {
-    static let defaultValue = MDZTheme.ascMountain
+    static let defaultValue = MDZTheme.ascMidnight
 }
 public extension EnvironmentValues {
     public var mdzColors: MDZColorSet {
@@ -750,8 +786,8 @@ public actor APIClient {
         if let v=ud.string(forKey:"cfg_gs"),!v.isEmpty{moduleGroundSchool=v}
         if let v=ud.string(forKey:"cfg_mf"),!v.isEmpty{moduleManifest=v}
         if let v=ud.string(forKey:"cfg_theme"),!v.isEmpty{
-            // Migrate legacy light theme to ASC Mountain (icon-matched dark palette).
-            theme = v == MDZTheme.slateFire ? MDZTheme.ascMountain : v
+            // Migrate legacy light theme to ASC Midnight (icon-matched flat palette).
+            theme = v == MDZTheme.slateFire ? MDZTheme.ascMidnight : v
             if theme != v { ud.set(theme, forKey: "cfg_theme") }
         }
     }

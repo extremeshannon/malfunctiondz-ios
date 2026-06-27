@@ -118,6 +118,10 @@ struct ASCMemberTabView: View {
 // MARK: - App delegate (push)
 final class ASCAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        ASC.role = .skydiver
+        #if DEBUG
+        ASCFontDiagnostics.logRegisteredASCFonts()
+        #endif
         UNUserNotificationCenter.current().delegate = self
         MDZChrome.applyNavigationBar()
         return true

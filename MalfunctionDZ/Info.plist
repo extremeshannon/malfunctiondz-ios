@@ -11,5 +11,16 @@
 	<string>Used to scan and photograph pilot documents, logbook pages, and aircraft records.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Used to attach existing photos or scans of logbook pages and STC/337 documents.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>BigShouldersDisplay-Black.ttf</string>
+		<string>BigShouldersDisplay-Bold.ttf</string>
+		<string>SairaCondensed-SemiBold.ttf</string>
+		<string>SairaCondensed-Bold.ttf</string>
+		<string>SairaCondensed-ExtraBold.ttf</string>
+		<string>Inter-Regular.ttf</string>
+		<string>Inter-Medium.ttf</string>
+		<string>Inter-SemiBold.ttf</string>
+	</array>
 </dict>
 </plist>

@@ -137,6 +137,10 @@ struct ASCPackersTabView: View {
 
 final class ASCPackersAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        ASC.role = .packers
+        #if DEBUG
+        ASCFontDiagnostics.logRegisteredASCFonts()
+        #endif
         UNUserNotificationCenter.current().delegate = self
         MDZChrome.applyNavigationBar()
         return true

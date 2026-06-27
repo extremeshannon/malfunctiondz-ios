@@ -158,6 +158,8 @@ struct ProfileView: View {
                     }
                     .mdzContentCard(accent: colors.dz, glass: mountainTheme)
 
+                    AppearanceThemeSection(config: config)
+
                     if !isMemberShell {
                         ApiBaseUrlSection()
                     }
@@ -244,6 +246,52 @@ struct ProfileView: View {
             return "\(first.prefix(1))\(last.prefix(1))".uppercased()
         }
         return String(u.username.prefix(2)).uppercased()
+    }
+}
+
+struct AppearanceThemeSection: View {
+    @ObservedObject var config: AppConfig
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzThemeKey) private var themeKey
+
+    private var mountainTheme: Bool { MDZTheme.usesMountainBackground(themeKey) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            MDZSectionLabel("APPEARANCE", icon: "paintbrush.fill")
+                .padding(.horizontal, 16)
+                .padding(.top, 14)
+                .padding(.bottom, 6)
+            ForEach(MDZTheme.selectableKeys, id: \.self) { key in
+                Button {
+                    config.theme = key
+                    UserDefaults.standard.set(key, forKey: "cfg_theme")
+                } label: {
+                    HStack {
+                        Text(MDZTheme.displayName(for: key))
+                            .font(.system(size: 15, weight: config.theme == key ? .bold : .regular))
+                            .foregroundColor(colors.text)
+                        Spacer()
+                        if config.theme == key {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(colors.accent)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                }
+                .buttonStyle(.plain)
+                if key != MDZTheme.selectableKeys.last {
+                    Divider().background(colors.border.opacity(0.5)).padding(.leading, 16)
+                }
+            }
+            Text("ASC Midnight matches the icon set. ASC Mountain keeps the Alaska gradient and glass cards.")
+                .font(.system(size: 11))
+                .foregroundColor(colors.muted)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
+        }
+        .mdzContentCard(accent: colors.accent, glass: mountainTheme)
     }
 }
 

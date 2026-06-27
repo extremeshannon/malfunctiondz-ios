@@ -385,6 +385,14 @@ struct MDZTabView: View {
 // MARK: - App Delegate (push notifications, nav bar appearance)
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        #if ASC_STAFF
+        ASC.role = .staff
+        #else
+        ASC.role = .skydiver
+        #endif
+        #if DEBUG
+        ASCFontDiagnostics.logRegisteredASCFonts()
+        #endif
         UNUserNotificationCenter.current().delegate = self
         MDZChrome.applyNavigationBar()
         return true
