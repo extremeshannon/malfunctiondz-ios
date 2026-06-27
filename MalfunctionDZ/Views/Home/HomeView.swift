@@ -49,12 +49,18 @@ struct HomeView: View {
                 } else if isPilotShell {
                     ASCPilotHomeView(vm: vm)
                 } else {
-                    legacyHomeContent
+                    ascDefaultHomeContent
                 }
             }
+            #if ASC_STAFF
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
+            #else
             .navigationTitle(isMemberShell || isPilotShell ? "" : "Home")
             .navigationBarTitleDisplayMode(isMemberShell || isPilotShell ? .inline : .large)
             .toolbar(isMemberShell || isPilotShell ? .hidden : .visible, for: .navigationBar)
+            #endif
             .task { await vm.loadDashboard(user: auth.currentUser) }
             .task(id: "dz") { await vm.loadDzStatus() }
             .refreshable {
@@ -101,6 +107,15 @@ struct HomeView: View {
                 })
             }
         }
+    }
+
+    @ViewBuilder
+    private var ascDefaultHomeContent: some View {
+        #if ASC_STAFF
+        ASCStaffHomeView(vm: vm, showDzStatusModal: $showDzStatusModal)
+        #else
+        legacyHomeContent
+        #endif
     }
 
     @ViewBuilder

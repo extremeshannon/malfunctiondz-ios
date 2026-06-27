@@ -302,7 +302,11 @@ struct MDZTabView: View {
     var body: some View {
         TabView(selection: $tabSelect.selected) {
             HomeView()
+                #if ASC_STAFF
+                .tabItem { Label("Today", systemImage: "house.fill") }
+                #else
                 .tabItem { Label("Home", systemImage: "house.fill") }
+                #endif
                 .tag(0)
 
             if auth.currentUser?.canAccessAviation == true {

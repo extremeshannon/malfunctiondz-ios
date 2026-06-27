@@ -141,6 +141,31 @@ struct InstructorDashData {
     var activeStudents:  Int = 0
 }
 
+/// Manifest load row for ASC Staff home (from `/api/manifest/display`).
+struct StaffManifestLoad: Identifiable {
+    let id: Int
+    let time: String
+    let aircraft: String
+    let kind: String
+    let slots: [StaffManifestSlot]
+
+    var filled: Int { slots.count }
+}
+
+struct StaffManifestSlot: Identifiable {
+    let id: Int
+    let displayName: String
+    let jumpType: String
+
+    var chipLabel: String {
+        let name = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let jt = jumpType.trimmingCharacters(in: .whitespacesAndNewlines)
+        if name.isEmpty { return jt.isEmpty ? "Jumper" : jt }
+        if jt.isEmpty { return name }
+        return "\(name) · \(jt)"
+    }
+}
+
 struct JumpCheckSummary {
     var passed25: Int = 0
     var total: Int = 0
@@ -228,6 +253,8 @@ class HomeViewModel: ObservableObject {
     @Published var studentData:       StudentDashData?
     @Published var instructorData:    InstructorDashData?
     @Published var airworthyAircraft: [AircraftBrief] = []
+    @Published var staffManifestLoads: [StaffManifestLoad] = []
+    @Published var staffSignoffItems:  [InstructorSignoffItem] = []
 
     /// My rigs (reserve/AAD expiry for dashboard)
     @Published var myRigs: [JumperRig] = []
@@ -305,6 +332,13 @@ class HomeViewModel: ObservableObject {
 
         // DZ Status — always load for Home banner
         await loadDzStatus()
+
+        #if ASC_STAFF
+        await loadStaffManifest()
+        if user.isInstructorRole {
+            await loadStaffSignoffPreview()
+        }
+        #endif
     }
 
     func loadDzStatus() async {
@@ -617,4 +651,72 @@ class HomeViewModel: ObservableObject {
             .init(label: "\(pct)% Complete", color: pct == 100 ? .mdzGreen : .mdzAmber, semanticKey: pct == 100 ? "green" : "amber")
         ]
     }
+
+    // MARK: - ASC Staff ops home (manifest display + instructor sign-offs)
+    #if ASC_STAFF
+    private func loadStaffManifest() async {
+        guard let url = URL(string: "\(kServerURL)/api/manifest/display") else {
+            staffManifestLoads = []
+            return
+        }
+        struct DisplayResp: Decodable {
+            let ok: Bool
+            let loads: [LoadRow]?
+            struct LoadRow: Decodable {
+                let time: String?
+                let aircraft: String?
+                let kind: String?
+                let slots: [SlotRow]?
+                struct SlotRow: Decodable {
+                    let displayName: String?
+                    let jumpType: String?
+                    enum CodingKeys: String, CodingKey {
+                        case displayName = "display_name"
+                        case jumpType = "jump_type"
+                    }
+                }
+            }
+        }
+        guard let (data, _) = try? await URLSession.shared.data(from: url),
+              let resp = try? JSONDecoder().decode(DisplayResp.self, from: data),
+              resp.ok, let rows = resp.loads else {
+            staffManifestLoads = []
+            return
+        }
+        staffManifestLoads = rows.enumerated().map { index, row in
+            let slotRows = row.slots ?? []
+            let slots = slotRows.enumerated().map { slotIdx, slot in
+                StaffManifestSlot(
+                    id: index * 100 + slotIdx,
+                    displayName: slot.displayName ?? "",
+                    jumpType: slot.jumpType ?? ""
+                )
+            }
+            return StaffManifestLoad(
+                id: index + 1,
+                time: row.time ?? "",
+                aircraft: row.aircraft ?? "",
+                kind: row.kind ?? "",
+                slots: slots
+            )
+        }
+    }
+
+    private func loadStaffSignoffPreview() async {
+        guard let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)/api/lms/instructor/signoffs.php") else {
+            staffSignoffItems = []
+            return
+        }
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let resp = try? JSONDecoder().decode(InstructorSignoffListResponse.self, from: data),
+              resp.ok else {
+            staffSignoffItems = []
+            return
+        }
+        staffSignoffItems = Array((resp.items ?? []).prefix(5))
+    }
+    #endif
 }
