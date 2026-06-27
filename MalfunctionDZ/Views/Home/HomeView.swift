@@ -46,13 +46,15 @@ struct HomeView: View {
                 ASCScreenBackground()
                 if isMemberShell {
                     ASCSkydiverHomeView(vm: vm)
+                } else if isPilotShell {
+                    ASCPilotHomeView(vm: vm)
                 } else {
                     legacyHomeContent
                 }
             }
-            .navigationTitle(isMemberShell ? "" : "Home")
-            .navigationBarTitleDisplayMode(isMemberShell ? .inline : .large)
-            .toolbar(isMemberShell ? .hidden : .visible, for: .navigationBar)
+            .navigationTitle(isMemberShell || isPilotShell ? "" : "Home")
+            .navigationBarTitleDisplayMode(isMemberShell || isPilotShell ? .inline : .large)
+            .toolbar(isMemberShell || isPilotShell ? .hidden : .visible, for: .navigationBar)
             .task { await vm.loadDashboard(user: auth.currentUser) }
             .task(id: "dz") { await vm.loadDzStatus() }
             .refreshable {

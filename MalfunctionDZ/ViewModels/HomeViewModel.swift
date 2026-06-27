@@ -223,6 +223,8 @@ class HomeViewModel: ObservableObject {
 
     // Role-specific
     @Published var pilotData:         PilotDashData?
+    @Published var pilotOpenFlight: Flight?
+    @Published var pilotLoads:        [FlightLoad] = []
     @Published var studentData:       StudentDashData?
     @Published var instructorData:    InstructorDashData?
     @Published var airworthyAircraft: [AircraftBrief] = []
@@ -497,6 +499,32 @@ class HomeViewModel: ObservableObject {
         }
         groundSchoolSummary = "Jump Pilot Training"
         groundSchoolBadges  = []
+
+        await loadPilotFlightState(userId: userId)
+    }
+
+    private func loadPilotFlightState(userId: Int) async {
+        guard let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)/api/aircraft/flights.php?pilot_user_id=\(userId)") else { return }
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        struct Wrapper: Decodable { let ok: Bool; let data: PaxStateResponse? }
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let resp = try? JSONDecoder().decode(Wrapper.self, from: data),
+              resp.ok, let state = resp.data else {
+            pilotOpenFlight = nil
+            pilotLoads = []
+            return
+        }
+        pilotOpenFlight = state.flight
+        pilotLoads = state.loads
+        if pilotData?.openTailNumber == nil, let tail = state.flight?.tailNumber {
+            pilotData?.openTailNumber = tail
+        }
+        if state.flight?.isOpen == true {
+            pilotData?.hasOpenFlight = true
+            pilotData?.openFlightId = state.flight?.id
+        }
     }
 
     // MARK: - Student dashboard

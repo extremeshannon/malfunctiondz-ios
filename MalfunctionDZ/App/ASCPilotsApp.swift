@@ -110,7 +110,7 @@ struct ASCPilotsTabView: View {
     var body: some View {
         TabView(selection: $tabSelect.selected) {
             HomeView()
-                .tabItem { Label("Home", systemImage: "house.fill") }
+                .tabItem { Label("Loads", systemImage: "airplane") }
                 .tag(0)
 
             if auth.currentUser?.canAccessAviation == true {
