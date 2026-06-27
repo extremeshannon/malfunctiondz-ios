@@ -571,10 +571,10 @@ struct PilotQuickWidget: View {
                         Text("Start First Flight of the Day")
                             .font(.system(size: isWide ? 16 : 14, weight: .bold))
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(.mdzNavy)
                     .frame(maxWidth: .infinity)
                     .frame(height: isWide ? 52 : 44)
-                    .background(Color.mdzRed)
+                    .background(Color.mdzGold)
                     .cornerRadius(10)
                 }
                 .buttonStyle(.plain)

@@ -101,10 +101,10 @@ struct PilotAviationSplitView: View {
                                         Text("Log New Load")
                                             .font(.system(size: 16, weight: .bold))
                                     }
-                                    .foregroundColor(.white)
+                                    .foregroundColor(.mdzNavy)
                                     .frame(maxWidth: 320)
                                     .frame(height: 52)
-                                    .background(Color.mdzRed)
+                                    .background(Color.mdzGold)
                                     .cornerRadius(12)
                                 }
                                 .padding(.horizontal, 32)
@@ -126,10 +126,10 @@ struct PilotAviationSplitView: View {
                                     Text("Start New Flight")
                                         .font(.system(size: 16, weight: .bold))
                                 }
-                                .foregroundColor(.white)
+                                .foregroundColor(.mdzNavy)
                                 .frame(maxWidth: 320)
                                 .frame(height: 52)
-                                .background(Color.mdzRed)
+                                .background(Color.mdzGold)
                                 .cornerRadius(12)
                             }
                         }
@@ -142,7 +142,7 @@ struct PilotAviationSplitView: View {
                 await vm.load(pilotId: uid)
             }
         }
-        .accentColor(.mdzRed)
+        .accentColor(.mdzGold)
     }
 
     private var sidebarHeader: some View {
@@ -300,9 +300,9 @@ struct PilotAviationView: View {
             Image(systemName: "play.fill")
             Text("Start New Flight").font(.system(size: 16, weight: .bold))
         }
-        .foregroundColor(.white)
+        .foregroundColor(.mdzNavy)
         .frame(maxWidth: .infinity).frame(height: 52)
-        .background(Color.mdzRed).cornerRadius(12)
+        .background(Color.mdzGold).cornerRadius(12)
     }
 
     private var noAircraftWarning: some View {

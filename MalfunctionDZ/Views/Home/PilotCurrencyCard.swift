@@ -263,9 +263,9 @@ struct WideCurrencyRow: View {
                         Text(item.file != nil ? "Replace" : "Upload")
                             .font(.system(size: 11, weight: .semibold))
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(item.file != nil ? .white : .mdzNavy)
                     .padding(.horizontal, 10).padding(.vertical, 6)
-                    .background(item.file != nil ? Color.mdzNavyLift : Color.mdzRed)
+                    .background(item.file != nil ? Color.mdzNavyLift : Color.mdzGold)
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
@@ -308,9 +308,9 @@ struct CurrencyRow: View {
                         Text(item.file != nil ? "Replace" : "Upload")
                             .font(.system(size: 11, weight: .semibold))
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(item.file != nil ? .white : .mdzNavy)
                     .padding(.horizontal, 10).padding(.vertical, 6)
-                    .background(item.file != nil ? Color.mdzNavyLift : Color.mdzRed)
+                    .background(item.file != nil ? Color.mdzNavyLift : Color.mdzGold)
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)

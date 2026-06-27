@@ -115,10 +115,10 @@ struct UserAddView: View {
                     } label: {
                         Text(r.label)
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(isSel ? .white : .mdzBlue)
+                            .foregroundColor(isSel ? .mdzNavy : .mdzBlue)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .background(isSel ? Color.mdzRed : Color.mdzBlue.opacity(0.12))
+                            .background(isSel ? Color.mdzGold : Color.mdzBlue.opacity(0.12))
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)

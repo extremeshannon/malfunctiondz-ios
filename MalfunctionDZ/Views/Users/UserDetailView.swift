@@ -73,10 +73,10 @@ struct AdminReadOnlyView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 14) {
                 ZStack {
-                    Circle().fill(Color.mdzRed.opacity(0.15)).frame(width: 50, height: 50)
+                    Circle().fill(Color.mdzGold.opacity(0.15)).frame(width: 50, height: 50)
                     Text(user.displayInitials)
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.mdzRed)
+                        .foregroundColor(.mdzGold)
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text(user.fullName?.isEmpty == false ? user.fullName! : user.username)
@@ -120,10 +120,10 @@ struct AdminReadOnlyView: View {
                     Text("Send reset")
                 }
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(.mdzNavy)
                 .frame(maxWidth: .infinity)
                 .frame(height: 44)
-                .background(Color.mdzRed)
+                .background(Color.mdzGold)
                 .cornerRadius(10)
             }
             .buttonStyle(.plain)
@@ -225,7 +225,7 @@ struct UserEditView: View {
             fieldRow("Phone", $phone)
                 .keyboardType(.phonePad)
             Toggle("Active", isOn: $isActive)
-                .tint(.mdzRed)
+                .tint(.mdzGold)
         }
         .padding(16)
         .background(Color.mdzCard)
@@ -270,10 +270,10 @@ struct UserEditView: View {
                     } label: {
                         Text(r.label)
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(isSel ? .white : .mdzBlue)
+                            .foregroundColor(isSel ? .mdzNavy : .mdzBlue)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .background(isSel ? Color.mdzRed : Color.mdzBlue.opacity(0.12))
+                            .background(isSel ? Color.mdzGold : Color.mdzBlue.opacity(0.12))
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)

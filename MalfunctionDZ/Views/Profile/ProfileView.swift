@@ -64,7 +64,7 @@ struct ProfileView: View {
                                 HStack(spacing: 12) {
                                     Image(systemName: "pencil.and.list.clipboard")
                                         .font(.system(size: 18))
-                                        .foregroundColor(.mdzRed)
+                                        .foregroundColor(.mdzGold)
                                         .frame(width: 28)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("Manage LMS")

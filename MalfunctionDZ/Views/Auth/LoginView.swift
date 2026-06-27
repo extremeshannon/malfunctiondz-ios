@@ -85,16 +85,16 @@ struct LoginView: View {
                         ZStack {
                             if auth.isLoading {
                                 ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .mdzNavy))
                             } else {
                                 Text("Sign In")
                                     .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(.mdzNavy)
                             }
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(Color.mdzRed)
+                        .background(Color.mdzGold)
                         .cornerRadius(12)
                     }
                     .disabled(auth.isLoading || username.isEmpty || password.isEmpty)

@@ -136,7 +136,7 @@ struct UsersView: View {
                     if vm.isLoading && vm.users.isEmpty {
                         Spacer()
                         VStack {
-                            ProgressView().tint(.mdzRed).scaleEffect(1.2)
+                            ProgressView().tint(.mdzGold).scaleEffect(1.2)
                             Text("Loading users…")
                                 .font(.system(size: 14))
                                 .foregroundColor(.mdzMuted)
@@ -155,7 +155,7 @@ struct UsersView: View {
                                 .padding(.horizontal, 32)
                             Button("Retry") { Task { await vm.load() } }
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.mdzRed)
+                                .foregroundColor(.mdzGold)
                         }
                     } else if vm.users.isEmpty {
                         Spacer()
@@ -254,10 +254,10 @@ struct UsersView: View {
                     Task { await vm.applyAndLoad() }
                 }
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(.mdzNavy)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(Color.mdzRed)
+                .background(Color.mdzGold)
                 .cornerRadius(8)
             }
         }
@@ -274,11 +274,11 @@ struct UserRow: View {
         HStack(spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(Color.mdzRed.opacity(0.15))
+                    .fill(Color.mdzGold.opacity(0.15))
                     .frame(width: 44, height: 44)
                 Text(user.displayInitials)
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.mdzRed)
+                    .foregroundColor(.mdzGold)
             }
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {

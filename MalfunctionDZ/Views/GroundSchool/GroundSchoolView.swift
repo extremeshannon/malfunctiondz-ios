@@ -202,7 +202,7 @@ struct GroundSchoolStackView: View {
                                         HStack(spacing: 12) {
                                             Image(systemName: "pencil.and.list.clipboard")
                                                 .font(.system(size: 22))
-                                                .foregroundColor(.mdzRed)
+                                                .foregroundColor(.mdzGold)
                                             VStack(alignment: .leading, spacing: 2) {
                                                 Text("Manage LMS")
                                                     .font(.system(size: 16, weight: .bold))
@@ -219,7 +219,7 @@ struct GroundSchoolStackView: View {
                                         .padding(14)
                                         .background(Color.mdzCard)
                                         .cornerRadius(12)
-                                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzRed.opacity(0.5), lineWidth: 1))
+                                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.mdzGold.opacity(0.5), lineWidth: 1))
                                     }
                                     .buttonStyle(.plain)
                                 }

@@ -136,7 +136,7 @@ struct MDZSplitView: View {
                 selectedModule = AppModule(tag: tag) ?? .home
             }
         }
-        .accentColor(.mdzRed)
+        .accentColor(.mdzGold)
         .preferredColorScheme(.dark)
     }
 }
@@ -153,7 +153,7 @@ struct SidebarButton: View {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(selected ? .mdzRed : .mdzMuted)
+                    .foregroundColor(selected ? .mdzGold : .mdzMuted)
                     .frame(width: 22)
                 Text(title)
                     .font(.system(size: 15, weight: selected ? .bold : .regular))
@@ -162,7 +162,7 @@ struct SidebarButton: View {
             }
             .padding(.vertical, 6)
             .padding(.horizontal, 8)
-            .background(selected ? Color.mdzRed.opacity(0.12) : Color.clear)
+            .background(selected ? Color.mdzGold.opacity(0.12) : Color.clear)
             .cornerRadius(8)
         }
         .buttonStyle(.plain)
@@ -263,7 +263,7 @@ struct MDZTabView: View {
                 .tabItem { Label("Profile", systemImage: "person.fill") }
                 .tag(9)
         }
-        .accentColor(.mdzRed)
+        .accentColor(.mdzGold)
     }
 }
 

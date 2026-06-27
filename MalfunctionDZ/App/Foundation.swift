@@ -66,6 +66,8 @@ extension Color {
     static let mdzNavyLift   = Color(hex:"14406E")
     static let mdzRed        = Color(hex:"C8102E")
     static let mdzRedDark    = Color(hex:"8B0B1E")
+    /// ASC brand CTA/accent gold — the only primary action color across the suite.
+    static let mdzGold       = Palette.gold
     static let mdzBlue       = Color(hex:"8DC8FF")
     static let mdzBlueLight  = Color(hex:"B8D9F5")
     static let mdzBackground = Color(hex:"060D1A")
