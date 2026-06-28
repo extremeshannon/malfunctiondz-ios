@@ -541,7 +541,7 @@ struct SignaturePadSheet: View {
     let entryId: Int
     @ObservedObject var vm: LogbookViewModel
     let onComplete: () -> Void
-    @State private var canvasView = PKCanvasView()
+    @State private var signatureDrawing = PKDrawing()
     @State private var errorMsg: String?
     @Environment(\.mdzColors) private var colors
     var body: some View {
@@ -552,11 +552,15 @@ struct SignaturePadSheet: View {
                     Text("Draw your signature below")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(colors.text)
-                    SignatureCanvasRepresentable(canvas: $canvasView)
-                        .frame(height: 200)
-                        .background(Color(red: 12/255, green: 29/255, blue: 53/255))
-                        .cornerRadius(10)
-                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
+                    MDZSignaturePadRepresentable(
+                        drawing: $signatureDrawing,
+                        inkColor: .white
+                    )
+                    .frame(height: 200)
+                    .frame(maxWidth: .infinity)
+                    .background(Color(red: 12/255, green: 29/255, blue: 53/255))
+                    .cornerRadius(10)
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
                     if let err = errorMsg {
                         Text(err).font(.caption).foregroundColor(.red)
                     }
@@ -574,12 +578,12 @@ struct SignaturePadSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         Task {
-                            let rect = canvasView.drawing.bounds
+                            let rect = signatureDrawing.bounds
                             guard !rect.isEmpty else {
                                 errorMsg = "Please draw your signature first"
                                 return
                             }
-                            let img = canvasView.drawing.image(from: rect, scale: 2)
+                            let img = signatureDrawing.image(from: rect, scale: 2)
                             guard let png = img.pngData() else {
                                 errorMsg = "Could not capture signature"
                                 return
@@ -600,19 +604,6 @@ struct SignaturePadSheet: View {
             }
         }
     }
-}
-
-// MARK: - Signature canvas (PencilKit — finger/stylus)
-struct SignatureCanvasRepresentable: UIViewRepresentable {
-    @Binding var canvas: PKCanvasView
-    func makeUIView(context: Context) -> PKCanvasView {
-        canvas.tool = PKInkingTool(.pen, color: .label, width: 2)
-        canvas.drawingPolicy = .anyInput
-        canvas.backgroundColor = UIColor(red: 12/255, green: 29/255, blue: 53/255, alpha: 1)
-        canvas.isOpaque = false
-        return canvas
-    }
-    func updateUIView(_ uiView: PKCanvasView, context: Context) {}
 }
 
 // MARK: - Single entry card (printable-style layout)

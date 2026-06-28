@@ -748,7 +748,7 @@ struct InstructorJumpReviewDetailView: View {
 
                         if vm.detail?.instructorProfileReady == false {
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Complete your instructor profile (license, initials, and signature) before Pass or Retake.")
+                                Text("Complete your instructor profile (highest license in Profile, initials and signature in Instructor Profile) before Pass or Retake.")
                                     .font(.system(size: 12))
                                     .foregroundColor(colors.amber)
                                 NavigationLink(destination: InstructorProfileView()) {
@@ -814,7 +814,7 @@ struct InstructorJumpReviewDetailView: View {
                             HStack(spacing: 10) {
                                 Button {
                                     guard vm.detail?.instructorProfileReady != false else {
-                                        vm.error = "Complete your instructor profile (license, initials, and signature) before Pass or Retake."
+                                        vm.error = "Complete your instructor profile (highest license in Profile, initials and signature in Instructor Profile) before Pass or Retake."
                                         return
                                     }
                                     Task { if await vm.resolve(result: "pass") { dismiss() } }
@@ -831,7 +831,7 @@ struct InstructorJumpReviewDetailView: View {
 
                                 Button {
                                     guard vm.detail?.instructorProfileReady != false else {
-                                        vm.error = "Complete your instructor profile (license, initials, and signature) before Pass or Retake."
+                                        vm.error = "Complete your instructor profile (highest license in Profile, initials and signature in Instructor Profile) before Pass or Retake."
                                         return
                                     }
                                     Task { if await vm.resolve(result: "retake") { dismiss() } }
@@ -1253,7 +1253,7 @@ struct InstructorStudentJumpSignoffView: View {
 
     private var profileWarning: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Complete your instructor profile (license, initials, and signature) before Pass or Retake.")
+            Text("Complete your instructor profile (highest license in Profile, initials and signature in Instructor Profile) before Pass or Retake.")
                 .font(.system(size: 12))
                 .foregroundColor(colors.amber)
             NavigationLink(destination: InstructorProfileView()) {
@@ -1270,7 +1270,7 @@ struct InstructorStudentJumpSignoffView: View {
     private var passRetakeButtons: some View {
         VStack(spacing: 8) {
             if !vm.instructorProfileReady {
-                Text("Pass and Retake require license, initials, and signature on your instructor profile.")
+                Text("Pass and Retake require highest license (Profile), initials, and signature (Instructor Profile).")
                     .font(.system(size: 11))
                     .foregroundColor(colors.amber)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -1278,7 +1278,7 @@ struct InstructorStudentJumpSignoffView: View {
             HStack(spacing: 12) {
                 Button {
                     guard vm.instructorProfileReady else {
-                        vm.error = "Complete your instructor profile (license, initials, and signature) before Pass or Retake."
+                        vm.error = "Complete your instructor profile (highest license in Profile, initials and signature in Instructor Profile) before Pass or Retake."
                         return
                     }
                     Task { if await vm.finalize(result: "pass") { dismiss() } }
@@ -1295,7 +1295,7 @@ struct InstructorStudentJumpSignoffView: View {
 
                 Button {
                     guard vm.instructorProfileReady else {
-                        vm.error = "Complete your instructor profile (license, initials, and signature) before Pass or Retake."
+                        vm.error = "Complete your instructor profile (highest license in Profile, initials and signature in Instructor Profile) before Pass or Retake."
                         return
                     }
                     Task { _ = await vm.finalize(result: "retake") }

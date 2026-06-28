@@ -1,14 +1,22 @@
-// ASC Packers — swipeable Gear Room: browse rigs left/right, view records, submit pack jobs.
+// ASC Packers — Gear Room: vertical icon grid; tap a rig to swipe left/right in detail.
 import SwiftUI
 import MalfunctionDZCore
+
+private struct RigNavTarget: Identifiable, Hashable {
+    let id: Int
+}
 
 struct PackerGearRoomBrowseView: View {
     @StateObject private var vm = DzRigsViewModel()
     @EnvironmentObject private var tabSelect: TabSelection
     @State private var searchText = ""
-    @State private var filter: PackerRigFilter = .all
-    @State private var selectedRigId: Int = 0
-    @Environment(\.mdzColors) private var colors
+    @State private var filter: PackerRigFilter = .airworthy
+    @State private var openRig: RigNavTarget?
+
+    private let iconGridColumns = [
+        GridItem(.flexible(), spacing: ASC.Space.md),
+        GridItem(.flexible(), spacing: ASC.Space.md),
+    ]
 
     var body: some View {
         ZStack {
@@ -24,46 +32,29 @@ struct PackerGearRoomBrowseView: View {
                     Spacer()
                     EmptyStateView(
                         icon: "square.stack.3d.up.fill",
-                        title: searchText.isEmpty ? "No Rigs" : "No Matches",
+                        title: searchText.isEmpty ? emptyTitle : "No Matches",
                         subtitle: searchText.isEmpty
-                            ? "No DZ rigs in the gear room."
+                            ? emptySubtitle
                             : "Try a different search or filter."
                     )
                     Spacer()
                 } else {
-                    pagerHint
-                    TabView(selection: $selectedRigId) {
-                        ForEach(displayRigs) { rig in
-                            PackerRigSwipePage(rig: rig, vm: vm)
-                                .tag(rig.id)
-                        }
-                    }
-                    .tabViewStyle(.page(indexDisplayMode: .automatic))
-                    .animation(.easeInOut(duration: 0.2), value: selectedRigId)
+                    rigIconGrid
                 }
             }
         }
         .navigationTitle("Gear Room")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(item: $openRig) { target in
+            PackerGearRoomRigPagerView(
+                rigs: displayRigs,
+                initialRigId: target.id,
+                vm: vm
+            )
+        }
         .task { await vm.load() }
         .refreshable { await vm.load() }
-        .onChange(of: displayRigs.map(\.id)) { _, ids in
-            guard !ids.isEmpty else {
-                selectedRigId = 0
-                return
-            }
-            if ids.contains(selectedRigId) { return }
-            selectedRigId = ids[0]
-        }
-        .onChange(of: filter) { _, _ in
-            selectedRigId = displayRigs.first?.id ?? 0
-        }
-        .onAppear {
-            if selectedRigId == 0, let first = displayRigs.first?.id {
-                selectedRigId = first
-            }
-            applyPendingRigSelection()
-        }
+        .onAppear { applyPendingRigSelection() }
         .onChange(of: tabSelect.pendingGearRoomRigId) { _, _ in
             applyPendingRigSelection()
         }
@@ -77,6 +68,44 @@ struct PackerGearRoomBrowseView: View {
         }
     }
 
+    private var emptyTitle: String {
+        switch filter {
+        case .airworthy:    return "No Airworthy Rigs"
+        case .need25Jump:   return "No 25-Jump Rigs"
+        case .notInService: return "No Out-of-Service Rigs"
+        }
+    }
+
+    private var emptySubtitle: String {
+        switch filter {
+        case .airworthy:
+            return "No DZ rigs are pack-ready right now."
+        case .need25Jump:
+            return "No DZ rigs are at the 25-jump inspection limit."
+        case .notInService:
+            return "No other DZ rigs are out of service."
+        }
+    }
+
+    // MARK: - Icon grid (scroll up / down)
+
+    private var rigIconGrid: some View {
+        ScrollView(showsIndicators: false) {
+            LazyVGrid(columns: iconGridColumns, spacing: ASC.Space.md) {
+                ForEach(displayRigs) { rig in
+                    Button {
+                        openRig = RigNavTarget(id: rig.id)
+                    } label: {
+                        PackerGearRoomIconCard(rig: rig)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, ASC.Space.lg)
+            .padding(.bottom, ASC.Space.xxxl)
+        }
+    }
+
     // MARK: - Header
 
     private var gearRoomHeader: some View {
@@ -85,11 +114,11 @@ struct PackerGearRoomBrowseView: View {
                 .font(ASC.Typography.display(28))
                 .foregroundStyle(ASC.Text.primary)
             if let s = vm.summary {
-                Text("\(s.total) rigs · swipe to browse")
+                Text("\(displayRigs.count) of \(dzRigCount) DZ rigs · tap to open · swipe in detail")
                     .font(ASC.Typography.bodyMedium(13))
                     .foregroundStyle(ASC.Text.tertiary)
             } else {
-                Text("Swipe left or right between rigs")
+                Text("DZ rigs only · tap a rig · swipe left or right inside")
                     .font(ASC.Typography.bodyMedium(13))
                     .foregroundStyle(ASC.Text.tertiary)
             }
@@ -150,69 +179,37 @@ struct PackerGearRoomBrowseView: View {
         }
     }
 
-    private var pagerHint: some View {
-        HStack {
-            Image(systemName: "hand.draw")
-                .font(.system(size: 12))
-                .foregroundStyle(ASC.Text.muted)
-            Text("Swipe between rigs")
-                .font(ASC.Typography.caption(11))
-                .foregroundStyle(ASC.Text.muted)
-            Spacer()
-            if selectedRigId != 0,
-               let idx = displayRigs.firstIndex(where: { $0.id == selectedRigId }) {
-                Text("\(idx + 1) of \(displayRigs.count)")
-                    .font(ASC.Typography.numeric(13))
-                    .foregroundStyle(ASC.Palette.daylight)
-            }
-        }
-        .padding(.horizontal, ASC.Space.lg)
-        .padding(.bottom, 4)
+    private func applyPendingRigSelection() {
+        guard let rigId = tabSelect.pendingGearRoomRigId else { return }
+        tabSelect.pendingGearRoomRigId = nil
+        guard let rig = vm.rigs.first(where: { $0.id == rigId && $0.isDzRig }) else { return }
+        searchText = ""
+        filter = PackerGearRoomFilters.filter(for: rig)
+        openRig = RigNavTarget(id: rigId)
+    }
+
+    private var dzRigs: [LoftRig] {
+        vm.rigs.filter { $0.isDzRig }
+    }
+
+    private var dzRigCount: Int {
+        dzRigs.count
     }
 
     private var displayRigs: [LoftRig] {
         let base: [LoftRig]
         switch filter {
-        case .all:
-            base = vm.rigs.sorted(by: packerRigSort)
-        case .priority:
-            var seen = Set<Int>()
-            base = (vm.outOfServiceRigs + vm.approachingLimitRigs + vm.rigs.filter {
-                ($0.packJobsSinceInspection ?? 0) >= 15 && $0.outOfService != true
-            }).filter { seen.insert($0.id).inserted }
-        case .reserveDue:
-            base = vm.overdueRigs + vm.dueSoonRigs
-        case .ready:
-            base = vm.allClearRigs
+        case .airworthy:
+            base = dzRigs.filter { PackerGearRoomFilters.isAirworthy($0) }
+        case .need25Jump:
+            base = dzRigs.filter { PackerGearRoomFilters.needs25Jump($0) }
+        case .notInService:
+            base = dzRigs.filter { PackerGearRoomFilters.isNotInService($0) }
         }
+        let sorted = base.sorted(by: PackerGearRoomFilters.sortRigs)
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard !q.isEmpty else { return base }
-        return base.filter { rigMatchesSearch($0, q) }
-    }
-
-    private func applyPendingRigSelection() {
-        guard let rigId = tabSelect.pendingGearRoomRigId else { return }
-        tabSelect.pendingGearRoomRigId = nil
-        if vm.rigs.contains(where: { $0.id == rigId }) {
-            filter = .all
-            searchText = ""
-            selectedRigId = rigId
-        }
-    }
-
-    private func packerRigSort(_ a: LoftRig, _ b: LoftRig) -> Bool {
-        let pa = packerSortRank(a)
-        let pb = packerSortRank(b)
-        if pa != pb { return pa < pb }
-        return a.label.localizedCaseInsensitiveCompare(b.label) == .orderedAscending
-    }
-
-    private func packerSortRank(_ rig: LoftRig) -> Int {
-        if rig.outOfService == true { return 0 }
-        if (rig.packJobsSinceInspection ?? 0) >= 20 { return 1 }
-        if rig.status == "overdue" { return 2 }
-        if rig.status == "due_soon" { return 3 }
-        return 4
+        guard !q.isEmpty else { return sorted }
+        return sorted.filter { rigMatchesSearch($0, q) }
     }
 
     private func rigMatchesSearch(_ rig: LoftRig, _ q: String) -> Bool {
@@ -233,15 +230,203 @@ struct PackerGearRoomBrowseView: View {
 // MARK: - Filter
 
 private enum PackerRigFilter: CaseIterable {
-    case all, priority, reserveDue, ready
+    case airworthy, need25Jump, notInService
 
     var label: String {
         switch self {
-        case .all:        return "All"
-        case .priority:   return "Priority"
-        case .reserveDue: return "Reserves"
-        case .ready:      return "Ready"
+        case .airworthy:     return "Airworthy"
+        case .need25Jump:    return "25 Jump"
+        case .notInService:  return "Out of Service"
         }
+    }
+}
+
+private enum PackerGearRoomFilters {
+    /// ASC Sigma tandem rigs (label or reserve/harness model).
+    static func isSigmaTandem(_ rig: LoftRig) -> Bool {
+        let label = rig.label.lowercased()
+        if label.contains("sigma") || label.contains("tandem") { return true }
+        let reserve = (rig.reserve.model ?? rig.reserve.mfr ?? "").lowercased()
+        let harness = (rig.harness.model ?? rig.harness.mfr ?? "").lowercased()
+        return reserve.contains("sigma") || harness.contains("sigma")
+    }
+
+    static func sortRigs(_ a: LoftRig, _ b: LoftRig) -> Bool {
+        let sigmaA = isSigmaTandem(a) ? 0 : 1
+        let sigmaB = isSigmaTandem(b) ? 0 : 1
+        if sigmaA != sigmaB { return sigmaA < sigmaB }
+        return a.label.localizedCaseInsensitiveCompare(b.label) == .orderedAscending
+    }
+
+    /// Pack-ready DZ rig: reserve current/due soon, under 25 pack jobs (includes 20–24 warning range).
+    static func isAirworthy(_ rig: LoftRig) -> Bool {
+        guard rig.isDzRig, rig.outOfService != true else { return false }
+        guard rig.status == "current" || rig.status == "due_soon" else { return false }
+        return (rig.packJobsSinceInspection ?? 0) < 25
+    }
+
+    /// At the 25-jump limit — locked until inspection.
+    static func needs25Jump(_ rig: LoftRig) -> Bool {
+        guard rig.isDzRig else { return false }
+        if rig.outOfService == true { return true }
+        return (rig.packJobsSinceInspection ?? 0) >= 25
+    }
+
+    /// Other active DZ rigs not pack-ready and not in the 25-jump queue (overdue, no pack record, etc.).
+    static func isNotInService(_ rig: LoftRig) -> Bool {
+        guard rig.isDzRig else { return false }
+        if isAirworthy(rig) || needs25Jump(rig) { return false }
+        return true
+    }
+
+    static func filter(for rig: LoftRig) -> PackerRigFilter {
+        if needs25Jump(rig) { return .need25Jump }
+        if isAirworthy(rig) { return .airworthy }
+        return .notInService
+    }
+}
+
+// MARK: - Icon card (grid cell)
+
+private struct PackerGearRoomIconCard: View {
+    let rig: LoftRig
+
+    private var packJobsText: String {
+        let n = rig.packJobsSinceInspection ?? 0
+        if rig.outOfService == true { return "25/25" }
+        return "\(n)/25"
+    }
+
+    private var statusColor: Color {
+        if rig.outOfService == true { return ASC.Palette.cutaway }
+        switch rig.status {
+        case "overdue": return ASC.Palette.cutaway
+        case "due_soon": return ASC.Palette.caution
+        case "current": return ASC.Palette.jumpReady
+        default: return ASC.Text.muted
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: ASC.Space.sm) {
+            ZStack(alignment: .topTrailing) {
+                rigThumbnail
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 108)
+                    .clipShape(RoundedRectangle(cornerRadius: ASC.Radius.md, style: .continuous))
+                Text(packJobsText)
+                    .font(ASC.Typography.eyebrow(9))
+                    .foregroundStyle(ASC.Palette.midnight)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 4)
+                    .background(ASC.Palette.hiVis)
+                    .clipShape(Capsule())
+                    .padding(8)
+            }
+            Text(rig.label)
+                .font(ASC.Typography.sectionLabel(14))
+                .foregroundStyle(ASC.Text.primary)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+            HStack(spacing: ASC.Space.xs) {
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: 7, height: 7)
+                Text(rig.daysLeftText)
+                    .font(ASC.Typography.caption(11))
+                    .foregroundStyle(ASC.Text.tertiary)
+                    .lineLimit(1)
+            }
+        }
+        .padding(ASC.Space.md)
+        .background(ASC.Surface.card)
+        .clipShape(RoundedRectangle(cornerRadius: ASC.Radius.card, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: ASC.Radius.card, style: .continuous)
+                .strokeBorder(statusColor.opacity(0.45), lineWidth: 1)
+        )
+    }
+
+    @ViewBuilder
+    private var rigThumbnail: some View {
+        if let path = rig.imageContainer ?? rig.imageMain ?? rig.imageReserve,
+           !path.isEmpty,
+           let url = rig.imageURL(path: path) {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .success(let img):
+                    img.resizable().scaledToFill()
+                default:
+                    thumbPlaceholder
+                }
+            }
+        } else {
+            thumbPlaceholder
+        }
+    }
+
+    private var thumbPlaceholder: some View {
+        ZStack {
+            ASC.Surface.deep
+            Image(systemName: "backpack.fill")
+                .font(.system(size: 36))
+                .foregroundStyle(ASC.Palette.daylight.opacity(0.85))
+        }
+    }
+}
+
+// MARK: - Horizontal rig pager (after tap)
+
+private struct PackerGearRoomRigPagerView: View {
+    let rigs: [LoftRig]
+    @ObservedObject var vm: DzRigsViewModel
+    @State private var selectedRigId: Int
+
+    init(rigs: [LoftRig], initialRigId: Int, vm: DzRigsViewModel) {
+        self.rigs = rigs
+        self.vm = vm
+        _selectedRigId = State(initialValue: initialRigId)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            pagerHint
+            TabView(selection: $selectedRigId) {
+                ForEach(rigs) { rig in
+                    PackerRigSwipePage(rig: rig, vm: vm)
+                        .tag(rig.id)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .automatic))
+            .animation(.easeInOut(duration: 0.2), value: selectedRigId)
+        }
+        .background(ASCScreenBackground())
+        .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: rigs.map(\.id)) { _, ids in
+            guard !ids.isEmpty else { return }
+            if !ids.contains(selectedRigId) {
+                selectedRigId = ids[0]
+            }
+        }
+    }
+
+    private var pagerHint: some View {
+        HStack {
+            Image(systemName: "hand.draw")
+                .font(.system(size: 12))
+                .foregroundStyle(ASC.Text.muted)
+            Text("Swipe between rigs")
+                .font(ASC.Typography.caption(11))
+                .foregroundStyle(ASC.Text.muted)
+            Spacer()
+            if let idx = rigs.firstIndex(where: { $0.id == selectedRigId }) {
+                Text("\(idx + 1) of \(rigs.count)")
+                    .font(ASC.Typography.numeric(13))
+                    .foregroundStyle(ASC.Palette.daylight)
+            }
+        }
+        .padding(.horizontal, ASC.Space.lg)
+        .padding(.vertical, ASC.Space.sm)
     }
 }
 

@@ -112,9 +112,10 @@ public extension Color {
     public static let ascLoginOrangeDark = Color(hex:"B83D12")
 }
 
-// MARK: - Theme-based color set (slate_fire | old_glory | asc_mountain)
+// MARK: - Theme-based color set (asc_colors | old_glory | asc_midnight | asc_mountain)
 public enum MDZTheme {
-    public static let slateFire = "slate_fire"
+    public static let slateFire = "slate_fire" // legacy key → ascColors
+    public static let ascColors = "asc_colors"
     public static let oldGlory = "old_glory"
     /// Flat midnight navy — matches ASC icon / mockup (no mountain gradient).
     public static let ascMidnight = "asc_midnight"
@@ -123,22 +124,34 @@ public enum MDZTheme {
 
     public static var defaultKey: String { ascMidnight }
 
+    public static func normalizeKey(_ theme: String) -> String {
+        switch theme {
+        case slateFire: return ascColors
+        default: return theme
+        }
+    }
+
     public static func colorScheme(for theme: String) -> ColorScheme {
-        theme == slateFire ? .light : .dark
+        switch normalizeKey(theme) {
+        case ascColors, oldGlory:
+            return .light
+        default:
+            return .dark
+        }
     }
 
     public static func usesMountainBackground(_ theme: String) -> Bool {
         theme == ascMountain
     }
 
-    public static let selectableKeys: [String] = [ascMidnight, ascMountain, oldGlory]
+    public static let selectableKeys: [String] = [ascMidnight, ascMountain, ascColors, oldGlory]
 
     public static func displayName(for theme: String) -> String {
-        switch theme {
+        switch normalizeKey(theme) {
         case ascMidnight:  return "ASC Midnight"
         case ascMountain:  return "ASC Mountain"
+        case ascColors:    return "ASC Colors"
         case oldGlory:     return "Old Glory"
-        case slateFire:    return "Slate & Fire"
         default:           return theme
         }
     }
@@ -168,26 +181,26 @@ public struct MDZColorSet {
     public let groundSchool: Color
 
     public static let oldGlory = MDZColorSet(
-        background: .mdzBackground,
-        card: .mdzCard,
-        card2: .mdzCard2,
-        text: .mdzText,
-        muted: .mdzMuted,
-        primary: .mdzBlue,
-        accent: .mdzRed,
-        border: .mdzBorder,
-        green: .mdzGreen,
-        amber: .mdzAmber,
-        danger: .mdzDanger,
-        navy: .mdzNavy,
-        navyMid: .mdzNavyMid,
-        aviation: Color(hex: "5B9BD5"),
+        background: Color(hex: "F8FAFC"),
+        card: Color(hex: "FFFFFF"),
+        card2: Color(hex: "F1F5F9"),
+        text: Color(hex: "0F172A"),
+        muted: Color(hex: "475569"),
+        primary: Color(hex: "002868"),
+        accent: Color(hex: "B22234"),
+        border: Color(hex: "CBD5E1"),
+        green: Color(hex: "15803D"),
+        amber: Color(hex: "D97706"),
+        danger: Color(hex: "B22234"),
+        navy: Color(hex: "002868"),
+        navyMid: Color(hex: "001A3D"),
+        aviation: Color(hex: "002868"),
         loft: Color(hex: "0D9488"),
-        dz: Color(hex: "E85D04"),
+        dz: Color(hex: "B22234"),
         groundSchool: Color(hex: "7C3AED")
     )
 
-    public static let slateFire = MDZColorSet(
+    public static let ascColors = MDZColorSet(
         background: Color(hex: "D6DCE3"),
         card: Color(hex: "E8ECF0"),
         card2: Color(hex: "EFF2F5"),
@@ -206,6 +219,9 @@ public struct MDZColorSet {
         dz: Color(hex: "F06020"),
         groundSchool: Color(hex: "7C3AED")
     )
+
+    /// Legacy alias — same palette as ASC Colors.
+    public static let slateFire = ascColors
 
     public static let ascMidnight = MDZColorSet(
         background: ASC.Palette.midnight,
@@ -248,11 +264,11 @@ public struct MDZColorSet {
     )
 
     public static func `for`(_ theme: String) -> MDZColorSet {
-        switch theme {
+        switch MDZTheme.normalizeKey(theme) {
         case MDZTheme.oldGlory: return .oldGlory
         case MDZTheme.ascMountain: return .ascMountain
         case MDZTheme.ascMidnight: return .ascMidnight
-        case MDZTheme.slateFire: return .slateFire
+        case MDZTheme.ascColors: return .ascColors
         default: return .ascMidnight
         }
     }
@@ -590,10 +606,12 @@ public struct User: Codable, Identifiable {
     public let roles: [String]?
     public let totalRigs: Int?
     public let totalJumps: Int?
+    public let highestUsapLicense: String?
     public enum CodingKeys: String, CodingKey {
         case id, username, email, role, roles
         case firstName = "first_name"; case lastName = "last_name"
         case totalRigs = "total_rigs"; case totalJumps = "total_jumps"
+        case highestUsapLicense = "highest_uspa_license"
     }
 
     /// Build from raw JSON (handles PHP/MySQL type variations)
@@ -612,6 +630,7 @@ public struct User: Codable, Identifiable {
         else { roles = nil }
         totalRigs = (dict["total_rigs"] as? Int) ?? (dict["total_rigs"] as? String).flatMap(Int.init)
         totalJumps = (dict["total_jumps"] as? Int) ?? (dict["total_jumps"] as? String).flatMap(Int.init)
+        highestUsapLicense = (dict["highest_uspa_license"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
     }
 
     public init(from decoder: Decoder) throws {
@@ -625,6 +644,7 @@ public struct User: Codable, Identifiable {
         roles = try c.decodeIfPresent([String].self, forKey: .roles)
         totalRigs = try c.decodeIfPresent(Int.self, forKey: .totalRigs)
         totalJumps = try c.decodeIfPresent(Int.self, forKey: .totalJumps)
+        highestUsapLicense = try c.decodeIfPresent(String.self, forKey: .highestUsapLicense)?.uppercased()
     }
     public var fullName: String { "\(firstName ?? "") \(lastName ?? "")".trimmingCharacters(in:.whitespaces) }
     public var displayInitials: String {
@@ -786,9 +806,9 @@ public actor APIClient {
         if let v=ud.string(forKey:"cfg_gs"),!v.isEmpty{moduleGroundSchool=v}
         if let v=ud.string(forKey:"cfg_mf"),!v.isEmpty{moduleManifest=v}
         if let v=ud.string(forKey:"cfg_theme"),!v.isEmpty{
-            // Migrate legacy light theme to ASC Midnight (icon-matched flat palette).
-            theme = v == MDZTheme.slateFire ? MDZTheme.ascMidnight : v
-            if theme != v { ud.set(theme, forKey: "cfg_theme") }
+            let normalized = MDZTheme.normalizeKey(v)
+            theme = normalized
+            if normalized != v { ud.set(normalized, forKey: "cfg_theme") }
         }
     }
 }

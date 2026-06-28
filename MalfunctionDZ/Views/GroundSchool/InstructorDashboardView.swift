@@ -212,7 +212,7 @@ struct InstructorDashboardView: View {
                                         Text("Instructor Profile")
                                             .font(.system(size: 15, weight: .bold))
                                             .foregroundColor(colors.text)
-                                        Text("License, initials, and signature for sign-offs")
+                                        Text("Initials and signature — license set in Profile")
                                             .font(.system(size: 12))
                                             .foregroundColor(colors.muted)
                                     }
@@ -909,18 +909,79 @@ private struct InstructorDashboardEmptyState: View {
     }
 }
 
-// MARK: - Signature pad (white paper, dark ink)
+// MARK: - Signature pad (PencilKit — finger/stylus)
 
-struct InstructorSignaturePadRepresentable: UIViewRepresentable {
-    @Binding var canvas: PKCanvasView
+/// Host view so PKCanvasView always fills the signing area (SwiftUI frame alone is unreliable).
+final class SignaturePadContainerView: UIView {
+    let canvasView = PKCanvasView()
 
-    func makeUIView(context: Context) -> PKCanvasView {
-        canvas.tool = PKInkingTool(.pen, color: .black, width: 2)
-        canvas.drawingPolicy = .anyInput
-        canvas.backgroundColor = .white
-        canvas.isOpaque = true
-        return canvas
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .clear
+        canvasView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(canvasView)
+        NSLayoutConstraint.activate([
+            canvasView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            canvasView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            canvasView.topAnchor.constraint(equalTo: topAnchor),
+            canvasView.bottomAnchor.constraint(equalTo: bottomAnchor),
+        ])
     }
 
-    func updateUIView(_ uiView: PKCanvasView, context: Context) {}
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { nil }
 }
+
+struct MDZSignaturePadRepresentable: UIViewRepresentable {
+    @Binding var drawing: PKDrawing
+    var inkColor: UIColor = .black
+    var lineWidth: CGFloat = 5
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    final class Coordinator: NSObject, PKCanvasViewDelegate {
+        var parent: MDZSignaturePadRepresentable
+
+        init(parent: MDZSignaturePadRepresentable) {
+            self.parent = parent
+        }
+
+        func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
+            let snapshot = canvasView.drawing
+            DispatchQueue.main.async {
+                self.parent.drawing = snapshot
+            }
+        }
+    }
+
+    func makeUIView(context: Context) -> SignaturePadContainerView {
+        let container = SignaturePadContainerView()
+        let view = container.canvasView
+        view.delegate = context.coordinator
+        view.drawing = drawing
+        view.tool = PKInkingTool(.pen, color: inkColor, width: lineWidth)
+        view.drawingPolicy = .anyInput
+        view.backgroundColor = .clear
+        view.isOpaque = false
+        view.isScrollEnabled = false
+        view.alwaysBounceVertical = false
+        view.alwaysBounceHorizontal = false
+        view.isUserInteractionEnabled = true
+        return container
+    }
+
+    func updateUIView(_ container: SignaturePadContainerView, context: Context) {
+        context.coordinator.parent = self
+        let view = container.canvasView
+        view.tool = PKInkingTool(.pen, color: inkColor, width: lineWidth)
+        // Apply Clear only — do not overwrite in-progress strokes from a stale binding.
+        if drawing.strokes.isEmpty, !view.drawing.strokes.isEmpty {
+            view.drawing = PKDrawing()
+        }
+    }
+}
+
+/// Legacy name — instructor profile uses dark ink on white paper.
+typealias InstructorSignaturePadRepresentable = MDZSignaturePadRepresentable

@@ -7,6 +7,7 @@ struct InstructorProfilePayload: Codable {
     let userId: Int?
     let displayName: String?
     let licenseNumber: String?
+    let highestLicense: String?
     let initials: String?
     let signatureUrl: String?
     let signaturePath: String?
@@ -17,6 +18,7 @@ struct InstructorProfilePayload: Codable {
         case userId = "user_id"
         case displayName = "display_name"
         case licenseNumber = "license_number"
+        case highestLicense = "highest_license"
         case signatureUrl = "signature_url"
         case signaturePath = "signature_path"
         case readyForSignoff = "ready_for_signoff"
@@ -46,17 +48,17 @@ enum InstructorProfileURL {
     }
 }
 
-func signatureImageFromCanvas(_ canvas: PKCanvasView) -> UIImage? {
-    let rect = canvas.drawing.bounds
+func signatureImageFromDrawing(_ drawing: PKDrawing) -> UIImage? {
+    let rect = drawing.bounds
     guard !rect.isEmpty else { return nil }
     let padded = rect.insetBy(dx: -24, dy: -16)
-    return canvas.drawing.image(from: padded, scale: 2)
+    return drawing.image(from: padded, scale: 2)
 }
 
 @MainActor
 final class InstructorProfileViewModel: ObservableObject {
-    @Published var licenseNumber = ""
     @Published var initials = ""
+    @Published var highestLicense = ""
     @Published var signatureUrl = ""
     @Published var signaturePath = ""
     @Published var readyForSignoff = false
@@ -69,6 +71,11 @@ final class InstructorProfileViewModel: ObservableObject {
         let url = signatureUrl.trimmingCharacters(in: .whitespacesAndNewlines)
         if !url.isEmpty { return url }
         return signaturePath.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var highestLicenseDisplay: String {
+        let v = highestLicense.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        return v.isEmpty ? "—" : v
     }
 
     func load() async {
@@ -96,50 +103,44 @@ final class InstructorProfileViewModel: ObservableObject {
         }
     }
 
-    func save(signatureBase64: String?) async -> Bool {
-        let lic = licenseNumber.trimmingCharacters(in: .whitespacesAndNewlines)
-        let initls = initials.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        if lic.isEmpty {
-            error = "License number is required."
+    /// Save initials and/or signature independently (partial updates).
+    func save(initials: String? = nil, signatureBase64: String? = nil) async -> Bool {
+        let savingInitials = initials != nil
+        let savingSignature = signatureBase64 != nil
+        guard savingInitials || savingSignature else {
+            error = "Nothing to save."
             return false
         }
-        if initls.isEmpty {
-            error = "Instructor initials are required."
-            return false
+        if savingInitials {
+            let initls = (initials ?? "").trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+            if initls.isEmpty {
+                error = "Enter your instructor initials."
+                return false
+            }
         }
         isSaving = true
         defer { isSaving = false }
         guard let token = KeychainHelper.readToken(),
               let url = URL(string: "\(kServerURL)/api/lms/instructor/profile.php") else { return false }
-        struct Body: Codable {
-            let instructorLicenseNumber: String
-            let instructorInitials: String
-            let signatureData: String
 
-            enum CodingKeys: String, CodingKey {
-                case instructorLicenseNumber = "instructor_license_number"
-                case instructorInitials = "instructor_initials"
-                case signatureData = "signature_data"
-            }
+        var body: [String: Any] = [:]
+        if savingInitials {
+            body["instructor_initials"] = (initials ?? "").trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
         }
-        var sigData = ""
-        if let b64 = signatureBase64, !b64.isEmpty {
-            sigData = "data:image/png;base64,\(b64)"
+        if savingSignature, let b64 = signatureBase64, !b64.isEmpty {
+            body["signature_data"] = "data:image/png;base64,\(b64)"
         }
+
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try? JSONEncoder().encode(Body(
-            instructorLicenseNumber: lic,
-            instructorInitials: initls,
-            signatureData: sigData
-        ))
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
         do {
             let (data, response) = try await URLSession.shared.data(for: req)
             let resp = try JSONDecoder().decode(InstructorProfileResponse.self, from: data)
             if let http = response as? HTTPURLResponse, http.statusCode >= 400 || !resp.ok {
-                error = resp.error ?? "Could not save profile (HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0))"
+                error = resp.error ?? "Could not save (HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0))"
                 return false
             }
             guard let p = resp.profile else {
@@ -157,8 +158,8 @@ final class InstructorProfileViewModel: ObservableObject {
     }
 
     private func applyProfile(_ p: InstructorProfilePayload) {
-        licenseNumber = p.licenseNumber ?? licenseNumber
         initials = p.initials ?? initials
+        highestLicense = p.highestLicense ?? p.licenseNumber ?? highestLicense
         signatureUrl = p.signatureUrl ?? ""
         signaturePath = p.signaturePath ?? ""
         readyForSignoff = p.readyForSignoff ?? false
@@ -248,7 +249,8 @@ private struct InstructorRemoteSignatureImage: View {
 
 struct InstructorProfileView: View {
     @StateObject private var vm = InstructorProfileViewModel()
-    @State private var canvasView = PKCanvasView()
+    @EnvironmentObject private var auth: AuthManager
+    @State private var signatureDrawing = PKDrawing()
     @State private var drewNewSignature = false
     @State private var showSignaturePad = false
     @State private var localSignaturePreview: UIImage?
@@ -263,23 +265,27 @@ struct InstructorProfileView: View {
     var body: some View {
         ZStack {
             colors.background.ignoresSafeArea()
-            if vm.isLoading && licenseEmpty {
+            if vm.isLoading && vm.initials.isEmpty && !hasSignatureOnFile {
                 ProgressView().tint(colors.amber)
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("License, initials, and signature are required before you can Pass or Retake jump sign-offs.")
+                        Text("Initials and signature for jump sign-offs. Set your highest USPA license (A–D) in Profile.")
                             .font(.system(size: 13))
                             .foregroundColor(colors.muted)
 
                         if vm.readyForSignoff {
-                            Label("Profile complete", systemImage: "checkmark.seal.fill")
+                            Label("Ready to sign off jumps", systemImage: "checkmark.seal.fill")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(colors.green)
+                        } else {
+                            Label("Incomplete — Pass/Retake blocked until Profile + instructor fields are done", systemImage: "exclamationmark.triangle.fill")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(colors.amber)
                         }
 
                         if vm.saved {
-                            Text("Profile saved.")
+                            Text("Saved.")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(colors.green)
                         }
@@ -290,17 +296,22 @@ struct InstructorProfileView: View {
                                 .foregroundColor(colors.danger)
                         }
 
-                        fieldBlock("Instructor license number *") {
-                            TextField("USPA instructor rating", text: $vm.licenseNumber)
-                                .textInputAutocapitalization(.characters)
-                                .autocorrectionDisabled()
-                                .padding(12)
-                                .background(colors.card2)
-                                .cornerRadius(8)
-                                .foregroundColor(colors.text)
+                        fieldBlock("Highest license (read-only)") {
+                            HStack {
+                                Text(vm.highestLicenseDisplay)
+                                    .font(.system(size: 22, weight: .black, design: .rounded))
+                                    .foregroundColor(colors.text)
+                                Spacer()
+                            }
+                            .padding(12)
+                            .background(colors.card2.opacity(0.65))
+                            .cornerRadius(8)
+                            Text("Set A–D in Profile → Highest USPA license. D is highest.")
+                                .font(.system(size: 11))
+                                .foregroundColor(colors.muted)
                         }
 
-                        fieldBlock("Instructor initials *") {
+                        fieldBlock("Instructor initials") {
                             TextField("e.g. SJ", text: $vm.initials)
                                 .textInputAutocapitalization(.characters)
                                 .autocorrectionDisabled()
@@ -309,6 +320,19 @@ struct InstructorProfileView: View {
                                 .cornerRadius(8)
                                 .foregroundColor(colors.text)
                                 .frame(maxWidth: 120)
+                            Button {
+                                Task { await saveInitialsOnly() }
+                            } label: {
+                                Text(vm.isSaving ? "Saving…" : "Save initials")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(colors.primary)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(10)
+                            }
+                            .disabled(vm.isSaving)
+                            .padding(.top, 4)
                         }
 
                         fieldBlock("Signature *") {
@@ -352,68 +376,49 @@ struct InstructorProfileView: View {
                             .buttonStyle(.plain)
                         }
 
-                        Button {
-                            Task { await saveProfileFromForm() }
-                        } label: {
-                            Text(vm.isSaving ? "Saving…" : "Save profile")
-                                .font(.system(size: 16, weight: .bold))
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(colors.primary)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
-                        }
-                        .disabled(vm.isSaving)
                     }
                     .padding(16)
                 }
             }
 
-            if showSignaturePad {
-                InstructorFullScreenSignatureView(
-                    canvasView: $canvasView,
-                    drewNewSignature: $drewNewSignature,
-                    localSignaturePreview: $localSignaturePreview,
-                    signatureCacheBuster: $signatureCacheBuster,
-                    vm: vm,
-                    onDismiss: { showSignaturePad = false }
-                )
-                .transition(.opacity)
-                .zIndex(1)
+        }
+        .fullScreenCover(isPresented: $showSignaturePad) {
+            InstructorFullScreenSignatureView(
+                signatureDrawing: $signatureDrawing,
+                drewNewSignature: $drewNewSignature,
+                localSignaturePreview: $localSignaturePreview,
+                signatureCacheBuster: $signatureCacheBuster,
+                vm: vm,
+                onDismiss: { showSignaturePad = false }
+            )
+        }
+        .onChange(of: showSignaturePad) { _, open in
+            if open {
+                signatureDrawing = PKDrawing()
+                drewNewSignature = false
+                localSignaturePreview = nil
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: showSignaturePad)
+        .onChange(of: signatureDrawing) { _, drawing in
+            drewNewSignature = !drawing.strokes.isEmpty
+        }
         .navigationTitle("Instructor Profile")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
         .task { await vm.load() }
+        .onAppear {
+            if let lic = auth.currentUser?.highestUsapLicense, !lic.isEmpty, vm.highestLicense.isEmpty {
+                vm.highestLicense = lic
+            }
+        }
     }
 
-    private func saveProfileFromForm() async {
-        var sigB64: String?
-        if drewNewSignature {
-            guard let img = localSignaturePreview ?? signatureImageFromCanvas(canvasView),
-                  let b64 = img.pngData()?.base64EncodedString() else {
-                vm.error = "Draw your signature on the pad."
-                return
-            }
-            sigB64 = b64
-        } else if !hasSignatureOnFile {
-            vm.error = "Add your signature first."
-            return
-        }
-        if await vm.save(signatureBase64: sigB64) {
-            drewNewSignature = false
-            if sigB64 != nil {
-                signatureCacheBuster += 1
-            }
+    private func saveInitialsOnly() async {
+        vm.saved = false
+        if await vm.save(initials: vm.initials) {
             await vm.load()
         }
-    }
-
-    private var licenseEmpty: Bool {
-        vm.licenseNumber.isEmpty && vm.initials.isEmpty && !hasSignatureOnFile
     }
 
     private func fieldBlock<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
@@ -434,7 +439,7 @@ struct InstructorProfileView: View {
 // MARK: - Full-screen signature pad (overlay — survives rotation)
 
 struct InstructorFullScreenSignatureView: View {
-    @Binding var canvasView: PKCanvasView
+    @Binding var signatureDrawing: PKDrawing
     @Binding var drewNewSignature: Bool
     @Binding var localSignaturePreview: UIImage?
     @Binding var signatureCacheBuster: Int
@@ -444,77 +449,96 @@ struct InstructorFullScreenSignatureView: View {
     @Environment(\.mdzColors) private var colors
     @State private var localError: String?
 
+    private func clearPad() {
+        signatureDrawing = PKDrawing()
+        drewNewSignature = false
+        localSignaturePreview = nil
+        localError = nil
+    }
+
     var body: some View {
         GeometryReader { geo in
             let isWide = geo.size.width > geo.size.height
 
-            ZStack {
-                colors.background.ignoresSafeArea()
-
-                VStack(spacing: 0) {
-                    HStack {
-                        Button("Cancel") { onDismiss() }
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(colors.amber)
-                        Spacer()
-                        Text("INSTRUCTOR SIGNATURE")
-                            .font(.system(size: 12, weight: .black))
-                            .foregroundColor(colors.muted)
-                            .tracking(1.2)
-                        Spacer()
-                        Button("Clear") {
-                            canvasView.drawing = PKDrawing()
-                            drewNewSignature = false
-                            localSignaturePreview = nil
-                            localError = nil
-                        }
+            VStack(spacing: 0) {
+                HStack {
+                    Button("Cancel") { onDismiss() }
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(colors.amber)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 14)
-                    .background(colors.navyMid)
+                    Spacer()
+                    Text("INSTRUCTOR SIGNATURE")
+                        .font(.system(size: 12, weight: .black))
+                        .foregroundColor(colors.muted)
+                        .tracking(1.2)
+                    Spacer()
+                    // Balance Cancel width
+                    Text("Cancel")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.clear)
+                        .accessibilityHidden(true)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 14)
+                .background(colors.navyMid)
 
-                    ZStack(alignment: .bottom) {
-                        Color.white
+                ZStack(alignment: .bottom) {
+                    Color.white
 
-                        InstructorSignaturePadRepresentable(canvas: $canvasView)
-                            .onChange(of: canvasView.drawing) { _, _ in
-                                drewNewSignature = !canvasView.drawing.bounds.isEmpty
-                                localError = nil
-                            }
-
-                        VStack(spacing: 8) {
-                            Text("Sign on the line")
-                                .font(.system(size: isWide ? 14 : 13, weight: .semibold))
-                                .foregroundColor(Color.black.opacity(0.45))
-                            Rectangle()
-                                .fill(Color.black.opacity(0.55))
-                                .frame(height: 2)
-                                .padding(.horizontal, isWide ? 48 : 28)
-                        }
-                        .padding(.bottom, isWide ? 36 : 28)
-                        .allowsHitTesting(false)
-                    }
+                    MDZSignaturePadRepresentable(
+                        drawing: $signatureDrawing,
+                        inkColor: .black,
+                        lineWidth: 5
+                    )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                    VStack(spacing: 10) {
-                        if let localError {
-                            Text(localError)
-                                .font(.system(size: 12))
-                                .foregroundColor(colors.danger)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        } else if let err = vm.error {
-                            Text(err)
-                                .font(.system(size: 12))
-                                .foregroundColor(colors.danger)
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(spacing: 8) {
+                        Text("Sign on the line")
+                            .font(.system(size: isWide ? 14 : 13, weight: .semibold))
+                            .foregroundColor(Color.black.opacity(0.5))
+                        Rectangle()
+                            .fill(Color.black)
+                            .frame(height: 2)
+                            .padding(.horizontal, isWide ? 48 : 28)
+                    }
+                    .padding(.bottom, isWide ? 40 : 32)
+                    .allowsHitTesting(false)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.white)
+
+                VStack(spacing: 12) {
+                    if let localError {
+                        Text(localError)
+                            .font(.system(size: 12))
+                            .foregroundColor(colors.danger)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else if let err = vm.error {
+                        Text(err)
+                            .font(.system(size: 12))
+                            .foregroundColor(colors.danger)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
+                    HStack(spacing: 12) {
+                        Button(action: clearPad) {
+                            Text("Clear")
+                                .font(.system(size: 17, weight: .bold))
+                                .foregroundColor(colors.text)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 52)
+                                .background(colors.card2)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .strokeBorder(colors.border, lineWidth: 1)
+                                )
                         }
+                        .disabled(vm.isSaving)
 
                         Button {
                             Task { await saveSignature() }
                         } label: {
-                            Text(vm.isSaving ? "Saving…" : "Save signature")
+                            Text(vm.isSaving ? "Saving…" : "Save")
                                 .font(.system(size: 17, weight: .bold))
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
@@ -524,31 +548,26 @@ struct InstructorFullScreenSignatureView: View {
                         }
                         .disabled(vm.isSaving)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 16)
-                    .background(colors.navyMid)
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, max(20, geo.safeAreaInsets.bottom + 8))
+                .background(colors.navyMid)
             }
+            .frame(width: geo.size.width, height: geo.size.height)
+            .background(colors.background)
         }
-        .ignoresSafeArea()
+        .onChange(of: signatureDrawing) { _, drawing in
+            drewNewSignature = !drawing.strokes.isEmpty
+            if drewNewSignature { localError = nil }
+        }
     }
 
     private func saveSignature() async {
         localError = nil
         vm.error = nil
 
-        let lic = vm.licenseNumber.trimmingCharacters(in: .whitespacesAndNewlines)
-        let initls = vm.initials.trimmingCharacters(in: .whitespacesAndNewlines)
-        if lic.isEmpty {
-            localError = "Enter your instructor license number on the profile screen first."
-            return
-        }
-        if initls.isEmpty {
-            localError = "Enter your instructor initials on the profile screen first."
-            return
-        }
-
-        guard let img = signatureImageFromCanvas(canvasView),
+        guard let img = signatureImageFromDrawing(signatureDrawing),
               let b64 = img.pngData()?.base64EncodedString() else {
             localError = "Draw your signature on the line."
             return
