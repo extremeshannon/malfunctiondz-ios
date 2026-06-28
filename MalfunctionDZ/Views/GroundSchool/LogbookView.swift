@@ -541,9 +541,10 @@ struct SignaturePadSheet: View {
     let entryId: Int
     @ObservedObject var vm: LogbookViewModel
     let onComplete: () -> Void
-    @State private var signatureDrawing = PKDrawing()
+    @State private var padVC: MDZSignaturePadViewController?
     @State private var errorMsg: String?
     @Environment(\.mdzColors) private var colors
+    private let logbookPaper = UIColor(red: 12 / 255, green: 29 / 255, blue: 53 / 255, alpha: 1)
     var body: some View {
         NavigationStack {
             ZStack {
@@ -552,13 +553,13 @@ struct SignaturePadSheet: View {
                     Text("Draw your signature below")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(colors.text)
-                    MDZSignaturePadRepresentable(
-                        drawing: $signatureDrawing,
-                        inkColor: .white
+                    MDZSignaturePadScreen(
+                        inkColor: .white,
+                        paperColor: logbookPaper,
+                        onPadReady: { padVC = $0 }
                     )
-                    .frame(height: 200)
+                    .frame(height: 220)
                     .frame(maxWidth: .infinity)
-                    .background(Color(red: 12/255, green: 29/255, blue: 53/255))
                     .cornerRadius(10)
                     .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
                     if let err = errorMsg {
@@ -578,14 +579,9 @@ struct SignaturePadSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         Task {
-                            let rect = signatureDrawing.bounds
-                            guard !rect.isEmpty else {
+                            guard let img = signatureImageFromPad(padVC),
+                                  let png = img.pngData() else {
                                 errorMsg = "Please draw your signature first"
-                                return
-                            }
-                            let img = signatureDrawing.image(from: rect, scale: 2)
-                            guard let png = img.pngData() else {
-                                errorMsg = "Could not capture signature"
                                 return
                             }
                             let base64 = png.base64EncodedString()

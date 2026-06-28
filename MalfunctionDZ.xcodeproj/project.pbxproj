@@ -211,12 +211,6 @@
 		ASC0PGRM2F60060100022704 /* PackerGearRoomBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */; };
 		ASC0PGRM2F60060100022705 /* PackerGearRoomBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */; };
 		ASC0PGRM2F60060100022706 /* PackerGearRoomBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */; };
-		MBR0PROF2F60090200022701 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
-		MBR0PROF2F60090200022702 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
-		MBR0PROF2F60090200022703 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
-		MBR0PROF2F60090200022704 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
-		MBR0PROF2F60090200022705 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
-		MBR0PROF2F60090200022706 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
 		ASC0PILOT2F60030100022701 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
 		ASC0PILOT2F60030100022702 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
 		ASC0PILOT2F60030100022703 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
@@ -495,6 +489,18 @@
 		FD856064C927134B63B883E1 /* LMSEditService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E032F56000100022763 /* LMSEditService.swift */; };
 		FE6736E5D629DA45AA58E2AF /* DzRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D332F54BB210227638 /* DzRigsView.swift */; };
 		FF7D8F2F65884ACFF3C3E4CF /* AppBranding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92015F7A280BD1AC6C2EEEAD /* AppBranding.swift */; };
+		MBR0PROF2F60090200022701 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
+		MBR0PROF2F60090200022702 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
+		MBR0PROF2F60090200022703 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
+		MBR0PROF2F60090200022704 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
+		MBR0PROF2F60090200022705 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
+		MBR0PROF2F60090200022706 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
+		MDZ0SIGN2F60100100022701 /* MDZSignaturePad.swift in Sources */ = {isa = PBXBuildFile; fileRef = MDZ0SIGN2F60100100022700 /* MDZSignaturePad.swift */; };
+		MDZ0SIGN2F60100100022702 /* MDZSignaturePad.swift in Sources */ = {isa = PBXBuildFile; fileRef = MDZ0SIGN2F60100100022700 /* MDZSignaturePad.swift */; };
+		MDZ0SIGN2F60100100022703 /* MDZSignaturePad.swift in Sources */ = {isa = PBXBuildFile; fileRef = MDZ0SIGN2F60100100022700 /* MDZSignaturePad.swift */; };
+		MDZ0SIGN2F60100100022704 /* MDZSignaturePad.swift in Sources */ = {isa = PBXBuildFile; fileRef = MDZ0SIGN2F60100100022700 /* MDZSignaturePad.swift */; };
+		MDZ0SIGN2F60100100022705 /* MDZSignaturePad.swift in Sources */ = {isa = PBXBuildFile; fileRef = MDZ0SIGN2F60100100022700 /* MDZSignaturePad.swift */; };
+		MDZ0SIGN2F60100100022706 /* MDZSignaturePad.swift in Sources */ = {isa = PBXBuildFile; fileRef = MDZ0SIGN2F60100100022700 /* MDZSignaturePad.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -519,7 +525,6 @@
 		ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCSkydiverHomeView.swift; sourceTree = "<group>"; };
 		ASC0PACK2F60050100022700 /* ASCPackersHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCPackersHomeView.swift; sourceTree = "<group>"; };
 		ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackerGearRoomBrowseView.swift; sourceTree = "<group>"; };
-		MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberProfileEditView.swift; sourceTree = "<group>"; };
 		ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCPilotHomeView.swift; sourceTree = "<group>"; };
 		ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackerSquawksView.swift; sourceTree = "<group>"; };
 		ASC0RSVM2F60080100022700 /* RigSquawksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigSquawksViewModel.swift; sourceTree = "<group>"; };
@@ -575,6 +580,7 @@
 		FB063E112F57000200022763 /* InstructorReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstructorReviewView.swift; sourceTree = "<group>"; };
 		FB063E132F57000300022763 /* JumpSignoffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JumpSignoffView.swift; sourceTree = "<group>"; };
 		FB063E152F57000400022763 /* InstructorProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstructorProfileView.swift; sourceTree = "<group>"; };
+		MDZ0SIGN2F60100100022700 /* MDZSignaturePad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDZSignaturePad.swift; sourceTree = "<group>"; };
 		FB063E172F57000500022763 /* InstructorDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstructorDashboardView.swift; sourceTree = "<group>"; };
 		FB063F012F56000200022763 /* CalendarModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarModels.swift; sourceTree = "<group>"; };
 		FB063F032F56000200022763 /* CalendarAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarAPIService.swift; sourceTree = "<group>"; };
@@ -599,6 +605,7 @@
 		FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroundSchoolViewModel.swift; sourceTree = "<group>"; };
 		FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotCurrencyCard.swift; sourceTree = "<group>"; };
 		FBFFF0E42F58BC1F009895AE /* MalfunctionDZ.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MalfunctionDZ.entitlements; sourceTree = "<group>"; };
+		MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberProfileEditView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -665,6 +672,7 @@
 				FB063E112F57000200022763 /* InstructorReviewView.swift */,
 				FB063E132F57000300022763 /* JumpSignoffView.swift */,
 				FB063E152F57000400022763 /* InstructorProfileView.swift */,
+				MDZ0SIGN2F60100100022700 /* MDZSignaturePad.swift */,
 				FB063E172F57000500022763 /* InstructorDashboardView.swift */,
 				FB063E052F56000100022763 /* LMSEditRootView.swift */,
 			);
@@ -1154,6 +1162,7 @@
 				B33ECA87DBDF5F1618D09070 /* InstructorReviewView.swift in Sources */,
 				0ECA334E4AD1641657CF681B /* JumpSignoffView.swift in Sources */,
 				C8D8D02A849D47D1A43A68BD /* InstructorProfileView.swift in Sources */,
+				MDZ0SIGN2F60100100022701 /* MDZSignaturePad.swift in Sources */,
 				EF7862787860DC0382A85F65 /* InstructorDashboardView.swift in Sources */,
 				72E64FF5BCD10FCA4E7DD078 /* PilotCurrencyCard.swift in Sources */,
 				9BF9449281DEC20CF1FFA9E5 /* PackerGearRoomRootView.swift in Sources */,
@@ -1240,6 +1249,7 @@
 				FBF4CB9A2FEE36F700D692CD /* InstructorReviewView.swift in Sources */,
 				FBF4CB9B2FEE36F700D692CD /* JumpSignoffView.swift in Sources */,
 				FBF4CB9C2FEE36F700D692CD /* InstructorProfileView.swift in Sources */,
+				MDZ0SIGN2F60100100022702 /* MDZSignaturePad.swift in Sources */,
 				FBF4CB9D2FEE36F700D692CD /* InstructorDashboardView.swift in Sources */,
 				FBF4CB9E2FEE36F700D692CD /* PilotCurrencyCard.swift in Sources */,
 				FBF4CB9F2FEE36F700D692CD /* PackerGearRoomRootView.swift in Sources */,
@@ -1326,6 +1336,7 @@
 				A1B2C3D42F57000200022763 /* InstructorReviewView.swift in Sources */,
 				B2C3D4E52F57000300022763 /* JumpSignoffView.swift in Sources */,
 				C3D4E5F62F57000400022763 /* InstructorProfileView.swift in Sources */,
+				MDZ0SIGN2F60100100022703 /* MDZSignaturePad.swift in Sources */,
 				E5F607182F57000500022763 /* InstructorDashboardView.swift in Sources */,
 				EABBC7036BAABDA0DD2634DC /* SkydiverLogbook.swift in Sources */,
 				D528A477893001F7E1EB2BBC /* LogbookViewModel.swift in Sources */,
@@ -1411,6 +1422,7 @@
 				1D590B71B49ABCF5B93D07BD /* InstructorReviewView.swift in Sources */,
 				FB154361CF2718ED11670914 /* JumpSignoffView.swift in Sources */,
 				F82061ED024339C4DC390357 /* InstructorProfileView.swift in Sources */,
+				MDZ0SIGN2F60100100022704 /* MDZSignaturePad.swift in Sources */,
 				7B366833FDF6A513FE1530CD /* InstructorDashboardView.swift in Sources */,
 				E81F815E333EEBA2237ACA6A /* PilotCurrencyCard.swift in Sources */,
 				DB6B5EAE60CAD6092BFEB899 /* PackerGearRoomRootView.swift in Sources */,
@@ -1495,6 +1507,7 @@
 				92FC2AD6513E16177BFB1AA7 /* InstructorReviewView.swift in Sources */,
 				613ECEEE4D612D805EBD63F8 /* JumpSignoffView.swift in Sources */,
 				218506BB3B9AFE8D57168C20 /* InstructorProfileView.swift in Sources */,
+				MDZ0SIGN2F60100100022705 /* MDZSignaturePad.swift in Sources */,
 				6DD199BF7C0183FF4DFF97AD /* InstructorDashboardView.swift in Sources */,
 				3256B9E768DA2746E2995B87 /* PilotCurrencyCard.swift in Sources */,
 				73049C306E645EA4C12D8DCC /* PackerGearRoomRootView.swift in Sources */,
@@ -1581,6 +1594,7 @@
 				FB063E122F57000200022763 /* InstructorReviewView.swift in Sources */,
 				FB063E142F57000300022763 /* JumpSignoffView.swift in Sources */,
 				D4E5F6072F57000400022763 /* InstructorProfileView.swift in Sources */,
+				MDZ0SIGN2F60100100022706 /* MDZSignaturePad.swift in Sources */,
 				F60718192F57000500022763 /* InstructorDashboardView.swift in Sources */,
 				FB063D202F54BB010227638 /* SkydiverLogbook.swift in Sources */,
 				FB063D212F54BB020227638 /* LogbookViewModel.swift in Sources */,
@@ -1820,7 +1834,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASC.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 19;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1857,7 +1871,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASC.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 19;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
