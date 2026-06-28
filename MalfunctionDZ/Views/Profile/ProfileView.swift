@@ -68,10 +68,16 @@ struct ProfileView: View {
                     }
                     .mdzContentCard(accent: colors.primary, glass: mountainTheme)
 
-                    if auth.currentUser?.isInstructorRole == true {
-                        HighestUsapLicenseSection()
-                            .mdzContentCard(accent: colors.accent, glass: mountainTheme)
+                    NavigationLink(destination: MemberProfileEditView()) {
+                        MDZNavRow(
+                            icon: "person.text.rectangle",
+                            title: "My Profile",
+                            subtitle: "Licenses, address, DOB, contact — same as web",
+                            accent: colors.primary
+                        )
                     }
+                    .buttonStyle(.plain)
+                    .mdzContentCard(accent: colors.primary, glass: mountainTheme)
 
                     if auth.currentUser?.isInstructorRole == true {
                         NavigationLink(destination: InstructorProfileView()) {
@@ -391,124 +397,5 @@ struct ApiBaseUrlSection: View {
         #else
         return "https://malfunctiondz.com (default)"
         #endif
-    }
-}
-
-// MARK: - Highest USPA license (A–D) — main profile, used for instructor sign-offs
-
-private struct HighestUsapLicenseSection: View {
-    @EnvironmentObject private var auth: AuthManager
-    @Environment(\.mdzColors) private var colors
-    @State private var selected: String = ""
-    @State private var isSaving = false
-    @State private var message: String?
-    @State private var isError = false
-
-    private let levels = ["A", "B", "C", "D"]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            MDZSectionLabel("HIGHEST USPA LICENSE", icon: "medal.fill")
-                .padding(.horizontal, 16)
-                .padding(.top, 14)
-
-            Text("A is lowest, D is highest. Required before you can Pass or Retake student jumps.")
-                .font(.system(size: 12))
-                .foregroundColor(colors.muted)
-                .padding(.horizontal, 16)
-
-            HStack(spacing: 8) {
-                ForEach(levels, id: \.self) { level in
-                    Button {
-                        selected = level
-                        message = nil
-                    } label: {
-                        Text(level)
-                            .font(.system(size: 18, weight: .black, design: .rounded))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44)
-                            .foregroundColor(selected == level ? .white : colors.text)
-                            .background(selected == level ? colors.accent : colors.card2)
-                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .strokeBorder(selected == level ? colors.accent : colors.border, lineWidth: 1)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, 16)
-
-            if let message {
-                Text(message)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(isError ? colors.danger : colors.green)
-                    .padding(.horizontal, 16)
-            }
-
-            Button {
-                Task { await save() }
-            } label: {
-                Text(isSaving ? "Saving…" : "Save highest license")
-                    .font(.system(size: 15, weight: .bold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(colors.primary)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-            }
-            .disabled(isSaving || selected.isEmpty)
-            .padding(.horizontal, 16)
-            .padding(.bottom, 14)
-        }
-        .onAppear { syncFromUser() }
-        .onChange(of: auth.currentUser?.highestUsapLicense) { _, _ in syncFromUser() }
-    }
-
-    private func syncFromUser() {
-        let lic = auth.currentUser?.highestUsapLicense?.uppercased() ?? ""
-        if levels.contains(lic) { selected = lic }
-    }
-
-    private func save() async {
-        guard !selected.isEmpty else { return }
-        isSaving = true
-        defer { isSaving = false }
-        message = nil
-        guard let token = KeychainHelper.readToken(),
-              let url = URL(string: "\(kServerURL)/api/me/profile.php") else {
-            message = "Not configured"
-            isError = true
-            return
-        }
-        var req = URLRequest(url: url)
-        req.httpMethod = "POST"
-        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try? JSONSerialization.data(withJSONObject: ["highest_uspa_license": selected])
-        do {
-            let (data, response) = try await URLSession.shared.data(for: req)
-            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-                message = "Could not save"
-                isError = true
-                return
-            }
-            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               json["ok"] as? Bool == true,
-               let uDict = json["user"] as? [String: Any],
-               let user = User(from: uDict) {
-                auth.currentUser = user
-                message = "Saved."
-                isError = false
-            } else {
-                await auth.refreshCurrentUser()
-                message = "Saved."
-                isError = false
-            }
-        } catch {
-            message = "Could not save"
-            isError = true
-        }
     }
 }

@@ -211,6 +211,12 @@
 		ASC0PGRM2F60060100022704 /* PackerGearRoomBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */; };
 		ASC0PGRM2F60060100022705 /* PackerGearRoomBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */; };
 		ASC0PGRM2F60060100022706 /* PackerGearRoomBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */; };
+		MBR0PROF2F60090200022701 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
+		MBR0PROF2F60090200022702 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
+		MBR0PROF2F60090200022703 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
+		MBR0PROF2F60090200022704 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
+		MBR0PROF2F60090200022705 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
+		MBR0PROF2F60090200022706 /* MemberProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */; };
 		ASC0PILOT2F60030100022701 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
 		ASC0PILOT2F60030100022702 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
 		ASC0PILOT2F60030100022703 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
@@ -513,6 +519,7 @@
 		ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCSkydiverHomeView.swift; sourceTree = "<group>"; };
 		ASC0PACK2F60050100022700 /* ASCPackersHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCPackersHomeView.swift; sourceTree = "<group>"; };
 		ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackerGearRoomBrowseView.swift; sourceTree = "<group>"; };
+		MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberProfileEditView.swift; sourceTree = "<group>"; };
 		ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCPilotHomeView.swift; sourceTree = "<group>"; };
 		ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackerSquawksView.swift; sourceTree = "<group>"; };
 		ASC0RSVM2F60080100022700 /* RigSquawksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigSquawksViewModel.swift; sourceTree = "<group>"; };
@@ -704,6 +711,7 @@
 			isa = PBXGroup;
 			children = (
 				FB063D0D2F52C9CE00227638 /* ProfileView.swift */,
+				MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */,
 			);
 			path = Profile;
 			sourceTree = "<group>";
@@ -1189,6 +1197,7 @@
 				0DA62E91C452009346441258 /* LoginView.swift in Sources */,
 				246D912E4E52E2DFAD795F47 /* HomeView.swift in Sources */,
 				BE0EC5A6275B54723D11F79D /* ProfileView.swift in Sources */,
+				MBR0PROF2F60090200022701 /* MemberProfileEditView.swift in Sources */,
 				B1C70CBFD278E5D44D09003D /* GroundSchoolView.swift in Sources */,
 				3AA04AC47E0F0E933AC2200E /* LMSEditModels.swift in Sources */,
 				C8F14996347330F25570B446 /* LMSEditService.swift in Sources */,
@@ -1274,6 +1283,7 @@
 				FBF4CBBE2FEE36F700D692CD /* LoginView.swift in Sources */,
 				FBF4CBBF2FEE36F700D692CD /* HomeView.swift in Sources */,
 				FBF4CBC02FEE36F700D692CD /* ProfileView.swift in Sources */,
+				MBR0PROF2F60090200022702 /* MemberProfileEditView.swift in Sources */,
 				FBF4CBC12FEE36F700D692CD /* GroundSchoolView.swift in Sources */,
 				FBF4CBC22FEE36F700D692CD /* LMSEditModels.swift in Sources */,
 				FBF4CBC32FEE36F700D692CD /* LMSEditService.swift in Sources */,
@@ -1369,6 +1379,7 @@
 				7CC98768114F6E4781539996 /* LoginView.swift in Sources */,
 				31416E09DFD57BBED348B649 /* HomeView.swift in Sources */,
 				36AC855C931997430E028A97 /* ProfileView.swift in Sources */,
+				MBR0PROF2F60090200022703 /* MemberProfileEditView.swift in Sources */,
 				2EB224C889AC7ACC2D9CFE8F /* GroundSchoolView.swift in Sources */,
 				464FC721722F3C327A3FBB2F /* UsersView.swift in Sources */,
 				4936B0B4AF6D76D7EBFEFC01 /* UserDetailView.swift in Sources */,
@@ -1455,6 +1466,7 @@
 				0E1BDCEB62F36D2B25B3D44E /* LoginView.swift in Sources */,
 				B6C711BCFD9013A30CAA81CE /* HomeView.swift in Sources */,
 				602B5A2445D8EE600367EC0D /* ProfileView.swift in Sources */,
+				MBR0PROF2F60090200022704 /* MemberProfileEditView.swift in Sources */,
 				D96343A7AB4C0AB0C860018C /* GroundSchoolView.swift in Sources */,
 				192AF3B87760A93B5AF75C8B /* LMSEditModels.swift in Sources */,
 				B4E01631730584E9A827D90C /* LMSEditService.swift in Sources */,
@@ -1526,6 +1538,7 @@
 				92A76EB6E15095D54326F7F9 /* LoginView.swift in Sources */,
 				746FB5C1D66A58D5997519FD /* HomeView.swift in Sources */,
 				88DC89F7BB3190BD745D3BBB /* ProfileView.swift in Sources */,
+				MBR0PROF2F60090200022705 /* MemberProfileEditView.swift in Sources */,
 				5E3FD08029F391D30E5E2C11 /* GroundSchoolView.swift in Sources */,
 				88726AB09AB2B5DF5498D431 /* LMSEditModels.swift in Sources */,
 				FD856064C927134B63B883E1 /* LMSEditService.swift in Sources */,
@@ -1624,6 +1637,7 @@
 				FB063CF82F52304F00227638 /* LoginView.swift in Sources */,
 				FB367DCF2F5201DB00FBAD05 /* HomeView.swift in Sources */,
 				FB063D0E2F52C9CE00227638 /* ProfileView.swift in Sources */,
+				MBR0PROF2F60090200022706 /* MemberProfileEditView.swift in Sources */,
 				FB063CE42F52191600227638 /* GroundSchoolView.swift in Sources */,
 				FB063D282F54BB100227638 /* UsersView.swift in Sources */,
 				FB063D2B2F54BB120227638 /* UserDetailView.swift in Sources */,
@@ -1806,7 +1820,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASC.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1843,7 +1857,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASC.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;

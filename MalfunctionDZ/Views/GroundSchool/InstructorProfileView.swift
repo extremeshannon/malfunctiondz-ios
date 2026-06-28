@@ -8,17 +8,29 @@ struct InstructorProfilePayload: Codable {
     let displayName: String?
     let licenseNumber: String?
     let highestLicense: String?
+    let highestLicenseNumber: String?
+    let highestLicenseDisplay: String?
+    let licenseA: String?
+    let licenseB: String?
+    let licenseC: String?
+    let licenseD: String?
     let initials: String?
     let signatureUrl: String?
     let signaturePath: String?
     let readyForSignoff: Bool?
 
     enum CodingKeys: String, CodingKey {
+        case licenseA = "license_a"
+        case licenseB = "license_b"
+        case licenseC = "license_c"
+        case licenseD = "license_d"
         case initials
         case userId = "user_id"
         case displayName = "display_name"
         case licenseNumber = "license_number"
         case highestLicense = "highest_license"
+        case highestLicenseNumber = "highest_license_number"
+        case highestLicenseDisplay = "highest_license_display"
         case signatureUrl = "signature_url"
         case signaturePath = "signature_path"
         case readyForSignoff = "ready_for_signoff"
@@ -59,6 +71,11 @@ func signatureImageFromDrawing(_ drawing: PKDrawing) -> UIImage? {
 final class InstructorProfileViewModel: ObservableObject {
     @Published var initials = ""
     @Published var highestLicense = ""
+    @Published var highestLicenseDisplay = "—"
+    @Published var licenseA = ""
+    @Published var licenseB = ""
+    @Published var licenseC = ""
+    @Published var licenseD = ""
     @Published var signatureUrl = ""
     @Published var signaturePath = ""
     @Published var readyForSignoff = false
@@ -73,9 +90,14 @@ final class InstructorProfileViewModel: ObservableObject {
         return signaturePath.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    var highestLicenseDisplay: String {
-        let v = highestLicense.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        return v.isEmpty ? "—" : v
+    var highestLicenseDisplayText: String {
+        let d = highestLicenseDisplay.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !d.isEmpty, d != "—" { return d }
+        if !licenseD.isEmpty { return "D · \(licenseD)" }
+        if !licenseC.isEmpty { return "C · \(licenseC)" }
+        if !licenseB.isEmpty { return "B · \(licenseB)" }
+        if !licenseA.isEmpty { return "A · \(licenseA)" }
+        return "—"
     }
 
     func load() async {
@@ -110,13 +132,6 @@ final class InstructorProfileViewModel: ObservableObject {
         guard savingInitials || savingSignature else {
             error = "Nothing to save."
             return false
-        }
-        if savingInitials {
-            let initls = (initials ?? "").trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-            if initls.isEmpty {
-                error = "Enter your instructor initials."
-                return false
-            }
         }
         isSaving = true
         defer { isSaving = false }
@@ -159,7 +174,16 @@ final class InstructorProfileViewModel: ObservableObject {
 
     private func applyProfile(_ p: InstructorProfilePayload) {
         initials = p.initials ?? initials
-        highestLicense = p.highestLicense ?? p.licenseNumber ?? highestLicense
+        highestLicense = p.highestLicense ?? highestLicense
+        licenseA = p.licenseA ?? licenseA
+        licenseB = p.licenseB ?? licenseB
+        licenseC = p.licenseC ?? licenseC
+        licenseD = p.licenseD ?? licenseD
+        if let disp = p.highestLicenseDisplay, !disp.isEmpty {
+            highestLicenseDisplay = disp
+        } else {
+            highestLicenseDisplay = highestLicenseDisplayText
+        }
         signatureUrl = p.signatureUrl ?? ""
         signaturePath = p.signaturePath ?? ""
         readyForSignoff = p.readyForSignoff ?? false
@@ -270,7 +294,7 @@ struct InstructorProfileView: View {
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("Initials and signature for jump sign-offs. Set your highest USPA license (A–D) in Profile.")
+                        Text("Your initials and signature for jump sign-offs. USPA licenses come from My Profile.")
                             .font(.system(size: 13))
                             .foregroundColor(colors.muted)
 
@@ -278,10 +302,6 @@ struct InstructorProfileView: View {
                             Label("Ready to sign off jumps", systemImage: "checkmark.seal.fill")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(colors.green)
-                        } else {
-                            Label("Incomplete — Pass/Retake blocked until Profile + instructor fields are done", systemImage: "exclamationmark.triangle.fill")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(colors.amber)
                         }
 
                         if vm.saved {
@@ -296,19 +316,26 @@ struct InstructorProfileView: View {
                                 .foregroundColor(colors.danger)
                         }
 
-                        fieldBlock("Highest license (read-only)") {
+                        fieldBlock("USPA licenses (from My Profile)") {
+                            licenseReadOnlyRow("A", value: vm.licenseA)
+                            licenseReadOnlyRow("B", value: vm.licenseB)
+                            licenseReadOnlyRow("C", value: vm.licenseC)
+                            licenseReadOnlyRow("D", value: vm.licenseD)
                             HStack {
-                                Text(vm.highestLicenseDisplay)
-                                    .font(.system(size: 22, weight: .black, design: .rounded))
-                                    .foregroundColor(colors.text)
+                                Text("Highest on file")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(colors.muted)
                                 Spacer()
+                                Text(vm.highestLicenseDisplayText)
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundColor(colors.text)
                             }
-                            .padding(12)
-                            .background(colors.card2.opacity(0.65))
-                            .cornerRadius(8)
-                            Text("Set A–D in Profile → Highest USPA license. D is highest.")
-                                .font(.system(size: 11))
-                                .foregroundColor(colors.muted)
+                            .padding(.top, 4)
+                            NavigationLink(destination: MemberProfileEditView()) {
+                                Text("Edit licenses in My Profile →")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(colors.amber)
+                            }
                         }
 
                         fieldBlock("Instructor initials") {
@@ -335,7 +362,7 @@ struct InstructorProfileView: View {
                             .padding(.top, 4)
                         }
 
-                        fieldBlock("Signature *") {
+                        fieldBlock("Signature") {
                             if hasSignatureOnFile {
                                 InstructorSignaturePreview(
                                     localImage: localSignaturePreview,
@@ -345,7 +372,7 @@ struct InstructorProfileView: View {
                             }
 
                             if drewNewSignature, localSignaturePreview == nil {
-                                Text("New signature captured — tap Save profile to upload.")
+                                Text("New signature captured — save from the signing pad.")
                                     .font(.system(size: 11))
                                     .foregroundColor(colors.green)
                             }
@@ -407,10 +434,17 @@ struct InstructorProfileView: View {
         .toolbarBackground(colors.navyMid, for: .navigationBar)
         .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
         .task { await vm.load() }
-        .onAppear {
-            if let lic = auth.currentUser?.highestUsapLicense, !lic.isEmpty, vm.highestLicense.isEmpty {
-                vm.highestLicense = lic
-            }
+    }
+
+    private func licenseReadOnlyRow(_ level: String, value: String) -> some View {
+        HStack {
+            Text("License \(level)")
+                .font(.system(size: 12))
+                .foregroundColor(colors.muted)
+            Spacer()
+            Text(value.isEmpty ? "—" : value)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(colors.text)
         }
     }
 
