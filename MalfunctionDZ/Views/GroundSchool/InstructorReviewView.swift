@@ -64,12 +64,18 @@ struct InstructorSignoffDetailResponse: Codable {
     let request: InstructorSignoffRequest?
     let studentProgressPct: Double?
     let moduleReview: InstructorModuleReview?
+    let instructorProfileReady: Bool?
+    let reviewChecklist: ReviewChecklistPayload?
+    let instructorReadinessStatement: String?
     let error: String?
 
     enum CodingKeys: String, CodingKey {
         case ok, request, error
         case studentProgressPct = "student_progress_pct"
         case moduleReview = "module_review"
+        case instructorProfileReady = "instructor_profile_ready"
+        case reviewChecklist = "review_checklist"
+        case instructorReadinessStatement = "instructor_readiness_statement"
     }
 }
 
@@ -180,6 +186,14 @@ struct InstructorQuizAttempt: Codable, Identifiable {
 struct SignoffResolveBody: Codable {
     let status: String
     let notes: String
+    let instructorReadyAck: Bool?
+    let reviewChecks: [String: String]?
+
+    enum CodingKeys: String, CodingKey {
+        case status, notes
+        case instructorReadyAck = "instructor_ready_ack"
+        case reviewChecks = "review_checks"
+    }
 }
 
 // MARK: - ViewModel
@@ -216,6 +230,8 @@ final class InstructorReviewDetailViewModel: ObservableObject {
     @Published var detail: InstructorSignoffDetailResponse?
     @Published var instructorNotes = ""
     @Published var attested = false
+    @Published var checklistState = ReviewChecklistState(checklist: nil)
+    @Published var instructorProfileReady = true
     @Published var showModuleReview = false
     @Published var isLoading = false
     @Published var isSubmitting = false
@@ -227,7 +243,13 @@ final class InstructorReviewDetailViewModel: ObservableObject {
     init(requestId: Int) { self.requestId = requestId }
 
     var canApprove: Bool {
-        attested && !instructorNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let notesOk = !instructorNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let ackOk = checklistState.ackRequired ? checklistState.instructorAck : attested
+        return instructorProfileReady && checklistState.allRequiredChecked && ackOk && notesOk
+    }
+
+    var canDeny: Bool {
+        !instructorNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     func load() async {
@@ -245,6 +267,15 @@ final class InstructorReviewDetailViewModel: ObservableObject {
                 return
             }
             detail = resp
+            instructorProfileReady = resp.instructorProfileReady ?? true
+            checklistState = ReviewChecklistState(
+                checklist: resp.reviewChecklist,
+                ackStatement: resp.instructorReadinessStatement ?? ""
+            )
+            // Legacy attestation card hidden when API provides readiness statement.
+            if checklistState.ackRequired {
+                attested = false
+            }
         } catch {
             self.error = "Could not load review details."
         }
@@ -252,9 +283,16 @@ final class InstructorReviewDetailViewModel: ObservableObject {
 
     func resolve(status: String) async -> Bool {
         let notes = instructorNotes.trimmingCharacters(in: .whitespacesAndNewlines)
-        if status == "approved" && !attested {
-            error = "Please confirm you have reviewed this module with the student."
-            return false
+        if status == "approved" {
+            if !instructorProfileReady {
+                error = "Complete your instructor profile (signature and license) before sign-off."
+                return false
+            }
+            let ackOk = checklistState.ackRequired ? checklistState.instructorAck : attested
+            if !checklistState.allRequiredChecked || !ackOk {
+                error = "Check every required item and confirm the instructor readiness statement."
+                return false
+            }
         }
         if (status == "approved" || status == "failed") && notes.isEmpty {
             error = "Instructor notes are required."
@@ -268,7 +306,13 @@ final class InstructorReviewDetailViewModel: ObservableObject {
         req.httpMethod = "POST"
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try? JSONEncoder().encode(SignoffResolveBody(status: status, notes: notes))
+        let body = SignoffResolveBody(
+            status: status,
+            notes: notes,
+            instructorReadyAck: status == "approved" && (checklistState.instructorAck || attested) ? true : nil,
+            reviewChecks: checklistState.reviewChecksPayload().isEmpty ? nil : checklistState.reviewChecksPayload()
+        )
+        req.httpBody = try? JSONEncoder().encode(body)
         do {
             let (data, _) = try await URLSession.shared.data(for: req)
             struct R: Codable { let ok: Bool; let error: String? }
@@ -495,7 +539,22 @@ struct InstructorReviewDetailView: View {
                         if let note = req.studentNote, !note.isEmpty {
                             studentNoteCard(note: note)
                         }
-                        attestationCard
+                        if vm.detail?.reviewChecklist != nil || vm.checklistState.ackRequired {
+                            ReviewChecklistView(state: vm.checklistState)
+                        } else {
+                            attestationCard
+                        }
+
+                        if !vm.instructorProfileReady {
+                            Text("Complete your instructor profile (USPA license, initials, signature) before approving.")
+                                .font(.system(size: 12))
+                                .foregroundColor(colors.amber)
+                                .padding(12)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(colors.card)
+                                .cornerRadius(10)
+                        }
+
                         notesCard
                         actionButtons
                         reviewModuleButton(mod: mod)
@@ -706,7 +765,7 @@ struct InstructorReviewDetailView: View {
                     .cornerRadius(10)
                     .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.danger.opacity(0.4)))
             }
-            .disabled(vm.isSubmitting || vm.instructorNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .disabled(vm.isSubmitting || !vm.canDeny)
         }
     }
 

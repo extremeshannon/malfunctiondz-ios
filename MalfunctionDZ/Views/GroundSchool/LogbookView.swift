@@ -1,7 +1,6 @@
 // File: ASC/Views/GroundSchool/LogbookView.swift
 // Purpose: Skydiver logbook — list of jumps, stats, detail view, signature capture.
 import SwiftUI
-import PencilKit
 import MalfunctionDZCore
 
 struct LogbookView: View {
@@ -541,10 +540,9 @@ struct SignaturePadSheet: View {
     let entryId: Int
     @ObservedObject var vm: LogbookViewModel
     let onComplete: () -> Void
-    @State private var padVC: MDZSignaturePadViewController?
+    @State private var strokes: [MDZSignatureStroke] = []
     @State private var errorMsg: String?
     @Environment(\.mdzColors) private var colors
-    private let logbookPaper = UIColor(red: 12 / 255, green: 29 / 255, blue: 53 / 255, alpha: 1)
     var body: some View {
         NavigationStack {
             ZStack {
@@ -553,10 +551,11 @@ struct SignaturePadSheet: View {
                     Text("Draw your signature below")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(colors.text)
-                    MDZSignaturePadScreen(
+                    MDZFingerSignaturePad(
+                        strokes: $strokes,
                         inkColor: .white,
-                        paperColor: logbookPaper,
-                        onPadReady: { padVC = $0 }
+                        lineWidth: 3,
+                        paperColor: Color(red: 12 / 255, green: 29 / 255, blue: 53 / 255)
                     )
                     .frame(height: 220)
                     .frame(maxWidth: .infinity)
@@ -571,6 +570,7 @@ struct SignaturePadSheet: View {
             }
             .navigationTitle("Sign")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear { strokes = [] }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { onComplete() }
@@ -579,7 +579,7 @@ struct SignaturePadSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         Task {
-                            guard let img = signatureImageFromPad(padVC),
+                            guard let img = signatureImageFromStrokes(strokes, ink: .white, lineWidth: 3),
                                   let png = img.pngData() else {
                                 errorMsg = "Please draw your signature first"
                                 return

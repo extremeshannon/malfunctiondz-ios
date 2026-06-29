@@ -1,6 +1,5 @@
 // Instructor profile — license, initials, and signature for logbook / progression sign-offs.
 import SwiftUI
-import PencilKit
 import MalfunctionDZCore
 
 struct InstructorProfilePayload: Codable {
@@ -58,13 +57,6 @@ enum InstructorProfileURL {
         }
         return URL(string: urlString)
     }
-}
-
-func signatureImageFromDrawing(_ drawing: PKDrawing) -> UIImage? {
-    let rect = drawing.bounds
-    guard !rect.isEmpty else { return nil }
-    let padded = rect.insetBy(dx: -24, dy: -16)
-    return drawing.image(from: padded, scale: 2)
 }
 
 @MainActor
@@ -407,19 +399,16 @@ struct InstructorProfileView: View {
                 }
             }
 
-            if showSignaturePad {
-                InstructorFullScreenSignatureView(
-                    drewNewSignature: $drewNewSignature,
-                    localSignaturePreview: $localSignaturePreview,
-                    signatureCacheBuster: $signatureCacheBuster,
-                    onSave: { b64 in await vm.save(signatureBase64: b64) },
-                    onDismiss: { showSignaturePad = false }
-                )
-                .transition(.opacity)
-                .zIndex(1)
-            }
         }
-        .animation(.easeInOut(duration: 0.2), value: showSignaturePad)
+        .fullScreenCover(isPresented: $showSignaturePad) {
+            InstructorFullScreenSignatureView(
+                drewNewSignature: $drewNewSignature,
+                localSignaturePreview: $localSignaturePreview,
+                signatureCacheBuster: $signatureCacheBuster,
+                onSave: { b64 in await vm.save(signatureBase64: b64) },
+                onDismiss: { showSignaturePad = false }
+            )
+        }
         .onChange(of: showSignaturePad) { _, open in
             if open {
                 drewNewSignature = false
@@ -479,94 +468,96 @@ struct InstructorFullScreenSignatureView: View {
     @Environment(\.mdzColors) private var colors
     @State private var localError: String?
     @State private var isSaving = false
-    @State private var padVC: MDZSignaturePadViewController?
+    @State private var strokes: [MDZSignatureStroke] = []
 
     private func clearPad() {
-        padVC?.clearDrawing()
+        MDZFingerSignaturePad.clear(&strokes)
         drewNewSignature = false
         localSignaturePreview = nil
         localError = nil
     }
 
     var body: some View {
-        ZStack {
-            colors.background.ignoresSafeArea()
+        VStack(spacing: 0) {
+            HStack {
+                Button("Cancel") { onDismiss() }
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(colors.amber)
 
-            VStack(spacing: 0) {
-                HStack {
-                    Button("Cancel") { onDismiss() }
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(colors.amber)
-                    Spacer()
-                    Text("INSTRUCTOR SIGNATURE")
-                        .font(.system(size: 12, weight: .black))
-                        .foregroundColor(colors.muted)
-                        .tracking(1.2)
-                    Spacer()
-                    Button("Clear") { clearPad() }
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(colors.amber)
+                Spacer()
+
+                Text("INSTRUCTOR SIGNATURE")
+                    .font(.system(size: 12, weight: .black))
+                    .foregroundColor(colors.muted)
+                    .tracking(1.2)
+
+                Spacer()
+
+                Button {
+                    Task { await saveSignature() }
+                } label: {
+                    Text(isSaving ? "Saving…" : "Save")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(colors.green)
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 14)
-                .background(colors.navyMid)
+                .disabled(isSaving)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 14)
+            .background(colors.navyMid)
 
-                ZStack(alignment: .bottom) {
-                    MDZSignaturePadScreen(
-                        inkColor: .black,
-                        lineWidth: 5,
-                        paperColor: .white,
-                        onDrawingChanged: {
-                            drewNewSignature = true
-                            localError = nil
-                        },
-                        onPadReady: { padVC = $0 }
-                    )
-
-                    VStack(spacing: 8) {
-                        Text("Sign on the line")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(Color.black.opacity(0.5))
-                        Rectangle()
-                            .fill(Color.black)
-                            .frame(height: 2)
-                            .padding(.horizontal, 28)
+            ZStack(alignment: .bottom) {
+                MDZFingerSignaturePad(
+                    strokes: $strokes,
+                    inkColor: .black,
+                    lineWidth: 4,
+                    paperColor: .white,
+                    onDrawingChanged: {
+                        drewNewSignature = true
+                        localError = nil
                     }
-                    .padding(.bottom, 32)
-                    .allowsHitTesting(false)
+                )
+
+                VStack(spacing: 8) {
+                    Text("Sign on the line")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Color.black.opacity(0.5))
+                    Rectangle()
+                        .fill(Color.black)
+                        .frame(height: 2)
+                        .padding(.horizontal, 28)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .layoutPriority(1)
-                .background(Color.white)
-
-                VStack(spacing: 12) {
-                    if let localError {
-                        Text(localError)
-                            .font(.system(size: 12))
-                            .foregroundColor(colors.danger)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-
-                    Button {
-                        Task { await saveSignature() }
-                    } label: {
-                        Text(isSaving ? "Saving…" : "Save signature")
-                            .font(.system(size: 17, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 52)
-                            .background(colors.green)
-                            .cornerRadius(12)
-                    }
-                    .disabled(isSaving)
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 16)
-                .background(colors.navyMid)
+                .padding(.bottom, 24)
+                .allowsHitTesting(false)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.white)
+
+            VStack(spacing: 10) {
+                if let localError {
+                    Text(localError)
+                        .font(.system(size: 12))
+                        .foregroundColor(colors.danger)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                Button("Clear signature") { clearPad() }
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(colors.amber)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 8)
+            .background(colors.navyMid)
         }
-        .ignoresSafeArea()
+        .background(colors.background)
+        .onAppear {
+            strokes = []
+            drewNewSignature = false
+            localError = nil
+        }
     }
 
     private func saveSignature() async {
@@ -574,7 +565,7 @@ struct InstructorFullScreenSignatureView: View {
         isSaving = true
         defer { isSaving = false }
 
-        guard let img = signatureImageFromPad(padVC),
+        guard let img = signatureImageFromStrokes(strokes),
               let b64 = img.pngData()?.base64EncodedString() else {
             localError = "Draw your signature on the line."
             return

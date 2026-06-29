@@ -2,6 +2,209 @@
 import SwiftUI
 import MalfunctionDZCore
 
+// MARK: - Review checklist (ASP jump / ground — matches web review_checklist JSON)
+
+struct ReviewChecklistItem: Codable, Identifiable, Hashable {
+    let label: String
+    let inputName: String
+    let required: Bool?
+    let prefix: String?
+    let fieldId: String?
+
+    var id: String { inputName }
+
+    enum CodingKeys: String, CodingKey {
+        case label, required, prefix
+        case inputName = "input_name"
+        case fieldId = "field_id"
+    }
+
+    var isRequired: Bool { required ?? true }
+}
+
+struct ReviewChecklistSection: Codable, Identifiable, Hashable {
+    let key: String?
+    let title: String?
+    let requiredItems: [ReviewChecklistItem]?
+    let openItems: [ReviewChecklistItem]?
+    let carryover: Bool?
+
+    var id: String { key ?? title ?? UUID().uuidString }
+
+    enum CodingKeys: String, CodingKey {
+        case key, title, carryover
+        case requiredItems = "required_items"
+        case openItems = "open_items"
+    }
+}
+
+struct ReviewChecklistPayload: Codable, Hashable {
+    let title: String?
+    let description: String?
+    let orderedSections: [ReviewChecklistSection]?
+
+    enum CodingKeys: String, CodingKey {
+        case title, description
+        case orderedSections = "ordered_sections"
+    }
+
+    var allRequiredInputNames: [String] {
+        guard let sections = orderedSections else { return [] }
+        return sections.flatMap { ($0.requiredItems ?? []).filter(\.isRequired).map(\.inputName) }
+    }
+}
+
+@MainActor
+final class ReviewChecklistState: ObservableObject {
+    @Published var checked: Set<String> = []
+    @Published var instructorAck = false
+
+    let checklist: ReviewChecklistPayload?
+    let ackStatement: String
+
+    init(checklist: ReviewChecklistPayload?, ackStatement: String = "") {
+        self.checklist = checklist
+        self.ackStatement = ackStatement
+    }
+
+    var hasChecklist: Bool {
+        guard let sections = checklist?.orderedSections else { return false }
+        return sections.contains { !($0.requiredItems ?? []).isEmpty || !($0.openItems ?? []).isEmpty }
+    }
+
+    var allRequiredChecked: Bool {
+        guard let names = checklist?.allRequiredInputNames, !names.isEmpty else { return true }
+        return names.allSatisfy { checked.contains($0) }
+    }
+
+    var ackRequired: Bool { !ackStatement.isEmpty }
+
+    var passReady: Bool { allRequiredChecked && (!ackRequired || instructorAck) }
+
+    func reviewChecksPayload() -> [String: String] {
+        var out: [String: String] = [:]
+        for name in checked { out[name] = "1" }
+        return out
+    }
+}
+
+struct ReviewChecklistView: View {
+    @ObservedObject var state: ReviewChecklistState
+    @Environment(\.mdzColors) private var colors
+
+    var body: some View {
+        if let checklist = state.checklist {
+            VStack(alignment: .leading, spacing: 14) {
+                if let title = checklist.title, !title.isEmpty {
+                    Text(title.uppercased())
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(colors.muted)
+                        .tracking(1)
+                }
+                if let desc = checklist.description, !desc.isEmpty {
+                    Text(desc)
+                        .font(.system(size: 12))
+                        .foregroundColor(colors.muted)
+                }
+                if state.hasChecklist {
+                    Text("All required items must be checked before Pass.")
+                        .font(.system(size: 11))
+                        .foregroundColor(colors.amber)
+                }
+                ForEach(checklist.orderedSections ?? []) { section in
+                    sectionBlock(section)
+                }
+                if state.ackRequired { ackBlock }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(colors.card)
+            .cornerRadius(12)
+        }
+    }
+
+    @ViewBuilder
+    private func sectionBlock(_ section: ReviewChecklistSection) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let title = section.title, !title.isEmpty {
+                Text(title)
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(colors.text)
+            }
+            if let required = section.requiredItems, !required.isEmpty {
+                Text("Required")
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundColor(colors.muted)
+                    .tracking(0.8)
+                ForEach(required) { item in checklistRow(item, required: true) }
+            }
+            if let open = section.openItems, !open.isEmpty {
+                Text("Not required")
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundColor(colors.muted)
+                    .tracking(0.8)
+                    .padding(.top, 4)
+                Text("Check only what the student completed on this jump.")
+                    .font(.system(size: 11))
+                    .foregroundColor(colors.muted)
+                ForEach(open) { item in checklistRow(item, required: false) }
+            }
+        }
+    }
+
+    private func checklistRow(_ item: ReviewChecklistItem, required: Bool) -> some View {
+        Button { toggle(item.inputName) } label: {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: state.checked.contains(item.inputName) ? "checkmark.square.fill" : "square")
+                    .font(.system(size: 20))
+                    .foregroundColor(state.checked.contains(item.inputName) ? colors.green : colors.muted)
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    if let prefix = item.prefix, !prefix.isEmpty {
+                        Text(prefix)
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(colors.amber)
+                    }
+                    Text(item.label)
+                        .font(.system(size: 14, weight: required ? .semibold : .regular))
+                        .foregroundColor(colors.text)
+                        .multilineTextAlignment(.leading)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 4)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var ackBlock: some View {
+        Button { state.instructorAck.toggle() } label: {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: state.instructorAck ? "checkmark.square.fill" : "square")
+                    .font(.system(size: 22))
+                    .foregroundColor(state.instructorAck ? colors.green : colors.muted)
+                Text(state.ackStatement)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(colors.text)
+                    .multilineTextAlignment(.leading)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(colors.card2)
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(state.instructorAck ? colors.green.opacity(0.5) : colors.border, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func toggle(_ name: String) {
+        if state.checked.contains(name) { state.checked.remove(name) }
+        else { state.checked.insert(name) }
+    }
+}
+
 // MARK: - Helpers
 
 func isJumpSignoffLessonTitle(_ title: String) -> Bool {
@@ -175,6 +378,8 @@ struct InstructorJumpReviewResponse: Codable {
     let aspJumpTypeLabel: String?
     let canResolve: Bool?
     let instructorProfileReady: Bool?
+    let reviewChecklist: ReviewChecklistPayload?
+    let instructorJumpSignoffStatement: String?
     let error: String?
 
     enum CodingKeys: String, CodingKey {
@@ -182,6 +387,8 @@ struct InstructorJumpReviewResponse: Codable {
         case aspJumpTypeLabel = "asp_jump_type_label"
         case canResolve = "can_resolve"
         case instructorProfileReady = "instructor_profile_ready"
+        case reviewChecklist = "review_checklist"
+        case instructorJumpSignoffStatement = "instructor_jump_signoff_statement"
     }
 }
 
@@ -650,9 +857,21 @@ final class InstructorJumpReviewViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var isSubmitting = false
     @Published var error: String?
+    @Published var checklistState = ReviewChecklistState(checklist: nil)
 
     let signoffId: Int
     init(signoffId: Int) { self.signoffId = signoffId }
+
+    var canPass: Bool {
+        guard detail?.instructorProfileReady != false else { return false }
+        let notesOk = !instructorNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        return notesOk && checklistState.passReady
+    }
+
+    var canRetake: Bool {
+        guard detail?.instructorProfileReady != false else { return false }
+        return !instructorNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     func load() async {
         isLoading = true
@@ -669,6 +888,10 @@ final class InstructorJumpReviewViewModel: ObservableObject {
                 return
             }
             detail = resp
+            checklistState = ReviewChecklistState(
+                checklist: resp.reviewChecklist,
+                ackStatement: resp.instructorJumpSignoffStatement ?? ""
+            )
         } catch {
             self.error = "Could not load jump review."
         }
@@ -680,16 +903,46 @@ final class InstructorJumpReviewViewModel: ObservableObject {
             error = "Instructor notes are required."
             return false
         }
+        if result == "pass" {
+            if detail?.instructorProfileReady == false {
+                error = "Complete jump sign-offs: USPA license (A–D) on your Profile, plus instructor initials and signature."
+                return false
+            }
+            if !checklistState.passReady {
+                error = "Check every required item and confirm the instructor statement before Pass."
+                return false
+            }
+        } else if detail?.instructorProfileReady == false {
+            error = "Complete jump sign-offs: USPA license (A–D) on your Profile, plus instructor initials and signature."
+            return false
+        }
         isSubmitting = true
         defer { isSubmitting = false }
         guard let token = KeychainHelper.readToken(),
               let url = URL(string: "\(kServerURL)/api/lms/instructor/jump-signoffs/\(signoffId)/resolve.php") else { return false }
-        struct Body: Codable { let result: String; let notes: String }
+        struct Body: Codable {
+            let result: String
+            let notes: String
+            let instructorJumpSignoffAck: Bool?
+            let reviewChecks: [String: String]?
+
+            enum CodingKeys: String, CodingKey {
+                case result, notes
+                case instructorJumpSignoffAck = "instructor_jump_signoff_ack"
+                case reviewChecks = "review_checks"
+            }
+        }
+        let body = Body(
+            result: result,
+            notes: notes,
+            instructorJumpSignoffAck: result == "pass" && checklistState.instructorAck ? true : nil,
+            reviewChecks: checklistState.reviewChecksPayload().isEmpty ? nil : checklistState.reviewChecksPayload()
+        )
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try? JSONEncoder().encode(Body(result: result, notes: notes))
+        req.httpBody = try? JSONEncoder().encode(body)
         do {
             let (data, _) = try await URLSession.shared.data(for: req)
             struct R: Codable { let ok: Bool; let error: String? }
@@ -746,22 +999,6 @@ struct InstructorJumpReviewDetailView: View {
                         .background(colors.card)
                         .cornerRadius(12)
 
-                        if vm.detail?.instructorProfileReady == false {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Complete jump sign-offs: USPA license (A–D) on your Profile, plus instructor initials and signature.")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(colors.amber)
-                                NavigationLink(destination: InstructorProfileView()) {
-                                    Text("Open instructor profile")
-                                        .font(.system(size: 13, weight: .semibold))
-                                        .foregroundColor(colors.primary)
-                                }
-                            }
-                            .padding(12)
-                            .background(colors.card)
-                            .cornerRadius(10)
-                        }
-
                         if let entry = vm.detail?.entry {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("LOGBOOK ENTRY")
@@ -794,6 +1031,26 @@ struct InstructorJumpReviewDetailView: View {
                                 .cornerRadius(12)
                         }
 
+                        if vm.detail?.reviewChecklist != nil {
+                            ReviewChecklistView(state: vm.checklistState)
+                        }
+
+                        if vm.detail?.instructorProfileReady == false {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Complete jump sign-offs: USPA license (A–D) on your Profile, plus instructor initials and signature.")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(colors.amber)
+                                NavigationLink(destination: InstructorProfileView()) {
+                                    Text("Open instructor profile")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(colors.primary)
+                                }
+                            }
+                            .padding(12)
+                            .background(colors.card)
+                            .cornerRadius(10)
+                        }
+
                         VStack(alignment: .leading, spacing: 8) {
                             Text("INSTRUCTOR NOTES")
                                 .font(.system(size: 10, weight: .black))
@@ -813,10 +1070,6 @@ struct InstructorJumpReviewDetailView: View {
                         if vm.detail?.canResolve == true {
                             HStack(spacing: 10) {
                                 Button {
-                                    guard vm.detail?.instructorProfileReady != false else {
-                                        vm.error = "Complete jump sign-offs: USPA license (A–D) on your Profile, plus instructor initials and signature."
-                                        return
-                                    }
                                     Task { if await vm.resolve(result: "pass") { dismiss() } }
                                 } label: {
                                     Text(vm.isSubmitting ? "Saving…" : "Pass")
@@ -824,28 +1077,24 @@ struct InstructorJumpReviewDetailView: View {
                                         .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
                                         .frame(height: 50)
-                                        .background(colors.green.opacity(vm.detail?.instructorProfileReady == false ? 0.45 : 1))
+                                        .background(colors.green.opacity(vm.canPass && !vm.isSubmitting ? 1 : 0.35))
                                         .cornerRadius(10)
                                 }
-                                .disabled(vm.isSubmitting)
+                                .disabled(vm.isSubmitting || !vm.canPass)
 
                                 Button {
-                                    guard vm.detail?.instructorProfileReady != false else {
-                                        vm.error = "Complete jump sign-offs: USPA license (A–D) on your Profile, plus instructor initials and signature."
-                                        return
-                                    }
                                     Task { if await vm.resolve(result: "retake") { dismiss() } }
                                 } label: {
                                     Text("Retake")
                                         .font(.system(size: 16, weight: .bold))
-                                        .foregroundColor(colors.danger.opacity(vm.detail?.instructorProfileReady == false ? 0.55 : 1))
+                                        .foregroundColor(colors.danger.opacity(vm.canRetake ? 1 : 0.55))
                                         .frame(maxWidth: .infinity)
                                         .frame(height: 50)
                                         .background(colors.card)
                                         .cornerRadius(10)
                                         .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.danger.opacity(0.4)))
                                 }
-                                .disabled(vm.isSubmitting)
+                                .disabled(vm.isSubmitting || !vm.canRetake)
                             }
                         }
                     }
@@ -888,6 +1137,8 @@ struct InstructorManageJumpSignoffResponse: Codable {
     let canFinalize: Bool?
     let priorRetakeNote: String?
     let instructorProfileReady: Bool?
+    let reviewChecklist: ReviewChecklistPayload?
+    let instructorJumpSignoffStatement: String?
     let error: String?
 
     enum CodingKeys: String, CodingKey {
@@ -900,6 +1151,8 @@ struct InstructorManageJumpSignoffResponse: Codable {
         case canFinalize = "can_finalize"
         case priorRetakeNote = "prior_retake_note"
         case instructorProfileReady = "instructor_profile_ready"
+        case reviewChecklist = "review_checklist"
+        case instructorJumpSignoffStatement = "instructor_jump_signoff_statement"
     }
 }
 
@@ -929,6 +1182,7 @@ final class InstructorStudentJumpSignoffViewModel: ObservableObject {
     @Published var freefallSeconds = ""
     @Published var notes = ""
     @Published var studentNote = ""
+    @Published var checklistState = ReviewChecklistState(checklist: nil)
 
     let studentId: Int
     let lessonId: Int
@@ -941,6 +1195,24 @@ final class InstructorStudentJumpSignoffViewModel: ObservableObject {
     }
 
     var isEditable: Bool { canFinalize && status != "passed" }
+
+    var logbookValid: Bool {
+        !equipment.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !jumpDate.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    var canPass: Bool {
+        instructorProfileReady
+            && logbookValid
+            && !instructorNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && checklistState.passReady
+    }
+
+    var canRetake: Bool {
+        instructorProfileReady
+            && logbookValid
+            && !instructorNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     func load() async {
         isLoading = true
@@ -978,6 +1250,10 @@ final class InstructorStudentJumpSignoffViewModel: ObservableObject {
             } else {
                 instructorNotes = ""
             }
+            checklistState = ReviewChecklistState(
+                checklist: decoded.reviewChecklist,
+                ackStatement: decoded.instructorJumpSignoffStatement ?? ""
+            )
             applyForm(form)
         } catch {
             self.error = "Could not load jump sign-off."
@@ -1003,8 +1279,21 @@ final class InstructorStudentJumpSignoffViewModel: ObservableObject {
             error = "Instructor notes are required."
             return false
         }
-        if equipment.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            error = "Select equipment."
+        if !logbookValid {
+            error = "Complete logbook fields (equipment, date, etc.)."
+            return false
+        }
+        if result == "pass" {
+            if !instructorProfileReady {
+                error = "Complete jump sign-offs: USPA license (A–D) on your Profile, plus instructor initials and signature."
+                return false
+            }
+            if !checklistState.passReady {
+                error = "Check every required item and confirm the instructor statement before Pass."
+                return false
+            }
+        } else if !instructorProfileReady {
+            error = "Complete jump sign-offs: USPA license (A–D) on your Profile, plus instructor initials and signature."
             return false
         }
         isSubmitting = true
@@ -1028,6 +1317,8 @@ final class InstructorStudentJumpSignoffViewModel: ObservableObject {
             let equipment: String
             let notes: String
             let studentNote: String
+            let instructorJumpSignoffAck: Bool?
+            let reviewChecks: [String: String]?
 
             enum CodingKeys: String, CodingKey {
                 case result, notes, equipment
@@ -1043,6 +1334,8 @@ final class InstructorStudentJumpSignoffViewModel: ObservableObject {
                 case jumpNumber = "jump_number"
                 case freefallSeconds = "freefall_seconds"
                 case studentNote = "student_note"
+                case instructorJumpSignoffAck = "instructor_jump_signoff_ack"
+                case reviewChecks = "review_checks"
             }
         }
 
@@ -1061,7 +1354,9 @@ final class InstructorStudentJumpSignoffViewModel: ObservableObject {
             freefallSeconds: Int(freefallSeconds),
             equipment: equipment,
             notes: notes,
-            studentNote: studentNote
+            studentNote: studentNote,
+            instructorJumpSignoffAck: result == "pass" && checklistState.instructorAck ? true : nil,
+            reviewChecks: checklistState.reviewChecksPayload().isEmpty ? nil : checklistState.reviewChecksPayload()
         )
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
@@ -1193,6 +1488,10 @@ struct InstructorStudentJumpSignoffView: View {
 
             InstructorJumpFormFields(vm: vm)
 
+            if vm.checklistState.hasChecklist || vm.checklistState.ackRequired {
+                ReviewChecklistView(state: vm.checklistState)
+            }
+
             VStack(alignment: .leading, spacing: 6) {
                 Text("INSTRUCTOR NOTES")
                     .font(.system(size: 10, weight: .black))
@@ -1277,10 +1576,6 @@ struct InstructorStudentJumpSignoffView: View {
             }
             HStack(spacing: 12) {
                 Button {
-                    guard vm.instructorProfileReady else {
-                        vm.error = "Complete jump sign-offs: USPA license (A–D) on your Profile, plus instructor initials and signature."
-                        return
-                    }
                     Task { if await vm.finalize(result: "pass") { dismiss() } }
                 } label: {
                     Text(vm.isSubmitting ? "Saving…" : "Pass")
@@ -1288,28 +1583,24 @@ struct InstructorStudentJumpSignoffView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(colors.green.opacity(vm.instructorProfileReady ? 1 : 0.45))
+                        .background(colors.green.opacity(vm.canPass && !vm.isSubmitting ? 1 : 0.35))
                         .cornerRadius(12)
                 }
-                .disabled(vm.isSubmitting)
+                .disabled(vm.isSubmitting || !vm.canPass)
 
                 Button {
-                    guard vm.instructorProfileReady else {
-                        vm.error = "Complete jump sign-offs: USPA license (A–D) on your Profile, plus instructor initials and signature."
-                        return
-                    }
                     Task { _ = await vm.finalize(result: "retake") }
                 } label: {
                     Text("Retake")
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(colors.danger.opacity(vm.instructorProfileReady ? 1 : 0.55))
+                        .foregroundColor(colors.danger.opacity(vm.canRetake ? 1 : 0.55))
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
                         .background(colors.card)
                         .cornerRadius(12)
-                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.danger.opacity(vm.instructorProfileReady ? 0.45 : 0.2), lineWidth: 1.5))
+                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.danger.opacity(vm.canRetake ? 0.45 : 0.2), lineWidth: 1.5))
                 }
-                .disabled(vm.isSubmitting)
+                .disabled(vm.isSubmitting || !vm.canRetake)
             }
         }
     }
