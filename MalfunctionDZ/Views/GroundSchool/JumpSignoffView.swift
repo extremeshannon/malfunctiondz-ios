@@ -10,16 +10,26 @@ struct ReviewChecklistItem: Codable, Identifiable, Hashable {
     let required: Bool?
     let prefix: String?
     let fieldId: String?
+    let incrementalBox: Bool?
+    let checkboxBox: String?
+    let alreadyComplete: Bool?
+    let locked: Bool?
+    let signedByInitials: String?
 
     var id: String { inputName }
 
     enum CodingKeys: String, CodingKey {
-        case label, required, prefix
+        case label, required, prefix, locked
         case inputName = "input_name"
         case fieldId = "field_id"
+        case incrementalBox = "incremental_box"
+        case checkboxBox = "checkbox_box"
+        case alreadyComplete = "already_complete"
+        case signedByInitials = "signed_by_initials"
     }
 
     var isRequired: Bool { required ?? true }
+    var isInteractive: Bool { !(alreadyComplete ?? false) && !(locked ?? false) }
 }
 
 struct ReviewChecklistSection: Codable, Identifiable, Hashable {
@@ -27,7 +37,9 @@ struct ReviewChecklistSection: Codable, Identifiable, Hashable {
     let title: String?
     let requiredItems: [ReviewChecklistItem]?
     let openItems: [ReviewChecklistItem]?
+    let maneuverItems: [ReviewChecklistItem]?
     let carryover: Bool?
+    let incrementalTable: Bool?
 
     var id: String { key ?? title ?? UUID().uuidString }
 
@@ -35,6 +47,8 @@ struct ReviewChecklistSection: Codable, Identifiable, Hashable {
         case key, title, carryover
         case requiredItems = "required_items"
         case openItems = "open_items"
+        case maneuverItems = "maneuver_items"
+        case incrementalTable = "incremental_table"
     }
 }
 
@@ -42,15 +56,22 @@ struct ReviewChecklistPayload: Codable, Hashable {
     let title: String?
     let description: String?
     let orderedSections: [ReviewChecklistSection]?
+    let incrementalManeuverMode: Bool?
 
     enum CodingKeys: String, CodingKey {
         case title, description
         case orderedSections = "ordered_sections"
+        case incrementalManeuverMode = "incremental_maneuver_mode"
     }
 
     var allRequiredInputNames: [String] {
         guard let sections = orderedSections else { return [] }
-        return sections.flatMap { ($0.requiredItems ?? []).filter(\.isRequired).map(\.inputName) }
+        return sections.flatMap { section in
+            let pools = [section.requiredItems, section.maneuverItems].compactMap { $0 }
+            return pools.flatMap { items in
+                items.filter { $0.isRequired && $0.isInteractive }.map(\.inputName)
+            }
+        }
     }
 }
 
@@ -131,12 +152,16 @@ struct ReviewChecklistView: View {
                     .font(.system(size: 13, weight: .bold))
                     .foregroundColor(colors.text)
             }
-            if let required = section.requiredItems, !required.isEmpty {
-                Text("Required")
-                    .font(.system(size: 10, weight: .black))
-                    .foregroundColor(colors.muted)
-                    .tracking(0.8)
-                ForEach(required) { item in checklistRow(item, required: true) }
+            if section.incrementalTable == true || !(section.maneuverItems ?? []).isEmpty {
+                incrementalTable(section.maneuverItems ?? section.requiredItems ?? [])
+            } else {
+                if let required = section.requiredItems, !required.isEmpty {
+                    Text("Required")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(colors.muted)
+                        .tracking(0.8)
+                    ForEach(required) { item in checklistRow(item, required: true) }
+                }
             }
             if let open = section.openItems, !open.isEmpty {
                 Text("Not required")
@@ -152,12 +177,60 @@ struct ReviewChecklistView: View {
         }
     }
 
+    private func incrementalTable(_ items: [ReviewChecklistItem]) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(items) { item in
+                if item.alreadyComplete == true {
+                    HStack(spacing: 10) {
+                        Text(item.checkboxBox ?? "✓")
+                            .font(.system(size: 13, weight: .black))
+                            .foregroundColor(colors.green)
+                            .frame(width: 28, height: 28)
+                            .background(colors.green.opacity(0.15))
+                            .cornerRadius(6)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.label)
+                                .font(.system(size: 14))
+                                .foregroundColor(colors.muted)
+                            if let initl = item.signedByInitials, !initl.isEmpty {
+                                Text("Signed \(initl)")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(colors.green)
+                            }
+                        }
+                        Spacer()
+                        Image(systemName: "checkmark")
+                            .foregroundColor(colors.green)
+                    }
+                    .padding(.vertical, 4)
+                } else {
+                    checklistRow(item, required: item.isRequired)
+                }
+            }
+        }
+    }
+
     private func checklistRow(_ item: ReviewChecklistItem, required: Bool) -> some View {
-        Button { toggle(item.inputName) } label: {
+        let done = state.checked.contains(item.inputName)
+        let disabled = !item.isInteractive
+        return Button {
+            guard item.isInteractive else { return }
+            toggle(item.inputName)
+        } label: {
             HStack(alignment: .top, spacing: 10) {
-                Image(systemName: state.checked.contains(item.inputName) ? "checkmark.square.fill" : "square")
-                    .font(.system(size: 20))
-                    .foregroundColor(state.checked.contains(item.inputName) ? colors.green : colors.muted)
+                if let box = item.checkboxBox, item.incrementalBox == true {
+                    Text(box)
+                        .font(.system(size: 13, weight: .black))
+                        .foregroundColor(done ? colors.green : (disabled ? colors.muted.opacity(0.5) : colors.text))
+                        .frame(width: 28, height: 28)
+                        .background((done ? colors.green : colors.card2).opacity(done ? 0.2 : 1))
+                        .cornerRadius(6)
+                        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(done ? colors.green : colors.border))
+                } else {
+                    Image(systemName: done ? "checkmark.square.fill" : "square")
+                        .font(.system(size: 20))
+                        .foregroundColor(done ? colors.green : (disabled ? colors.muted.opacity(0.4) : colors.muted))
+                }
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     if let prefix = item.prefix, !prefix.isEmpty {
                         Text(prefix)
@@ -166,14 +239,16 @@ struct ReviewChecklistView: View {
                     }
                     Text(item.label)
                         .font(.system(size: 14, weight: required ? .semibold : .regular))
-                        .foregroundColor(colors.text)
+                        .foregroundColor(disabled ? colors.muted : colors.text)
                         .multilineTextAlignment(.leading)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 4)
+            .opacity(disabled ? 0.55 : 1)
         }
         .buttonStyle(.plain)
+        .disabled(disabled)
     }
 
     private var ackBlock: some View {

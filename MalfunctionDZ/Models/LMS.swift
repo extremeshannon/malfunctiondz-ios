@@ -144,6 +144,40 @@ struct LMSModule: Codable, Identifiable, Hashable {
     var lessonsComplete: Bool {
         lessonCount > 0 && completedCount >= lessonCount
     }
+
+    var isReadingAssignmentsModule: Bool {
+        title.trimmingCharacters(in: .whitespacesAndNewlines) == "Reading Assignments"
+    }
+}
+
+// MARK: - Reading assignment helpers
+
+enum ReadingAssignmentHelper {
+    private static let hints: [String: String] = [
+        "A": "Complete Tandem 1 first",
+        "B": "Complete Tandem 2 first",
+        "C": "Pass Level 2 first",
+        "D": "Pass Level 3 first (available before Level 4)",
+        "E": "Pass Level 5 first (available before Level 6)",
+        "F": "Pass Level 7 first (available before Level 8)",
+        "G": "Pass Level 9 first (available before Level 10)",
+        "H": "Pass Level 12 first (available before Level 13)",
+    ]
+
+    static func letter(fromLessonTitle title: String) -> String? {
+        let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        for letter in hints.keys.sorted() {
+            if t == "Category \(letter) Reading" { return letter }
+        }
+        return nil
+    }
+
+    static func lockHint(forLessonTitle title: String, serverReason: String?) -> String? {
+        if let letter = letter(fromLessonTitle: title), let hint = hints[letter] {
+            return hint
+        }
+        return serverReason
+    }
 }
 
 // MARK: - Module Unlock Status

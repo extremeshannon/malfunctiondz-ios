@@ -230,9 +230,10 @@ struct ALicenseProgressView: View {
                 }
                 HStack(spacing: 12) {
                     if let c = row.coach, !c.isEmpty {
-                        initialsPill(label: "Coach", value: c)
+                        let readSim = row.label.lowercased().contains("read sim")
+                        initialsPill(label: readSim ? "Student" : "Coach", value: c)
                     }
-                    if let i = row.instructor, !i.isEmpty {
+                    if let i = row.instructor, !i.isEmpty, !row.label.lowercased().contains("read sim") {
                         initialsPill(label: "I", value: i)
                     }
                 }
@@ -251,7 +252,8 @@ struct ALicenseProgressView: View {
                     .font(.subheadline)
                     .foregroundColor(colors.text)
                 if let val = field.value?.displayText, !val.isEmpty {
-                    Text(field.prefix == "I" ? "I \(val)" : val)
+                    let readSim = field.label.lowercased().contains("read sim")
+                    Text(readSim ? val : (field.prefix == "I" ? "I \(val)" : val))
                         .font(.caption.weight(.medium))
                         .foregroundColor(colors.muted)
                 }

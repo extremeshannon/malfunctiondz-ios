@@ -12,6 +12,7 @@ struct InstructorDashboardResponse: Codable {
     let progressionForms: [InstructorProgressionRow]?
     let enrolledStudents: [InstructorEnrolledStudentRow]?
     let myCourses: [InstructorDashboardCourseRef]?
+    let oralExamReady: [OralExamReadyRow]?
     let error: String?
 
     enum CodingKeys: String, CodingKey {
@@ -21,6 +22,7 @@ struct InstructorDashboardResponse: Codable {
         case progressionForms = "progression_forms"
         case enrolledStudents = "enrolled_students"
         case myCourses = "my_courses"
+        case oralExamReady = "oral_exam_ready"
     }
 }
 
@@ -28,6 +30,7 @@ struct InstructorDashboardStats: Codable {
     let readyForReview: Int?
     let progressionFormComplete: Int?
     let jumpReadyStudents: Int?
+    let oralExamReady: Int?
     let studentsWithEnrollments: Int?
     let activeCourses: Int?
 
@@ -35,6 +38,7 @@ struct InstructorDashboardStats: Codable {
         case readyForReview = "ready_for_review"
         case progressionFormComplete = "progression_form_complete"
         case jumpReadyStudents = "jump_ready_students"
+        case oralExamReady = "oral_exam_ready"
         case studentsWithEnrollments = "students_with_enrollments"
         case activeCourses = "active_courses"
     }
@@ -128,6 +132,7 @@ final class InstructorDashboardViewModel: ObservableObject {
         readyForReview: 0,
         progressionFormComplete: 0,
         jumpReadyStudents: 0,
+        oralExamReady: 0,
         studentsWithEnrollments: 0,
         activeCourses: 0
     )
@@ -136,6 +141,7 @@ final class InstructorDashboardViewModel: ObservableObject {
     @Published var progressionForms: [InstructorProgressionRow] = []
     @Published var enrolledStudents: [InstructorEnrolledStudentRow] = []
     @Published var myCourseRefs: [InstructorDashboardCourseRef] = []
+    @Published var oralExamReady: [OralExamReadyRow] = []
     @Published var isLoading = false
     @Published var error: String?
 
@@ -167,6 +173,7 @@ final class InstructorDashboardViewModel: ObservableObject {
             progressionForms = resp.progressionForms ?? []
             enrolledStudents = resp.enrolledStudents ?? []
             myCourseRefs = resp.myCourses ?? []
+            oralExamReady = resp.oralExamReady ?? []
             error = nil
         } catch {
             guard !Task.isCancelled else { return }
@@ -232,6 +239,13 @@ struct InstructorDashboardView: View {
                                     .foregroundColor(colors.danger)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.horizontal, 16)
+                            }
+                            sectionNavLink(
+                                title: "Oral Exam Ready",
+                                subtitle: "A-License oral exam — 24 correct to pass",
+                                count: dashVm.oralExamReady.count
+                            ) {
+                                InstructorOralExamListView(items: dashVm.oralExamReady)
                             }
                             sectionNavLink(
                                 title: "Ready for Review",

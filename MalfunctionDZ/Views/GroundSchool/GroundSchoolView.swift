@@ -531,12 +531,20 @@ struct CourseDetailView: View {
         liveCourse.modules.filter { !$0.isLocked }
     }
 
+    private var readingAssignmentsModule: LMSModule? {
+        accessibleModules.first(where: \.isReadingAssignmentsModule)
+    }
+
+    private var trainingModules: [LMSModule] {
+        accessibleModules.filter { !$0.isReadingAssignmentsModule }
+    }
+
     private var currentModule: LMSModule? {
-        accessibleModules.first(where: { !$0.isComplete })
+        trainingModules.first(where: { !$0.isComplete })
     }
 
     private var completedModules: [LMSModule] {
-        accessibleModules.filter(\.isComplete)
+        trainingModules.filter(\.isComplete)
     }
 
     private var currentModuleQuizzes: [LMSQuizSummary] {
@@ -552,6 +560,36 @@ struct CourseDetailView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
                         courseHeaderCard
+
+                        if let reading = readingAssignmentsModule {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("READING ASSIGNMENTS")
+                                    .font(.system(size: 10, weight: .black))
+                                    .foregroundColor(colors.primary)
+                                    .tracking(2)
+                                Text("Complete each category reading before training — signs Read SIM on your A-card.")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(colors.muted)
+                                ModuleSection(
+                                    module: reading,
+                                    courseId: liveCourse.id,
+                                    isExpanded: expandedModules.contains(reading.id) || !reading.isComplete,
+                                    pinsOpen: false,
+                                    moduleQuizzes: [],
+                                    vm: vm,
+                                    onToggle: { toggleModule(reading.id) },
+                                    onSelectLesson: { lesson in
+                                        lessonNav = LessonNavItem(
+                                            lessonId: lesson.id,
+                                            lessonTitle: lesson.title,
+                                            courseId: liveCourse.id,
+                                            moduleId: reading.id,
+                                            allLessons: reading.lessons
+                                        )
+                                    }
+                                )
+                            }
+                        }
 
                         if let current = currentModule {
                             VStack(alignment: .leading, spacing: 8) {
@@ -1028,7 +1066,10 @@ struct LessonRow: View {
                     .font(.system(size: 13, weight: lesson.completed ? .medium : .regular))
                     .foregroundColor(lesson.isLocked ? colors.muted : colors.text)
                     .multilineTextAlignment(.leading)
-                if lesson.isLocked, let reason = lesson.lockReason, !reason.isEmpty {
+                if lesson.isLocked, let reason = ReadingAssignmentHelper.lockHint(
+                    forLessonTitle: lesson.title,
+                    serverReason: lesson.lockReason
+                ), !reason.isEmpty {
                     Text(reason)
                         .font(.system(size: 11))
                         .foregroundColor(colors.muted)
