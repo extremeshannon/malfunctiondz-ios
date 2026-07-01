@@ -54,17 +54,20 @@ struct QuizLaunchCard: View {
             }
 
             // ── Title ────────────────────────────────────
-            Text(title)
-                .font(.system(size: 15, weight: .bold))
-                .foregroundColor(isUnlocked ? colors.text : colors.muted)
+            QuizRichText(
+                html: title,
+                fontSize: 16,
+                weight: .bold,
+                color: isUnlocked ? colors.text : colors.muted
+            )
 
             // ── Meta ─────────────────────────────────────
             HStack(spacing: 16) {
-                Label("\(questionCount) questions", systemImage: "questionmark.circle")
-                    .font(.system(size: 12))
+                Label("\(questionCount) questions", systemImage: "list.number")
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundColor(colors.muted)
-                Label("Pass: \(Int(passPercentage))%", systemImage: "checkmark.shield")
-                    .font(.system(size: 12))
+                Label("Pass \(Int(passPercentage))%", systemImage: "checkmark.shield.fill")
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundColor(colors.muted)
             }
 
@@ -113,19 +116,26 @@ struct QuizLaunchCard: View {
         }
         .padding(16)
         .background(colors.card)
-        .cornerRadius(12)
+        .cornerRadius(14)
+        .overlay(alignment: .top) {
+            LinearGradient(
+                colors: [Color(red: 0.75, green: 0.12, blue: 0.18), .white, Color(red: 0.12, green: 0.25, blue: 0.55)],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .frame(height: 3)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 14)
                 .strokeBorder(
-                    isUnlocked ? colors.amber.opacity(0.3) : colors.border,
+                    isUnlocked ? colors.amber.opacity(0.35) : colors.border,
                     lineWidth: 1
                 )
         )
         .opacity(isUnlocked ? 1.0 : 0.75)
         .fullScreenCover(isPresented: $showQuiz) {
-            NavigationView {
-                QuizAttemptView(quizId: quizId)
-            }
+            QuizAttemptView(quizId: quizId)
         }
         .alert("Quiz Locked", isPresented: $showLockedAlert) {
             Button("OK", role: .cancel) {}

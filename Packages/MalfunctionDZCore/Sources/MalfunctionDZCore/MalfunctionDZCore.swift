@@ -456,6 +456,35 @@ public struct ASCMountainBackground: View {
                 }
                 .fill(Color.white.opacity(0.15))
             }
+
+            // Falling skydiver silhouette (freefall, arms & legs spread)
+            GeometryReader { geo in
+                let w = geo.size.width
+                let h = geo.size.height
+                let cx = w * 0.78
+                let cy = h * 0.17
+                let limb = StrokeStyle(lineWidth: 4.5, lineCap: .round, lineJoin: .round)
+                let skydiverColor = ASC.Palette.hiVis.opacity(0.88)
+
+                Circle()
+                    .fill(skydiverColor)
+                    .frame(width: 14, height: 14)
+                    .position(x: cx, y: cy)
+
+                Path { p in
+                    p.move(to: CGPoint(x: cx, y: cy + 8))
+                    p.addLine(to: CGPoint(x: cx, y: cy + 38))
+                    p.move(to: CGPoint(x: cx, y: cy + 16))
+                    p.addLine(to: CGPoint(x: cx - 28, y: cy + 8))
+                    p.move(to: CGPoint(x: cx, y: cy + 16))
+                    p.addLine(to: CGPoint(x: cx + 28, y: cy + 8))
+                    p.move(to: CGPoint(x: cx, y: cy + 38))
+                    p.addLine(to: CGPoint(x: cx - 18, y: cy + 64))
+                    p.move(to: CGPoint(x: cx, y: cy + 38))
+                    p.addLine(to: CGPoint(x: cx + 18, y: cy + 64))
+                }
+                .stroke(skydiverColor, style: limb)
+            }
         }
         .ignoresSafeArea()
     }

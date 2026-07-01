@@ -65,25 +65,18 @@ class QuizViewModel: ObservableObject {
     }
 
     func goNext() {
-        if currentIndex < totalQuestions - 1 {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                currentIndex += 1
-            }
-        }
+        guard currentIndex < totalQuestions - 1 else { return }
+        currentIndex += 1
     }
 
     func goBack() {
-        if currentIndex > 0 {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                currentIndex -= 1
-            }
-        }
+        guard currentIndex > 0 else { return }
+        currentIndex -= 1
     }
 
     func jumpTo(index: Int) {
-        withAnimation(.easeInOut(duration: 0.2)) {
-            currentIndex = index
-        }
+        guard index >= 0, index < totalQuestions else { return }
+        currentIndex = index
     }
 
     // MARK: - Network
@@ -112,7 +105,10 @@ class QuizViewModel: ObservableObject {
     }
 
     func submitQuiz() async {
-        guard !answers.isEmpty else { return }
+        guard !answers.isEmpty else {
+            error = "Answer at least one question before submitting."
+            return
+        }
         isSubmitting = true
         timerTask?.cancel()
         defer { isSubmitting = false }
@@ -124,17 +120,47 @@ class QuizViewModel: ObservableObject {
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        // Convert [Int:Int] to [String:Int] for JSON
         let payload = ["answers": Dictionary(uniqueKeysWithValues: answers.map { (String($0.key), $0.value) })]
-        req.httpBody = try? JSONEncoder().encode(payload)
+        guard let body = try? JSONEncoder().encode(payload) else {
+            error = "Could not prepare your answers."
+            return
+        }
+        req.httpBody = body
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: req)
+        } catch {
+            self.error = error.localizedDescription
+            return
+        }
+
+        if let http = response as? HTTPURLResponse, http.statusCode == 401 {
+            error = "Session expired — sign in again."
+            return
+        }
+
+        if let envelope = try? JSONDecoder().decode(QuizAPIEnvelope.self, from: data), !envelope.ok {
+            error = envelope.error ?? envelope.detail ?? "Quiz submit failed."
+            return
+        }
 
         do {
-            let (data, _) = try await URLSession.shared.data(for: req)
             let resp = try JSONDecoder().decode(QuizSubmitResponse.self, from: data)
+            guard resp.ok, resp.attemptId > 0 else {
+                error = "Quiz submit failed."
+                return
+            }
             submitResult = resp
             showResult = true
         } catch {
-            self.error = error.localizedDescription
+            if let envelope = try? JSONDecoder().decode(QuizAPIEnvelope.self, from: data),
+               let msg = envelope.error ?? envelope.detail {
+                self.error = msg
+            } else {
+                self.error = "Could not read the server response. Try again."
+            }
         }
     }
 

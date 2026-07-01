@@ -20,7 +20,6 @@
 		0DA62E91C452009346441258 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF72F521B7300227638 /* LoginView.swift */; };
 		0E1BDCEB62F36D2B25B3D44E /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF72F521B7300227638 /* LoginView.swift */; };
 		0ECA334E4AD1641657CF681B /* JumpSignoffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E132F57000300022763 /* JumpSignoffView.swift */; };
-		FB063E192F58000100022763 /* OralExamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E182F58000100022763 /* OralExamView.swift */; };
 		127ECE91745498AAE4545B93 /* QuizResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D062F52ADD000227638 /* QuizResultView.swift */; };
 		130300E5785AB06CFFFAFF63 /* TodosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F132F56000200022763 /* TodosView.swift */; };
 		130A19B15A80888FEFE05DDB /* DocumentScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4CA289BC591040DD92EBD6 /* DocumentScannerView.swift */; };
@@ -101,7 +100,6 @@
 		602B5A2445D8EE600367EC0D /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0D2F52C9CE00227638 /* ProfileView.swift */; };
 		6124E986A6F92AB3F59F09BE /* RoleHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D1B2F54AB7600227638 /* RoleHelpers.swift */; };
 		613ECEEE4D612D805EBD63F8 /* JumpSignoffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E132F57000300022763 /* JumpSignoffView.swift */; };
-		FB063E1A2F58000100022763 /* OralExamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E182F58000100022763 /* OralExamView.swift */; };
 		622962FE17CE94FDD45FDB75 /* EventsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F092F56000200022763 /* EventsView.swift */; };
 		63197EC750C1519D8EABF0DE /* DzRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D332F54BB210227638 /* DzRigsView.swift */; };
 		633D5C73E56D5A997419139F /* AircraftDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CED2F521B1A00227638 /* AircraftDetailViewModel.swift */; };
@@ -244,7 +242,6 @@
 		B23939ED22DCA4A147EBE0E4 /* AppShellKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = 082E7E54562843BAEE626099 /* AppShellKind.swift */; };
 		B2B01A2C7D37057DBE3F86B5 /* QuizResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D062F52ADD000227638 /* QuizResultView.swift */; };
 		B2C3D4E52F57000300022763 /* JumpSignoffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E132F57000300022763 /* JumpSignoffView.swift */; };
-		FB063E1B2F58000100022763 /* OralExamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E182F58000100022763 /* OralExamView.swift */; };
 		B2C67229E3500FDFE8F92DCE /* FlightLoad.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D152F53F69A00227638 /* FlightLoad.swift */; };
 		B3120AB655C385934EBAA120 /* QuizAttemptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D042F52AD7F00227638 /* QuizAttemptView.swift */; };
 		B33ECA87DBDF5F1618D09070 /* InstructorReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E112F57000200022763 /* InstructorReviewView.swift */; };
@@ -379,7 +376,9 @@
 		FB063E042F56000100022763 /* LMSEditRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E052F56000100022763 /* LMSEditRootView.swift */; };
 		FB063E122F57000200022763 /* InstructorReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E112F57000200022763 /* InstructorReviewView.swift */; };
 		FB063E142F57000300022763 /* JumpSignoffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E132F57000300022763 /* JumpSignoffView.swift */; };
+		FB063E1B2F58000100022763 /* OralExamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E182F58000100022763 /* OralExamView.swift */; };
 		FB063E1C2F58000100022763 /* OralExamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E182F58000100022763 /* OralExamView.swift */; };
+		FB063E1E2F58000100022763 /* OralExamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E182F58000100022763 /* OralExamView.swift */; };
 		FB063F002F56000200022763 /* CalendarModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F012F56000200022763 /* CalendarModels.swift */; };
 		FB063F022F56000200022763 /* CalendarAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F032F56000200022763 /* CalendarAPIService.swift */; };
 		FB063F042F56000200022763 /* CalendarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F052F56000200022763 /* CalendarViewModel.swift */; };
@@ -396,7 +395,6 @@
 		FB0A5C062F60020100022763 /* ALicenseProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0A5C012F60020100022763 /* ALicenseProgressView.swift */; };
 		FB0A5C072F60020100022763 /* ALicenseProgressViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0A5C042F60020100022763 /* ALicenseProgressViewModel.swift */; };
 		FB154361CF2718ED11670914 /* JumpSignoffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E132F57000300022763 /* JumpSignoffView.swift */; };
-		FB063E1D2F58000100022763 /* OralExamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E182F58000100022763 /* OralExamView.swift */; };
 		FB28B0C92F78DAEC004C95A0 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */; };
 		FB28B0CA2F78DAEC004C95A0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
 		FB367C542F510E6100FBAD05 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
@@ -415,12 +413,14 @@
 		FB60263A2FECFF3E004D2532 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
 		FB60263B2FECFF3E004D2532 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */; };
 		FB60263C2FECFF3E004D2532 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
+		FB86E1DB2FF458DB008B8CFA /* OralExamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E182F58000100022763 /* OralExamView.swift */; };
+		FB86E1DE2FF458DB008B8CFA /* OralExamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E182F58000100022763 /* OralExamView.swift */; };
+		FB86E1DF2FF458DB008B8CFA /* OralExamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E182F58000100022763 /* OralExamView.swift */; };
 		FBC8582030379412EA76F7A1 /* MalfunctionDZCore in Frameworks */ = {isa = PBXBuildFile; productRef = FB063FAB2F60000100022763 /* MalfunctionDZCore */; };
 		FBD783602F5217F800F5EBCD /* GroundSchoolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7835F2F5217F800F5EBCD /* GroundSchoolViewModel.swift */; };
 		FBF4CB992FEE36F700D692CD /* ModuleSignoffBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D132F534F9E00227638 /* ModuleSignoffBlock.swift */; };
 		FBF4CB9A2FEE36F700D692CD /* InstructorReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E112F57000200022763 /* InstructorReviewView.swift */; };
 		FBF4CB9B2FEE36F700D692CD /* JumpSignoffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E132F57000300022763 /* JumpSignoffView.swift */; };
-		FB063E1E2F58000100022763 /* OralExamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E182F58000100022763 /* OralExamView.swift */; };
 		FBF4CB9C2FEE36F700D692CD /* InstructorProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E152F57000400022763 /* InstructorProfileView.swift */; };
 		FBF4CB9D2FEE36F700D692CD /* InstructorDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E172F57000500022763 /* InstructorDashboardView.swift */; };
 		FBF4CB9E2FEE36F700D692CD /* PilotCurrencyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */; };
@@ -585,10 +585,9 @@
 		FB063E052F56000100022763 /* LMSEditRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMSEditRootView.swift; sourceTree = "<group>"; };
 		FB063E112F57000200022763 /* InstructorReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstructorReviewView.swift; sourceTree = "<group>"; };
 		FB063E132F57000300022763 /* JumpSignoffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JumpSignoffView.swift; sourceTree = "<group>"; };
-		FB063E182F58000100022763 /* OralExamView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OralExamView.swift; sourceTree = "<group>"; };
 		FB063E152F57000400022763 /* InstructorProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstructorProfileView.swift; sourceTree = "<group>"; };
-		MDZ0SIGN2F60100100022700 /* MDZSignaturePad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDZSignaturePad.swift; sourceTree = "<group>"; };
 		FB063E172F57000500022763 /* InstructorDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstructorDashboardView.swift; sourceTree = "<group>"; };
+		FB063E182F58000100022763 /* OralExamView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OralExamView.swift; sourceTree = "<group>"; };
 		FB063F012F56000200022763 /* CalendarModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarModels.swift; sourceTree = "<group>"; };
 		FB063F032F56000200022763 /* CalendarAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarAPIService.swift; sourceTree = "<group>"; };
 		FB063F052F56000200022763 /* CalendarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarViewModel.swift; sourceTree = "<group>"; };
@@ -613,6 +612,7 @@
 		FBFAB3592F54FF3E0046027A /* PilotCurrencyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotCurrencyCard.swift; sourceTree = "<group>"; };
 		FBFFF0E42F58BC1F009895AE /* MalfunctionDZ.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MalfunctionDZ.entitlements; sourceTree = "<group>"; };
 		MBR0PROF2F60090200022700 /* MemberProfileEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberProfileEditView.swift; sourceTree = "<group>"; };
+		MDZ0SIGN2F60100100022700 /* MDZSignaturePad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDZSignaturePad.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1169,12 +1169,7 @@
 				CF422036B8F5DEF23FB32F43 /* ModuleSignoffBlock.swift in Sources */,
 				B33ECA87DBDF5F1618D09070 /* InstructorReviewView.swift in Sources */,
 				0ECA334E4AD1641657CF681B /* JumpSignoffView.swift in Sources */,
-				FB063E1E2F58000100022763 /* OralExamView.swift in Sources */,
-				FB063E1D2F58000100022763 /* OralExamView.swift in Sources */,
-				FB063E1C2F58000100022763 /* OralExamView.swift in Sources */,
-				FB063E1B2F58000100022763 /* OralExamView.swift in Sources */,
-				FB063E1A2F58000100022763 /* OralExamView.swift in Sources */,
-				FB063E192F58000100022763 /* OralExamView.swift in Sources */,
+				FB86E1DB2FF458DB008B8CFA /* OralExamView.swift in Sources */,
 				C8D8D02A849D47D1A43A68BD /* InstructorProfileView.swift in Sources */,
 				MDZ0SIGN2F60100100022701 /* MDZSignaturePad.swift in Sources */,
 				EF7862787860DC0382A85F65 /* InstructorDashboardView.swift in Sources */,
@@ -1262,7 +1257,7 @@
 				FBF4CB992FEE36F700D692CD /* ModuleSignoffBlock.swift in Sources */,
 				FBF4CB9A2FEE36F700D692CD /* InstructorReviewView.swift in Sources */,
 				FBF4CB9B2FEE36F700D692CD /* JumpSignoffView.swift in Sources */,
-				FB063E1A2F58000100022763 /* OralExamView.swift in Sources */,
+				FB86E1DF2FF458DB008B8CFA /* OralExamView.swift in Sources */,
 				FBF4CB9C2FEE36F700D692CD /* InstructorProfileView.swift in Sources */,
 				MDZ0SIGN2F60100100022702 /* MDZSignaturePad.swift in Sources */,
 				FBF4CB9D2FEE36F700D692CD /* InstructorDashboardView.swift in Sources */,
@@ -1523,7 +1518,7 @@
 				8B5EC277B777002D49A42A67 /* ModuleSignoffBlock.swift in Sources */,
 				92FC2AD6513E16177BFB1AA7 /* InstructorReviewView.swift in Sources */,
 				613ECEEE4D612D805EBD63F8 /* JumpSignoffView.swift in Sources */,
-				FB063E1D2F58000100022763 /* OralExamView.swift in Sources */,
+				FB86E1DE2FF458DB008B8CFA /* OralExamView.swift in Sources */,
 				218506BB3B9AFE8D57168C20 /* InstructorProfileView.swift in Sources */,
 				MDZ0SIGN2F60100100022705 /* MDZSignaturePad.swift in Sources */,
 				6DD199BF7C0183FF4DFF97AD /* InstructorDashboardView.swift in Sources */,
@@ -1853,7 +1848,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASC.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 31;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1890,7 +1885,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASC.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 31;
 				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;

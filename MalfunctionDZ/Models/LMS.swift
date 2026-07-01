@@ -303,6 +303,122 @@ extension LMSCourse {
             return module.requireQuiz && quiz.title.localizedCaseInsensitiveContains(String(module.title.prefix(12)))
         }
     }
+
+    // MARK: - Home dashboard (training-first; matches GroundSchoolView)
+
+    var accessibleModules: [LMSModule] {
+        modules.filter { !$0.isLocked }
+    }
+
+    var trainingModules: [LMSModule] {
+        accessibleModules.filter { !$0.isReadingAssignmentsModule }
+    }
+
+    var currentTrainingModule: LMSModule? {
+        trainingModules.first(where: { !$0.isComplete })
+    }
+
+    static func affLevelNumber(from title: String) -> Int? {
+        let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let range = t.range(of: "Level ", options: .caseInsensitive) else { return nil }
+        let after = t[range.upperBound...]
+        var digits = ""
+        for ch in after where ch.isNumber {
+            digits.append(ch)
+        }
+        return Int(digits)
+    }
+
+    func moduleShortLabel(_ module: LMSModule) -> String {
+        if let n = Self.affLevelNumber(from: module.title) {
+            return "Level \(n)"
+        }
+        return module.title
+    }
+
+    /// Next lesson / current work for the home screen — training levels before reading assignments.
+    func studentHomeProgress() -> LMSStudentHomeProgress {
+        let completedTraining = trainingModules.filter(\.isComplete).count
+
+        if let module = currentTrainingModule {
+            let level = Self.affLevelNumber(from: module.title) ?? max(1, completedTraining + 1)
+            let lesson = module.lessons.first(where: { !$0.completed && !$0.isLocked })
+            let headline: String
+            if let lesson {
+                headline = lesson.title
+            } else if module.lessonsComplete {
+                switch module.unlockStatusEnum {
+                case .awaitingInstructor:
+                    headline = "\(moduleShortLabel(module)) — Instructor sign-off"
+                case .awaitingJump:
+                    headline = "\(moduleShortLabel(module)) — Jump sign-off"
+                case .jumpFailed:
+                    headline = "\(moduleShortLabel(module)) — Repeat jump"
+                default:
+                    headline = moduleShortLabel(module)
+                }
+            } else {
+                headline = moduleShortLabel(module)
+            }
+            return LMSStudentHomeProgress(
+                courseId: id,
+                currentAffLevel: level,
+                nextLessonTitle: headline,
+                currentModuleTitle: lesson != nil ? moduleShortLabel(module) : nil,
+                progressSubtitle: "\(completedLessons) of \(totalLessons) lessons complete · Level \(level)",
+                moduleId: module.id,
+                lessonId: lesson?.id
+            )
+        }
+
+        if let reading = accessibleModules.first(where: \.isReadingAssignmentsModule), !reading.isComplete {
+            let lesson = reading.lessons.first(where: { !$0.completed && !$0.isLocked })
+            let level = max(1, completedTraining)
+            return LMSStudentHomeProgress(
+                courseId: id,
+                currentAffLevel: level,
+                nextLessonTitle: lesson?.title ?? reading.title,
+                currentModuleTitle: reading.title,
+                progressSubtitle: "\(completedLessons) of \(totalLessons) lessons complete · Level \(level)",
+                moduleId: reading.id,
+                lessonId: lesson?.id
+            )
+        }
+
+        let level = max(1, completedTraining)
+        return LMSStudentHomeProgress(
+            courseId: id,
+            currentAffLevel: level,
+            nextLessonTitle: "Course complete",
+            currentModuleTitle: nil,
+            progressSubtitle: "\(completedLessons) of \(totalLessons) lessons complete · Level \(level)",
+            moduleId: nil,
+            lessonId: nil
+        )
+    }
+}
+
+/// Home / Continue → Ground School at the student's current module or lesson.
+struct GroundSchoolResumeTarget: Equatable {
+    let courseId: Int
+    let moduleId: Int
+    let lessonId: Int?
+}
+
+/// Home / Today card snapshot derived from `LMSCourse`.
+struct LMSStudentHomeProgress {
+    let courseId: Int
+    let currentAffLevel: Int
+    let nextLessonTitle: String
+    let currentModuleTitle: String?
+    let progressSubtitle: String
+    let moduleId: Int?
+    let lessonId: Int?
+
+    var resumeTarget: GroundSchoolResumeTarget? {
+        guard let moduleId else { return nil }
+        return GroundSchoolResumeTarget(courseId: courseId, moduleId: moduleId, lessonId: lessonId)
+    }
 }
 
 // MARK: - Last Attempt

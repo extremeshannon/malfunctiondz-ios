@@ -72,7 +72,7 @@ struct ProfileView: View {
                         MDZNavRow(
                             icon: "person.text.rectangle",
                             title: "My Profile",
-                            subtitle: "Licenses, address, DOB, contact — same as web",
+                            subtitle: "Licenses, address, logbook signature",
                             accent: colors.primary
                         )
                     }

@@ -1,5 +1,7 @@
 // Finger signature pad — SwiftUI Canvas + DragGesture (no PencilKit; works on all devices).
 import SwiftUI
+import UIKit
+import MalfunctionDZCore
 
 /// One continuous finger/stylus stroke as a series of points in pad coordinates.
 typealias MDZSignatureStroke = [CGPoint]
@@ -106,6 +108,104 @@ func signatureImageFromStrokes(
                 ctx.cgContext.addLine(to: CGPoint(x: point.x - minX, y: point.y - minY))
             }
             ctx.cgContext.strokePath()
+        }
+    }
+}
+
+enum MDZSignatureURL {
+    static func absolute(_ path: String, cacheBuster: Int = 0) -> URL? {
+        let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") {
+            return URL(string: trimmed)
+        }
+        let base = kServerURL.hasSuffix("/") ? String(kServerURL.dropLast()) : kServerURL
+        let p = trimmed.hasPrefix("/") ? trimmed : "/\(trimmed)"
+        var urlString = "\(base)\(p)"
+        if cacheBuster > 0 {
+            urlString += p.contains("?") ? "&v=\(cacheBuster)" : "?v=\(cacheBuster)"
+        }
+        return URL(string: urlString)
+    }
+}
+
+struct MDZSignaturePreview: View {
+    let localImage: UIImage?
+    let remotePath: String
+    let cacheBuster: Int
+    @Environment(\.mdzColors) private var colors
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Current signature")
+                .font(.system(size: 11))
+                .foregroundColor(colors.muted)
+
+            Group {
+                if let localImage {
+                    Image(uiImage: localImage)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxHeight: 90)
+                } else if !remotePath.isEmpty {
+                    MDZRemoteSignatureImage(path: remotePath, cacheBuster: cacheBuster)
+                        .frame(maxHeight: 90)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(10)
+            .background(Color.white)
+            .cornerRadius(8)
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.gray.opacity(0.35), lineWidth: 1))
+        }
+    }
+}
+
+struct MDZRemoteSignatureImage: View {
+    let path: String
+    let cacheBuster: Int
+    @Environment(\.mdzColors) private var colors
+    @State private var image: UIImage?
+    @State private var failed = false
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+            } else if failed {
+                Text("Could not load saved signature")
+                    .font(.system(size: 11))
+                    .foregroundColor(colors.danger)
+                    .multilineTextAlignment(.center)
+            } else {
+                ProgressView()
+                    .tint(colors.amber)
+            }
+        }
+        .task(id: "\(path)-\(cacheBuster)") {
+            await load()
+        }
+    }
+
+    private func load() async {
+        image = nil
+        failed = false
+        guard let url = MDZSignatureURL.absolute(path, cacheBuster: cacheBuster) else {
+            failed = true
+            return
+        }
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode),
+                  let img = UIImage(data: data) else {
+                failed = true
+                return
+            }
+            image = img
+        } catch {
+            failed = true
         }
     }
 }

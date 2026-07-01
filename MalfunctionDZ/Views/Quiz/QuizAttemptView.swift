@@ -19,51 +19,41 @@ struct QuizAttemptView: View {
             colors.background.ignoresSafeArea()
 
             if vm.isLoading {
-                VStack(spacing: 16) {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: colors.amber))
-                        .scaleEffect(1.4)
-                    Text("Loading quiz...")
-                        .font(.subheadline)
-                        .foregroundColor(colors.muted)
-                }
+                loadingState
             } else if let quiz = vm.quiz {
                 VStack(spacing: 0) {
-                    // ── Top bar ─────────────────────────────
-                    quizTopBar(quiz: quiz)
-
-                    // ── Progress bar ─────────────────────────
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Rectangle().fill(colors.border).frame(height: 3)
-                            Rectangle()
-                                .fill(colors.amber)
-                                .frame(width: geo.size.width * vm.progress, height: 3)
-                                .animation(.easeInOut(duration: 0.3), value: vm.progress)
-                        }
-                    }
-                    .frame(height: 3)
-
-                    // ── Question ─────────────────────────────
+                    quizHeader(quiz: quiz)
+                    progressRail
                     if let question = vm.currentQuestion {
-                        questionCard(question: question)
+                        QuizQuestionPage(
+                            question: question,
+                            questionNumber: vm.currentIndex + 1,
+                            totalQuestions: vm.totalQuestions,
+                            selectedChoiceId: vm.answers[question.id],
+                            isFlagged: vm.isFlagged(question),
+                            onSelectChoice: { choiceId in
+                                vm.selectChoice(questionId: question.id, choiceId: choiceId)
+                            },
+                            onToggleFlag: { vm.toggleFlag(questionId: question.id) },
+                            onEnlargeImage: { enlargedQuizImageURL = $0 }
+                        )
                     }
-
-                    // ── Navigation ───────────────────────────
-                    navBar
+                    bottomNav
                 }
             }
         }
         .navigationBarHidden(true)
         .task { await vm.loadQuiz() }
         .sheet(isPresented: $showQuestionList) {
-            QuestionListSheet(vm: vm, onSelect: {
-                showQuestionList = false
-            })
+            QuestionListSheet(vm: vm, onSelect: { showQuestionList = false })
         }
         .fullScreenCover(isPresented: $vm.showResult) {
-            if let result = vm.submitResult {
-                QuizResultView(result: result, quizTitle: vm.quiz?.title ?? "Quiz")
+            Group {
+                if let result = vm.submitResult {
+                    QuizResultView(result: result, quizTitle: vm.quiz?.title ?? "Quiz")
+                } else {
+                    colors.background.ignoresSafeArea()
+                }
             }
         }
         .alert("Submit Quiz?", isPresented: $showSubmitConfirm) {
@@ -95,238 +85,427 @@ struct QuizAttemptView: View {
         }
     }
 
-    // MARK: - Top Bar
-    @ViewBuilder
-    private func quizTopBar(quiz: QuizDetail) -> some View {
-        HStack(spacing: 12) {
-            Button { dismiss() } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(colors.muted)
-            }
+    // MARK: - Loading
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(quiz.title)
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(colors.text)
-                    .lineLimit(1)
-                Text("Question \(vm.currentIndex + 1) of \(vm.totalQuestions) · \(vm.answeredCount) answered")
-                    .font(.system(size: 11))
-                    .foregroundColor(colors.muted)
-            }
-
-            Spacer()
-
-            // Timer
-            if quiz.isTimed {
-                Text(vm.timerDisplay)
-                    .font(.system(size: 14, weight: .black, design: .monospaced))
-                    .foregroundColor(vm.timerColor)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(vm.timerColor.opacity(0.15))
-                    .clipShape(Capsule())
-            }
-
-            // Question list button
-            Button { showQuestionList = true } label: {
-                Image(systemName: "list.bullet")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(colors.amber)
-            }
+    private var loadingState: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: colors.amber))
+                .scaleEffect(1.4)
+            Text("Preparing your quiz…")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(colors.text)
+            Text("Loading questions")
+                .font(.system(size: 13))
+                .foregroundColor(colors.muted)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+    }
+
+    // MARK: - Header
+
+    @ViewBuilder
+    private func quizHeader(quiz: QuizDetail) -> some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(colors.muted)
+                        .frame(width: 36, height: 36)
+                        .background(colors.card)
+                        .clipShape(Circle())
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(quiz.title.uppercased())
+                        .font(.system(size: 11, weight: .black))
+                        .foregroundColor(colors.amber)
+                        .tracking(1.2)
+                        .lineLimit(1)
+                    Text("Pass \(Int(quiz.passPercentage))% · \(vm.answeredCount) of \(vm.totalQuestions) answered")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(colors.muted)
+                }
+
+                Spacer(minLength: 8)
+
+                if quiz.isTimed {
+                    HStack(spacing: 5) {
+                        Image(systemName: "clock.fill")
+                            .font(.system(size: 11))
+                        Text(vm.timerDisplay)
+                            .font(.system(size: 14, weight: .black, design: .monospaced))
+                    }
+                    .foregroundColor(vm.timerColor)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(vm.timerColor.opacity(0.14))
+                    .clipShape(Capsule())
+                }
+
+                Button { showQuestionList = true } label: {
+                    Image(systemName: "square.grid.3x3.fill")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(colors.amber)
+                        .frame(width: 36, height: 36)
+                        .background(colors.amber.opacity(0.12))
+                        .clipShape(Circle())
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+
+            quizGradientBar
+        }
         .background(colors.navyMid)
     }
 
-    // MARK: - Question Card
-    @ViewBuilder
-    private func questionCard(question: QuizQuestion) -> some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 16) {
-
-                // Question image (tap to enlarge)
-                if let path = question.imagePath, !path.isEmpty,
-                   let url = URL(string: path.hasPrefix("http") ? path : "\(kServerURL)\(path.hasPrefix("/") ? "" : "/")\(path)") {
-                    Button {
-                        enlargedQuizImageURL = url
-                    } label: {
-                        ZStack(alignment: .bottomTrailing) {
-                            AsyncImage(url: url) { phase in
-                                switch phase {
-                                case .success(let img): img.resizable().scaledToFit()
-                                case .failure: Image(systemName: "photo").font(.largeTitle).foregroundColor(colors.muted)
-                                default: ProgressView().tint(colors.amber)
-                                }
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: 200)
-                            .clipped()
-                            .cornerRadius(10)
-                            Text("Tap to enlarge")
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(colors.muted)
-                                .padding(6)
-                        }
-                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                // Question header
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 8) {
-                            Text("Q\(vm.currentIndex + 1)")
-                                .font(.system(size: 11, weight: .black))
-                                .foregroundColor(colors.amber)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 3)
-                                .background(colors.amber.opacity(0.15))
-                                .clipShape(Capsule())
-
-                            Text(question.type == "true_false" ? "TRUE / FALSE" : "MULTIPLE CHOICE")
-                                .font(.system(size: 10, weight: .black))
-                                .foregroundColor(colors.muted)
-                                .tracking(1)
-                        }
-
-                        Text(question.text)
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(colors.text)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    Spacer()
-
-                    // Flag button
-                    Button {
-                        vm.toggleFlag(questionId: question.id)
-                    } label: {
-                        Image(systemName: vm.isFlagged(question) ? "flag.fill" : "flag")
-                            .font(.system(size: 18))
-                            .foregroundColor(vm.isFlagged(question) ? colors.amber : colors.border)
-                    }
-                }
-
-                // Choices
-                VStack(spacing: 10) {
-                    ForEach(question.choices) { choice in
-                        ChoiceButton(
-                            choice: choice,
-                            isSelected: vm.selectedChoice(for: question) == choice.id,
-                            onTap: {
-                                withAnimation(.easeInOut(duration: 0.15)) {
-                                    vm.selectChoice(questionId: question.id, choiceId: choice.id)
-                                }
-                            }
-                        )
-                    }
-                }
-            }
-            .padding(20)
-        }
-        .id(vm.currentIndex) // Force scroll reset on question change
+    private var quizGradientBar: some View {
+        LinearGradient(
+            colors: [Color(red: 0.75, green: 0.12, blue: 0.18), .white, Color(red: 0.12, green: 0.25, blue: 0.55)],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+        .frame(height: 4)
     }
 
-    // MARK: - Nav Bar
-    private var navBar: some View {
-        HStack(spacing: 12) {
-            Button {
-                vm.goBack()
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "chevron.left")
-                    Text("Back")
-                }
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(vm.canGoBack ? colors.text : colors.border)
-                .frame(maxWidth: .infinity)
-                .frame(height: 48)
-                .background(colors.card)
-                .cornerRadius(10)
-            }
-            .disabled(!vm.canGoBack)
+    // MARK: - Progress rail (no ScrollViewReader — scrollTo during navigation has crashed SwiftUI)
 
-            if vm.isLastQuestion {
-                Button {
-                    showSubmitConfirm = true
-                } label: {
-                    HStack(spacing: 6) {
-                        if vm.isSubmitting {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .scaleEffect(0.8)
-                        } else {
-                            Text("Submit")
-                                .font(.system(size: 15, weight: .black))
+    private var progressRail: some View {
+        VStack(spacing: 8) {
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(colors.border.opacity(0.45))
+                    Capsule()
+                        .fill(colors.amber)
+                        .frame(
+                            width: max(
+                                8,
+                                geo.size.width * CGFloat(vm.currentIndex + 1) / CGFloat(max(vm.totalQuestions, 1))
+                            )
+                        )
+                }
+            }
+            .frame(height: 4)
+            .padding(.horizontal, 16)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    if let quiz = vm.quiz {
+                        ForEach(0..<quiz.questions.count, id: \.self) { idx in
+                            let question = quiz.questions[idx]
+                            Button { vm.jumpTo(index: idx) } label: {
+                                progressDot(index: idx, question: question)
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(colors.green)
-                    .cornerRadius(10)
                 }
-                .disabled(vm.isSubmitting)
-            } else {
-                Button {
-                    vm.goNext()
-                } label: {
+                .padding(.horizontal, 16)
+            }
+        }
+        .padding(.vertical, 10)
+        .background(colors.card.opacity(0.35))
+    }
+
+    private func progressDot(index: Int, question: QuizQuestion) -> some View {
+        let isCurrent = index == vm.currentIndex
+        let isAnswered = vm.answers[question.id] != nil
+        let isFlagged = vm.isFlagged(question)
+
+        return ZStack {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(isCurrent ? colors.amber : (isAnswered ? colors.green.opacity(0.85) : colors.border.opacity(0.55)))
+                .frame(width: isCurrent ? 34 : 28, height: 28)
+            Text("\(index + 1)")
+                .font(.system(size: isCurrent ? 13 : 11, weight: .black))
+                .foregroundColor(isCurrent || isAnswered ? .white : colors.muted)
+            if isFlagged {
+                VStack {
+                    HStack {
+                        Spacer()
+                        Circle()
+                            .fill(colors.amber)
+                            .frame(width: 6, height: 6)
+                            .offset(x: 2, y: -2)
+                    }
+                    Spacer()
+                }
+                .frame(width: 34, height: 28)
+            }
+        }
+    }
+
+    // MARK: - Bottom nav
+
+    private var bottomNav: some View {
+        VStack(spacing: 0) {
+            Divider().background(colors.border)
+            HStack(spacing: 12) {
+                Button { vm.goBack() } label: {
                     HStack(spacing: 6) {
-                        Text("Next")
-                        Image(systemName: "chevron.right")
+                        Image(systemName: "chevron.left")
+                        Text("Back")
                     }
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(vm.canGoBack ? colors.text : colors.border)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(colors.amber)
-                    .cornerRadius(10)
+                    .frame(height: 50)
+                    .background(colors.card)
+                    .cornerRadius(12)
+                }
+                .disabled(!vm.canGoBack)
+
+                if vm.isLastQuestion {
+                    Button { showSubmitConfirm = true } label: {
+                        HStack(spacing: 8) {
+                            if vm.isSubmitting {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(0.85)
+                            } else {
+                                Image(systemName: "paperplane.fill")
+                                Text("Submit Quiz")
+                                    .font(.system(size: 15, weight: .black))
+                            }
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(colors.green)
+                        .cornerRadius(12)
+                    }
+                    .disabled(vm.isSubmitting)
+                } else {
+                    Button { vm.goNext() } label: {
+                        HStack(spacing: 6) {
+                            Text("Next")
+                            Image(systemName: "chevron.right")
+                        }
+                        .font(.system(size: 15, weight: .black))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(colors.amber)
+                        .cornerRadius(12)
+                    }
                 }
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(colors.navyMid)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(colors.navyMid)
+    }
+}
+
+// MARK: - Question page (isolated view — avoids navigation rebuild crashes)
+
+private struct QuizQuestionPage: View {
+    let question: QuizQuestion
+    let questionNumber: Int
+    let totalQuestions: Int
+    let selectedChoiceId: Int?
+    let isFlagged: Bool
+    let onSelectChoice: (Int) -> Void
+    let onToggleFlag: () -> Void
+    let onEnlargeImage: (URL) -> Void
+
+    @Environment(\.mdzColors) private var colors
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 20) {
+                questionCard
+
+                if let path = question.imagePath, !path.isEmpty, let url = imageURL(path) {
+                    imageBlock(url: url)
+                }
+
+                if let instructions = question.instructions?.trimmingCharacters(in: .whitespacesAndNewlines),
+                   !instructions.isEmpty {
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "info.circle.fill")
+                            .foregroundColor(colors.amber)
+                        QuizRichText(html: instructions, fontSize: 14, weight: .medium, color: colors.muted)
+                    }
+                    .padding(14)
+                    .background(colors.amber.opacity(0.08))
+                    .cornerRadius(12)
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(question.type == "true_false" ? "SELECT TRUE OR FALSE" : "SELECT ONE ANSWER")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(colors.muted)
+                        .tracking(1.5)
+
+                    if question.type == "true_false", question.choices.count == 2 {
+                        HStack(spacing: 12) {
+                            ForEach(0..<question.choices.count, id: \.self) { idx in
+                                trueFalseCard(index: idx, choice: question.choices[idx])
+                            }
+                        }
+                    } else {
+                        VStack(spacing: 10) {
+                            ForEach(0..<question.choices.count, id: \.self) { idx in
+                                ChoiceButton(
+                                    choice: question.choices[idx],
+                                    letter: quizChoiceLetter(index: idx),
+                                    isSelected: selectedChoiceId == question.choices[idx].id,
+                                    onTap: { onSelectChoice(question.choices[idx].id) }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 24)
+        }
+    }
+
+    private var questionCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center) {
+                Text(String(format: "%02d", questionNumber))
+                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .foregroundColor(colors.amber)
+                Text("/ \(String(format: "%02d", totalQuestions))")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundColor(colors.muted)
+                Spacer()
+                Button(action: onToggleFlag) {
+                    Label(
+                        isFlagged ? "Flagged" : "Flag",
+                        systemImage: isFlagged ? "flag.fill" : "flag"
+                    )
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(isFlagged ? colors.amber : colors.muted)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(isFlagged ? colors.amber.opacity(0.15) : colors.border.opacity(0.35))
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+
+            QuizRichText(html: question.text, fontSize: 18, weight: .semibold, color: colors.text)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(colors.card)
+        .cornerRadius(16)
+        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(colors.border.opacity(0.8), lineWidth: 1))
+        .overlay(alignment: .top) {
+            LinearGradient(
+                colors: [Color(red: 0.75, green: 0.12, blue: 0.18), .white, Color(red: 0.12, green: 0.25, blue: 0.55)],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .frame(height: 4)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+    }
+
+    private func trueFalseCard(index: Int, choice: QuizChoice) -> some View {
+        let selected = selectedChoiceId == choice.id
+        return Button {
+            onSelectChoice(choice.id)
+        } label: {
+            VStack(spacing: 10) {
+                Text(quizChoiceLetter(index: index))
+                    .font(.system(size: 12, weight: .black))
+                    .foregroundColor(selected ? colors.amber : colors.muted)
+                QuizRichText(
+                    html: choice.text,
+                    fontSize: 16,
+                    weight: .bold,
+                    color: selected ? colors.text : colors.text.opacity(0.9),
+                    alignment: .center
+                )
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 20)
+            .padding(.horizontal, 12)
+            .background(selected ? colors.amber.opacity(0.12) : colors.card)
+            .cornerRadius(14)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .strokeBorder(selected ? colors.amber : colors.border, lineWidth: selected ? 2 : 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func imageBlock(url: URL) -> some View {
+        Button { onEnlargeImage(url) } label: {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .success(let img): img.resizable().scaledToFit()
+                case .failure:
+                    Label("Image unavailable", systemImage: "photo")
+                        .foregroundColor(colors.muted)
+                        .frame(maxWidth: .infinity, minHeight: 100)
+                default:
+                    ProgressView().tint(colors.amber)
+                        .frame(maxWidth: .infinity, minHeight: 120)
+                }
+            }
+            .frame(maxHeight: 220)
+            .frame(maxWidth: .infinity)
+            .background(colors.card)
+            .cornerRadius(14)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func imageURL(_ path: String) -> URL? {
+        if path.hasPrefix("http") { return URL(string: path) }
+        return URL(string: "\(kServerURL)\(path.hasPrefix("/") ? "" : "/")\(path)")
     }
 }
 
 // MARK: - Choice Button
+
 struct ChoiceButton: View {
     let choice: QuizChoice
+    let letter: String
     let isSelected: Bool
     let onTap: () -> Void
     @Environment(\.mdzColors) private var colors
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 14) {
+            HStack(alignment: .top, spacing: 14) {
                 ZStack {
-                    Circle()
-                        .strokeBorder(isSelected ? colors.amber : colors.border, lineWidth: 2)
-                        .frame(width: 24, height: 24)
-                    if isSelected {
-                        Circle()
-                            .fill(colors.amber)
-                            .frame(width: 14, height: 14)
-                    }
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(isSelected ? colors.amber : colors.border.opacity(0.45))
+                        .frame(width: 36, height: 36)
+                    Text(letter)
+                        .font(.system(size: 15, weight: .black))
+                        .foregroundColor(isSelected ? .white : colors.muted)
                 }
 
-                Text(choice.text)
-                    .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
-                    .foregroundColor(isSelected ? colors.text : colors.text.opacity(0.85))
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
+                QuizRichText(
+                    html: choice.text,
+                    fontSize: 15,
+                    weight: isSelected ? .semibold : .regular,
+                    color: isSelected ? colors.text : colors.text.opacity(0.88)
+                )
 
-                Spacer()
+                Spacer(minLength: 4)
+
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 22))
+                    .foregroundColor(isSelected ? colors.amber : colors.border)
             }
-            .padding(14)
+            .padding(16)
             .background(isSelected ? colors.amber.opacity(0.1) : colors.card)
-            .cornerRadius(10)
+            .cornerRadius(14)
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .strokeBorder(isSelected ? colors.amber : colors.border, lineWidth: isSelected ? 2 : 1)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(isSelected ? colors.amber : colors.border.opacity(0.85), lineWidth: isSelected ? 2 : 1)
             )
         }
         .buttonStyle(.plain)
@@ -334,6 +513,7 @@ struct ChoiceButton: View {
 }
 
 // MARK: - Question List Sheet
+
 struct QuestionListSheet: View {
     @ObservedObject var vm: QuizViewModel
     let onSelect: () -> Void
@@ -345,26 +525,27 @@ struct QuestionListSheet: View {
             colors.background.ignoresSafeArea()
             VStack(spacing: 0) {
                 HStack {
-                    Text("QUESTIONS")
-                        .font(.system(size: 11, weight: .black))
-                        .foregroundColor(colors.amber)
-                        .tracking(2)
-                    Spacer()
-                    Text("\(vm.answeredCount)/\(vm.totalQuestions) answered")
-                        .font(.system(size: 12))
-                        .foregroundColor(colors.muted)
-                    Button { dismiss() } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 20))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("QUESTION MAP")
+                            .font(.system(size: 11, weight: .black))
+                            .foregroundColor(colors.amber)
+                            .tracking(2)
+                        Text("\(vm.answeredCount) of \(vm.totalQuestions) answered")
+                            .font(.system(size: 12))
                             .foregroundColor(colors.muted)
                     }
-                    .padding(.leading, 12)
+                    Spacer()
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(colors.muted)
+                    }
                 }
                 .padding(16)
                 .background(colors.navyMid)
 
                 ScrollView {
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 10) {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 5), spacing: 10) {
                         if let quiz = vm.quiz {
                             ForEach(Array(quiz.questions.enumerated()), id: \.offset) { idx, question in
                                 Button {
@@ -372,25 +553,20 @@ struct QuestionListSheet: View {
                                     onSelect()
                                 } label: {
                                     ZStack {
-                                        RoundedRectangle(cornerRadius: 8)
+                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
                                             .fill(buttonColor(for: question, idx: idx))
-                                        Text("\(idx + 1)")
-                                            .font(.system(size: 13, weight: .bold))
-                                            .foregroundColor(.white)
-                                        if vm.isFlagged(question) {
-                                            VStack {
-                                                HStack {
-                                                    Spacer()
-                                                    Image(systemName: "flag.fill")
-                                                        .font(.system(size: 8))
-                                                        .foregroundColor(colors.amber)
-                                                        .padding(3)
-                                                }
-                                                Spacer()
+                                        VStack(spacing: 2) {
+                                            Text("\(idx + 1)")
+                                                .font(.system(size: 14, weight: .black))
+                                                .foregroundColor(.white)
+                                            if vm.isFlagged(question) {
+                                                Image(systemName: "flag.fill")
+                                                    .font(.system(size: 8))
+                                                    .foregroundColor(colors.amber)
                                             }
                                         }
                                     }
-                                    .frame(height: 44)
+                                    .frame(height: 48)
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -399,10 +575,9 @@ struct QuestionListSheet: View {
                     .padding(16)
                 }
 
-                // Legend
-                HStack(spacing: 16) {
+                HStack(spacing: 20) {
                     LegendItem(color: colors.green, label: "Answered")
-                    LegendItem(color: colors.card, label: "Unanswered")
+                    LegendItem(color: colors.card, label: "Open")
                     LegendItem(color: colors.amber, label: "Current")
                 }
                 .padding(16)
@@ -426,9 +601,9 @@ struct LegendItem: View {
         HStack(spacing: 6) {
             RoundedRectangle(cornerRadius: 4)
                 .fill(color)
-                .frame(width: 16, height: 16)
+                .frame(width: 14, height: 14)
             Text(label)
-                .font(.system(size: 11))
+                .font(.system(size: 11, weight: .medium))
                 .foregroundColor(colors.muted)
         }
     }

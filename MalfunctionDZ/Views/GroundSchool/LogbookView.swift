@@ -467,14 +467,38 @@ struct LogbookEntryDetailView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
                     LogbookEntryCard(entry: entry)
-                    if !entry.isLocked && !entry.isSigned {
+                    if entry.canStudentSign {
+                        if vm.hasSavedSignature {
+                            Button {
+                                Task {
+                                    if await vm.signEntry(entryId: entry.id, useSavedSignature: true) {
+                                        dismiss()
+                                    }
+                                }
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "signature")
+                                        .font(.system(size: 18))
+                                    Text("Sign with saved signature")
+                                        .font(.system(size: 15, weight: .semibold))
+                                }
+                                .foregroundColor(colors.text)
+                                .frame(maxWidth: .infinity)
+                                .padding(14)
+                                .background(colors.card2)
+                                .cornerRadius(10)
+                                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(vm.isSaving)
+                        }
                         Button {
                             showSignaturePad = true
                         } label: {
                             HStack(spacing: 10) {
                                 Image(systemName: "pencil.and.outline")
                                     .font(.system(size: 18))
-                                Text("Sign to lock this record")
+                                Text(vm.hasSavedSignature ? "Draw a new signature" : "Sign to lock this record")
                                     .font(.system(size: 15, weight: .semibold))
                             }
                             .foregroundColor(colors.amber)
@@ -485,6 +509,7 @@ struct LogbookEntryDetailView: View {
                             .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.amber.opacity(0.4), lineWidth: 1))
                         }
                         .buttonStyle(.plain)
+                        .disabled(vm.isSaving)
                     }
                     signatureBlock
                 }
@@ -501,29 +526,22 @@ struct LogbookEntryDetailView: View {
         }
     }
 
-    /// Signature block — for phone-to-phone signing (placeholder for future)
     private var signatureBlock: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("SIGNATURE")
                 .font(.system(size: 10, weight: .black))
                 .foregroundColor(colors.muted)
                 .tracking(1)
-            VStack(alignment: .leading, spacing: 8) {
-                if entry.isSigned {
-                    HStack(spacing: 8) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(colors.green)
-                        Text("Signed and locked")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(colors.text)
-                    }
-                } else {
-                    Text("Phone-to-phone signing")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(colors.text)
-                    Text("Sign from another device — coming soon")
-                        .font(.system(size: 12))
+            VStack(alignment: .leading, spacing: 12) {
+                if entry.isStudentSigned {
+                    studentSignatureSection
+                } else if entry.canStudentSign {
+                    Text("Sign this jump to lock your logbook record.")
+                        .font(.system(size: 13))
                         .foregroundColor(colors.muted)
+                }
+                if entry.isInstructorSigned {
+                    instructorSignatureSection
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -532,6 +550,69 @@ struct LogbookEntryDetailView: View {
             .cornerRadius(10)
             .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
         }
+    }
+
+    private var studentSignatureSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(colors.green)
+                Text("Signed by you")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(colors.text)
+            }
+            if let name = entry.studentSignedBy, !name.isEmpty {
+                Text(name)
+                    .font(.system(size: 13))
+                    .foregroundColor(colors.text)
+            }
+            if let at = entry.studentSignedAt, !at.isEmpty {
+                Text(formatSignedDate(at))
+                    .font(.system(size: 12))
+                    .foregroundColor(colors.muted)
+            }
+            if let urlStr = entry.studentSignatureUrl,
+               let url = MDZSignatureURL.absolute(urlStr) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image.resizable().scaledToFit().frame(maxHeight: 72)
+                    default:
+                        EmptyView()
+                    }
+                }
+            }
+        }
+    }
+
+    private var instructorSignatureSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("INSTRUCTOR")
+                .font(.system(size: 9, weight: .black))
+                .foregroundColor(colors.muted)
+                .tracking(0.8)
+            if let name = entry.signedBy, !name.isEmpty {
+                Text(name)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(colors.text)
+            }
+            if let lic = entry.instructorLicenseNumber, !lic.isEmpty {
+                Text(lic)
+                    .font(.system(size: 12))
+                    .foregroundColor(colors.muted)
+            }
+            if let at = entry.signedAt, !at.isEmpty {
+                Text(formatSignedDate(at))
+                    .font(.system(size: 12))
+                    .foregroundColor(colors.muted)
+            }
+        }
+    }
+
+    private func formatSignedDate(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.count >= 10 { return String(trimmed.prefix(10)) }
+        return trimmed
     }
 }
 
@@ -585,11 +666,10 @@ struct SignaturePadSheet: View {
                                 return
                             }
                             let base64 = png.base64EncodedString()
-                            await vm.signEntry(entryId: entryId, signatureBase64: base64)
-                            if vm.error == nil {
+                            if await vm.signEntry(entryId: entryId, signatureBase64: base64) {
                                 onComplete()
                             } else {
-                                errorMsg = vm.error
+                                errorMsg = vm.error ?? "Could not sign entry"
                             }
                         }
                     }

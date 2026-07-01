@@ -1,5 +1,6 @@
 // Member profile — edit contact, address, USPA licenses (same fields as web manifest user edit).
 import SwiftUI
+import UIKit
 import MalfunctionDZCore
 
 @MainActor
@@ -21,6 +22,8 @@ final class MemberProfileViewModel: ObservableObject {
     @Published var dateOfBirth = ""
     @Published var weightLb = ""
     @Published var mainCanopySqft = ""
+    @Published var signatureUrl = ""
+    @Published var signaturePath = ""
     @Published var isLoading = false
     @Published var isSaving = false
     @Published var saved = false
@@ -124,6 +127,52 @@ final class MemberProfileViewModel: ObservableObject {
         dateOfBirth = str("date_of_birth")
         weightLb = str("weight_lb")
         mainCanopySqft = str("main_canopy_sqft")
+        signatureUrl = str("jumper_signature_url")
+        signaturePath = str("jumper_signature_path")
+    }
+
+    var resolvedSignaturePath: String {
+        let url = signatureUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !url.isEmpty { return url }
+        return signaturePath.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var hasSignatureOnFile: Bool {
+        !resolvedSignaturePath.isEmpty
+    }
+
+    func saveSignature(base64: String) async -> Bool {
+        isSaving = true
+        defer { isSaving = false }
+        saved = false
+        guard let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)/api/me/profile.php") else { return false }
+        let body: [String: String] = [
+            "signature_data": "data:image/png;base64,\(base64)",
+        ]
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode),
+                  let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  json["ok"] as? Bool == true else {
+                error = "Could not save signature"
+                return false
+            }
+            if let user = json["user"] as? [String: Any] {
+                apply(user)
+            }
+            saved = true
+            error = nil
+            return true
+        } catch {
+            self.error = "Could not save signature"
+            return false
+        }
     }
 
     var highestLicenseSummary: String {
@@ -140,6 +189,9 @@ struct MemberProfileEditView: View {
     @EnvironmentObject private var auth: AuthManager
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
+    @State private var showSignaturePad = false
+    @State private var signatureCacheBuster = 0
+    @State private var localSignaturePreview: UIImage?
 
     var body: some View {
         ZStack {
@@ -149,7 +201,7 @@ struct MemberProfileEditView: View {
             } else {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("Same fields as the drop zone user profile on the web. USPA licenses A–D are used for instructor sign-offs (D is highest).")
+                        Text("Same fields as the drop zone user profile on the web. Save a signature here to sign logbook jumps quickly.")
                             .font(.system(size: 13))
                             .foregroundColor(colors.muted)
 
@@ -193,6 +245,35 @@ struct MemberProfileEditView: View {
                             profileField("ZIP", text: $vm.postalCode)
                         }
 
+                        profileSection("Logbook signature") {
+                            if vm.hasSignatureOnFile || localSignaturePreview != nil {
+                                MDZSignaturePreview(
+                                    localImage: localSignaturePreview,
+                                    remotePath: vm.resolvedSignaturePath,
+                                    cacheBuster: signatureCacheBuster
+                                )
+                            }
+                            Button {
+                                showSignaturePad = true
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "signature")
+                                    Text(vm.hasSignatureOnFile ? "Update signature" : "Add signature")
+                                        .font(.system(size: 15, weight: .semibold))
+                                    Spacer()
+                                    Image(systemName: "pencil.and.scribble")
+                                }
+                                .foregroundColor(colors.text)
+                                .padding(14)
+                                .background(colors.card2)
+                                .cornerRadius(10)
+                            }
+                            .buttonStyle(.plain)
+                            Text("Used when you sign jumps in your logbook.")
+                                .font(.system(size: 12))
+                                .foregroundColor(colors.muted)
+                        }
+
                         profileSection("Physical & gear") {
                             profileField("Date of birth", text: $vm.dateOfBirth, placeholder: "YYYY-MM-DD")
                             profileField("Weight (lb)", text: $vm.weightLb)
@@ -224,6 +305,14 @@ struct MemberProfileEditView: View {
         .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
         .task { await vm.load() }
         .refreshable { await vm.load() }
+        .fullScreenCover(isPresented: $showSignaturePad) {
+            MemberSignaturePadView(
+                localSignaturePreview: $localSignaturePreview,
+                signatureCacheBuster: $signatureCacheBuster,
+                onSave: { b64 in await vm.saveSignature(base64: b64) },
+                onDismiss: { showSignaturePad = false }
+            )
+        }
     }
 
     private func profileSection<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
@@ -251,6 +340,71 @@ struct MemberProfileEditView: View {
                 .padding(12)
                 .background(colors.card2)
                 .cornerRadius(8)
+        }
+    }
+}
+
+private struct MemberSignaturePadView: View {
+    @Binding var localSignaturePreview: UIImage?
+    @Binding var signatureCacheBuster: Int
+    let onSave: (String) async -> Bool
+    let onDismiss: () -> Void
+    @State private var strokes: [MDZSignatureStroke] = []
+    @State private var localError: String?
+    @Environment(\.mdzColors) private var colors
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                colors.background.ignoresSafeArea()
+                VStack(spacing: 16) {
+                    Text("Draw your logbook signature")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(colors.text)
+                    MDZFingerSignaturePad(
+                        strokes: $strokes,
+                        inkColor: .white,
+                        lineWidth: 3,
+                        paperColor: Color(red: 12 / 255, green: 29 / 255, blue: 53 / 255)
+                    )
+                    .frame(height: 220)
+                    .cornerRadius(10)
+                    if let localError {
+                        Text(localError).font(.caption).foregroundColor(.red)
+                    }
+                    Spacer()
+                }
+                .padding(20)
+            }
+            .navigationTitle("Signature")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onDismiss)
+                        .foregroundColor(colors.amber)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        Task { await saveFromPad() }
+                    }
+                    .foregroundColor(colors.amber)
+                }
+            }
+        }
+    }
+
+    private func saveFromPad() async {
+        guard let img = signatureImageFromStrokes(strokes),
+              let b64 = img.pngData()?.base64EncodedString() else {
+            localError = "Draw your signature on the line."
+            return
+        }
+        if await onSave(b64) {
+            localSignaturePreview = img
+            signatureCacheBuster += 1
+            onDismiss()
+        } else {
+            localError = "Could not save signature."
         }
     }
 }

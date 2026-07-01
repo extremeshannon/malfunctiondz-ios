@@ -137,6 +137,11 @@ struct SafariVideoView: UIViewControllerRepresentable {
 
 private struct LMSPDFKitRepresentable: UIViewRepresentable {
     let document: PDFDocument
+    var onScrolledToBottom: (() -> Void)? = nil
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onScrolledToBottom: onScrolledToBottom)
+    }
 
     func makeUIView(context: Context) -> PDFView {
         let view = PDFView()
@@ -145,12 +150,57 @@ private struct LMSPDFKitRepresentable: UIViewRepresentable {
         view.displayMode = .singlePageContinuous
         view.displayDirection = .vertical
         view.backgroundColor = .clear
+        context.coordinator.attach(to: view)
         return view
     }
 
     func updateUIView(_ uiView: PDFView, context: Context) {
         if uiView.document !== document {
             uiView.document = document
+            context.coordinator.attach(to: uiView)
+        }
+    }
+
+    final class Coordinator: NSObject, UIScrollViewDelegate {
+        var onScrolledToBottom: (() -> Void)?
+        private weak var scrollView: UIScrollView?
+        private var didReachBottom = false
+
+        init(onScrolledToBottom: (() -> Void)?) {
+            self.onScrolledToBottom = onScrolledToBottom
+        }
+
+        func attach(to pdfView: PDFView) {
+            didReachBottom = false
+            scrollView?.delegate = nil
+            scrollView = findScrollView(in: pdfView)
+            scrollView?.delegate = self
+            if let scrollView {
+                DispatchQueue.main.async { self.checkBottom(scrollView) }
+            }
+        }
+
+        func scrollViewDidScroll(_ scrollView: UIScrollView) {
+            checkBottom(scrollView)
+        }
+
+        private func checkBottom(_ scrollView: UIScrollView) {
+            guard !didReachBottom else { return }
+            let threshold: CGFloat = 48
+            let fitsOnScreen = scrollView.contentSize.height <= scrollView.bounds.height + threshold
+            let atBottom = scrollView.contentOffset.y + scrollView.bounds.height >= scrollView.contentSize.height - threshold
+            if fitsOnScreen || atBottom {
+                didReachBottom = true
+                onScrolledToBottom?()
+            }
+        }
+
+        private func findScrollView(in view: UIView) -> UIScrollView? {
+            if let scrollView = view as? UIScrollView { return scrollView }
+            for subview in view.subviews {
+                if let found = findScrollView(in: subview) { return found }
+            }
+            return nil
         }
     }
 }
@@ -158,6 +208,7 @@ private struct LMSPDFKitRepresentable: UIViewRepresentable {
 private struct LMSPDFLessonView: View {
     let url: URL
     var onLoaded: () -> Void
+    var onScrolledToBottom: (() -> Void)? = nil
 
     @Environment(\.mdzColors) private var colors
     @State private var document: PDFDocument?
@@ -166,7 +217,7 @@ private struct LMSPDFLessonView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             if let document {
-                LMSPDFKitRepresentable(document: document)
+                LMSPDFKitRepresentable(document: document, onScrolledToBottom: onScrolledToBottom)
                     .frame(minHeight: 520)
                     .cornerRadius(10)
                     .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
@@ -432,18 +483,24 @@ class LessonDetailViewModel: ObservableObject {
         return isPDFLessonType(lesson.lessonType)
     }
 
+    var requiresAcknowledgementFlow: Bool {
+        lesson?.requireAcknowledgement == true && !completed
+    }
+
     var canComplete: Bool {
         if completed { return false }
         guard let lesson = lesson else { return false }
         if lesson.isLocked { return false }
         if isQuizLesson { return false }
-        if lesson.requireAcknowledgement && !acknowledged { return false }
+        if lesson.requireAcknowledgement {
+            guard hasScrolledToBottom, acknowledged else { return false }
+        }
         if isSlideshowLesson {
             if (lesson.quizId ?? 0) > 0 { return false }
             return slideshowFinished
         }
         if isPDFLesson {
-            return pdfLoaded
+            return pdfLoaded && (!lesson.requireAcknowledgement || hasScrolledToBottom)
         }
         if lessonYouTubeId(from: lesson) != nil {
             return videoFinished
@@ -486,6 +543,8 @@ class LessonDetailViewModel: ObservableObject {
                 acknowledged = true
             } else {
                 slideshowFinished = false
+                hasScrolledToBottom = false
+                acknowledged = false
             }
         } catch {
             self.error = "Could not load lesson. Pull to refresh or check your connection."
@@ -495,7 +554,10 @@ class LessonDetailViewModel: ObservableObject {
     func markComplete(courseId: Int) async {
         guard !completed else { return }
         guard let lesson = lesson else { return }
-        if lesson.requireAcknowledgement && !acknowledged { return }
+        if lesson.requireAcknowledgement {
+            guard acknowledged, hasScrolledToBottom else { return }
+            if isPDFLesson && !pdfLoaded { return }
+        }
         isMarkingComplete = true
         defer { isMarkingComplete = false }
         guard let token = KeychainHelper.readToken() else { return }
@@ -799,6 +861,8 @@ struct LessonDetailView: View {
 
                                 LMSPDFLessonView(url: pdfURL) {
                                     vm.pdfLoaded = true
+                                } onScrolledToBottom: {
+                                    vm.hasScrolledToBottom = true
                                 }
 
                                 Button {
@@ -889,16 +953,21 @@ struct LessonDetailView: View {
                                 }
                             }
 
-                            // ── Bottom sentinel ───────────────
+                            // ── Bottom sentinel (text / planner scroll gate) ───────────────
                             Color.clear
                                 .frame(height: 1)
-                                .onAppear { vm.hasScrolledToBottom = true }
+                                .onAppear {
+                                    if !(vm.isPDFLesson && lesson.requireAcknowledgement) {
+                                        vm.hasScrolledToBottom = true
+                                    }
+                                }
                         }
                         .padding(20)
                         .padding(.bottom, 120)
                     }
                     .refreshable { await vm.load() }
                     .onAppear {
+                        guard let lesson = vm.lesson, !lesson.requireAcknowledgement || !vm.isPDFLesson else { return }
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                             if htmlContentHeight > 0 && htmlContentHeight < UIScreen.main.bounds.height * 0.72 {
                                 vm.hasScrolledToBottom = true
@@ -912,29 +981,46 @@ struct LessonDetailView: View {
                         VStack(spacing: 10) {
 
                             if lesson.requireAcknowledgement && !vm.completed {
-                                VStack(alignment: .leading, spacing: 10) {
-                                    Text("Acknowledgement required")
-                                        .font(.system(size: 13, weight: .bold))
-                                        .foregroundColor(colors.text)
-                                    Button {
-                                        vm.acknowledged.toggle()
-                                    } label: {
-                                        HStack(alignment: .top, spacing: 10) {
-                                            Image(systemName: vm.acknowledged ? "checkmark.square.fill" : "square")
-                                                .font(.system(size: 20))
-                                                .foregroundColor(vm.acknowledged ? colors.green : colors.muted)
-                                            Text("I confirm I have read and understand the material in this lesson.")
-                                                .font(.system(size: 13))
-                                                .foregroundColor(colors.text)
-                                                .multilineTextAlignment(.leading)
+                                if vm.hasScrolledToBottom {
+                                    VStack(alignment: .leading, spacing: 10) {
+                                        Text("Acknowledgement required")
+                                            .font(.system(size: 13, weight: .bold))
+                                            .foregroundColor(colors.text)
+                                        Button {
+                                            vm.acknowledged.toggle()
+                                        } label: {
+                                            HStack(alignment: .top, spacing: 10) {
+                                                Image(systemName: vm.acknowledged ? "checkmark.square.fill" : "square")
+                                                    .font(.system(size: 20))
+                                                    .foregroundColor(vm.acknowledged ? colors.green : colors.muted)
+                                                Text("I confirm I have read and understand the material in this lesson.")
+                                                    .font(.system(size: 13))
+                                                    .foregroundColor(colors.text)
+                                                    .multilineTextAlignment(.leading)
+                                            }
                                         }
+                                        .buttonStyle(.plain)
                                     }
-                                    .buttonStyle(.plain)
+                                    .padding(12)
+                                    .background(colors.card)
+                                    .cornerRadius(10)
+                                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
+                                } else {
+                                    HStack(alignment: .top, spacing: 10) {
+                                        Image(systemName: "arrow.down.doc")
+                                            .font(.system(size: 18, weight: .semibold))
+                                            .foregroundColor(colors.muted)
+                                        Text("Read the full document and scroll to the bottom. You can then confirm you've read it.")
+                                            .font(.system(size: 13))
+                                            .foregroundColor(colors.muted)
+                                            .multilineTextAlignment(.leading)
+                                    }
+                                    .padding(12)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(colors.card.opacity(0.6))
+                                    .cornerRadius(10)
+                                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border.opacity(0.6), lineWidth: 1))
                                 }
-                                .padding(12)
-                                .background(colors.card)
-                                .cornerRadius(10)
-                                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
                             }
 
                             if vm.signoffSubmitted {
@@ -955,7 +1041,7 @@ struct LessonDetailView: View {
                                 HStack(spacing: 8) {
                                     if vm.isMarkingComplete {
                                         ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white)).scaleEffect(0.8)
-                                    } else if lesson.requireAcknowledgement && vm.canComplete && !vm.completed {
+                                    } else if isReviewGateLessonTitle(lesson.title) && vm.canComplete && !vm.completed {
                                         Image(systemName: "paperplane.fill")
                                     } else {
                                         Image(systemName: vm.completed ? "checkmark.circle.fill" : "checkmark.circle")
@@ -1058,10 +1144,13 @@ struct LessonDetailView: View {
             }
             return "Completed"
         }
+        if lesson.requireAcknowledgement && !vm.hasScrolledToBottom {
+            return vm.isPDFLesson ? "Read to the end to continue" : "Scroll to the end to complete"
+        }
         if lesson.requireAcknowledgement && !vm.acknowledged {
             return "Acknowledge to continue"
         }
-        if vm.canComplete && lesson.requireAcknowledgement {
+        if vm.canComplete && lesson.requireAcknowledgement && isReviewGateLessonTitle(lesson.title) {
             return "Send for Review"
         }
         if vm.canComplete { return "Mark as Complete" }

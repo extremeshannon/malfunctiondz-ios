@@ -73,9 +73,7 @@ struct QuizLaunchCard: View {
                 .strokeBorder(colors.amber.opacity(0.3), lineWidth: 1)
         )
         .fullScreenCover(isPresented: $showQuiz) {
-            NavigationView {
-                QuizAttemptView(quizId: quizId)
-            }
+            QuizAttemptView(quizId: quizId)
         }
     }
 }

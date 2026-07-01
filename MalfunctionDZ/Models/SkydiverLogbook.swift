@@ -62,7 +62,11 @@ struct SkydiverLogbookEntry: Codable, Identifiable {
     let signedBy: String?
     let instructorLicenseNumber: String?
     let signedAt: String?
-    /// Locked after instructor signs; no further edits.
+    /// Student/jumper self-sign (locks entry from further edits).
+    let studentSignedBy: String?
+    let studentSignedAt: String?
+    let studentSignatureUrl: String?
+    /// Locked after student or instructor signs; no further edits.
     let isLocked: Bool
     /// LMS link
     let courseId: Int?
@@ -86,6 +90,9 @@ struct SkydiverLogbookEntry: Codable, Identifiable {
         case signedBy = "signed_by"
         case instructorLicenseNumber = "instructor_license_number"
         case signedAt = "signed_at"
+        case studentSignedBy = "student_signed_by"
+        case studentSignedAt = "student_signed_at"
+        case studentSignatureUrl = "student_signature_url"
         case isLocked = "is_locked"
         case courseId = "course_id"
         case moduleId = "module_id"
@@ -99,7 +106,19 @@ struct SkydiverLogbookEntry: Codable, Identifiable {
         }
     }
 
-    var isSigned: Bool { (signedAt != nil && !(signedAt?.isEmpty ?? true)) || isLocked }
+    var isStudentSigned: Bool {
+        guard let t = studentSignedAt else { return false }
+        return !t.isEmpty
+    }
+
+    var isInstructorSigned: Bool {
+        guard let t = signedAt else { return false }
+        return !t.isEmpty
+    }
+
+    var isSigned: Bool { isStudentSigned || isInstructorSigned || isLocked }
+
+    var canStudentSign: Bool { !isStudentSigned && !isLocked }
 
     /// Display: rig label when set, else equipment free text
     var equipmentDisplay: String? {

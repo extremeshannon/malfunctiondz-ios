@@ -27,6 +27,7 @@ class LogbookViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var isSaving = false
     @Published var error: String?
+    @Published var savedSignatureUrl = ""
 
     private var currentCourseId: Int?
 
@@ -48,6 +49,7 @@ class LogbookViewModel: ObservableObject {
         defer { isLoading = false }
 
         guard let token = KeychainHelper.readToken() else { return }
+        await loadSavedSignature(token: token)
 
         var queryItems: [URLQueryItem] = []
         if let cid = courseId, cid > 0 {
@@ -579,19 +581,26 @@ class LogbookViewModel: ObservableObject {
         }
     }
 
-    /// Sign and lock a logbook entry. Pass signature as base64 PNG.
-    func signEntry(entryId: Int, signatureBase64: String) async {
+    /// Sign and lock a logbook entry. Pass signature as base64 PNG, or use saved profile signature.
+    func signEntry(entryId: Int, signatureBase64: String? = nil, useSavedSignature: Bool = false) async -> Bool {
         isSaving = true
         error = nil
         defer { isSaving = false }
 
         guard let token = KeychainHelper.readToken(),
-              let url = URL(string: "\(kServerURL)/api/lms/logbook_sign.php") else { return }
+              let url = URL(string: "\(kServerURL)/api/lms/logbook_sign.php") else { return false }
 
-        guard let jsonData = try? JSONSerialization.data(withJSONObject: [
-            "entry_id": entryId,
-            "signature": signatureBase64,
-        ]) else { return }
+        var payload: [String: Any] = ["entry_id": entryId]
+        if useSavedSignature {
+            payload["use_saved_signature"] = true
+        } else if let b64 = signatureBase64, !b64.isEmpty {
+            payload["signature"] = b64
+        } else {
+            error = "Signature required"
+            return false
+        }
+
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: payload) else { return false }
 
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
@@ -604,11 +613,34 @@ class LogbookViewModel: ObservableObject {
             let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
             if (json?["ok"] as? Bool) == true {
                 await load(courseId: currentCourseId, userId: nil)
+                return true
             } else {
                 error = json?["error"] as? String ?? "Failed to sign"
+                return false
             }
         } catch {
             self.error = error.localizedDescription
+            return false
         }
+    }
+
+    private func loadSavedSignature(token: String) async {
+        guard let url = URL(string: "\(kServerURL)/api/me.php") else { return }
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        do {
+            let (data, _) = try await URLSession.shared.data(for: req)
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let user = json["user"] as? [String: Any] else { return }
+            let urlStr = (user["jumper_signature_url"] as? String) ?? ""
+            let pathStr = (user["jumper_signature_path"] as? String) ?? ""
+            savedSignatureUrl = !urlStr.isEmpty ? urlStr : pathStr
+        } catch {
+            savedSignatureUrl = ""
+        }
+    }
+
+    var hasSavedSignature: Bool {
+        !savedSignatureUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }

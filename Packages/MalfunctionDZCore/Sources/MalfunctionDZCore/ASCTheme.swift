@@ -346,15 +346,16 @@ public struct ASCAltimeter: View {
 
 public struct ASCStatusPill: View {
   public enum Kind {
-    case ready, caution, cutaway, training, level(String)
+    case ready, caution, cutaway, notCurrent, training, level(String)
 
     public var color: Color {
       switch self {
-      case .ready:    return ASC.Palette.jumpReady
-      case .caution:  return ASC.Palette.caution
-      case .cutaway:  return ASC.Palette.cutaway
-      case .training: return ASC.Palette.daylight
-      case .level:    return ASC.Palette.hiVis
+      case .ready:       return ASC.Palette.jumpReady
+      case .caution:     return ASC.Palette.caution
+      case .cutaway:     return ASC.Palette.cutaway
+      case .notCurrent:  return ASC.Palette.cutaway
+      case .training:    return ASC.Palette.daylight
+      case .level:       return ASC.Palette.hiVis
       }
     }
 
@@ -363,6 +364,7 @@ public struct ASCStatusPill: View {
       case .ready:        return "Jump-Ready"
       case .caution:      return "Caution"
       case .cutaway:      return "Cutaway"
+      case .notCurrent:   return "Not Current"
       case .training:     return "In Training"
       case .level(let l): return l
       }

@@ -79,6 +79,7 @@ struct ASCSkydiverHomeView: View {
 
     private var jumpReadyKind: ASCStatusPill.Kind {
         if let dz = vm.dzStatus, dz.status.lowercased() == "closed" { return .caution }
+        if let c = vm.jumpCurrency { return c.statusPillKind }
         return .ready
     }
 
@@ -87,28 +88,34 @@ struct ASCSkydiverHomeView: View {
     private var statRow: some View {
         HStack(spacing: ASC.Space.sm) {
             statTile(label: "Level", value: levelLabel, accent: ASC.role.accent)
-            statTile(label: "Currency", value: currencyLabel, accent: ASC.Palette.jumpReady, unit: currencyUnit)
+            statTile(label: "Currency", value: currencyLabel, accent: currencyAccent, valueColor: currencyAccent, unit: currencyUnit)
             statTile(label: "Jumps", value: jumpsLabel, accent: ASC.Palette.beacon)
         }
     }
 
-    private func statTile(label: String, value: String, accent: Color, unit: String? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+    private func statTile(label: String, value: String, accent: Color, valueColor: Color? = nil, unit: String? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
             Text(label.uppercased())
-                .font(ASC.Typography.eyebrow(10))
-                .tracking(1.6)
+                .font(ASC.Typography.eyebrow(9))
+                .tracking(1.2)
                 .foregroundStyle(ASC.Text.muted)
+                .lineLimit(1)
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(value)
-                    .font(ASC.Typography.numeric(26))
-                    .foregroundStyle(ASC.Text.primary)
+                    .font(ASC.Typography.numeric(17))
+                    .foregroundStyle(valueColor ?? ASC.Text.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .allowsTightening(true)
                 if let unit {
                     Text(unit)
-                        .font(ASC.Typography.caption(14))
+                        .font(ASC.Typography.caption(11))
                         .foregroundStyle(ASC.Text.tertiary)
+                        .lineLimit(1)
                 }
             }
         }
+        .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
         .ascStatTile(accent)
     }
 
@@ -118,13 +125,20 @@ struct ASCSkydiverHomeView: View {
     }
 
     private var currencyLabel: String {
-        // Placeholder until jump-currency API is wired on HomeViewModel.
-        "—"
+        vm.jumpCurrency?.displayLabel ?? "—"
     }
 
-    private var currencyUnit: String? { nil }
+    private var currencyAccent: Color {
+        vm.jumpCurrency?.accentColor ?? ASC.Text.muted
+    }
+
+    private var currencyUnit: String? {
+        guard let days = vm.jumpCurrency?.daysSince else { return nil }
+        return "\(days)d"
+    }
 
     private var jumpsLabel: String {
+        if let n = vm.homeTotalJumps { return "\(n)" }
         if let n = auth.currentUser?.totalJumps { return "\(n)" }
         return "—"
     }
@@ -144,7 +158,7 @@ struct ASCSkydiverHomeView: View {
                         .foregroundStyle(ASC.Text.tertiary)
                         .fixedSize(horizontal: false, vertical: true)
                     ASCPrimaryButton(title: "Begin →") {
-                        tabSelect.selected = 3
+                        openGroundSchoolResume()
                     }
                     .padding(.top, ASC.Space.sm)
                 } else {
@@ -170,7 +184,11 @@ struct ASCSkydiverHomeView: View {
     }
 
     private func nextLessonDescription(_ d: StudentDashData) -> String {
-        "\(d.completedLessons) of \(d.totalLessons) lessons complete · Level \(d.currentLevel)"
+        if !d.progressSubtitle.isEmpty { return d.progressSubtitle }
+        if let mod = d.currentModuleTitle {
+            return "\(d.completedLessons) of \(d.totalLessons) lessons complete · \(mod)"
+        }
+        return "\(d.completedLessons) of \(d.totalLessons) lessons complete · Level \(d.currentLevel)"
     }
 
     // MARK: - Up next
@@ -185,13 +203,13 @@ struct ASCSkydiverHomeView: View {
                         .tracking(2)
                         .foregroundStyle(ASC.Text.muted)
                     Spacer()
-                    Button { tabSelect.selected = 3 } label: {
+                    Button { openGroundSchoolResume() } label: {
                         Text("See all →")
                             .font(ASC.Typography.eyebrow(11))
                             .foregroundStyle(ASC.Text.link)
                     }
                 }
-                Button { tabSelect.selected = 3 } label: {
+                Button { openGroundSchoolResume() } label: {
                     HStack(spacing: ASC.Space.md) {
                         Text("—")
                             .font(ASC.Typography.numeric(18))
@@ -221,6 +239,14 @@ struct ASCSkydiverHomeView: View {
                 }
                 .buttonStyle(.plain)
             }
+        }
+    }
+
+    private func openGroundSchoolResume() {
+        if let resume = vm.studentData?.groundSchoolResume {
+            tabSelect.openGroundSchool(resume: resume)
+        } else {
+            tabSelect.selected = 3
         }
     }
 }

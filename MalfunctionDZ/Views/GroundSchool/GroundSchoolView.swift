@@ -103,9 +103,20 @@ struct GroundSchoolWideLayout: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .onAppear { if selectedCourse == nil, let first = vm.courses.first { selectedCourse = first } }
+        .onAppear {
+            applyPendingGroundSchoolResume()
+            if selectedCourse == nil, tabSelect.pendingGroundSchoolResume == nil,
+               let first = vm.courses.first { selectedCourse = first }
+        }
         .onChange(of: vm.courses.count) { _, _ in
-            if selectedCourse == nil, let first = vm.courses.first { selectedCourse = first }
+            if selectedCourse == nil, tabSelect.pendingGroundSchoolResume == nil,
+               let first = vm.courses.first { selectedCourse = first }
+        }
+        .onChange(of: tabSelect.pendingGroundSchoolResume) { _, _ in
+            applyPendingGroundSchoolResume()
+        }
+        .onChange(of: tabSelect.selected) { _, tag in
+            if tag == 3 { applyPendingGroundSchoolResume() }
         }
         .onChange(of: tabSelect.openInstructorReviews) { _, open in
             if open {
@@ -126,6 +137,25 @@ struct GroundSchoolWideLayout: View {
             }
         }
         .refreshable { await vm.load() }
+    }
+
+    private func applyPendingGroundSchoolResume() {
+        guard tabSelect.selected == 3,
+              let target = tabSelect.pendingGroundSchoolResume else { return }
+
+        func open(in courses: [LMSCourse]) {
+            guard let course = courses.first(where: { $0.id == target.courseId }) else { return }
+            selectedCourse = course
+        }
+
+        if let course = vm.courses.first(where: { $0.id == target.courseId }) {
+            selectedCourse = course
+        } else {
+            Task {
+                await vm.load(scope: appShell.groundSchoolScope)
+                open(in: vm.courses)
+            }
+        }
     }
 
     private var groundSchoolHeader: some View {
@@ -303,6 +333,7 @@ struct GroundSchoolStackView: View {
     @Environment(\.appShell) private var appShell
     @ObservedObject var vm: GroundSchoolViewModel
     @State private var showInstructorReviews = false
+    @State private var resumeCourse: LMSCourse?
     @Environment(\.mdzColors) private var colors
 
     var body: some View {
@@ -397,6 +428,16 @@ struct GroundSchoolStackView: View {
             .navigationDestination(isPresented: $showInstructorReviews) {
                 InstructorReviewListView()
             }
+            .navigationDestination(item: $resumeCourse) { course in
+                CourseDetailView(course: course, vm: vm)
+            }
+            .onAppear { applyPendingGroundSchoolResume() }
+            .onChange(of: tabSelect.pendingGroundSchoolResume) { _, _ in
+                applyPendingGroundSchoolResume()
+            }
+            .onChange(of: tabSelect.selected) { _, tag in
+                if tag == 3 { applyPendingGroundSchoolResume() }
+            }
             .onChange(of: tabSelect.openInstructorReviews) { _, open in
                 if open {
                     showInstructorReviews = true
@@ -404,6 +445,31 @@ struct GroundSchoolStackView: View {
                 }
             }
             .refreshable { await vm.load() }
+        }
+    }
+
+    private func applyPendingGroundSchoolResume() {
+        guard tabSelect.selected == 3,
+              let target = tabSelect.pendingGroundSchoolResume else { return }
+
+        func open(in courses: [LMSCourse]) {
+            guard let course = courses.first(where: { $0.id == target.courseId }) else { return }
+            resumeCourse = nil
+            DispatchQueue.main.async {
+                resumeCourse = course
+            }
+        }
+
+        if let course = vm.courses.first(where: { $0.id == target.courseId }) {
+            resumeCourse = nil
+            DispatchQueue.main.async {
+                resumeCourse = course
+            }
+        } else {
+            Task {
+                await vm.load(scope: appShell.groundSchoolScope)
+                open(in: vm.courses)
+            }
         }
     }
 }
@@ -515,10 +581,12 @@ struct LessonNavItem: Hashable {
 struct CourseDetailView: View {
     let course: LMSCourse
     @ObservedObject var vm: GroundSchoolViewModel
+    @EnvironmentObject private var tabSelect: TabSelection
     @State private var expandedModules: Set<Int> = []
     @State private var showModuleQuizzes = false
     @State private var showCompletedModules = false
     @State private var lessonNav: LessonNavItem?
+    @State private var didApplyResume = false
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
 
@@ -588,6 +656,7 @@ struct CourseDetailView: View {
                                         )
                                     }
                                 )
+                                .id("module-\(reading.id)")
                             }
                         }
 
@@ -687,15 +756,15 @@ struct CourseDetailView: View {
                     .padding(16)
                 }
                 .onAppear {
-                    if let current = currentModule {
-                        expandedModules = [current.id]
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                            withAnimation {
-                                proxy.scrollTo("current-module", anchor: .top)
-                            }
-                        }
+                    if !didApplyResume {
+                        didApplyResume = true
+                        applyResumeNavigation(proxy: proxy)
                     }
                     Task { await vm.load() }
+                }
+                .onChange(of: tabSelect.pendingGroundSchoolResume) { _, pending in
+                    guard let pending, pending.courseId == liveCourse.id else { return }
+                    applyResumeFromPending(pending, proxy: proxy)
                 }
             }
         }
@@ -780,6 +849,52 @@ struct CourseDetailView: View {
         .padding(16)
         .background(colors.card)
         .cornerRadius(12)
+    }
+
+    private func applyResumeNavigation(proxy: ScrollViewProxy) {
+        guard let pending = tabSelect.pendingGroundSchoolResume,
+              pending.courseId == liveCourse.id else {
+            scrollToCurrentModule(proxy: proxy)
+            return
+        }
+        applyResumeFromPending(pending, proxy: proxy)
+    }
+
+    private func applyResumeFromPending(_ pending: GroundSchoolResumeTarget, proxy: ScrollViewProxy? = nil) {
+        tabSelect.pendingGroundSchoolResume = nil
+        expandedModules.insert(pending.moduleId)
+        let scrollId = pending.moduleId == currentModule?.id ? "current-module" : "module-\(pending.moduleId)"
+        if let proxy {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                withAnimation { proxy.scrollTo(scrollId, anchor: .top) }
+            }
+        }
+        if let lid = pending.lessonId {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                openLesson(lessonId: lid, moduleId: pending.moduleId)
+            }
+        }
+    }
+
+    private func scrollToCurrentModule(proxy: ScrollViewProxy) {
+        if let current = currentModule {
+            expandedModules = [current.id]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                withAnimation { proxy.scrollTo("current-module", anchor: .top) }
+            }
+        }
+    }
+
+    private func openLesson(lessonId: Int, moduleId: Int) {
+        guard let module = liveCourse.modules.first(where: { $0.id == moduleId }),
+              let lesson = module.lessons.first(where: { $0.id == lessonId }) else { return }
+        lessonNav = LessonNavItem(
+            lessonId: lesson.id,
+            lessonTitle: lesson.title,
+            courseId: liveCourse.id,
+            moduleId: moduleId,
+            allLessons: module.lessons
+        )
     }
 
     private func toggleModule(_ id: Int) {

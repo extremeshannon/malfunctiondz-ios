@@ -10,7 +10,14 @@ class TabSelection: ObservableObject {
     @Published var openInstructorReviews = false
     /// ASC Packers: open Gear Room tab on this rig (from Squawks list).
     @Published var pendingGearRoomRigId: Int?
+    /// Student resume: open enrolled course at module/lesson (consumed by CourseDetailView).
+    @Published var pendingGroundSchoolResume: GroundSchoolResumeTarget?
     static let shared = TabSelection()
+
+    func openGroundSchool(resume: GroundSchoolResumeTarget) {
+        pendingGroundSchoolResume = resume
+        selected = 3
+    }
 }
 
 struct HomeView: View {
@@ -489,7 +496,11 @@ struct HomeView: View {
             )
         } else if isStudent {
             StudentProgressWidget(data: vm.studentData) {
-                tabSelect.selected = 3
+                if let resume = vm.studentData?.groundSchoolResume {
+                    tabSelect.openGroundSchool(resume: resume)
+                } else {
+                    tabSelect.selected = 3
+                }
             }
         }
     }
@@ -1078,6 +1089,10 @@ struct StudentProgressWidget: View {
                         }
                         Text("\(d.completedLessons) / \(d.totalLessons) lessons")
                             .font(.system(size: isWide ? 13 : 11)).foregroundColor(ASC.Text.muted)
+                        if let mod = d.currentModuleTitle {
+                            Text(mod)
+                                .font(.system(size: isWide ? 12 : 10)).foregroundColor(ASC.Text.tertiary)
+                        }
                     }
                 }
                 ASCPrimaryButton(

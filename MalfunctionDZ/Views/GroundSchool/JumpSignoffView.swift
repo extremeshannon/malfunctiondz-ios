@@ -287,6 +287,12 @@ func isJumpSignoffLessonTitle(_ title: String) -> Bool {
     return (t.contains("sign off") || t.contains("signoff")) && !t.contains("review")
 }
 
+func isReviewGateLessonTitle(_ title: String) -> Bool {
+    let t = title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    if isJumpSignoffLessonTitle(title) { return false }
+    return t.contains("review") || t.contains("sign off") || t.contains("signoff")
+}
+
 // MARK: - Models
 
 struct JumpSignoffChoice: Codable, Identifiable, Hashable {

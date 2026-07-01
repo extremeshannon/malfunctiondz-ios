@@ -132,8 +132,20 @@ struct StudentDashData {
     var completedLessons: Int     = 0
     var totalLessons:     Int     = 0
     var progressPct:      Double  = 0
+    /// Headline for Next Lesson (lesson title or level sign-off).
     var nextModuleTitle:  String? = nil
+    /// Parent module when the headline is a lesson (e.g. "Level 18").
+    var currentModuleTitle: String? = nil
+    var progressSubtitle: String = ""
     var currentLevel:     Int     = 0
+    var courseId:         Int     = 0
+    var resumeModuleId:   Int?
+    var resumeLessonId:   Int?
+
+    var groundSchoolResume: GroundSchoolResumeTarget? {
+        guard courseId > 0, let resumeModuleId else { return nil }
+        return GroundSchoolResumeTarget(courseId: courseId, moduleId: resumeModuleId, lessonId: resumeLessonId)
+    }
 }
 
 struct InstructorDashData {
@@ -172,6 +184,68 @@ struct JumpCheckSummary {
     var summaryText: String {
         if total == 0 { return "No data" }
         return "\(passed25) of \(total) at 25+ jumps"
+    }
+}
+
+/// Skydiver jump currency from last logged jump date (30/60-day rules).
+struct JumpCurrencyStatus: Equatable {
+    enum Status: String, Equatable {
+        case current
+        case warning
+        case expired
+        case none
+    }
+
+    var status: Status = .none
+    var daysSince: Int?
+    var lastJumpDate: String = ""
+
+    var displayLabel: String {
+        switch status {
+        case .current: return "Current"
+        case .warning, .expired, .none: return "NOT"
+        }
+    }
+
+    var accentColor: Color {
+        switch status {
+        case .current: return ASC.Palette.jumpReady
+        case .warning: return ASC.Palette.caution
+        case .expired, .none: return ASC.Palette.cutaway
+        }
+    }
+
+    var statusPillKind: ASCStatusPill.Kind {
+        switch status {
+        case .current: return .ready
+        case .warning: return .caution
+        case .expired, .none: return .notCurrent
+        }
+    }
+
+    static func parse(from json: [String: Any]?) -> JumpCurrencyStatus? {
+        guard let json else { return nil }
+        let raw = (json["status"] as? String ?? "").lowercased()
+        let status: Status
+        switch raw {
+        case "current": status = .current
+        case "warning": status = .warning
+        case "expired": status = .expired
+        default: status = .none
+        }
+        let days: Int?
+        if let d = json["days_since"] as? Int {
+            days = d
+        } else if let d = json["days_since"] as? Double {
+            days = Int(d)
+        } else {
+            days = nil
+        }
+        return JumpCurrencyStatus(
+            status: status,
+            daysSince: days,
+            lastJumpDate: (json["last_jump_date"] as? String) ?? ""
+        )
     }
 }
 
@@ -272,6 +346,11 @@ class HomeViewModel: ObservableObject {
     /// DZ Status (open/closed/announcement) — shown on Home
     @Published var dzStatus: DZStatus? = nil
 
+    /// Jump currency (last jump within 30 / 60 days)
+    @Published var jumpCurrency: JumpCurrencyStatus?
+    /// Refreshed from logbook API (more accurate than login snapshot).
+    @Published var homeTotalJumps: Int?
+
     /// 25 Jump Check summary for Manifest / Ops Admin home
     @Published var jumpCheckSummary: JumpCheckSummary? = nil
     @Published var dzRigsSummary: DzRigsSummary? = nil
@@ -333,6 +412,11 @@ class HomeViewModel: ObservableObject {
         // DZ Status — always load for Home banner
         await loadDzStatus()
 
+        // Jump currency for member/student home (last logged jump date)
+        if isStudent || hasLogbook || hasGroundSchool {
+            await loadJumpCurrency()
+        }
+
         #if ASC_STAFF
         await loadStaffManifest()
         if user.isInstructorRole {
@@ -362,6 +446,39 @@ class HomeViewModel: ObservableObject {
               (json["ok"] as? Bool) == true else { return }
         startFreefallTime = (json["start_freefall_time"] as? String) ?? ""
         homeDropzone = (json["home_dropzone"] as? String) ?? ""
+    }
+
+    func loadJumpCurrency() async {
+        guard let token = KeychainHelper.readToken() else { return }
+
+        // Prefer logbook GET — includes currency + fresh total_jumps for students with entries.
+        for path in ["/api/lms/logbook.php", "/api/lms/logbook"] {
+            guard let url = URL(string: "\(kServerURL)\(path)") else { continue }
+            var req = URLRequest(url: url)
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            guard let (data, response) = try? await URLSession.shared.data(for: req),
+                  (response as? HTTPURLResponse)?.statusCode == 200,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  (json["ok"] as? Bool) == true else { continue }
+            if let tj = json["total_jumps"] as? Int {
+                homeTotalJumps = tj
+            } else if let tj = json["total_jumps"] as? Double {
+                homeTotalJumps = Int(tj)
+            }
+            if let cur = json["currency"] as? [String: Any], let parsed = JumpCurrencyStatus.parse(from: cur) {
+                jumpCurrency = parsed
+                return
+            }
+        }
+
+        // Fallback: logbook settings (older deploys without currency on logbook GET).
+        guard let url = URL(string: "\(kServerURL)/api/lms/logbook_settings.php") else { return }
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              (json["ok"] as? Bool) == true else { return }
+        jumpCurrency = JumpCurrencyStatus.parse(from: json["currency"] as? [String: Any])
     }
 
     func setStartFreefallTime(_ value: String) async {
@@ -570,13 +687,19 @@ class HomeViewModel: ObservableObject {
               let resp = try? JSONDecoder().decode(LMSCoursesResponse.self, from: data),
               resp.ok, let course = resp.courses?.first else { return }
 
+        let home = course.studentHomeProgress()
         studentData = StudentDashData(
             courseTitle:      course.title,
             completedLessons: course.completedLessons,
             totalLessons:     course.totalLessons,
             progressPct:      course.progressPct,
-            nextModuleTitle:  course.modules.first(where: { !$0.isComplete && !$0.isLocked })?.title,
-            currentLevel:     course.modules.filter { $0.isComplete }.count
+            nextModuleTitle:  home.nextLessonTitle,
+            currentModuleTitle: home.currentModuleTitle,
+            progressSubtitle: home.progressSubtitle,
+            currentLevel:     home.currentAffLevel,
+            courseId:         home.courseId,
+            resumeModuleId:   home.moduleId,
+            resumeLessonId:   home.lessonId
         )
         groundSchoolSummary = course.title
         let pct = Int(course.progressPct)
@@ -584,7 +707,7 @@ class HomeViewModel: ObservableObject {
             .init(label: "Level \(studentData!.currentLevel)", color: .mdzBlue, semanticKey: "primary"),
             .init(label: "\(pct)%", color: pct == 100 ? .mdzGreen : .mdzAmber, semanticKey: pct == 100 ? "green" : "amber")
         ]
-        if let next = studentData?.nextModuleTitle {
+        if let next = studentData?.nextModuleTitle, next != "Course complete" {
             alerts.append(.init(message: "Up next: \(next)", category: "Ground School", color: .mdzAmber, semanticKey: "amber"))
         }
     }

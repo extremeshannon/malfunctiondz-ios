@@ -113,7 +113,7 @@ struct PackerGearRoomBrowseView: View {
             Text("GEAR ROOM")
                 .font(ASC.Typography.display(28))
                 .foregroundStyle(ASC.Text.primary)
-            if let s = vm.summary {
+            if vm.summary != nil {
                 Text("\(displayRigs.count) of \(dzRigCount) DZ rigs · tap to open · swipe in detail")
                     .font(ASC.Typography.bodyMedium(13))
                     .foregroundStyle(ASC.Text.tertiary)
