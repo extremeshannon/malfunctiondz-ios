@@ -20,6 +20,11 @@ class LogbookViewModel: ObservableObject {
     /// Canonical jump type prefilled for new jumps (e.g. rw, freefly).
     @Published var defaultJumpType: String = ""
     @Published var homeDropzone: String = ""
+    @Published var defaultAircraft: String = ""
+    @Published var dropzoneOptions: [String] = LogbookPickerDefaults.dropzones
+    @Published var aircraftOptions: [String] = LogbookPickerDefaults.aircraft
+    @Published var lastDropzoneName: String = ""
+    @Published var lastAircraftLabel: String = ""
     @Published var totalJumps: Int = 0
     @Published var isStudent: Bool = false
     @Published var isSkydiver: Bool = false
@@ -35,6 +40,11 @@ class LogbookViewModel: ObservableObject {
     private static let logbookLoadPaths = [
         "/api/lms/logbook",
         "/api/lms/logbook.php",
+    ]
+
+    private static let logbookAddPaths = [
+        "/api/lms/logbook_add",
+        "/api/lms/logbook_add.php",
     ]
 
     private static let logbookSettingsPaths = [
@@ -112,6 +122,11 @@ class LogbookViewModel: ObservableObject {
         startFreefallTime = resp.startFreefallTime ?? ""
         defaultJumpType = resp.defaultJumpType ?? ""
         homeDropzone = resp.homeDropzone ?? ""
+        defaultAircraft = resp.defaultAircraft ?? ""
+        dropzoneOptions = LogbookPickerDefaults.mergedOptions(resp.dropzoneOptions, defaults: LogbookPickerDefaults.dropzones)
+        aircraftOptions = LogbookPickerDefaults.mergedOptions(resp.aircraftOptions, defaults: LogbookPickerDefaults.aircraft)
+        lastDropzoneName = resp.lastDropzoneName ?? ""
+        lastAircraftLabel = resp.lastAircraftLabel ?? ""
         totalJumps = resp.totalJumps ?? priorJumpCount
         isStudent = resp.isStudent ?? false
         isSkydiver = resp.isSkydiver ?? false
@@ -128,6 +143,11 @@ class LogbookViewModel: ObservableObject {
         startFreefallTime = ""
         defaultJumpType = ""
         homeDropzone = ""
+        defaultAircraft = ""
+        dropzoneOptions = LogbookPickerDefaults.dropzones
+        aircraftOptions = LogbookPickerDefaults.aircraft
+        lastDropzoneName = ""
+        lastAircraftLabel = ""
         totalJumps = 0
         isStudent = false
         isSkydiver = false
@@ -140,7 +160,8 @@ class LogbookViewModel: ObservableObject {
         priorFreefallSeconds: Int,
         startFreefallTime: String,
         defaultJumpType: String,
-        homeDropzone: String
+        homeDropzone: String,
+        defaultAircraft: String
     ) async -> Bool {
         let pj = max(0, min(priorJumpCount, 50000))
         let pff = max(0, min(priorFreefallSeconds, 1_000_000_000))
@@ -154,6 +175,7 @@ class LogbookViewModel: ObservableObject {
             "start_freefall_time": startFreefallTime.isEmpty ? NSNull() : startFreefallTime,
             "home_dropzone": homeDropzone.isEmpty ? NSNull() : homeDropzone,
             "default_jump_type": defaultJumpType.isEmpty ? NSNull() : defaultJumpType,
+            "default_aircraft": defaultAircraft.isEmpty ? NSNull() : defaultAircraft,
         ]
         guard let jsonData = try? JSONSerialization.data(withJSONObject: body) else { return false }
         for path in Self.logbookSettingsPaths {
@@ -179,6 +201,7 @@ class LogbookViewModel: ObservableObject {
                     self.startFreefallTime = startFreefallTime
                     self.defaultJumpType = defaultJumpType
                     self.homeDropzone = homeDropzone
+                    self.defaultAircraft = defaultAircraft
                     await load(courseId: currentCourseId, userId: nil)
                     return true
                 }
@@ -532,16 +555,33 @@ class LogbookViewModel: ObservableObject {
         }
     }
 
+    func rememberPickerOption(dropzone: String? = nil, aircraft: String? = nil) {
+        if let dz = dropzone?.trimmingCharacters(in: .whitespacesAndNewlines), !dz.isEmpty {
+            if !dropzoneOptions.contains(where: { $0.caseInsensitiveCompare(dz) == .orderedSame }) {
+                dropzoneOptions.append(dz)
+            }
+            lastDropzoneName = dz
+        }
+        if let ac = aircraft?.trimmingCharacters(in: .whitespacesAndNewlines), !ac.isEmpty {
+            if !aircraftOptions.contains(where: { $0.caseInsensitiveCompare(ac) == .orderedSame }) {
+                aircraftOptions.append(ac)
+            }
+            lastAircraftLabel = ac
+        }
+    }
+
     /// Add a jump entry. Skydivers only (total >= 25).
     /// Backend computes total_time (cumulative freefall) from prior entries + this jump's delay.
     func addEntry(dz: String?, altitude: String?, delay: String?, date: String?, aircraft: String?,
-                  equipment: String?, rigId: Int?, jumpType: String?, comments: String?) async {
+                  equipment: String?, rigId: Int?, jumpType: String?, comments: String?) async -> Bool {
         isSaving = true
         error = nil
         defer { isSaving = false }
 
-        guard let token = KeychainHelper.readToken(),
-              let url = URL(string: "\(kServerURL)/api/lms/logbook_add.php") else { return }
+        guard let token = KeychainHelper.readToken() else {
+            error = "Not signed in"
+            return false
+        }
 
         let body: [String: Any?] = [
             "dz": dz?.isEmpty == true ? nil : dz,
@@ -555,30 +595,44 @@ class LogbookViewModel: ObservableObject {
             "comments": comments?.isEmpty == true ? nil : comments,
         ]
         let clean = body.compactMapValues { $0 }
-        guard let jsonData = try? JSONSerialization.data(withJSONObject: clean) else { return }
-
-        var req = URLRequest(url: url)
-        req.httpMethod = "POST"
-        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = jsonData
-
-        do {
-            let (data, resp) = try await URLSession.shared.data(for: req)
-            let statusCode = (resp as? HTTPURLResponse)?.statusCode ?? 0
-            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-            if statusCode == 403 {
-                error = json?["error"] as? String ?? "You need 25 jumps to add entries."
-                return
-            }
-            if (json?["ok"] as? Bool) == true {
-                await load(courseId: currentCourseId, userId: nil)
-            } else {
-                error = json?["error"] as? String ?? "Failed to add entry"
-            }
-        } catch {
-            self.error = error.localizedDescription
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: clean) else {
+            error = "Could not encode jump"
+            return false
         }
+
+        for path in Self.logbookAddPaths {
+            guard let url = URL(string: "\(kServerURL)\(path)") else { continue }
+
+            var req = URLRequest(url: url)
+            req.httpMethod = "POST"
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            req.httpBody = jsonData
+
+            do {
+                let (data, resp) = try await URLSession.shared.data(for: req)
+                let statusCode = (resp as? HTTPURLResponse)?.statusCode ?? 0
+                if statusCode == 404 { continue }
+                let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+                if statusCode == 403 {
+                    error = json?["error"] as? String ?? "You need 25 jumps to add entries."
+                    return false
+                }
+                if (json?["ok"] as? Bool) == true {
+                    rememberPickerOption(dropzone: dz, aircraft: aircraft)
+                    await load(courseId: currentCourseId, userId: nil)
+                    return true
+                }
+                error = json?["error"] as? String ?? "Failed to add entry"
+                return false
+            } catch {
+                self.error = error.localizedDescription
+                return false
+            }
+        }
+
+        error = "Logbook add API not found — the server needs a platform update."
+        return false
     }
 
     /// Sign and lock a logbook entry. Pass signature as base64 PNG, or use saved profile signature.
@@ -713,7 +767,9 @@ class LogbookViewModel: ObservableObject {
             let (data, _) = try await URLSession.shared.data(for: req)
             guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let user = json["user"] as? [String: Any] else { return }
-            let urlStr = (user["jumper_signature_url"] as? String) ?? ""
+            let urlStr = (user["signature_url"] as? String)
+                ?? (user["jumper_signature_url"] as? String)
+                ?? ""
             let pathStr = (user["jumper_signature_path"] as? String) ?? ""
             savedSignatureUrl = !urlStr.isEmpty ? urlStr : pathStr
         } catch {

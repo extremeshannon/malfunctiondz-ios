@@ -72,7 +72,7 @@ struct ProfileView: View {
                         MDZNavRow(
                             icon: "person.text.rectangle",
                             title: "My Profile",
-                            subtitle: "Licenses, address, logbook signature",
+                            subtitle: "Licenses, address, your signature",
                             accent: colors.primary
                         )
                     }
@@ -84,7 +84,7 @@ struct ProfileView: View {
                             MDZNavRow(
                                 icon: "signature",
                                 title: "Instructor Profile",
-                                subtitle: "Initials and signature for sign-offs",
+                                subtitle: "Initials for jump sign-offs",
                                 accent: colors.accent
                             )
                         }

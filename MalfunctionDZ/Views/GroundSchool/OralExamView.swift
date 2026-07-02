@@ -280,7 +280,7 @@ struct OralExamView: View {
 
     private var profileWarning: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Complete your instructor profile (USPA license, initials, signature) before grading.")
+            Text("Complete sign-offs: USPA license and signature in My Profile, plus instructor initials.")
                 .font(.system(size: 12))
                 .foregroundColor(colors.amber)
             NavigationLink(destination: InstructorProfileView()) {

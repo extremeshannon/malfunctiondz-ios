@@ -248,11 +248,8 @@ struct LogbookView: View {
             defaultJumpType: vm.defaultJumpType,
             homeDropzone: vm.homeDropzone,
             onSave: { dz, altitude, delay, date, aircraft, equipment, rigId, jumpType, comments in
-                Task {
-                    await vm.addEntry(dz: dz, altitude: altitude, delay: delay, date: date, aircraft: aircraft,
-                                     equipment: equipment, rigId: rigId, jumpType: jumpType, comments: comments)
-                    showAddEntry = false
-                }
+                await vm.addEntry(dz: dz, altitude: altitude, delay: delay, date: date, aircraft: aircraft,
+                                  equipment: equipment, rigId: rigId, jumpType: jumpType, comments: comments)
             },
             onCancel: { showAddEntry = false }
         )
@@ -269,6 +266,7 @@ struct LogbookConfigSheet: View {
     @State private var draftDefaultFreefall = ""
     @State private var draftJumpType = ""
     @State private var draftHomeDz = ""
+    @State private var draftDefaultAircraft = ""
 
     @Environment(\.appShell) private var appShell
     @Environment(\.mdzColors) private var colors
@@ -343,11 +341,26 @@ struct LogbookConfigSheet: View {
 
                         configField(
                             title: "Home dropzone",
-                            subtitle: "Prefills DZ when adding a jump."
+                            subtitle: "Default DZ when adding a jump."
                         ) {
-                            TextField("Drop zone name", text: $draftHomeDz)
-                                .font(.system(size: 17, weight: .medium))
-                                .foregroundColor(colors.text)
+                            LogbookEditablePicker(
+                                label: "Dropzone",
+                                hint: nil,
+                                value: $draftHomeDz,
+                                options: vm.dropzoneOptions
+                            )
+                        }
+
+                        configField(
+                            title: "Default aircraft",
+                            subtitle: "Prefills aircraft when adding a jump."
+                        ) {
+                            LogbookEditablePicker(
+                                label: "Aircraft",
+                                hint: nil,
+                                value: $draftDefaultAircraft,
+                                options: vm.aircraftOptions
+                            )
                         }
                     }
                     .padding(20)
@@ -373,7 +386,8 @@ struct LogbookConfigSheet: View {
                                 priorFreefallSeconds: max(0, pff),
                                 startFreefallTime: draftDefaultFreefall,
                                 defaultJumpType: draftJumpType,
-                                homeDropzone: draftHomeDz
+                                homeDropzone: draftHomeDz,
+                                defaultAircraft: draftDefaultAircraft
                             )
                             if ok { onDismiss() }
                         }
@@ -389,6 +403,7 @@ struct LogbookConfigSheet: View {
                 draftDefaultFreefall = vm.startFreefallTime
                 draftJumpType = vm.defaultJumpType
                 draftHomeDz = vm.homeDropzone
+                draftDefaultAircraft = vm.defaultAircraft
             }
         }
     }
@@ -1051,7 +1066,7 @@ struct AddLogbookEntrySheet: View {
     let startFreefallTime: String
     let defaultJumpType: String
     let homeDropzone: String
-    let onSave: (String?, String?, String?, String?, String?, String?, Int?, String?, String?) -> Void
+    let onSave: (String?, String?, String?, String?, String?, String?, Int?, String?, String?) async -> Bool
     let onCancel: () -> Void
 
     @State private var dz = ""
@@ -1064,6 +1079,7 @@ struct AddLogbookEntrySheet: View {
     @State private var jumpType = ""
     @State private var comments = ""
     @State private var showCreateRig = false
+    @State private var showSaveError = false
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
 
@@ -1083,11 +1099,23 @@ struct AddLogbookEntrySheet: View {
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(colors.amber)
 
-                        addEntryField("DZ", text: $dz, hint: "Drop zone name")
+                        LogbookEditablePicker(
+                            label: "DZ",
+                            hint: "Drop zone name",
+                            value: $dz,
+                            options: vm.dropzoneOptions,
+                            onAddOption: { vm.rememberPickerOption(dropzone: $0) }
+                        )
                         addEntryField("Altitude", text: $altitude, hint: "Exit altitude (e.g. 13500)")
                         addFreefallField()
                         datePickerField
-                        addEntryField("Aircraft", text: $aircraft, hint: "e.g. Caravan, Otter")
+                        LogbookEditablePicker(
+                            label: "Aircraft",
+                            hint: "e.g. Caravan, Twin Otter",
+                            value: $aircraft,
+                            options: vm.aircraftOptions,
+                            onAddOption: { vm.rememberPickerOption(aircraft: $0) }
+                        )
                         rigPickerField
                         addEntryField("Equipment", text: $equipment, hint: "Rig or canopy (free text if not in list)")
                         addEntryField("Jump Type", text: $jumpType, hint: "Prefills from your default; change freely for this jump")
@@ -1117,12 +1145,25 @@ struct AddLogbookEntrySheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        let dateStr = Self.dateFormatter.string(from: jumpDate)
-                        onSave(dz, altitude, delay, dateStr, aircraft, equipment, selectedRigId, jumpType, comments)
+                        Task {
+                            let dateStr = Self.dateFormatter.string(from: jumpDate)
+                            let ok = await onSave(dz, altitude, delay, dateStr, aircraft, equipment, selectedRigId, jumpType, comments)
+                            if ok {
+                                onCancel()
+                            } else {
+                                showSaveError = true
+                            }
+                        }
                     }
                     .fontWeight(.semibold)
                     .foregroundColor(colors.amber)
+                    .disabled(vm.isSaving)
                 }
+            }
+            .alert("Could not add jump", isPresented: $showSaveError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(vm.error ?? "Failed to add entry")
             }
         }
     }
@@ -1164,13 +1205,20 @@ struct AddLogbookEntrySheet: View {
 
     private func prefillFromLastEntry() {
         if let e = lastEntry {
-            if let v = e.dz, !v.isEmpty { dz = v }
             if let v = e.altitude, !v.isEmpty { altitude = v }
-            if let v = e.aircraft, !v.isEmpty { aircraft = v }
             if let v = e.equipment, !v.isEmpty { equipment = v }
             if let rid = e.rigId, rid > 0 { selectedRigId = rid }
         }
-        if dz.isEmpty, !homeDropzone.isEmpty { dz = homeDropzone }
+        if dz.isEmpty {
+            if !vm.lastDropzoneName.isEmpty { dz = vm.lastDropzoneName }
+            else if !homeDropzone.isEmpty { dz = homeDropzone }
+            else if let v = lastEntry?.dz, !v.isEmpty { dz = v }
+        }
+        if aircraft.isEmpty {
+            if !vm.lastAircraftLabel.isEmpty { aircraft = vm.lastAircraftLabel }
+            else if !vm.defaultAircraft.isEmpty { aircraft = vm.defaultAircraft }
+            else if let v = lastEntry?.aircraft, !v.isEmpty { aircraft = v }
+        }
         if delay.isEmpty, !startFreefallTime.isEmpty {
             delay = FreefallDurationFormatting.formatWhileTyping(startFreefallTime)
         }
@@ -1260,6 +1308,81 @@ struct AddLogbookEntrySheet: View {
         .background(colors.card)
         .cornerRadius(8)
         .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+    }
+}
+
+// MARK: - Editable picker (preset list + add custom)
+
+struct LogbookEditablePicker: View {
+    let label: String
+    let hint: String?
+    @Binding var value: String
+    var options: [String]
+    var onAddOption: ((String) -> Void)? = nil
+
+    @State private var showAddAlert = false
+    @State private var newOptionText = ""
+    @Environment(\.mdzColors) private var colors
+
+    private var displayOptions: [String] {
+        let v = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !v.isEmpty else { return options }
+        if options.contains(where: { $0.caseInsensitiveCompare(v) == .orderedSame }) {
+            return options
+        }
+        return [v] + options
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label.uppercased())
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundColor(colors.amber)
+                    .tracking(1)
+                if let h = hint, !h.isEmpty {
+                    Text(h)
+                        .font(.system(size: 12))
+                        .foregroundColor(colors.text.opacity(0.9))
+                }
+            }
+            Menu {
+                ForEach(displayOptions, id: \.self) { opt in
+                    Button(opt) { value = opt }
+                }
+                Divider()
+                Button("Add new…") {
+                    newOptionText = value
+                    showAddAlert = true
+                }
+            } label: {
+                HStack {
+                    Text(value.isEmpty ? "Select…" : value)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(value.isEmpty ? colors.muted : colors.text)
+                    Spacer()
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(colors.amber)
+                }
+            }
+        }
+        .padding(14)
+        .background(colors.card)
+        .cornerRadius(8)
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+        .alert("Add \(label)", isPresented: $showAddAlert) {
+            TextField(label, text: $newOptionText)
+            Button("Add") {
+                let trimmed = newOptionText.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmed.isEmpty else { return }
+                value = trimmed
+                onAddOption?(trimmed)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Saved for future jumps on this device and synced when you add a jump.")
+        }
     }
 }
 

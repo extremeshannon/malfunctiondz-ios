@@ -285,7 +285,7 @@ final class InstructorReviewDetailViewModel: ObservableObject {
         let notes = instructorNotes.trimmingCharacters(in: .whitespacesAndNewlines)
         if status == "approved" {
             if !instructorProfileReady {
-                error = "Complete your instructor profile (signature and license) before sign-off."
+                error = "Complete sign-offs: USPA license and signature in My Profile, plus instructor initials."
                 return false
             }
             let ackOk = checklistState.ackRequired ? checklistState.instructorAck : attested
@@ -546,7 +546,7 @@ struct InstructorReviewDetailView: View {
                         }
 
                         if !vm.instructorProfileReady {
-                            Text("Complete your instructor profile (USPA license, initials, signature) before approving.")
+                            Text("Complete sign-offs: USPA license and signature in My Profile, plus instructor initials.")
                                 .font(.system(size: 12))
                                 .foregroundColor(colors.amber)
                                 .padding(12)

@@ -201,7 +201,7 @@ struct MemberProfileEditView: View {
             } else {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("Same fields as the drop zone user profile on the web. Save a signature here to sign logbook jumps quickly.")
+                        Text("Same fields as the drop zone user profile on the web. Save one signature here — used for logbook witness signing, instructor sign-offs, and other role-based signing.")
                             .font(.system(size: 13))
                             .foregroundColor(colors.muted)
 
@@ -245,7 +245,7 @@ struct MemberProfileEditView: View {
                             profileField("ZIP", text: $vm.postalCode)
                         }
 
-                        profileSection("Logbook signature") {
+                        profileSection("Profile signature") {
                             if vm.hasSignatureOnFile || localSignaturePreview != nil {
                                 MDZSignaturePreview(
                                     localImage: localSignaturePreview,

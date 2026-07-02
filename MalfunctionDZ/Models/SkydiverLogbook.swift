@@ -20,6 +20,11 @@ struct SkydiverLogbookResponse: Codable {
     /// Canonical jump type (e.g. rw, freefly) prefilled when adding a jump.
     let defaultJumpType: String?
     let homeDropzone: String?
+    let defaultAircraft: String?
+    let dropzoneOptions: [String]?
+    let aircraftOptions: [String]?
+    let lastDropzoneName: String?
+    let lastAircraftLabel: String?
     let totalJumps: Int?
     let isStudent: Bool?
     let isSkydiver: Bool?
@@ -34,6 +39,11 @@ struct SkydiverLogbookResponse: Codable {
         case startFreefallTime = "start_freefall_time"
         case defaultJumpType = "default_jump_type"
         case homeDropzone = "home_dropzone"
+        case defaultAircraft = "default_aircraft"
+        case dropzoneOptions = "dropzone_options"
+        case aircraftOptions = "aircraft_options"
+        case lastDropzoneName = "last_dropzone_name"
+        case lastAircraftLabel = "last_aircraft_label"
         case totalJumps = "total_jumps"
         case isStudent = "is_student"
         case isSkydiver = "is_skydiver"
@@ -295,6 +305,33 @@ struct RigCatalogResponse: Codable {
 }
 
 // MARK: - Jump type defaults (matches server `normalize_jump_type`)
+
+enum LogbookPickerDefaults {
+    static let dropzones = ["Alaska Skydive Center", "Skydive Arizona"]
+    static let aircraft = [
+        "Cessna P206",
+        "Cessna U206",
+        "Cessna 182",
+        "Twin Otter",
+        "A-Star",
+        "Caravan",
+        "Casa",
+    ]
+
+    static func mergedOptions(_ server: [String]?, defaults: [String]) -> [String] {
+        var seen = Set<String>()
+        var out: [String] = []
+        for item in defaults + (server ?? []) {
+            let trimmed = item.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { continue }
+            let key = trimmed.lowercased()
+            guard !seen.contains(key) else { continue }
+            seen.insert(key)
+            out.append(trimmed)
+        }
+        return out
+    }
+}
 
 enum LogbookJumpTypeOptions {
     static let all: [(value: String, label: String)] = [

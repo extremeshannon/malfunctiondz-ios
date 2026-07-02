@@ -986,7 +986,7 @@ final class InstructorJumpReviewViewModel: ObservableObject {
         }
         if result == "pass" {
             if detail?.instructorProfileReady == false {
-                error = "Complete jump sign-offs: USPA license (A–D) on your Profile, plus instructor initials and signature."
+                error = "Complete jump sign-offs: USPA license and signature in My Profile, plus instructor initials."
                 return false
             }
             if !checklistState.passReady {
@@ -994,7 +994,7 @@ final class InstructorJumpReviewViewModel: ObservableObject {
                 return false
             }
         } else if detail?.instructorProfileReady == false {
-            error = "Complete jump sign-offs: USPA license (A–D) on your Profile, plus instructor initials and signature."
+            error = "Complete jump sign-offs: USPA license and signature in My Profile, plus instructor initials."
             return false
         }
         isSubmitting = true
@@ -1118,7 +1118,7 @@ struct InstructorJumpReviewDetailView: View {
 
                         if vm.detail?.instructorProfileReady == false {
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Complete jump sign-offs: USPA license (A–D) on your Profile, plus instructor initials and signature.")
+                                Text("Complete jump sign-offs: USPA license and signature in My Profile, plus instructor initials.")
                                     .font(.system(size: 12))
                                     .foregroundColor(colors.amber)
                                 NavigationLink(destination: InstructorProfileView()) {
@@ -1366,7 +1366,7 @@ final class InstructorStudentJumpSignoffViewModel: ObservableObject {
         }
         if result == "pass" {
             if !instructorProfileReady {
-                error = "Complete jump sign-offs: USPA license (A–D) on your Profile, plus instructor initials and signature."
+                error = "Complete jump sign-offs: USPA license and signature in My Profile, plus instructor initials."
                 return false
             }
             if !checklistState.passReady {
@@ -1374,7 +1374,7 @@ final class InstructorStudentJumpSignoffViewModel: ObservableObject {
                 return false
             }
         } else if !instructorProfileReady {
-            error = "Complete jump sign-offs: USPA license (A–D) on your Profile, plus instructor initials and signature."
+            error = "Complete jump sign-offs: USPA license and signature in My Profile, plus instructor initials."
             return false
         }
         isSubmitting = true
@@ -1633,7 +1633,7 @@ struct InstructorStudentJumpSignoffView: View {
 
     private var profileWarning: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Complete jump sign-offs: USPA license (A–D) on your Profile, plus instructor initials and signature.")
+            Text("Complete jump sign-offs: USPA license and signature in My Profile, plus instructor initials.")
                 .font(.system(size: 12))
                 .foregroundColor(colors.amber)
             NavigationLink(destination: InstructorProfileView()) {
@@ -1650,7 +1650,7 @@ struct InstructorStudentJumpSignoffView: View {
     private var passRetakeButtons: some View {
         VStack(spacing: 8) {
             if !vm.instructorProfileReady {
-                Text("Pass and Retake require a USPA license on your Profile, plus instructor initials and signature.")
+                Text("Pass and Retake require a USPA license and signature in My Profile, plus instructor initials.")
                     .font(.system(size: 11))
                     .foregroundColor(colors.amber)
                     .frame(maxWidth: .infinity, alignment: .leading)

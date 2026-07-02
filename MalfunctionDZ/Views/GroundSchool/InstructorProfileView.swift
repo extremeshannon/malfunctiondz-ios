@@ -1,4 +1,4 @@
-// Instructor profile — license, initials, and signature for logbook / progression sign-offs.
+// Instructor profile — initials for logbook / progression sign-offs (signature in My Profile).
 import SwiftUI
 import MalfunctionDZCore
 
@@ -174,15 +174,12 @@ final class InstructorProfileViewModel: ObservableObject {
 struct InstructorProfileView: View {
     @StateObject private var vm = InstructorProfileViewModel()
     @EnvironmentObject private var auth: AuthManager
-    @State private var drewNewSignature = false
-    @State private var showSignaturePad = false
-    @State private var localSignaturePreview: UIImage?
     @State private var signatureCacheBuster = 0
     @Environment(\.mdzColors) private var colors
     @Environment(\.mdzColorScheme) private var mdzColorScheme
 
     private var hasSignatureOnFile: Bool {
-        localSignaturePreview != nil || !vm.resolvedSignaturePath.isEmpty
+        !vm.resolvedSignaturePath.isEmpty
     }
 
     var body: some View {
@@ -193,7 +190,7 @@ struct InstructorProfileView: View {
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("Your initials and signature for jump sign-offs. USPA licenses come from My Profile.")
+                        Text("Your initials for jump sign-offs. Signature and USPA licenses are in My Profile.")
                             .font(.system(size: 13))
                             .foregroundColor(colors.muted)
 
@@ -264,34 +261,30 @@ struct InstructorProfileView: View {
                         fieldBlock("Signature") {
                             if hasSignatureOnFile {
                                 MDZSignaturePreview(
-                                    localImage: localSignaturePreview,
+                                    localImage: nil,
                                     remotePath: vm.resolvedSignaturePath,
                                     cacheBuster: signatureCacheBuster
                                 )
+                            } else {
+                                Text("No signature on file yet.")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(colors.muted)
                             }
 
-                            if drewNewSignature, localSignaturePreview == nil {
-                                Text("New signature captured — save from the signing pad.")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(colors.green)
-                            }
-
-                            Button {
-                                showSignaturePad = true
-                            } label: {
+                            NavigationLink(destination: MemberProfileEditView()) {
                                 HStack(spacing: 10) {
-                                    Image(systemName: "signature")
+                                    Image(systemName: "person.text.rectangle")
                                         .font(.system(size: 18, weight: .semibold))
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(hasSignatureOnFile ? "Update signature" : "Add signature")
+                                        Text(hasSignatureOnFile ? "Update in My Profile" : "Add signature in My Profile")
                                             .font(.system(size: 15, weight: .bold))
-                                        Text("Opens full-screen signing pad")
+                                        Text("One signature per account — used for sign-offs and logbook witness.")
                                             .font(.system(size: 11))
                                             .foregroundColor(colors.muted)
                                     }
                                     Spacer()
-                                    Image(systemName: "pencil.and.scribble")
-                                        .font(.system(size: 14, weight: .semibold))
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 12, weight: .semibold))
                                 }
                                 .foregroundColor(colors.text)
                                 .padding(14)
@@ -305,22 +298,6 @@ struct InstructorProfileView: View {
                     }
                     .padding(16)
                 }
-            }
-
-        }
-        .fullScreenCover(isPresented: $showSignaturePad) {
-            InstructorFullScreenSignatureView(
-                drewNewSignature: $drewNewSignature,
-                localSignaturePreview: $localSignaturePreview,
-                signatureCacheBuster: $signatureCacheBuster,
-                onSave: { b64 in await vm.save(signatureBase64: b64) },
-                onDismiss: { showSignaturePad = false }
-            )
-        }
-        .onChange(of: showSignaturePad) { _, open in
-            if open {
-                drewNewSignature = false
-                localSignaturePreview = nil
             }
         }
         .navigationTitle("Instructor Profile")
