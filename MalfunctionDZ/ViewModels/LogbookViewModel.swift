@@ -28,6 +28,7 @@ class LogbookViewModel: ObservableObject {
     @Published var isSaving = false
     @Published var error: String?
     @Published var savedSignatureUrl = ""
+    @Published var canCounterSignEntries = false
 
     private var currentCourseId: Int?
 
@@ -115,6 +116,7 @@ class LogbookViewModel: ObservableObject {
         isStudent = resp.isStudent ?? false
         isSkydiver = resp.isSkydiver ?? false
         nextJumpNumber = resp.nextJumpNumber ?? (priorJumpCount + 1)
+        canCounterSignEntries = (resp.entries ?? []).contains { $0.canWitnessSign == true || $0.canCounterSign == true }
         error = nil
     }
 
@@ -621,6 +623,87 @@ class LogbookViewModel: ObservableObject {
         } catch {
             self.error = error.localizedDescription
             return false
+        }
+    }
+
+    /// Counter-sign someone else's entry (saved profile signature).
+    func witnessSignEntry(entryId: Int, useSavedSignature: Bool = true) async -> Bool {
+        isSaving = true
+        error = nil
+        defer { isSaving = false }
+
+        guard let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)/api/lms/logbook_witness_sign.php") else { return false }
+
+        let payload: [String: Any] = [
+            "entry_id": entryId,
+            "use_saved_signature": useSavedSignature,
+        ]
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: payload) else { return false }
+
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = jsonData
+
+        do {
+            let (data, _) = try await URLSession.shared.data(for: req)
+            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            if (json?["ok"] as? Bool) == true {
+                await load(courseId: currentCourseId, userId: nil)
+                return true
+            }
+            error = json?["error"] as? String ?? "Could not witness-sign entry"
+            return false
+        } catch {
+            self.error = error.localizedDescription
+            return false
+        }
+    }
+
+    struct SigningChallengeResult {
+        let entryId: Int
+        let nonce: String
+        let qrPayload: String
+        let summary: String
+    }
+
+    /// Create a short-lived nonce for QR or Multipeer witness flow.
+    func createSigningChallenge(entryId: Int, summary: String) async -> SigningChallengeResult? {
+        guard let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)/api/logbook/\(entryId)/challenge.php") else { return nil }
+
+        let body: [String: Any] = ["summary": summary]
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: body) else { return nil }
+
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = jsonData
+
+        do {
+            let (data, resp) = try await URLSession.shared.data(for: req)
+            let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
+            guard code == 200,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let nonce = json["nonce"] as? String,
+                  let qr = json["qr_payload"] as? String else {
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    error = json["error"] as? String ?? json["detail"] as? String
+                }
+                return nil
+            }
+            return SigningChallengeResult(
+                entryId: entryId,
+                nonce: nonce,
+                qrPayload: qr,
+                summary: (json["summary"] as? String) ?? summary
+            )
+        } catch {
+            self.error = error.localizedDescription
+            return nil
         }
     }
 

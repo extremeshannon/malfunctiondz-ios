@@ -7,6 +7,13 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Used to find nearby phones for logbook witness signatures (like AirDrop).</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_mdz-logsign._tcp</string>
+		<string>_mdz-logsign._udp</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Used to scan and photograph pilot documents, logbook pages, and aircraft records.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

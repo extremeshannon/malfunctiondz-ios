@@ -66,7 +66,15 @@ struct SkydiverLogbookEntry: Codable, Identifiable {
     let studentSignedBy: String?
     let studentSignedAt: String?
     let studentSignatureUrl: String?
-    /// Locked after student or instructor signs; no further edits.
+    /// Witness / counter-sign (another skydiver or pilot).
+    let witnessSignedBy: String?
+    let witnessSignedAt: String?
+    let witnessSignatureUrl: String?
+    let requiresWitness: Bool?
+    let needsWitness: Bool?
+    let canWitnessSign: Bool?
+    let canCounterSign: Bool?
+    /// Locked after witness or instructor sign-off.
     let isLocked: Bool
     /// LMS link
     let courseId: Int?
@@ -93,6 +101,13 @@ struct SkydiverLogbookEntry: Codable, Identifiable {
         case studentSignedBy = "student_signed_by"
         case studentSignedAt = "student_signed_at"
         case studentSignatureUrl = "student_signature_url"
+        case witnessSignedBy = "witness_signed_by"
+        case witnessSignedAt = "witness_signed_at"
+        case witnessSignatureUrl = "witness_signature_url"
+        case requiresWitness = "requires_witness"
+        case needsWitness = "needs_witness"
+        case canWitnessSign = "can_witness_sign"
+        case canCounterSign = "can_counter_sign"
         case isLocked = "is_locked"
         case courseId = "course_id"
         case moduleId = "module_id"
@@ -116,9 +131,19 @@ struct SkydiverLogbookEntry: Codable, Identifiable {
         return !t.isEmpty
     }
 
-    var isSigned: Bool { isStudentSigned || isInstructorSigned || isLocked }
+    var isWitnessSigned: Bool {
+        guard let t = witnessSignedAt else { return false }
+        return !t.isEmpty
+    }
 
-    var canStudentSign: Bool { !isStudentSigned && !isLocked }
+    var isSigned: Bool { isStudentSigned || isInstructorSigned || isWitnessSigned || isLocked }
+
+    /// Self-sign is disabled on the server — students need a witness counter-sign.
+    var canStudentSign: Bool { false }
+
+    var needsWitnessSignature: Bool {
+        (needsWitness ?? requiresWitness ?? false) && !isWitnessSigned
+    }
 
     /// Display: rig label when set, else equipment free text
     var equipmentDisplay: String? {

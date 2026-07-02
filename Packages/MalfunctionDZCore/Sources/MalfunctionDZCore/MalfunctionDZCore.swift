@@ -70,6 +70,32 @@ public struct KeychainHelper {
         print("🔑 KEYCHAIN DELETE: \(s == errSecSuccess || s == errSecItemNotFound)")
         return s == errSecSuccess || s == errSecItemNotFound
     }
+
+    @discardableResult
+    public static func saveGeneric(_ data: Data, account: String) -> Bool {
+        let q: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecValueData as String: data,
+        ]
+        SecItemDelete(q as CFDictionary)
+        return SecItemAdd(q as CFDictionary, nil) == errSecSuccess
+    }
+
+    public static func readGeneric(account: String) -> Data? {
+        let q: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+        var ref: AnyObject?
+        guard SecItemCopyMatching(q as CFDictionary, &ref) == errSecSuccess,
+              let d = ref as? Data else { return nil }
+        return d
+    }
 }
 
 // MARK: - Colors

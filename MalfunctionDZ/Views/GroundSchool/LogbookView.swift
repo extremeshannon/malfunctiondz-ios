@@ -2,6 +2,7 @@
 // Purpose: Skydiver logbook — list of jumps, stats, detail view, signature capture.
 import SwiftUI
 import MalfunctionDZCore
+import CoreImage
 
 struct LogbookView: View {
     /// nil = standalone "My Logbook" (all entries); non-nil = logbook for that course
@@ -458,7 +459,7 @@ struct LogbookEntryRow: View {
 struct LogbookEntryDetailView: View {
     let entry: SkydiverLogbookEntry
     @ObservedObject var vm: LogbookViewModel
-    @State private var showSignaturePad = false
+    @State private var showWitnessFlow = false
     @Environment(\.dismiss) private var dismiss
     @Environment(\.mdzColors) private var colors
     var body: some View {
@@ -467,38 +468,14 @@ struct LogbookEntryDetailView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
                     LogbookEntryCard(entry: entry)
-                    if entry.canStudentSign {
-                        if vm.hasSavedSignature {
-                            Button {
-                                Task {
-                                    if await vm.signEntry(entryId: entry.id, useSavedSignature: true) {
-                                        dismiss()
-                                    }
-                                }
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "signature")
-                                        .font(.system(size: 18))
-                                    Text("Sign with saved signature")
-                                        .font(.system(size: 15, weight: .semibold))
-                                }
-                                .foregroundColor(colors.text)
-                                .frame(maxWidth: .infinity)
-                                .padding(14)
-                                .background(colors.card2)
-                                .cornerRadius(10)
-                                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
-                            }
-                            .buttonStyle(.plain)
-                            .disabled(vm.isSaving)
-                        }
+                    if entry.needsWitnessSignature {
                         Button {
-                            showSignaturePad = true
+                            showWitnessFlow = true
                         } label: {
                             HStack(spacing: 10) {
-                                Image(systemName: "pencil.and.outline")
+                                Image(systemName: "iphone.radiowaves.left.and.right")
                                     .font(.system(size: 18))
-                                Text(vm.hasSavedSignature ? "Draw a new signature" : "Sign to lock this record")
+                                Text("Get witness signature")
                                     .font(.system(size: 15, weight: .semibold))
                             }
                             .foregroundColor(colors.amber)
@@ -507,6 +484,24 @@ struct LogbookEntryDetailView: View {
                             .background(colors.amber.opacity(0.12))
                             .cornerRadius(10)
                             .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.amber.opacity(0.4), lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    if entry.canWitnessSign == true || entry.canCounterSign == true {
+                        Button {
+                            showWitnessFlow = true
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "checkmark.seal")
+                                    .font(.system(size: 18))
+                                Text("Witness this jump")
+                                    .font(.system(size: 15, weight: .semibold))
+                            }
+                            .foregroundColor(colors.green)
+                            .frame(maxWidth: .infinity)
+                            .padding(14)
+                            .background(colors.green.opacity(0.12))
+                            .cornerRadius(10)
                         }
                         .buttonStyle(.plain)
                         .disabled(vm.isSaving)
@@ -518,30 +513,30 @@ struct LogbookEntryDetailView: View {
         }
         .navigationTitle("Jump #\(entry.jumpNumber)")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showSignaturePad) {
-            SignaturePadSheet(entryId: entry.id, vm: vm, onComplete: {
-                showSignaturePad = false
-                dismiss()
-            })
+        .sheet(isPresented: $showWitnessFlow) {
+            LogbookWitnessFlowView(entry: entry, vm: vm) {
+                showWitnessFlow = false
+                Task { await vm.load(courseId: nil, userId: nil) }
+            }
         }
     }
 
     private var signatureBlock: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("SIGNATURE")
+            Text("SIGNATURES")
                 .font(.system(size: 10, weight: .black))
                 .foregroundColor(colors.muted)
                 .tracking(1)
             VStack(alignment: .leading, spacing: 12) {
-                if entry.isStudentSigned {
-                    studentSignatureSection
-                } else if entry.canStudentSign {
-                    Text("Sign this jump to lock your logbook record.")
-                        .font(.system(size: 13))
-                        .foregroundColor(colors.muted)
-                }
                 if entry.isInstructorSigned {
                     instructorSignatureSection
+                }
+                if entry.isWitnessSigned {
+                    witnessSignatureSection
+                } else if entry.needsWitnessSignature {
+                    Text("Another skydiver or pilot must counter-sign this jump (hold phones together or show a QR code).")
+                        .font(.system(size: 13))
+                        .foregroundColor(colors.muted)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -609,10 +604,242 @@ struct LogbookEntryDetailView: View {
         }
     }
 
+    private var witnessSignatureSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("WITNESS")
+                .font(.system(size: 9, weight: .black))
+                .foregroundColor(colors.muted)
+                .tracking(0.8)
+            if let name = entry.witnessSignedBy, !name.isEmpty {
+                Text(name)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(colors.text)
+            }
+            if let at = entry.witnessSignedAt, !at.isEmpty {
+                Text(formatSignedDate(at))
+                    .font(.system(size: 12))
+                    .foregroundColor(colors.muted)
+            }
+            if let urlStr = entry.witnessSignatureUrl,
+               let url = MDZSignatureURL.absolute(urlStr) {
+                AsyncImage(url: url) { phase in
+                    if let img = phase.image {
+                        img.resizable().scaledToFit().frame(maxHeight: 56)
+                    }
+                }
+            }
+        }
+    }
+
     private func formatSignedDate(_ raw: String) -> String {
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.count >= 10 { return String(trimmed.prefix(10)) }
         return trimmed
+    }
+}
+
+// MARK: - Witness flow (Multipeer + QR)
+struct LogbookWitnessFlowView: View {
+    enum Mode: String, CaseIterable { case request = "Get signature"; case witness = "Sign nearby" }
+
+    let entry: SkydiverLogbookEntry?
+    @ObservedObject var vm: LogbookViewModel
+    let onComplete: () -> Void
+
+    @StateObject private var session: MDZSigningSession
+    @State private var mode: Mode
+    @State private var qrPayload = ""
+    @State private var challengeNonce = ""
+    @State private var statusMessage = ""
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.mdzColors) private var colors
+
+    init(entry: SkydiverLogbookEntry?, vm: LogbookViewModel, onComplete: @escaping () -> Void) {
+        self.entry = entry
+        self.vm = vm
+        self.onComplete = onComplete
+        let user = AuthManager.shared.currentUser
+        let uid = user?.id ?? 0
+        let name = [user?.firstName, user?.lastName].compactMap { $0 }.joined(separator: " ")
+        let display = name.isEmpty ? (user?.username ?? "MalfunctionDZ") : name
+        _session = StateObject(wrappedValue: MDZSigningSession(userId: uid, displayName: display))
+        if entry?.needsWitnessSignature == true {
+            _mode = State(initialValue: .request)
+        } else {
+            _mode = State(initialValue: .witness)
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                colors.background.ignoresSafeArea()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        Picker("Mode", selection: $mode) {
+                            ForEach(Mode.allCases, id: \.self) { m in
+                                Text(m.rawValue).tag(m)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+
+                        if let entry {
+                            Text(entrySummary(entry))
+                                .font(.system(size: 14))
+                                .foregroundColor(colors.muted)
+                        }
+
+                        switch mode {
+                        case .request:
+                            requestWitnessSection
+                        case .witness:
+                            witnessNearbySection
+                        }
+
+                        if !statusMessage.isEmpty {
+                            Text(statusMessage)
+                                .font(.system(size: 13))
+                                .foregroundColor(colors.amber)
+                        }
+                    }
+                    .padding(20)
+                }
+            }
+            .navigationTitle("Witness signature")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
+                        session.reset()
+                        dismiss()
+                        onComplete()
+                    }
+                }
+            }
+            .onChange(of: session.state) { _, newState in
+                switch newState {
+                case .completed:
+                    statusMessage = "Witness signature recorded."
+                case .failed(let msg):
+                    statusMessage = msg
+                default:
+                    break
+                }
+            }
+        }
+    }
+
+  @ViewBuilder
+    private var requestWitnessSection: some View {
+        if let entry, entry.needsWitnessSignature {
+            Button("Start nearby signing") {
+                Task { await startAdvertising(for: entry) }
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(colors.amber)
+
+            if !qrPayload.isEmpty {
+                LogbookWitnessQRCodeView(payload: qrPayload)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                Text("Or scan this QR with any phone camera — witness signs in browser.")
+                    .font(.system(size: 12))
+                    .foregroundColor(colors.muted)
+            }
+
+            switch session.state {
+            case .advertising, .awaitingWitness:
+                Text("Hold phones close together. Waiting for witness…")
+                    .foregroundColor(colors.muted)
+            case .completed:
+                Text("Signed!")
+                    .foregroundColor(colors.green)
+            default:
+                EmptyView()
+            }
+        } else {
+            Text("Select a jump that needs a witness signature.")
+                .foregroundColor(colors.muted)
+        }
+    }
+
+    @ViewBuilder
+    private var witnessNearbySection: some View {
+        if vm.hasSavedSignature == false {
+            Text("Set up your signature in Profile before you can witness jumps.")
+                .foregroundColor(colors.amber)
+        }
+
+        Button("Look for nearby jumps") {
+            session.startBrowsing()
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(colors.green)
+
+        ForEach(session.discoveredPeers, id: \.self) { peer in
+            Button("Connect to \(peer.displayName)") {
+                session.connect(to: peer)
+            }
+        }
+
+        if case .awaitingConfirmation(let request) = session.state {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(request.summary)
+                    .font(.system(size: 15, weight: .semibold))
+                Button("Confirm & sign") {
+                    session.confirmAndSign(request)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(colors.green)
+                Button("Decline", role: .cancel) { session.decline() }
+            }
+        }
+    }
+
+    private func entrySummary(_ entry: SkydiverLogbookEntry) -> String {
+        var parts = ["Jump #\(entry.jumpNumber)"]
+        if let dz = entry.dz, !dz.isEmpty { parts.append("@ \(dz)") }
+        if let alt = entry.altitude, !alt.isEmpty { parts.append("\(alt) ft") }
+        return parts.joined(separator: " ")
+    }
+
+    private func startAdvertising(for entry: SkydiverLogbookEntry) async {
+        let summary = entrySummary(entry)
+        guard let challenge = await vm.createSigningChallenge(entryId: entry.id, summary: summary) else {
+            statusMessage = vm.error ?? "Could not start signing session"
+            return
+        }
+        qrPayload = challenge.qrPayload
+        challengeNonce = challenge.nonce
+        let request = LogbookSignRequest(entryId: entry.id, nonce: challenge.nonce, summary: summary)
+        session.startAdvertising(for: request)
+    }
+}
+
+struct LogbookWitnessQRCodeView: View {
+    let payload: String
+
+    var body: some View {
+        if let img = Self.makeQRImage(from: payload) {
+            Image(uiImage: img)
+                .interpolation(.none)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 220, height: 220)
+                .padding(12)
+                .background(Color.white)
+                .cornerRadius(8)
+        }
+    }
+
+    private static func makeQRImage(from string: String) -> UIImage? {
+        guard let data = string.data(using: .utf8),
+              let filter = CIFilter(name: "CIQRCodeGenerator") else { return nil }
+        filter.setValue(data, forKey: "inputMessage")
+        filter.setValue("M", forKey: "inputCorrectionLevel")
+        guard let output = filter.outputImage else { return nil }
+        let scaled = output.transformed(by: CGAffineTransform(scaleX: 8, y: 8))
+        return UIImage(ciImage: scaled)
     }
 }
 
