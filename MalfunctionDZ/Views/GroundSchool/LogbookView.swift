@@ -57,9 +57,9 @@ struct LogbookView: View {
 
                         // Config + Add (standalone only) — config moved to gear sheet
                         if isStandalone {
-                            if vm.isSkydiver {
+                            if canAddLogbookJumps {
                                 addJumpButton
-                            } else if vm.isStudent {
+                            } else if showTrainingStudentBanner {
                                 studentNoteCard
                             }
                         }
@@ -207,6 +207,21 @@ struct LogbookView: View {
         .background(colors.card)
         .cornerRadius(12)
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
+    }
+
+    /// Full logbook access — skydivers, instructors, pilots (not training-only students).
+    private var canAddLogbookJumps: Bool {
+        if vm.isSkydiver { return true }
+        guard let user = AuthManager.shared.currentUser else { return false }
+        return user.isInstructorRole || user.isSkydiverRole || user.isPilotRole
+    }
+
+    /// 25-jump / sign-off notice is for training students only.
+    private var showTrainingStudentBanner: Bool {
+        guard vm.isStudent else { return false }
+        guard let user = AuthManager.shared.currentUser else { return true }
+        if user.isInstructorRole || user.isSkydiverRole || user.isPilotRole { return false }
+        return user.isStudentRole
     }
 
     private var studentNoteCard: some View {

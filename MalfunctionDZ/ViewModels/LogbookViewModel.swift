@@ -216,8 +216,6 @@ class LogbookViewModel: ObservableObject {
                 priorJumpCount = count
                 totalJumps = max(priorJumpCount, totalJumps)
                 nextJumpNumber = totalJumps + 1
-                isStudent = totalJumps < 25
-                isSkydiver = totalJumps >= 25
             } else {
                 error = (json?["error"] as? String) ?? "Failed to save"
             }
