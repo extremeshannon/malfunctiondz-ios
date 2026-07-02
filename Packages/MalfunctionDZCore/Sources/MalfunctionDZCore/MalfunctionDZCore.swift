@@ -809,6 +809,25 @@ public actor APIClient {
     public func post<T:Decodable>(path:String, body:Encodable?=nil) async throws -> T { try await request(path:path,method:"POST",body:body) }
 }
 
+// MARK: - App version (marketing + build)
+public enum MDZAppVersion {
+    public static var marketingVersion: String {
+        (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "—"
+    }
+
+    public static var buildNumber: String {
+        (Bundle.main.infoDictionary?["CFBundleVersion"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "—"
+    }
+
+    public static var displayShort: String {
+        "Build \(buildNumber)"
+    }
+
+    public static var displayFull: String {
+        "Version \(marketingVersion) · Build \(buildNumber)"
+    }
+}
+
 // MARK: - AppConfig
 @MainActor public final class AppConfig: ObservableObject {
     public init() { restore() }
@@ -818,16 +837,28 @@ public actor APIClient {
     @Published public var moduleGroundSchool = "Ground School"
     @Published public var moduleManifest     = "Manifest"
     @Published public var theme              = MDZTheme.defaultKey
+    @Published public var contactPhone       = ""
+    @Published public var contactEmail       = ""
+    @Published public var contactAddress     = ""
+    @Published public var contactHours       = ""
+    @Published public var websiteUrl         = ""
     public let poweredBy = "Alaska Skydive Center"
+    public let platformName = "MalfunctionDZ"
+    public let platformWebsite = "https://malfunctiondz.com"
     public func loadConfig() async {
         guard let url = URL(string:"\(kServerURL)/api/config.php") else { return }
         guard let (data,_) = try? await URLSession.shared.data(from:url) else { return }
         struct R: Decodable { let ok:Bool; let data:D? }
         struct D: Decodable {
             let dzName:String?; let av:String?; let loft:String?; let gs:String?; let mf:String?; let theme:String?
+            let contactPhone:String?; let contactEmail:String?; let contactAddress:String?
+            let contactHours:String?; let websiteUrl:String?
             enum CodingKeys:String,CodingKey {
                 case dzName="dz_name"; case av="module_aviation"; case loft="module_loft"
                 case gs="module_ground_school"; case mf="module_manifest"; case theme="theme"
+                case contactPhone="contact_phone"; case contactEmail="contact_email"
+                case contactAddress="contact_address"; case contactHours="contact_hours"
+                case websiteUrl="website_url"
             }
         }
         if let r = try? JSONDecoder().decode(R.self, from:data), r.ok, let d = r.data {
@@ -835,11 +866,21 @@ public actor APIClient {
             moduleAviation = d.av ?? moduleAviation
             moduleLoft = d.loft ?? moduleLoft; moduleGroundSchool = d.gs ?? moduleGroundSchool
             moduleManifest = d.mf ?? moduleManifest
+            contactPhone = d.contactPhone ?? contactPhone
+            contactEmail = d.contactEmail ?? contactEmail
+            contactAddress = d.contactAddress ?? contactAddress
+            contactHours = d.contactHours ?? contactHours
+            websiteUrl = d.websiteUrl ?? websiteUrl
             // Keep app theme as Slate & Fire; do not overwrite from server
             let ud = UserDefaults.standard
             ud.set(dzName, forKey:"cfg_dz"); ud.set(moduleAviation, forKey:"cfg_av")
             ud.set(moduleLoft, forKey:"cfg_loft"); ud.set(moduleGroundSchool, forKey:"cfg_gs")
             ud.set(moduleManifest, forKey:"cfg_mf"); ud.set(theme, forKey:"cfg_theme")
+            ud.set(contactPhone, forKey: "cfg_contact_phone")
+            ud.set(contactEmail, forKey: "cfg_contact_email")
+            ud.set(contactAddress, forKey: "cfg_contact_address")
+            ud.set(contactHours, forKey: "cfg_contact_hours")
+            ud.set(websiteUrl, forKey: "cfg_website_url")
         }
     }
     /// Replace legacy product default with dropzone branding.
@@ -865,6 +906,11 @@ public actor APIClient {
             theme = normalized
             if normalized != v { ud.set(normalized, forKey: "cfg_theme") }
         }
+        if let v = ud.string(forKey: "cfg_contact_phone") { contactPhone = v }
+        if let v = ud.string(forKey: "cfg_contact_email") { contactEmail = v }
+        if let v = ud.string(forKey: "cfg_contact_address") { contactAddress = v }
+        if let v = ud.string(forKey: "cfg_contact_hours") { contactHours = v }
+        if let v = ud.string(forKey: "cfg_website_url") { websiteUrl = v }
     }
 }
 

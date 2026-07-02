@@ -171,6 +171,17 @@ struct ProfileView: View {
 
                     AppearanceThemeSection(config: config)
 
+                    NavigationLink(destination: AboutView(config: config)) {
+                        MDZNavRow(
+                            icon: "info.circle.fill",
+                            title: "About",
+                            subtitle: MDZAppVersion.displayFull,
+                            accent: colors.muted
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .mdzContentCard(accent: colors.muted, glass: mountainTheme)
+
                     if !isMemberShell {
                         ApiBaseUrlSection()
                     }
@@ -195,17 +206,6 @@ struct ProfileView: View {
                         .shadow(color: colors.danger.opacity(0.35), radius: 12, y: 4)
                     }
 
-                    Text(config.poweredBy)
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(colors.muted).tracking(1)
-
-                    if let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
-                        Text("Build \(build)")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(colors.muted.opacity(0.8))
-                            .padding(.top, 4)
-                    }
-
                     Spacer().frame(height: 8)
                 }
                 .padding(isWide ? 32 : 16)
@@ -227,6 +227,7 @@ struct ProfileView: View {
             }
             .onAppear {
                 PushRegistration.shared.requestPermissionAndRegister()
+                Task { await config.loadConfig() }
             }
         }
     }
@@ -397,5 +398,162 @@ struct ApiBaseUrlSection: View {
         #else
         return "https://malfunctiondz.com (default)"
         #endif
+    }
+}
+
+// MARK: - About
+
+struct AboutView: View {
+    @ObservedObject var config: AppConfig
+    @Environment(\.mdzColors) private var colors
+    @Environment(\.mdzColorScheme) private var mdzColorScheme
+    @Environment(\.mdzThemeKey) private var themeKey
+    @Environment(\.horizontalSizeClass) private var hSizeClass
+
+    private var isWide: Bool { hSizeClass == .regular }
+    private var mountainTheme: Bool { MDZTheme.usesMountainBackground(themeKey) }
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: isWide ? 20 : 16) {
+                VStack(spacing: 10) {
+                    Image(systemName: "parachute.fill")
+                        .font(.system(size: 36, weight: .semibold))
+                        .foregroundColor(colors.accent)
+                    Text(config.dzName)
+                        .font(.system(size: isWide ? 24 : 20, weight: .black, design: .rounded))
+                        .foregroundColor(colors.text)
+                        .multilineTextAlignment(.center)
+                    Text(config.platformName)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(colors.muted)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, isWide ? 28 : 22)
+                .mdzContentCard(gloryBar: mountainTheme, glass: mountainTheme)
+
+                VStack(alignment: .leading, spacing: 0) {
+                    MDZSectionLabel("APP VERSION", icon: "number")
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
+                        .padding(.bottom, 6)
+                    aboutRow(label: "Version", value: MDZAppVersion.marketingVersion)
+                    Divider().background(colors.border.opacity(0.5)).padding(.leading, 16)
+                    aboutRow(label: "Build", value: MDZAppVersion.buildNumber)
+                }
+                .mdzContentCard(accent: colors.primary, glass: mountainTheme)
+
+                VStack(alignment: .leading, spacing: 0) {
+                    MDZSectionLabel("CONTACT", icon: "phone.fill")
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
+                        .padding(.bottom, 6)
+                    if !config.contactPhone.isEmpty {
+                        aboutLinkRow(label: "Phone", value: config.contactPhone, url: phoneURL(config.contactPhone))
+                        Divider().background(colors.border.opacity(0.5)).padding(.leading, 16)
+                    }
+                    if !config.contactEmail.isEmpty {
+                        aboutLinkRow(label: "Email", value: config.contactEmail, url: URL(string: "mailto:\(config.contactEmail)"))
+                        Divider().background(colors.border.opacity(0.5)).padding(.leading, 16)
+                    }
+                    if !config.contactAddress.isEmpty {
+                        aboutRow(label: "Address", value: config.contactAddress)
+                        Divider().background(colors.border.opacity(0.5)).padding(.leading, 16)
+                    }
+                    if !config.contactHours.isEmpty {
+                        aboutRow(label: "Hours", value: config.contactHours)
+                        Divider().background(colors.border.opacity(0.5)).padding(.leading, 16)
+                    }
+                    let site = config.websiteUrl.isEmpty ? config.platformWebsite : config.websiteUrl
+                    aboutLinkRow(label: "Website", value: displayWebsite(site), url: URL(string: site))
+                    if config.contactPhone.isEmpty && config.contactEmail.isEmpty && config.contactAddress.isEmpty {
+                        Text("Contact details are loaded from your dropzone settings. Pull to refresh on Profile if they look outdated.")
+                            .font(.system(size: 12))
+                            .foregroundColor(colors.muted)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 12)
+                    }
+                }
+                .mdzContentCard(accent: colors.dz, glass: mountainTheme)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Platform")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(colors.muted)
+                        .tracking(1)
+                    Text("\(config.poweredBy) uses \(config.platformName) for operations, training, and logbook.")
+                        .font(.system(size: 13))
+                        .foregroundColor(colors.text.opacity(0.9))
+                    Link(destination: URL(string: config.platformWebsite)!) {
+                        Text(config.platformWebsite)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(colors.accent)
+                    }
+                }
+                .padding(16)
+                .mdzContentCard(accent: colors.accent, glass: mountainTheme)
+            }
+            .padding(isWide ? 32 : 16)
+            .frame(maxWidth: isWide ? 900 : .infinity)
+            .frame(maxWidth: .infinity)
+        }
+        .mdzScreenBackground()
+        .navigationTitle("About")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(colors.navyMid.opacity(0.92), for: .navigationBar)
+        .toolbarColorScheme(mdzColorScheme, for: .navigationBar)
+        .refreshable { await config.loadConfig() }
+        .task { await config.loadConfig() }
+    }
+
+    private func aboutRow(label: String, value: String) -> some View {
+        HStack(alignment: .top) {
+            Text(label)
+                .font(.system(size: 14))
+                .foregroundColor(colors.muted)
+            Spacer(minLength: 12)
+            Text(value)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(colors.text)
+                .multilineTextAlignment(.trailing)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    private func aboutLinkRow(label: String, value: String, url: URL?) -> some View {
+        Group {
+            if let url {
+                Link(destination: url) {
+                    HStack(alignment: .top) {
+                        Text(label)
+                            .font(.system(size: 14))
+                            .foregroundColor(colors.muted)
+                        Spacer(minLength: 12)
+                        Text(value)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(colors.accent)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                }
+            } else {
+                aboutRow(label: label, value: value)
+            }
+        }
+    }
+
+    private func phoneURL(_ raw: String) -> URL? {
+        let digits = raw.filter { $0.isNumber || $0 == "+" }
+        guard !digits.isEmpty else { return nil }
+        return URL(string: "tel:\(digits)")
+    }
+
+    private func displayWebsite(_ raw: String) -> String {
+        raw
+            .replacingOccurrences(of: "https://", with: "")
+            .replacingOccurrences(of: "http://", with: "")
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
     }
 }

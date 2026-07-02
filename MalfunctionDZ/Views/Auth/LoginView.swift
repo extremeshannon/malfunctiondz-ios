@@ -57,11 +57,9 @@ struct LoginView: View {
                     .font(.system(size: 10, weight: .medium))
                     .foregroundColor(colors.muted)
                     .tracking(1)
-                if let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
-                    Text("Build \(build)")
-                        .font(.system(size: 9, weight: .regular))
-                        .foregroundColor(colors.muted.opacity(0.8))
-                }
+                Text(MDZAppVersion.displayFull)
+                    .font(.system(size: 9, weight: .regular))
+                    .foregroundColor(colors.muted.opacity(0.8))
             }
             .padding(.bottom, 24)
         }
