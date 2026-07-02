@@ -10,8 +10,9 @@ DerivedData/
 *.xcuserdatad/
 **/xcuserdata/
 
-# Accidental local photos at repo root
+# Accidental local photos / sim captures at repo root
 IMG_3504.JPG
+asc-skydiver-home-sim.png
 
 # SwiftPM / Xcode package build artifacts (never commit)
 Packages/**/.build/
