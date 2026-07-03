@@ -70,7 +70,7 @@ struct HomeView: View {
             .navigationBarTitleDisplayMode(isMemberShell || isPilotShell ? .inline : .large)
             .toolbar(isMemberShell || isPilotShell ? .hidden : .visible, for: .navigationBar)
             #endif
-            .task { await vm.loadDashboard(user: auth.currentUser) }
+            .task(id: auth.currentUser?.id) { await vm.loadDashboard(user: auth.currentUser) }
             .task(id: "dz") { await vm.loadDzStatus() }
             .refreshable {
                 await vm.loadDashboard(user: auth.currentUser)

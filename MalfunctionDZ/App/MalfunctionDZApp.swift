@@ -36,7 +36,16 @@ struct ContentRootView: View {
     @Environment(\.scenePhase) private var scenePhase
     var body: some View {
         Group {
-            if auth.isAuthenticated {
+            if auth.isRestoringSession {
+                VStack(spacing: 16) {
+                    ProgressView()
+                    Text("Restoring session…")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .mdzThemed(config.theme)
+            } else if auth.isAuthenticated {
                 MDZRootView()
                     .id(auth.sessionID)
             } else {

@@ -32,7 +32,17 @@ struct ASCContentRootView: View {
 
     var body: some View {
         Group {
-            if auth.isAuthenticated {
+            if auth.isRestoringSession {
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .tint(config.theme == "asc_midnight" ? .white : nil)
+                    Text("Restoring session…")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .mdzThemed(config.theme)
+            } else if auth.isAuthenticated {
                 ASCMemberTabView()
                     .id(auth.sessionID)
             } else {

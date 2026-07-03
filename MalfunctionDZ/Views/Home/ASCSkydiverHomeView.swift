@@ -121,6 +121,7 @@ struct ASCSkydiverHomeView: View {
 
     private var levelLabel: String {
         if let d = vm.studentData, d.currentLevel > 0 { return "AFF \(d.currentLevel)" }
+        if auth.currentUser?.isInstructorRole == true { return "INST" }
         return "—"
     }
 
@@ -148,24 +149,8 @@ struct ASCSkydiverHomeView: View {
     private var nextLessonCard: some View {
         HStack(alignment: .top, spacing: ASC.Space.lg) {
             VStack(alignment: .leading, spacing: ASC.Space.md) {
-                ASCWingHeader(title: "Next Lesson")
-                if let d = vm.studentData {
-                    Text(nextLessonTitle(d))
-                        .font(ASC.Typography.display(20))
-                        .foregroundStyle(ASC.Text.primary)
-                    Text(nextLessonDescription(d))
-                        .font(ASC.Typography.body(14))
-                        .foregroundStyle(ASC.Text.tertiary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    ASCPrimaryButton(title: "Begin →") {
-                        openGroundSchoolResume()
-                    }
-                    .padding(.top, ASC.Space.sm)
-                } else {
-                    Text("Loading your course…")
-                        .font(ASC.Typography.body(14))
-                        .foregroundStyle(ASC.Text.muted)
-                }
+                ASCWingHeader(title: nextLessonCardTitle)
+                nextLessonCardBody
             }
             if let d = vm.studentData {
                 ASCAltimeter(
@@ -176,6 +161,74 @@ struct ASCSkydiverHomeView: View {
             }
         }
         .ascCard()
+    }
+
+    private var nextLessonCardTitle: String {
+        if vm.studentData != nil { return "Next Lesson" }
+        if vm.instructorData != nil { return "Instructor" }
+        return "Training"
+    }
+
+    @ViewBuilder
+    private var nextLessonCardBody: some View {
+        if let d = vm.studentData {
+            Text(nextLessonTitle(d))
+                .font(ASC.Typography.display(20))
+                .foregroundStyle(ASC.Text.primary)
+            Text(nextLessonDescription(d))
+                .font(ASC.Typography.body(14))
+                .foregroundStyle(ASC.Text.tertiary)
+                .fixedSize(horizontal: false, vertical: true)
+            ASCPrimaryButton(title: "Begin →") {
+                openGroundSchoolResume()
+            }
+            .padding(.top, ASC.Space.sm)
+        } else if let inst = vm.instructorData {
+            Text(inst.pendingSignoffs > 0 ? "\(inst.pendingSignoffs) PENDING SIGN-OFF\(inst.pendingSignoffs == 1 ? "" : "S")" : "ALL CLEAR")
+                .font(ASC.Typography.display(20))
+                .foregroundStyle(ASC.Text.primary)
+            Text("\(inst.activeStudents) active student\(inst.activeStudents == 1 ? "" : "s")")
+                .font(ASC.Typography.body(14))
+                .foregroundStyle(ASC.Text.tertiary)
+            ASCPrimaryButton(title: inst.pendingSignoffs > 0 ? "Review →" : "Ground School →") {
+                openInstructorGroundSchool()
+            }
+            .padding(.top, ASC.Space.sm)
+        } else if vm.memberDashboardLoaded {
+            Text(memberEmptyTrainingTitle)
+                .font(ASC.Typography.display(20))
+                .foregroundStyle(ASC.Text.primary)
+            Text(memberEmptyTrainingSubtitle)
+                .font(ASC.Typography.body(14))
+                .foregroundStyle(ASC.Text.tertiary)
+                .fixedSize(horizontal: false, vertical: true)
+            if auth.currentUser?.canAccessLogbook == true {
+                ASCPrimaryButton(title: "Open Logbook →") {
+                    tabSelect.selected = 4
+                }
+                .padding(.top, ASC.Space.sm)
+            }
+        } else {
+            Text("Loading your course…")
+                .font(ASC.Typography.body(14))
+                .foregroundStyle(ASC.Text.muted)
+        }
+    }
+
+    private var memberEmptyTrainingTitle: String {
+        if auth.currentUser?.isInstructorRole == true { return "INSTRUCTOR MODE" }
+        if auth.currentUser?.canAccessGroundSchool == true { return "NO ACTIVE COURSE" }
+        return "WELCOME"
+    }
+
+    private var memberEmptyTrainingSubtitle: String {
+        if auth.currentUser?.isInstructorRole == true {
+            return "Use Ground School to review student sign-offs and progress."
+        }
+        if auth.currentUser?.canAccessGroundSchool == true {
+            return "You are not enrolled in a training course yet. Contact the DZ to get started."
+        }
+        return "Track jumps and currency from your logbook."
     }
 
     private func nextLessonTitle(_ d: StudentDashData) -> String {
@@ -248,5 +301,10 @@ struct ASCSkydiverHomeView: View {
         } else {
             tabSelect.selected = 3
         }
+    }
+
+    private func openInstructorGroundSchool() {
+        tabSelect.openInstructorReviews = true
+        tabSelect.selected = 3
     }
 }

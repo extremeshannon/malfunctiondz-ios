@@ -308,6 +308,8 @@ private struct ProxyMetarResponse: Decodable {
 @MainActor
 class HomeViewModel: ObservableObject {
     @Published var isLoading = false
+    /// Set true after the first `loadDashboard` pass completes (member home uses this).
+    @Published var memberDashboardLoaded = false
 
     // Tile data
     @Published var aviationSummary      = "Loading…"
@@ -360,7 +362,9 @@ class HomeViewModel: ObservableObject {
 
     // MARK: - Load dashboard
     func loadDashboard(user: User?) async {
-        isLoading = true; defer { isLoading = false }
+        isLoading = true
+        memberDashboardLoaded = false
+        defer { isLoading = false; memberDashboardLoaded = true }
         alerts    = []
         guard let user else { return }
 
@@ -396,6 +400,9 @@ class HomeViewModel: ObservableObject {
             await withTaskGroup(of: Void.self) {
                 $0.addTask { await self.loadInstructorDashboard() }
                 $0.addTask { await self.loadLoftSummary() }
+            }
+            if isStudent {
+                await loadStudentDashboard(userId: user.id)
             }
         } else if isStudent {
             await loadStudentDashboard(userId: user.id)

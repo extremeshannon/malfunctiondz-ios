@@ -914,6 +914,31 @@ public enum MDZAppVersion {
     }
 }
 
+// MARK: - HTTP helpers (auth)
+private func mdzNonJSONResponseMessage(data: Data, response: URLResponse?, serverURL: String = kServerURL) -> String {
+    let status = (response as? HTTPURLResponse)?.statusCode
+    let body = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    if let status {
+        switch status {
+        case 504: return "Server timed out (504). The API may be down — try again in a minute.\n\(serverURL)"
+        case 502, 503: return "Server unavailable (HTTP \(status)). Try again shortly.\n\(serverURL)"
+        case 401, 403: return "Session expired. Sign in again."
+        default:
+            if body.hasPrefix("<") {
+                return "Server returned HTML instead of JSON (HTTP \(status)). Check the API URL:\n\(serverURL)"
+            }
+            if body.isEmpty {
+                return "Empty response from server (HTTP \(status)).\n\(serverURL)"
+            }
+            return "Unexpected server response (HTTP \(status)).\n\(serverURL)"
+        }
+    }
+    if body.hasPrefix("<") {
+        return "Server returned HTML instead of JSON. Check the API URL:\n\(serverURL)"
+    }
+    return "Invalid response. Check API URL:\n\(serverURL)"
+}
+
 // MARK: - AuthManager
 @MainActor public final class AuthManager: ObservableObject {
     public static let shared = AuthManager()
@@ -922,6 +947,7 @@ public enum MDZAppVersion {
         if let token = KeychainHelper.readToken(), !token.isEmpty {
             print("🚀 APP START: found existing token, restoring session")
             isAuthenticated = true
+            isRestoringSession = true
             sessionID = token
             Task { await refreshCurrentUser() }
         } else {
@@ -930,6 +956,8 @@ public enum MDZAppVersion {
     }
 
     @Published public var isAuthenticated = false
+    /// True while validating a saved token on cold start (avoids empty Home/tabs flash).
+    @Published public var isRestoringSession = false
     @Published public var currentUser: User?
     @Published public var isLoading = false
     @Published public var errorMessage: String?
@@ -942,55 +970,71 @@ public enum MDZAppVersion {
     public func login(username: String, password: String) async {
         isLoading = true; errorMessage = nil; pendingMfaToken = nil
         defer { isLoading = false }
-        guard let url = URL(string: "\(kServerURL)/api/login.php") else { return }
-        var req = URLRequest(url: url)
-        req.httpMethod = "POST"
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try? JSONEncoder().encode(LoginRequest(username: username, password: password))
+        let body = try? JSONEncoder().encode(LoginRequest(username: username, password: password))
+        let paths = ["/api/login.php", "/api/login"]
         do {
-            let (data, _) = try await URLSession.shared.data(for: req)
-            let raw = String(data: data, encoding: .utf8) ?? "nil"
-            print("📡 LOGIN RESPONSE: \(raw)")
-            // MFA challenge (no token yet)
-            if let resp = try? JSONDecoder().decode(LoginResponse.self, from: data),
-               resp.ok, resp.mfaRequired == true, let mt = resp.mfaToken, !mt.isEmpty {
-                pendingMfaToken = mt
+            var lastData = Data()
+            var lastResponse: URLResponse?
+            for path in paths {
+                guard let url = URL(string: "\(kServerURL)\(path)") else { continue }
+                var req = URLRequest(url: url)
+                req.httpMethod = "POST"
+                req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                req.httpBody = body
+                let (data, response) = try await URLSession.shared.data(for: req)
+                lastData = data
+                lastResponse = response
+                let raw = String(data: data, encoding: .utf8) ?? "nil"
+                print("📡 LOGIN RESPONSE (\(path)): \(raw.prefix(500))")
+                if tryHandleLoginPayload(data) { return }
+                // Only try alternate path on 404; otherwise stop (504, 502, etc.).
+                let code = (response as? HTTPURLResponse)?.statusCode ?? 0
+                if code != 404 { break }
+            }
+            guard let json = try? JSONSerialization.jsonObject(with: lastData) as? [String: Any] else {
+                errorMessage = mdzNonJSONResponseMessage(data: lastData, response: lastResponse)
                 return
             }
-            // Try Codable first, then raw JSON (handles PHP/MySQL type variations)
-            if let resp = try? JSONDecoder().decode(LoginResponse.self, from: data),
-               resp.ok, let token = resp.token, let user = resp.user {
-                finishLogin(token: token, user: user)
+            if let err = json["error"] as? String, !err.isEmpty {
+                errorMessage = err
                 return
             }
-            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                errorMessage = "Invalid response. Check API URL."
-                return
-            }
-            guard let ok = json["ok"] as? Bool else {
-                errorMessage = (json["error"] as? String) ?? "Login failed."
-                return
-            }
-            if !ok {
-                let err = (json["error"] as? String) ?? (json["detail"] as? String) ?? "Invalid login"
-                errorMessage = "\(err) (\(kServerURL))"
-                return
-            }
-            if (json["mfa_required"] as? Bool) == true,
-               let mt = json["mfa_token"] as? String, !mt.isEmpty {
-                pendingMfaToken = mt
-                return
-            }
-            guard let token = json["token"] as? String, !token.isEmpty,
-                  let userDict = json["user"] as? [String: Any],
-                  let user = User(from: userDict) else {
-                errorMessage = "Invalid response format."
-                return
-            }
-            finishLogin(token: token, user: user)
+            errorMessage = (json["detail"] as? String) ?? "Login failed."
         } catch {
-            errorMessage = "Network error: \(error.localizedDescription)"
+            errorMessage = "Network error: \(error.localizedDescription)\n\(kServerURL)"
         }
+    }
+
+    /// Returns true when login flow finished (success, MFA, or handled error).
+    private func tryHandleLoginPayload(_ data: Data) -> Bool {
+        if let resp = try? JSONDecoder().decode(LoginResponse.self, from: data),
+           resp.ok, resp.mfaRequired == true, let mt = resp.mfaToken, !mt.isEmpty {
+            pendingMfaToken = mt
+            return true
+        }
+        if let resp = try? JSONDecoder().decode(LoginResponse.self, from: data),
+           resp.ok, let token = resp.token, let user = resp.user {
+            finishLogin(token: token, user: user)
+            return true
+        }
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return false }
+        if let ok = json["ok"] as? Bool, !ok {
+            errorMessage = (json["error"] as? String) ?? (json["detail"] as? String) ?? "Invalid login"
+            return true
+        }
+        if (json["mfa_required"] as? Bool) == true,
+           let mt = json["mfa_token"] as? String, !mt.isEmpty {
+            pendingMfaToken = mt
+            return true
+        }
+        if json["ok"] as? Bool == true,
+           let token = json["token"] as? String, !token.isEmpty,
+           let userDict = json["user"] as? [String: Any],
+           let user = User(from: userDict) {
+            finishLogin(token: token, user: user)
+            return true
+        }
+        return false
     }
 
     /// Complete login after MFA challenge (`pendingMfaToken` from first login step).
@@ -1012,7 +1056,7 @@ public enum MDZAppVersion {
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try? JSONEncoder().encode(MfaLoginRequest(mfaToken: mfaTok, code: trimmed))
         do {
-            let (data, _) = try await URLSession.shared.data(for: req)
+            let (data, response) = try await URLSession.shared.data(for: req)
             let raw = String(data: data, encoding: .utf8) ?? "nil"
             print("📡 MFA LOGIN RESPONSE: \(raw)")
             if let resp = try? JSONDecoder().decode(LoginResponse.self, from: data),
@@ -1022,7 +1066,7 @@ public enum MDZAppVersion {
                 return
             }
             guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                errorMessage = "Invalid response. Check API URL."
+                errorMessage = mdzNonJSONResponseMessage(data: data, response: response)
                 return
             }
             if json["ok"] as? Bool == true,
@@ -1069,6 +1113,7 @@ public enum MDZAppVersion {
     }
 
     public func refreshCurrentUser() async {
+        defer { isRestoringSession = false }
         guard let token = KeychainHelper.readToken() else {
             print("🔄 REFRESH: no token, logging out")
             isAuthenticated = false
@@ -1077,13 +1122,22 @@ public enum MDZAppVersion {
         guard let url = URL(string: "\(kServerURL)/api/me.php") else { return }
         var req = URLRequest(url: url)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        guard let (data, _) = try? await URLSession.shared.data(for: req) else {
-            print("🔄 REFRESH: network error, logging out")
+        guard let (data, response) = try? await URLSession.shared.data(for: req) else {
+            print("🔄 REFRESH: network error")
+            if currentUser == nil {
+                errorMessage = "Could not reach server. Check connection.\n\(kServerURL)"
+                logout()
+            }
+            return
+        }
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        if status == 401 || status == 403 {
+            print("❌ REFRESH: unauthorized (\(status))")
             logout()
             return
         }
         let raw = String(data: data, encoding: .utf8) ?? "nil"
-        print("📡 ME RESPONSE: \(raw)")
+        print("📡 ME RESPONSE (HTTP \(status)): \(raw.prefix(500))")
         var user: User?
         if let resp = try? JSONDecoder().decode(LoginResponse.self, from: data), resp.ok { user = resp.user }
         else if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -1094,9 +1148,12 @@ public enum MDZAppVersion {
             isAuthenticated = true
             await autoEnroll(token: token)
             PushRegistration.shared.requestPermissionAndRegister()
-        } else {
-            print("❌ REFRESH FAILED: logging out")
-            logout()
+        } else if status >= 400 || user == nil {
+            print("❌ REFRESH FAILED: HTTP \(status)")
+            if currentUser == nil {
+                errorMessage = mdzNonJSONResponseMessage(data: data, response: response)
+                logout()
+            }
         }
     }
 
