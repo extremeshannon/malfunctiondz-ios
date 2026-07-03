@@ -828,13 +828,14 @@ struct LogbookEntryDetailView: View {
                     .font(.system(size: 12))
                     .foregroundColor(colors.muted)
             }
-            if let urlStr = entry.witnessSignatureUrl,
-               let url = MDZSignatureURL.absolute(urlStr) {
-                AsyncImage(url: url) { phase in
-                    if let img = phase.image {
-                        img.resizable().scaledToFit().frame(maxHeight: 56)
-                    }
-                }
+            if let urlStr = entry.witnessSignatureUrl, !urlStr.isEmpty {
+                MDZRemoteSignatureImage(path: urlStr, cacheBuster: 0)
+                    .frame(maxHeight: 72)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(8)
+                    .background(Color.white)
+                    .cornerRadius(6)
+                    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.gray.opacity(0.3), lineWidth: 1))
             }
         }
     }
@@ -1408,39 +1409,90 @@ struct LogbookEntryCard: View {
                 }
             }
 
-            // Signature
-            HStack(spacing: 8) {
+            // Signature (witness counter-sign or instructor sign-off)
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Signature")
                     .font(.system(size: 11, weight: .bold))
                     .foregroundColor(colors.muted)
-                if entry.isSigned, let signedBy = entry.signedBy, !signedBy.isEmpty {
-                    Text(signedBy)
-                        .font(.system(size: 13))
-                        .foregroundColor(colors.text)
-                    if let lic = entry.instructorLicenseNumber, !lic.isEmpty {
-                        Text("(\(lic))")
-                            .font(.system(size: 11))
-                            .foregroundColor(colors.muted)
-                    }
-                    if let at = entry.signedAt {
-                        Text("· \(at)")
-                            .font(.system(size: 11))
-                            .foregroundColor(colors.muted)
-                    }
-                } else {
-                    Text(" ")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, 8)
-                        .background(colors.card2)
-                        .cornerRadius(6)
-                        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(colors.border, lineWidth: 1))
-                }
+                logbookSignatureBox
             }
         }
         .padding(14)
         .background(colors.card)
         .cornerRadius(12)
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.border, lineWidth: 1))
+    }
+
+    @ViewBuilder
+    private var logbookSignatureBox: some View {
+        if entry.isWitnessSigned {
+            VStack(alignment: .leading, spacing: 8) {
+                if let name = entry.witnessSignedBy, !name.isEmpty {
+                    Text(name)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(colors.text)
+                }
+                if let lic = entry.witnessLicenseNumber, !lic.isEmpty {
+                    Text("License \(lic)")
+                        .font(.system(size: 11))
+                        .foregroundColor(colors.muted)
+                }
+                if let urlStr = entry.witnessSignatureUrl, !urlStr.isEmpty {
+                    MDZRemoteSignatureImage(path: urlStr, cacheBuster: 0)
+                        .frame(maxHeight: 72)
+                        .frame(maxWidth: .infinity)
+                        .padding(8)
+                        .background(Color.white)
+                        .cornerRadius(6)
+                        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.gray.opacity(0.3), lineWidth: 1))
+                }
+                if let at = entry.witnessSignedAt, !at.isEmpty {
+                    Text(LogbookEntryCard.formatSignedDate(at))
+                        .font(.system(size: 11))
+                        .foregroundColor(colors.muted)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(10)
+            .background(colors.card2)
+            .cornerRadius(8)
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+        } else if entry.isInstructorSigned, let signedBy = entry.signedBy, !signedBy.isEmpty {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(signedBy)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(colors.text)
+                if let lic = entry.instructorLicenseNumber, !lic.isEmpty {
+                    Text("License \(lic)")
+                        .font(.system(size: 11))
+                        .foregroundColor(colors.muted)
+                }
+                if let at = entry.signedAt, !at.isEmpty {
+                    Text(LogbookEntryCard.formatSignedDate(at))
+                        .font(.system(size: 11))
+                        .foregroundColor(colors.muted)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(10)
+            .background(colors.card2)
+            .cornerRadius(8)
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+        } else {
+            Text(" ")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(minHeight: 56)
+                .padding(10)
+                .background(colors.card2)
+                .cornerRadius(8)
+                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+        }
+    }
+
+    private static func formatSignedDate(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.count >= 10 { return String(trimmed.prefix(10)) }
+        return trimmed
     }
 }
 
