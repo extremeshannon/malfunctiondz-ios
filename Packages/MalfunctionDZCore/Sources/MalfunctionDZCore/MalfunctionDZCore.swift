@@ -6,11 +6,11 @@ import UIKit
 
 
 // MARK: - Server URL
-// Debug + Simulator (Mac): http://localhost:8000 (local Docker).
-// Debug + physical device / Release: https://malfunctiondz.com (VPS).
-// Override: set "API Base URL" in Profile or on the login screen (Debug).
+// Simulator (Debug): http://localhost:8000 · Physical device / Release: https://malfunctiondz.com
+// Profile override is honored on simulator; localhost/LAN overrides are ignored on device.
 private let mdzProductionServerURL = "https://malfunctiondz.com"
 private let mdzLocalServerURL = "http://localhost:8000"
+private let mdzApiBaseUrlKey = "api_base_url"
 
 private var mdzDebugDefaultServerURL: String {
     #if targetEnvironment(simulator)
@@ -20,10 +20,33 @@ private var mdzDebugDefaultServerURL: String {
     #endif
 }
 
+private func mdzNormalizedApiBaseURL(_ raw: String) -> String {
+    let t = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+    return t.hasSuffix("/") ? String(t.dropLast()) : t
+}
+
+/// True for localhost, loopback, or typical LAN dev URLs (saved during simulator testing).
+private func mdzIsLocalDevURL(_ url: String) -> Bool {
+    let lower = url.lowercased()
+    if lower.contains("localhost") || lower.contains("127.0.0.1") { return true }
+    guard let host = URL(string: url)?.host?.lowercased() else { return false }
+    if host.hasPrefix("192.168.") || host.hasPrefix("10.") { return true }
+    if host.hasPrefix("172.") {
+        let parts = host.split(separator: ".")
+        if parts.count >= 2, let second = Int(parts[1]), second >= 16, second <= 31 { return true }
+    }
+    return false
+}
+
 public var kServerURL: String {
-    if let custom = UserDefaults.standard.string(forKey: "api_base_url"), !custom.isEmpty {
-        let t = custom.trimmingCharacters(in: .whitespacesAndNewlines)
-        return t.hasSuffix("/") ? String(t.dropLast()) : t
+    if let custom = UserDefaults.standard.string(forKey: mdzApiBaseUrlKey), !custom.isEmpty {
+        let normalized = mdzNormalizedApiBaseURL(custom)
+        #if !targetEnvironment(simulator)
+        if mdzIsLocalDevURL(normalized) {
+            return mdzProductionServerURL
+        }
+        #endif
+        return normalized
     }
     #if DEBUG
     return mdzDebugDefaultServerURL

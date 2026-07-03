@@ -96,7 +96,7 @@ struct LoginView: View {
                 Task { await auth.login(username: username, password: password) }
             }
             .padding(.top, 4)
-            #if DEBUG
+            #if DEBUG && targetEnvironment(simulator)
             LoginApiUrlSection()
             #endif
         }
