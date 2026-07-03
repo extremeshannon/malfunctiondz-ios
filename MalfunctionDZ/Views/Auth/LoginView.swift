@@ -155,7 +155,7 @@ private struct LoginApiUrlSection: View {
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(colors.muted)
                 .tracking(0.8)
-            Text("Production is down? Start Docker locally, then set http://localhost:8000")
+            Text("Simulator → localhost:8000 · Device → VPS. Clear field and tap Set to reset.")
                 .font(.system(size: 10))
                 .foregroundColor(colors.muted.opacity(0.85))
             HStack(spacing: 8) {

@@ -6,24 +6,29 @@ import UIKit
 
 
 // MARK: - Server URL
-// Debug (run from Xcode): default = http://localhost:8000 for local testing.
-// Release (Archive / TestFlight / App Store): default = https://malfunctiondz.com.
-// Override: set "API Base URL" in Profile to point at any backend (e.g. Mac IP for device, or production).
+// Debug + Simulator (Mac): http://localhost:8000 (local Docker).
+// Debug + physical device / Release: https://malfunctiondz.com (VPS).
+// Override: set "API Base URL" in Profile or on the login screen (Debug).
+private let mdzProductionServerURL = "https://malfunctiondz.com"
+private let mdzLocalServerURL = "http://localhost:8000"
+
+private var mdzDebugDefaultServerURL: String {
+    #if targetEnvironment(simulator)
+    return mdzLocalServerURL
+    #else
+    return mdzProductionServerURL
+    #endif
+}
+
 public var kServerURL: String {
     if let custom = UserDefaults.standard.string(forKey: "api_base_url"), !custom.isEmpty {
         let t = custom.trimmingCharacters(in: .whitespacesAndNewlines)
         return t.hasSuffix("/") ? String(t.dropLast()) : t
     }
     #if DEBUG
-    // ASC suite apps (including HHIO) use production unless Profile overrides API Base URL.
-    // MalfunctionDZ staff target uses local Docker for day-to-day ops development.
-    let bundle = Bundle.main.bundleIdentifier ?? ""
-    if bundle == "com.malfunctiondz.app.MalfunctionDZ" {
-        return "http://localhost:8000"
-    }
-    return "https://malfunctiondz.com"
+    return mdzDebugDefaultServerURL
     #else
-    return "https://malfunctiondz.com"
+    return mdzProductionServerURL
     #endif
 }
 

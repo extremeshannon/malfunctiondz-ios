@@ -334,7 +334,7 @@ struct ApiBaseUrlSection: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 14)
                 .padding(.bottom, 6)
-            Text("Debug builds default to http://localhost:8000. Set a custom URL to override (e.g. http://YOUR_MAC_IP:8000 on device, or https://malfunctiondz.com for VPS). Leave empty to use the default for this build.")
+            Text("Simulator uses localhost:8000; physical device uses the VPS. Leave empty for the default, or set a custom URL to override.")
                 .font(.system(size: 11))
                 .foregroundColor(colors.muted)
                 .padding(.horizontal, 16)
@@ -393,11 +393,7 @@ struct ApiBaseUrlSection: View {
             let t = custom.trimmingCharacters(in: .whitespacesAndNewlines)
             return t.hasSuffix("/") ? String(t.dropLast()) : t
         }
-        #if DEBUG
-        return "http://localhost:8000 (Debug default)"
-        #else
-        return "https://malfunctiondz.com (default)"
-        #endif
+        return kServerURL
     }
 }
 
