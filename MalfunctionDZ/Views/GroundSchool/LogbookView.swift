@@ -818,6 +818,11 @@ struct LogbookEntryDetailView: View {
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(colors.text)
             }
+            if let lic = entry.witnessLicenseNumber, !lic.isEmpty {
+                Text("License \(lic)")
+                    .font(.system(size: 12))
+                    .foregroundColor(colors.muted)
+            }
             if let at = entry.witnessSignedAt, !at.isEmpty {
                 Text(formatSignedDate(at))
                     .font(.system(size: 12))
@@ -856,6 +861,8 @@ struct LogbookWitnessFlowView: View {
     @State private var selectedEntryForRequest: SkydiverLogbookEntry?
     @State private var qrPayload = ""
     @State private var challengeNonce = ""
+    @State private var witnessNotes = ""
+    @State private var isSigning = false
     @State private var statusMessage = ""
     @Environment(\.dismiss) private var dismiss
     @Environment(\.mdzColors) private var colors
@@ -946,8 +953,10 @@ struct LogbookWitnessFlowView: View {
                 switch newState {
                 case .completed:
                     statusMessage = "Signature recorded."
+                    isSigning = false
                 case .failed(let msg):
                     statusMessage = msg
+                    isSigning = false
                 default:
                     break
                 }
@@ -956,6 +965,13 @@ struct LogbookWitnessFlowView: View {
                 session.reset()
                 qrPayload = ""
                 statusMessage = ""
+                witnessNotes = ""
+                isSigning = false
+            }
+            .task(id: mode) {
+                if mode == .witness {
+                    await vm.reloadSignerProfile()
+                }
             }
         }
     }
@@ -1066,25 +1082,154 @@ struct LogbookWitnessFlowView: View {
                     .foregroundColor(colors.muted)
             }
 
-            ForEach(session.discoveredPeers, id: \.self) { peer in
-                Button("Connect to \(peer.displayName)") {
-                    session.connect(to: peer)
+            if case .connecting = session.state {
+                HStack(spacing: 10) {
+                    ProgressView().tint(colors.amber)
+                    Text("Connecting…")
+                        .font(.system(size: 14))
+                        .foregroundColor(colors.text)
                 }
+                .padding(.vertical, 4)
+            }
+
+            if case .failed = session.state, mode == .witness {
+                Button("Try again") {
+                    statusMessage = ""
+                    session.startBrowsing()
+                }
+                .buttonStyle(.bordered)
+                .tint(colors.amber)
+            }
+
+            ForEach(session.discoveredPeers) { row in
+                Button {
+                    session.connect(to: row.peer)
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "antenna.radiowaves.left.and.right")
+                            .font(.system(size: 18))
+                            .foregroundColor(colors.green)
+                        Text("Connect to \(row.peer.displayName)")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(colors.text)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(colors.muted)
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(colors.card2)
+                    .cornerRadius(10)
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.green.opacity(0.45), lineWidth: 1))
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
 
             if case .awaitingConfirmation(let request) = session.state {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(request.summary)
-                        .font(.system(size: 15, weight: .semibold))
-                    Button("Confirm & sign") {
-                        session.confirmAndSign(request)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(colors.green)
-                    Button("Decline", role: .cancel) { session.decline() }
-                }
+                witnessConfirmationPanel(request: request)
             }
         }
+    }
+
+    @ViewBuilder
+    private func witnessConfirmationPanel(request: LogbookSignRequest) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Confirm signature")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(colors.text)
+
+            Text(request.summary)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(colors.amber)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("YOUR SIGNATURE")
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundColor(colors.muted)
+                    .tracking(1)
+                if !vm.signerDisplayName.isEmpty {
+                    Text(vm.signerDisplayName)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(colors.text)
+                }
+                if !vm.signerLicenseDisplay.isEmpty {
+                    Text("License \(vm.signerLicenseDisplay)")
+                        .font(.system(size: 13))
+                        .foregroundColor(colors.muted)
+                }
+                if let url = MDZSignatureURL.absolute(vm.savedSignatureUrl) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().scaledToFit().frame(maxHeight: 72)
+                        case .failure:
+                            Text("Could not load saved signature")
+                                .font(.system(size: 12))
+                                .foregroundColor(colors.amber)
+                        default:
+                            ProgressView().tint(colors.amber)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(10)
+                    .background(colors.card)
+                    .cornerRadius(8)
+                } else {
+                    Text("Add your signature in Profile first.")
+                        .font(.system(size: 13))
+                        .foregroundColor(colors.amber)
+                }
+            }
+            .padding(14)
+            .background(colors.card2)
+            .cornerRadius(10)
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("NOTES (OPTIONAL)")
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundColor(colors.amber)
+                    .tracking(1)
+                TextField("Witness notes for this jump", text: $witnessNotes, axis: .vertical)
+                    .lineLimit(3...6)
+                    .textFieldStyle(.plain)
+                    .padding(12)
+                    .background(colors.card)
+                    .cornerRadius(8)
+                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.border, lineWidth: 1))
+                    .foregroundColor(colors.text)
+            }
+
+            Button {
+                guard vm.hasSavedSignature, !isSigning else { return }
+                isSigning = true
+                session.confirmAndSign(request, witnessNotes: witnessNotes)
+            } label: {
+                HStack {
+                    if isSigning { ProgressView().tint(.white) }
+                    Text(isSigning ? "Signing…" : "Sign jump")
+                        .font(.system(size: 16, weight: .semibold))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(colors.green)
+            .disabled(!vm.hasSavedSignature || isSigning)
+
+            Button("Decline", role: .cancel) {
+                witnessNotes = ""
+                isSigning = false
+                session.decline()
+            }
+            .foregroundColor(colors.muted)
+        }
+        .padding(14)
+        .background(colors.card)
+        .cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.green.opacity(0.35), lineWidth: 1))
     }
 
     private func entrySummary(_ entry: SkydiverLogbookEntry) -> String {
@@ -1109,28 +1254,44 @@ struct LogbookWitnessFlowView: View {
 
 struct LogbookWitnessQRCodeView: View {
     let payload: String
+    @Environment(\.mdzColors) private var colors
 
     var body: some View {
-        if let img = Self.makeQRImage(from: payload) {
-            Image(uiImage: img)
-                .interpolation(.none)
-                .resizable()
-                .scaledToFit()
+        Group {
+            if let img = Self.makeQRImage(from: payload) {
+                Image(uiImage: img)
+                    .interpolation(.none)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 220, height: 220)
+            } else {
+                VStack(spacing: 8) {
+                    Image(systemName: "qrcode")
+                        .font(.system(size: 40))
+                        .foregroundColor(colors.muted)
+                    Text("Could not render QR code")
+                        .font(.system(size: 12))
+                        .foregroundColor(colors.muted)
+                }
                 .frame(width: 220, height: 220)
-                .padding(12)
-                .background(Color.white)
-                .cornerRadius(8)
+            }
         }
+        .padding(12)
+        .background(Color.white)
+        .cornerRadius(8)
     }
 
     private static func makeQRImage(from string: String) -> UIImage? {
-        guard let data = string.data(using: .utf8),
+        guard !string.isEmpty,
+              let data = string.data(using: .utf8),
               let filter = CIFilter(name: "CIQRCodeGenerator") else { return nil }
         filter.setValue(data, forKey: "inputMessage")
         filter.setValue("M", forKey: "inputCorrectionLevel")
         guard let output = filter.outputImage else { return nil }
-        let scaled = output.transformed(by: CGAffineTransform(scaleX: 8, y: 8))
-        return UIImage(ciImage: scaled)
+        let scaled = output.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
+        let context = CIContext()
+        guard let cgImage = context.createCGImage(scaled, from: scaled.extent) else { return nil }
+        return UIImage(cgImage: cgImage)
     }
 }
 

@@ -79,6 +79,7 @@ struct SkydiverLogbookEntry: Codable, Identifiable {
     /// Witness / counter-sign (another skydiver or pilot).
     let witnessSignedBy: String?
     let witnessSignedAt: String?
+    let witnessLicenseNumber: String?
     let witnessSignatureUrl: String?
     let requiresWitness: Bool?
     let needsWitness: Bool?
@@ -114,6 +115,7 @@ struct SkydiverLogbookEntry: Codable, Identifiable {
         case studentSignatureUrl = "student_signature_url"
         case witnessSignedBy = "witness_signed_by"
         case witnessSignedAt = "witness_signed_at"
+        case witnessLicenseNumber = "witness_license_number"
         case witnessSignatureUrl = "witness_signature_url"
         case requiresWitness = "requires_witness"
         case needsWitness = "needs_witness"

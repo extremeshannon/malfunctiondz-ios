@@ -9,6 +9,8 @@
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Used to find nearby phones for logbook witness signatures (like AirDrop).</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Bluetooth is used to discover nearby phones for logbook witness signatures when Wi‑Fi is unavailable.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_mdz-logsign._tcp</string>

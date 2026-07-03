@@ -33,6 +33,8 @@ class LogbookViewModel: ObservableObject {
     @Published var isSaving = false
     @Published var error: String?
     @Published var savedSignatureUrl = ""
+    @Published var signerDisplayName = ""
+    @Published var signerLicenseDisplay = ""
     @Published var canCounterSignEntries = false
 
     private var currentCourseId: Int?
@@ -832,9 +834,30 @@ class LogbookViewModel: ObservableObject {
                 ?? ""
             let pathStr = (user["jumper_signature_path"] as? String) ?? ""
             savedSignatureUrl = !urlStr.isEmpty ? urlStr : pathStr
+
+            let fn = (user["first_name"] as? String) ?? ""
+            let ln = (user["last_name"] as? String) ?? ""
+            let full = "\(fn) \(ln)".trimmingCharacters(in: .whitespaces)
+            signerDisplayName = full.isEmpty ? ((user["username"] as? String) ?? "") : full
+            signerLicenseDisplay = Self.highestLicenseDisplay(from: user)
         } catch {
             savedSignatureUrl = ""
         }
+    }
+
+    private static func highestLicenseDisplay(from user: [String: Any]) -> String {
+        for level in ["D", "C", "B", "A"] {
+            let key = "license_\(level.lowercased())"
+            if let num = (user[key] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !num.isEmpty {
+                return "\(level) · \(num)"
+            }
+        }
+        return ""
+    }
+
+    func reloadSignerProfile() async {
+        guard let token = KeychainHelper.readToken() else { return }
+        await loadSavedSignature(token: token)
     }
 
     var hasSavedSignature: Bool {

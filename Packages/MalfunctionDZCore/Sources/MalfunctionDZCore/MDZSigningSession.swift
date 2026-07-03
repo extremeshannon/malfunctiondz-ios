@@ -45,12 +45,25 @@ public final class MDZSigningSession: NSObject, ObservableObject {
         case failed(String)
     }
 
+    public struct DiscoveredPeer: Identifiable, Equatable {
+        public let id: String
+        public let peer: MCPeerID
+
+        public init(peer: MCPeerID) {
+            self.peer = peer
+            self.id = peer.displayName
+        }
+    }
+
     @Published public private(set) var state: State = .idle
-    @Published public private(set) var discoveredPeers: [MCPeerID] = []
+    @Published public private(set) var discoveredPeers: [DiscoveredPeer] = []
 
     private let serviceType = "mdz-logsign"
     private let myPeerId: MCPeerID
-    private let session: MCSession
+    /// Fresh session per advertise / browse / invite — reusing a dead MCSession breaks reconnects.
+    private var session: MCSession!
+    /// Read synchronously from advertiser delegate (must not hop through MainActor).
+    private nonisolated(unsafe) var invitationSession: MCSession?
     private var advertiser: MCNearbyServiceAdvertiser?
     private var browser: MCNearbyServiceBrowser?
     private var pendingRequest: LogbookSignRequest?
@@ -58,19 +71,25 @@ public final class MDZSigningSession: NSObject, ObservableObject {
     private let signerDisplayName: String
     private let signingKey: P256.Signing.PrivateKey
     private var statusPollTask: Task<Void, Never>?
+    private var connectionTimeoutTask: Task<Void, Never>?
+    private var connectingToPeer: MCPeerID?
+    private var hasConnectedToPeer = false
 
     public init(userId: Int, displayName: String) {
         self.signerUserId = String(userId)
         self.signerDisplayName = displayName
-        self.myPeerId = MCPeerID(displayName: displayName.isEmpty ? "MalfunctionDZ" : displayName)
-        self.session = MCSession(peer: myPeerId, securityIdentity: nil, encryptionPreference: .required)
+        let label = displayName.isEmpty ? "MalfunctionDZ" : displayName
+        // Unique per account so two phones with the same name don't confuse Bonjour.
+        self.myPeerId = MCPeerID(displayName: "\(label) #\(userId)")
         self.signingKey = MDZDeviceSigningKey.loadOrCreate()
         super.init()
-        session.delegate = self
+        self.session = makeSession()
     }
 
-  deinit {
+    deinit {
         statusPollTask?.cancel()
+        connectionTimeoutTask?.cancel()
+        session?.disconnect()
     }
 
     /// Entry owner: advertise a witness request after POST /challenge.
@@ -79,6 +98,9 @@ public final class MDZSigningSession: NSObject, ObservableObject {
         pendingRequest = request
         state = .advertising
         startStatusPolling(entryId: request.entryId)
+
+        session = makeSession()
+        invitationSession = session
 
         let adv = MCNearbyServiceAdvertiser(
             peer: myPeerId,
@@ -96,6 +118,9 @@ public final class MDZSigningSession: NSObject, ObservableObject {
         state = .browsing
         discoveredPeers.removeAll()
 
+        session = makeSession()
+        invitationSession = nil
+
         let br = MCNearbyServiceBrowser(peer: myPeerId, serviceType: serviceType)
         br.delegate = self
         br.startBrowsingForPeers()
@@ -103,12 +128,32 @@ public final class MDZSigningSession: NSObject, ObservableObject {
     }
 
     public func connect(to peer: MCPeerID) {
+        guard browser != nil else { return }
+        connectionTimeoutTask?.cancel()
+        hasConnectedToPeer = false
+        connectingToPeer = peer
         state = .connecting
-        browser?.invitePeer(peer, to: session, withContext: nil, timeout: 20)
+
+        session.disconnect()
+        session = makeSession()
+
+        browser?.invitePeer(peer, to: session, withContext: nil, timeout: 60)
+
+        connectionTimeoutTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 65_000_000_000)
+            guard let self, !Task.isCancelled else { return }
+            if case .connecting = self.state {
+                self.session.disconnect()
+                self.connectingToPeer = nil
+                self.state = .failed(
+                    "Connection timed out. Keep both phones on this screen, tap Connect again, or scan the QR code."
+                )
+            }
+        }
     }
 
     /// Signer confirms — POSTs to backend with this device's Bearer token only.
-    public func confirmAndSign(_ request: LogbookSignRequest) {
+    public func confirmAndSign(_ request: LogbookSignRequest, witnessNotes: String = "") {
         let coSig = LogbookCoSignature(
             entryId: request.entryId,
             nonce: request.nonce,
@@ -116,26 +161,40 @@ public final class MDZSigningSession: NSObject, ObservableObject {
             deviceSignature: signDeviceAttestation(entryId: request.entryId, nonce: request.nonce),
             signerDisplayName: signerDisplayName
         )
-        if let data = try? JSONEncoder().encode(coSig) {
+        if let data = try? Self.jsonEncoder.encode(coSig) {
             try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
         }
         Task {
-            await postSignToBackend(coSig)
-            state = .completed
-            stopAll()
+            let ok = await postSignToBackend(coSig, witnessNotes: witnessNotes)
+            if ok {
+                state = .completed
+                stopAll()
+            } else {
+                state = .failed("Could not save signature — check Profile signature and try again.")
+            }
         }
     }
 
     public func decline() {
         pendingRequest = nil
+        connectingToPeer = nil
+        hasConnectedToPeer = false
         state = .idle
         stopAll()
     }
 
     public func reset() {
         pendingRequest = nil
+        connectingToPeer = nil
+        hasConnectedToPeer = false
         state = .idle
         stopAll()
+    }
+
+    private func makeSession() -> MCSession {
+        let s = MCSession(peer: myPeerId, securityIdentity: nil, encryptionPreference: .optional)
+        s.delegate = self
+        return s
     }
 
     private func signDeviceAttestation(entryId: Int, nonce: String) -> String {
@@ -174,17 +233,21 @@ public final class MDZSigningSession: NSObject, ObservableObject {
         return false
     }
 
-    private func postSignToBackend(_ coSig: LogbookCoSignature) async {
+    private func postSignToBackend(_ coSig: LogbookCoSignature, witnessNotes: String) async -> Bool {
         guard let token = KeychainHelper.readToken(), !token.isEmpty,
-              let url = URL(string: "\(kServerURL)/api/logbook/\(coSig.entryId)/sign.php") else { return }
+              let url = URL(string: "\(kServerURL)/api/logbook/\(coSig.entryId)/sign.php") else { return false }
 
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "entry_id": coSig.entryId,
             "nonce": coSig.nonce,
             "signed_at": ISO8601DateFormatter().string(from: coSig.signedAt),
             "device_signature": coSig.deviceSignature,
         ]
-        guard let jsonData = try? JSONSerialization.data(withJSONObject: body) else { return }
+        let notes = witnessNotes.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !notes.isEmpty {
+            body["witness_notes"] = notes
+        }
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: body) else { return false }
 
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
@@ -192,17 +255,43 @@ public final class MDZSigningSession: NSObject, ObservableObject {
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         req.httpBody = jsonData
 
-        _ = try? await URLSession.shared.data(for: req)
+        do {
+            let (data, resp) = try await URLSession.shared.data(for: req)
+            let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
+            guard code == 200 else { return false }
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                return json["witnessed"] as? Bool == true || json["ok"] as? Bool == true
+            }
+            return false
+        } catch {
+            return false
+        }
     }
 
     private func stopAll() {
         statusPollTask?.cancel()
         statusPollTask = nil
+        connectionTimeoutTask?.cancel()
+        connectionTimeoutTask = nil
         advertiser?.stopAdvertisingPeer()
         browser?.stopBrowsingForPeers()
         advertiser = nil
         browser = nil
+        session?.disconnect()
+        invitationSession = nil
     }
+
+    private static let jsonEncoder: JSONEncoder = {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        return encoder
+    }()
+
+    private static let jsonDecoder: JSONDecoder = {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
+    }()
 }
 
 extension MDZSigningSession: MCSessionDelegate {
@@ -210,13 +299,28 @@ extension MDZSigningSession: MCSessionDelegate {
         Task { @MainActor in
             switch state {
             case .connected:
-                if let req = self.pendingRequest, let data = try? JSONEncoder().encode(req) {
+                self.connectionTimeoutTask?.cancel()
+                self.hasConnectedToPeer = true
+                self.connectingToPeer = nil
+                if let req = self.pendingRequest, let data = try? Self.jsonEncoder.encode(req) {
                     try? session.send(data, toPeers: [peerID], with: .reliable)
                     self.state = .awaitingWitness(req)
                 }
             case .connecting:
                 self.state = .connecting
-            default:
+            case .notConnected:
+                guard !self.hasConnectedToPeer else { return }
+                guard case .connecting = self.state else { return }
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 1_500_000_000)
+                    guard !self.hasConnectedToPeer, case .connecting = self.state else { return }
+                    self.connectionTimeoutTask?.cancel()
+                    self.connectingToPeer = nil
+                    self.state = .failed(
+                        "Could not connect. Allow Local Network for MalfunctionDZ on both phones, stay on this screen, tap Connect again, or scan the QR code."
+                    )
+                }
+            @unknown default:
                 break
             }
         }
@@ -224,14 +328,19 @@ extension MDZSigningSession: MCSessionDelegate {
 
     nonisolated public func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         Task { @MainActor in
-            if let request = try? JSONDecoder().decode(LogbookSignRequest.self, from: data) {
+            if let request = try? Self.jsonDecoder.decode(LogbookSignRequest.self, from: data) {
+                self.connectionTimeoutTask?.cancel()
+                self.hasConnectedToPeer = true
                 self.state = .awaitingConfirmation(request)
                 return
             }
-            if (try? JSONDecoder().decode(LogbookCoSignature.self, from: data)) != nil {
-                // Initiator: peer signed — poll will pick up witnessed status; do NOT POST here.
+            if (try? Self.jsonDecoder.decode(LogbookCoSignature.self, from: data)) != nil {
                 self.state = .completed
                 self.stopAll()
+                return
+            }
+            if self.browser != nil {
+                self.state = .failed("Could not read the jump signing request. Try again.")
             }
         }
     }
@@ -242,23 +351,42 @@ extension MDZSigningSession: MCSessionDelegate {
 }
 
 extension MDZSigningSession: MCNearbyServiceAdvertiserDelegate {
-    nonisolated public func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
-        invitationHandler(true, session)
+    nonisolated public func advertiser(
+        _ advertiser: MCNearbyServiceAdvertiser,
+        didReceiveInvitationFromPeer peerID: MCPeerID,
+        withContext context: Data?,
+        invitationHandler: @escaping (Bool, MCSession?) -> Void
+    ) {
+        // Must accept immediately — async dispatch often causes invite timeout.
+        invitationHandler(true, invitationSession)
+    }
+
+    nonisolated public func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
+        Task { @MainActor in
+            self.state = .failed(error.localizedDescription)
+        }
     }
 }
 
 extension MDZSigningSession: MCNearbyServiceBrowserDelegate {
     nonisolated public func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String: String]?) {
         Task { @MainActor in
-            if !self.discoveredPeers.contains(peerID) {
-                self.discoveredPeers.append(peerID)
+            let row = DiscoveredPeer(peer: peerID)
+            if !self.discoveredPeers.contains(where: { $0.id == row.id }) {
+                self.discoveredPeers.append(row)
             }
         }
     }
 
     nonisolated public func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
         Task { @MainActor in
-            self.discoveredPeers.removeAll { $0 == peerID }
+            self.discoveredPeers.removeAll { $0.peer == peerID }
+        }
+    }
+
+    nonisolated public func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
+        Task { @MainActor in
+            self.state = .failed(error.localizedDescription)
         }
     }
 }
