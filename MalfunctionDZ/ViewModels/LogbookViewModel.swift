@@ -635,6 +635,66 @@ class LogbookViewModel: ObservableObject {
         return false
     }
 
+    /// Update an unsigned jump entry (PATCH /api/jump-log/{id}).
+    func updateEntry(entryId: Int, dz: String?, altitude: String?, delay: String?, date: String?,
+                     aircraft: String?, equipment: String?, rigId: Int?, jumpType: String?,
+                     comments: String?) async -> Bool {
+        isSaving = true
+        error = nil
+        defer { isSaving = false }
+
+        guard entryId > 0, let token = KeychainHelper.readToken(),
+              let url = URL(string: "\(kServerURL)/api/jump-log/\(entryId)") else {
+            error = "Not signed in"
+            return false
+        }
+
+        var body: [String: Any] = [:]
+        if let dz, !dz.isEmpty { body["dropzone_name"] = dz }
+        if let date, !date.isEmpty { body["jump_date"] = date }
+        if let aircraft, !aircraft.isEmpty { body["aircraft_label"] = aircraft }
+        if let equipment { body["equipment"] = equipment }
+        if let jumpType, !jumpType.isEmpty { body["jump_type"] = jumpType }
+        if let comments { body["notes"] = comments }
+        if let rigId { body["rig_id"] = rigId > 0 ? rigId : 0 }
+        if let alt = altitude?.trimmingCharacters(in: .whitespacesAndNewlines), !alt.isEmpty {
+            let digits = alt.filter { $0.isNumber }
+            if let ft = Int(digits), !digits.isEmpty { body["altitude_ft"] = ft }
+        }
+        if let ffs = FreefallDurationFormatting.seconds(from: delay) { body["freefall_seconds"] = ffs }
+
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: body) else {
+            error = "Could not encode jump"
+            return false
+        }
+
+        var req = URLRequest(url: url)
+        req.httpMethod = "PATCH"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = jsonData
+
+        do {
+            let (data, resp) = try await URLSession.shared.data(for: req)
+            let statusCode = (resp as? HTTPURLResponse)?.statusCode ?? 0
+            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            if statusCode == 403 {
+                error = json?["detail"] as? String ?? json?["error"] as? String ?? "This jump can no longer be edited."
+                return false
+            }
+            if (json?["ok"] as? Bool) == true {
+                rememberPickerOption(dropzone: dz, aircraft: aircraft)
+                await load(courseId: currentCourseId, userId: nil)
+                return true
+            }
+            error = json?["detail"] as? String ?? json?["error"] as? String ?? "Failed to update entry"
+            return false
+        } catch {
+            self.error = error.localizedDescription
+            return false
+        }
+    }
+
     /// Sign and lock a logbook entry. Pass signature as base64 PNG, or use saved profile signature.
     func signEntry(entryId: Int, signatureBase64: String? = nil, useSavedSignature: Bool = false) async -> Bool {
         isSaving = true

@@ -84,6 +84,7 @@ struct SkydiverLogbookEntry: Codable, Identifiable {
     let needsWitness: Bool?
     let canWitnessSign: Bool?
     let canCounterSign: Bool?
+    let canEdit: Bool?
     /// Locked after witness or instructor sign-off.
     let isLocked: Bool
     /// LMS link
@@ -118,6 +119,7 @@ struct SkydiverLogbookEntry: Codable, Identifiable {
         case needsWitness = "needs_witness"
         case canWitnessSign = "can_witness_sign"
         case canCounterSign = "can_counter_sign"
+        case canEdit = "can_edit"
         case isLocked = "is_locked"
         case courseId = "course_id"
         case moduleId = "module_id"
@@ -153,6 +155,12 @@ struct SkydiverLogbookEntry: Codable, Identifiable {
 
     var needsWitnessSignature: Bool {
         (needsWitness ?? requiresWitness ?? false) && !isWitnessSigned
+    }
+
+    /// Editable until witness or instructor sign-off (server `can_edit`).
+    var isEditable: Bool {
+        if let c = canEdit { return c }
+        return !isLocked && !isWitnessSigned && !isInstructorSigned
     }
 
     /// Display: rig label when set, else equipment free text
@@ -380,5 +388,20 @@ enum FreefallDurationFormatting {
             return String(format: "%d:%02d:%02d", h, m, s)
         }
         return String(format: "%d:%02d", m, s)
+    }
+
+    /// Parse M:SS or plain seconds from the delay field (matches server `parse_freefall_delay_string`).
+    static func seconds(from delay: String?) -> Int? {
+        guard let raw = delay?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { return nil }
+        if raw.contains(":") {
+            let parts = raw.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
+            guard parts.count == 2,
+                  let minutes = Int(parts[0].trimmingCharacters(in: .whitespaces)),
+                  let sec = Int(parts[1].trimmingCharacters(in: .whitespaces)) else { return nil }
+            return min(max(minutes * 60 + min(max(sec, 0), 59), 0), 3600)
+        }
+        let digits = raw.filter(\.isNumber)
+        guard let n = Int(digits), !digits.isEmpty else { return nil }
+        return min(max(n, 0), 3600)
     }
 }

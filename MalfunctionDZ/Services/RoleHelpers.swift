@@ -187,6 +187,16 @@ extension User {
             .contains(role?.lowercased() ?? "")
     }
 
+    /// ASC Students member app: Ground School + A-License tabs (training students only — not licensed skydivers).
+    var showsASCMemberTrainingTabs: Bool {
+        isStudentRole && !isSkydiverRole
+    }
+
+    /// Home training cards (next lesson, AFF level) — hidden for licensed skydivers on the member app.
+    var showsASCMemberTrainingHome: Bool {
+        showsASCMemberTrainingTabs
+    }
+
     var canAccessManifest: Bool {
         hasAnyRole(["admin", "master", "godmode", "manifest", "chief_pilot", "chief pilot", "ops"])
     }

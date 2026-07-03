@@ -18,7 +18,9 @@ struct LogbookView: View {
     @Environment(\.mdzColorScheme) private var mdzColorScheme
     @State private var showAddEntry = false
     @State private var showConfigSheet = false
-    @State private var showSignLogbookFlow = false
+    @State private var showSigningFlow = false
+    @State private var signingFlowInitialMode: LogbookWitnessFlowView.Mode = .request
+    @State private var signingFlowEntry: SkydiverLogbookEntry?
 
     /// Standalone logbook — all entries, no LMS course (for skydivers without LMS access)
     static func standalone() -> LogbookView {
@@ -65,8 +67,11 @@ struct LogbookView: View {
                             }
                         }
 
-                        if canSignOthersLogbook || hasUnsignedJumps {
-                            signLogbookButton
+                        if hasUnsignedJumps {
+                            signJumpButton
+                        }
+                        if canSignOthersLogbook {
+                            signOthersLogbookButton
                         }
 
                         if vm.entries.isEmpty {
@@ -91,10 +96,13 @@ struct LogbookView: View {
                                     .foregroundColor(colors.muted)
                                     .tracking(1)
                                 ForEach(vm.entries.reversed()) { entry in
-                                    NavigationLink(destination: LogbookEntryDetailView(entry: entry, vm: vm)) {
-                                        LogbookEntryRow(entry: entry)
-                                    }
-                                    .buttonStyle(.plain)
+                                    LogbookEntryRow(
+                                        entry: entry,
+                                        vm: vm,
+                                        onSignJump: entry.needsWitnessSignature && !entry.isWitnessSigned
+                                            ? { openSignJump(for: entry) }
+                                            : nil
+                                    )
                                 }
                             }
                         }
@@ -150,13 +158,17 @@ struct LogbookView: View {
                 showConfigSheet = false
             }
         }
-        .sheet(isPresented: $showSignLogbookFlow) {
+        .sheet(isPresented: $showSigningFlow, onDismiss: { signingFlowEntry = nil }) {
             LogbookWitnessFlowView(
-                entry: nil,
-                unsignedEntries: vm.entries.filter { $0.needsWitnessSignature },
+                entry: signingFlowEntry,
+                unsignedEntries: signingFlowEntry == nil
+                    ? vm.entries.filter { $0.needsWitnessSignature }
+                    : [],
+                initialMode: signingFlowInitialMode,
                 vm: vm
             ) {
-                showSignLogbookFlow = false
+                showSigningFlow = false
+                signingFlowEntry = nil
                 Task { await vm.load(courseId: courseId) }
             }
         }
@@ -234,9 +246,47 @@ struct LogbookView: View {
         return user.isSkydiverRole || user.isPilotRole || user.isInstructorRole
     }
 
-    private var signLogbookButton: some View {
+    private func openSignJump(for entry: SkydiverLogbookEntry) {
+        signingFlowEntry = entry
+        signingFlowInitialMode = .request
+        showSigningFlow = true
+    }
+
+    private var signJumpButton: some View {
         Button {
-            showSignLogbookFlow = true
+            signingFlowEntry = nil
+            signingFlowInitialMode = .request
+            showSigningFlow = true
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "signature")
+                    .font(.system(size: 18))
+                    .foregroundColor(colors.amber)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Sign jump")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(colors.text)
+                    Text("Get another jumper to sign your unsigned entries")
+                        .font(.system(size: 11))
+                        .foregroundColor(colors.muted)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(colors.muted)
+            }
+            .padding(14)
+            .background(colors.card)
+            .cornerRadius(12)
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(colors.amber.opacity(0.45), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var signOthersLogbookButton: some View {
+        Button {
+            signingFlowInitialMode = .witness
+            showSigningFlow = true
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "checkmark.seal.fill")
@@ -246,9 +296,7 @@ struct LogbookView: View {
                     Text("Sign logbook")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundColor(colors.text)
-                    Text(hasUnsignedJumps
-                         ? "Get a signature or sign someone else's jump"
-                         : "Counter-sign a nearby jumper's entry")
+                    Text("Sign someone else's nearby jump")
                         .font(.system(size: 11))
                         .foregroundColor(colors.muted)
                 }
@@ -509,8 +557,38 @@ struct StatCell: View {
 // MARK: - Compact list row (clickable)
 struct LogbookEntryRow: View {
     let entry: SkydiverLogbookEntry
+    @ObservedObject var vm: LogbookViewModel
+    var onSignJump: (() -> Void)? = nil
     @Environment(\.mdzColors) private var colors
+
+    private var needsSign: Bool {
+        entry.needsWitnessSignature && !entry.isWitnessSigned
+    }
+
     var body: some View {
+        HStack(spacing: 8) {
+            NavigationLink(destination: LogbookEntryDetailView(entry: entry, vm: vm)) {
+                rowContent
+            }
+            .buttonStyle(.plain)
+
+            if needsSign, let onSignJump {
+                Button(action: onSignJump) {
+                    Text("Sign jump")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(colors.amber)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(colors.amber.opacity(0.15))
+                        .cornerRadius(8)
+                        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(colors.amber.opacity(0.45), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var rowContent: some View {
         HStack(spacing: 12) {
             Text("#\(entry.jumpNumber)")
                 .font(.system(size: 15, weight: .bold))
@@ -525,7 +603,15 @@ struct LogbookEntryRow: View {
                     .foregroundColor(colors.muted)
             }
             Spacer()
-            if entry.isSigned {
+            if needsSign {
+                Text("NEEDS SIG")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundColor(colors.amber)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(colors.amber.opacity(0.15))
+                    .cornerRadius(4)
+            } else if entry.isSigned {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 16))
                     .foregroundColor(colors.green)
@@ -546,6 +632,7 @@ struct LogbookEntryDetailView: View {
     let entry: SkydiverLogbookEntry
     @ObservedObject var vm: LogbookViewModel
     @State private var showWitnessFlow = false
+    @State private var showEditSheet = false
     @Environment(\.dismiss) private var dismiss
     @Environment(\.mdzColors) private var colors
     var body: some View {
@@ -554,14 +641,33 @@ struct LogbookEntryDetailView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
                     LogbookEntryCard(entry: entry)
+                    if entry.isEditable {
+                        Button {
+                            showEditSheet = true
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "pencil")
+                                    .font(.system(size: 18))
+                                Text("Edit jump")
+                                    .font(.system(size: 15, weight: .semibold))
+                            }
+                            .foregroundColor(colors.text)
+                            .frame(maxWidth: .infinity)
+                            .padding(14)
+                            .background(colors.card2)
+                            .cornerRadius(10)
+                            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+                    }
                     if entry.needsWitnessSignature {
                         Button {
                             showWitnessFlow = true
                         } label: {
                             HStack(spacing: 10) {
-                                Image(systemName: "iphone.radiowaves.left.and.right")
+                                Image(systemName: "signature")
                                     .font(.system(size: 18))
-                                Text("Get signature")
+                                Text("Sign jump")
                                     .font(.system(size: 15, weight: .semibold))
                             }
                             .foregroundColor(colors.amber)
@@ -580,8 +686,38 @@ struct LogbookEntryDetailView: View {
         }
         .navigationTitle("Jump #\(entry.jumpNumber)")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showEditSheet) {
+            AddLogbookEntrySheet(
+                vm: vm,
+                nextJumpNumber: entry.jumpNumber,
+                lastEntry: nil,
+                editingEntry: entry,
+                startFreefallTime: vm.startFreefallTime,
+                defaultJumpType: vm.defaultJumpType,
+                homeDropzone: vm.homeDropzone,
+                onSave: { dz, altitude, delay, date, aircraft, equipment, rigId, jumpType, comments in
+                    let ok = await vm.updateEntry(
+                        entryId: entry.id,
+                        dz: dz, altitude: altitude, delay: delay, date: date,
+                        aircraft: aircraft, equipment: equipment, rigId: rigId,
+                        jumpType: jumpType, comments: comments
+                    )
+                    if ok {
+                        showEditSheet = false
+                        dismiss()
+                    }
+                    return ok
+                },
+                onCancel: { showEditSheet = false }
+            )
+        }
         .sheet(isPresented: $showWitnessFlow) {
-            LogbookWitnessFlowView(entry: entry, unsignedEntries: [], vm: vm) {
+            LogbookWitnessFlowView(
+                entry: entry,
+                unsignedEntries: [],
+                initialMode: .request,
+                vm: vm
+            ) {
                 showWitnessFlow = false
                 Task { await vm.load(courseId: nil, userId: nil) }
             }
@@ -707,10 +843,11 @@ struct LogbookEntryDetailView: View {
 
 // MARK: - Sign logbook flow (Multipeer + QR)
 struct LogbookWitnessFlowView: View {
-    enum Mode: String, CaseIterable { case request = "Get signature"; case witness = "Sign logbook" }
+    enum Mode: String, CaseIterable { case request = "Sign jump"; case witness = "Sign logbook" }
 
     let entry: SkydiverLogbookEntry?
     let unsignedEntries: [SkydiverLogbookEntry]
+    let initialMode: Mode
     @ObservedObject var vm: LogbookViewModel
     let onComplete: () -> Void
 
@@ -726,11 +863,13 @@ struct LogbookWitnessFlowView: View {
     init(
         entry: SkydiverLogbookEntry?,
         unsignedEntries: [SkydiverLogbookEntry] = [],
+        initialMode: Mode = .request,
         vm: LogbookViewModel,
         onComplete: @escaping () -> Void
     ) {
         self.entry = entry
         self.unsignedEntries = unsignedEntries
+        self.initialMode = initialMode
         self.vm = vm
         self.onComplete = onComplete
         let user = AuthManager.shared.currentUser
@@ -738,11 +877,7 @@ struct LogbookWitnessFlowView: View {
         let name = [user?.firstName, user?.lastName].compactMap { $0 }.joined(separator: " ")
         let display = name.isEmpty ? (user?.username ?? "MalfunctionDZ") : name
         _session = StateObject(wrappedValue: MDZSigningSession(userId: uid, displayName: display))
-        if entry?.needsWitnessSignature == true || !unsignedEntries.isEmpty {
-            _mode = State(initialValue: .request)
-        } else {
-            _mode = State(initialValue: .witness)
-        }
+        _mode = State(initialValue: initialMode)
         _selectedEntryForRequest = State(initialValue: unsignedEntries.count == 1 ? unsignedEntries.first : nil)
     }
 
@@ -751,10 +886,7 @@ struct LogbookWitnessFlowView: View {
         return selectedEntryForRequest
     }
 
-    private var showsModePicker: Bool {
-        if entry != nil { return entry?.needsWitnessSignature == true }
-        return !unsignedEntries.isEmpty
-    }
+    private var showsModePicker: Bool { true }
 
     var body: some View {
         NavigationStack {
@@ -769,6 +901,12 @@ struct LogbookWitnessFlowView: View {
                                 }
                             }
                             .pickerStyle(.segmented)
+
+                            Text(mode == .request
+                                 ? "You are waiting for someone to sign your jump."
+                                 : "You are signing another jumper's entry.")
+                                .font(.system(size: 12))
+                                .foregroundColor(colors.muted)
                         }
 
                         if let entry {
@@ -793,7 +931,7 @@ struct LogbookWitnessFlowView: View {
                     .padding(20)
                 }
             }
-            .navigationTitle(mode == .witness ? "Sign logbook" : "Get signature")
+            .navigationTitle(mode == .witness ? "Sign logbook" : "Sign jump")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -907,7 +1045,7 @@ struct LogbookWitnessFlowView: View {
             Text("Step 2 — You (signing someone else's jump)")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(colors.muted)
-            Text("The other jumper must tap Get signature → Start nearby signing first. Both phones need local network access.")
+            Text("The other jumper must tap Sign jump at the top of Logbook (or on the jump row), then Start nearby signing. Keep that screen open before you search below.")
                 .font(.system(size: 13))
                 .foregroundColor(colors.muted)
 
@@ -1186,6 +1324,7 @@ struct AddLogbookEntrySheet: View {
     @ObservedObject var vm: LogbookViewModel
     let nextJumpNumber: Int
     let lastEntry: SkydiverLogbookEntry?
+    var editingEntry: SkydiverLogbookEntry? = nil
     let startFreefallTime: String
     let defaultJumpType: String
     let homeDropzone: String
@@ -1218,7 +1357,7 @@ struct AddLogbookEntrySheet: View {
                 colors.background.ignoresSafeArea()
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 14) {
-                        Text("Jump #\(nextJumpNumber)")
+                        Text("Jump #\(editingEntry?.jumpNumber ?? nextJumpNumber)")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(colors.amber)
 
@@ -1247,9 +1386,13 @@ struct AddLogbookEntrySheet: View {
                     .padding(20)
                 }
             }
-            .navigationTitle("Add Jump")
+            .navigationTitle(editingEntry == nil ? "Add Jump" : "Edit Jump")
             .onAppear {
-                prefillFromLastEntry()
+                if let e = editingEntry {
+                    prefillFromEntry(e)
+                } else {
+                    prefillFromLastEntry()
+                }
                 Task { await vm.loadRigs() }
             }
             .sheet(isPresented: $showCreateRig) {
@@ -1283,10 +1426,10 @@ struct AddLogbookEntrySheet: View {
                     .disabled(vm.isSaving)
                 }
             }
-            .alert("Could not add jump", isPresented: $showSaveError) {
+            .alert(editingEntry == nil ? "Could not add jump" : "Could not save changes", isPresented: $showSaveError) {
                 Button("OK", role: .cancel) {}
             } message: {
-                Text(vm.error ?? "Failed to add entry")
+                Text(vm.error ?? (editingEntry == nil ? "Failed to add entry" : "Failed to update entry"))
             }
         }
     }
@@ -1350,6 +1493,23 @@ struct AddLogbookEntrySheet: View {
                 jumpType = j
             } else if !defaultJumpType.isEmpty {
                 jumpType = defaultJumpType
+            }
+        }
+    }
+
+    private func prefillFromEntry(_ e: SkydiverLogbookEntry) {
+        dz = e.dz ?? ""
+        altitude = e.altitude ?? ""
+        delay = e.delay ?? ""
+        aircraft = e.aircraft ?? ""
+        equipment = e.equipment ?? ""
+        if let rid = e.rigId, rid > 0 { selectedRigId = rid }
+        jumpType = e.jumpType ?? ""
+        comments = e.comments ?? ""
+        if let ds = e.date, !ds.isEmpty {
+            let f = Self.dateFormatter
+            if let d = f.date(from: String(ds.prefix(10))) {
+                jumpDate = d
             }
         }
     }

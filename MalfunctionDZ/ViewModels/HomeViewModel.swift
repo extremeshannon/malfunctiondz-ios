@@ -401,10 +401,10 @@ class HomeViewModel: ObservableObject {
                 $0.addTask { await self.loadInstructorDashboard() }
                 $0.addTask { await self.loadLoftSummary() }
             }
-            if isStudent {
+            if isStudent && !user.isSkydiverRole {
                 await loadStudentDashboard(userId: user.id)
             }
-        } else if isStudent {
+        } else if isStudent && !user.isSkydiverRole {
             await loadStudentDashboard(userId: user.id)
         }
 

@@ -79,13 +79,13 @@ struct ASCMemberTabView: View {
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(0)
 
-            if auth.currentUser?.canAccessGroundSchool == true {
+            if auth.currentUser?.showsASCMemberTrainingTabs == true {
                 GroundSchoolView()
                     .tabItem { Label(config.moduleGroundSchool, systemImage: "graduationcap.fill") }
                     .tag(3)
             }
 
-            if auth.currentUser?.canAccessGroundSchool == true {
+            if auth.currentUser?.showsASCMemberTrainingTabs == true {
                 ALicenseProgressView()
                     .tabItem { Label("A-License", systemImage: "checklist.checked") }
                     .tag(2)

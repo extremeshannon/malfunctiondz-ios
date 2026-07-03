@@ -8,14 +8,20 @@ struct ASCSkydiverHomeView: View {
     @ObservedObject var vm: HomeViewModel
     @Environment(\.mdzThemeKey) private var themeKey
 
+    private var showsTrainingHome: Bool {
+        auth.currentUser?.showsASCMemberTrainingHome == true
+    }
+
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: ASC.Space.xxl) {
                 ascLargeTitle
                 welcomeBanner
                 statRow
-                nextLessonCard
-                upNextSection
+                if showsTrainingHome {
+                    nextLessonCard
+                    upNextSection
+                }
             }
             .padding(.horizontal, ASC.Space.lg)
             .padding(.top, ASC.Space.md)
@@ -87,7 +93,9 @@ struct ASCSkydiverHomeView: View {
 
     private var statRow: some View {
         HStack(spacing: ASC.Space.sm) {
-            statTile(label: "Level", value: levelLabel, accent: ASC.role.accent)
+            if showsTrainingHome {
+                statTile(label: "Level", value: levelLabel, accent: ASC.role.accent)
+            }
             statTile(label: "Currency", value: currencyLabel, accent: currencyAccent, valueColor: currencyAccent, unit: currencyUnit)
             statTile(label: "Jumps", value: jumpsLabel, accent: ASC.Palette.beacon)
         }
