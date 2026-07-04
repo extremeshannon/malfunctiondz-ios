@@ -5,10 +5,16 @@ import MalfunctionDZCore
 extension User {
 
     // MARK: - Private role resolution
+    private func normalizeRole(_ r: String) -> String {
+        r.lowercased()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: " ", with: "_")
+    }
+
     private var allRolesLowercased: [String] {
         var r = roles ?? []
         if let p = role { r.append(p) }
-        return r.map { $0.lowercased() }
+        return r.map { normalizeRole($0) }
     }
 
     private func hasAnyRole(_ candidates: [String]) -> Bool {
@@ -187,9 +193,22 @@ extension User {
             .contains(role?.lowercased() ?? "")
     }
 
+    var isLMSInstructorRole: Bool {
+        hasAnyRole(["lms_instructor"])
+    }
+
+    var isLMSStudentRole: Bool {
+        hasAnyRole(["lms_student"])
+    }
+
     /// ASC Students member app: Ground School + A-License tabs (training students only — not licensed skydivers).
     var showsASCMemberTrainingTabs: Bool {
         isStudentRole && !isSkydiverRole
+    }
+
+    /// Ground School tab on the ASC member app — LMS roles plus active training students.
+    var showsASCMemberGroundSchoolTab: Bool {
+        isLMSInstructorRole || isLMSStudentRole || showsASCMemberTrainingTabs
     }
 
     /// Home training cards (next lesson, AFF level) — hidden for licensed skydivers on the member app.

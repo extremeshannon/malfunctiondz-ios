@@ -28,6 +28,7 @@ struct HHIOApp: App {
 struct HHIOContentRootView: View {
     @EnvironmentObject private var auth: AuthManager
     @EnvironmentObject private var config: AppConfig
+    @EnvironmentObject private var tabSelect: TabSelection
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -46,6 +47,11 @@ struct HHIOContentRootView: View {
         .environment(\.appShell, .hhio)
         .mdzThemed(config.theme)
         .task { await config.loadConfig() }
+        .onChange(of: auth.isAuthenticated) { wasAuthenticated, isAuthenticated in
+            if isAuthenticated && !wasAuthenticated {
+                tabSelect.selected = 0
+            }
+        }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active, auth.isAuthenticated, auth.currentUser?.canAccessHHIOApp == true {
                 PushRegistration.shared.requestPermissionAndRegister()
@@ -91,7 +97,6 @@ struct HHIOTabView: View {
 
     init() {
         MDZChrome.applyTabBar()
-        TabSelection.shared.selected = 0
     }
 
     var body: some View {

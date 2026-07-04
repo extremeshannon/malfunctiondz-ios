@@ -13,7 +13,8 @@ struct GroundSchoolView: View {
     @Environment(\.horizontalSizeClass) private var hSizeClass
 
     private var showInstructorDashboard: Bool {
-        auth.currentUser?.isInstructorRole == true && appShell == .staff
+        guard auth.currentUser?.isInstructorRole == true else { return false }
+        return appShell == .staff || auth.currentUser?.isLMSInstructorRole == true
     }
 
     var body: some View {

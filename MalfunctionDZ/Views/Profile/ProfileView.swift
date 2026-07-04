@@ -182,10 +182,6 @@ struct ProfileView: View {
                     .buttonStyle(.plain)
                     .mdzContentCard(accent: colors.muted, glass: mountainTheme)
 
-                    if !isMemberShell {
-                        ApiBaseUrlSection()
-                    }
-
                     Button { auth.logout() } label: {
                         HStack(spacing: 10) {
                             Image(systemName: "rectangle.portrait.and.arrow.right")
@@ -315,85 +311,6 @@ struct SectionHeader: View {
         MDZSectionLabel(title)
             .padding(.horizontal, 16)
             .padding(.vertical, hSizeClass == .regular ? 14 : 10)
-    }
-}
-
-private let kApiBaseUrlKey = "api_base_url"
-
-struct ApiBaseUrlSection: View {
-    @Environment(\.mdzColors) private var colors
-    @Environment(\.mdzThemeKey) private var themeKey
-    @State private var urlInput: String = ""
-    @State private var savedMessage: String?
-
-    private var mountainTheme: Bool { MDZTheme.usesMountainBackground(themeKey) }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            MDZSectionLabel("API BASE URL", icon: "link")
-                .padding(.horizontal, 16)
-                .padding(.top, 14)
-                .padding(.bottom, 6)
-            Text("Simulator uses localhost:8000; physical device uses the VPS. Leave empty for the default, or set a custom URL to override.")
-                .font(.system(size: 11))
-                .foregroundColor(colors.muted)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 8)
-            HStack(spacing: 8) {
-                TextField("e.g. http://localhost:8000 or https://malfunctiondz.com", text: $urlInput)
-                    .font(.system(size: 14))
-                    .foregroundColor(colors.text)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .keyboardType(.URL)
-                    .padding(12)
-                    .background(colors.navyMid.opacity(0.6))
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(colors.border, lineWidth: 1))
-                Button("Save") {
-                    let value = urlInput.trimmingCharacters(in: .whitespacesAndNewlines)
-                    UserDefaults.standard.set(value.isEmpty ? nil : value, forKey: kApiBaseUrlKey)
-                    savedMessage = value.isEmpty ? "Using default URL for this build." : "Saved. Restart or retry requests."
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { savedMessage = nil }
-                }
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(colors.accent)
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 8)
-            if let msg = savedMessage {
-                Text(msg)
-                    .font(.system(size: 12))
-                    .foregroundColor(colors.green)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 10)
-            }
-            HStack {
-                Text("Current")
-                    .font(.system(size: 14))
-                    .foregroundColor(colors.muted)
-                Spacer()
-                Text(currentDisplay)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(colors.primary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 14)
-        }
-        .mdzContentCard(accent: colors.primary, glass: mountainTheme)
-        .onAppear {
-            urlInput = UserDefaults.standard.string(forKey: kApiBaseUrlKey) ?? ""
-        }
-    }
-
-    private var currentDisplay: String {
-        if let custom = UserDefaults.standard.string(forKey: kApiBaseUrlKey), !custom.isEmpty {
-            let t = custom.trimmingCharacters(in: .whitespacesAndNewlines)
-            return t.hasSuffix("/") ? String(t.dropLast()) : t
-        }
-        return kServerURL
     }
 }
 

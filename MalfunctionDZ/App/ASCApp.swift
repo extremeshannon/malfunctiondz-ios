@@ -79,7 +79,7 @@ struct ASCMemberTabView: View {
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(0)
 
-            if auth.currentUser?.showsASCMemberTrainingTabs == true {
+            if auth.currentUser?.showsASCMemberGroundSchoolTab == true {
                 GroundSchoolView()
                     .tabItem { Label(config.moduleGroundSchool, systemImage: "graduationcap.fill") }
                     .tag(3)

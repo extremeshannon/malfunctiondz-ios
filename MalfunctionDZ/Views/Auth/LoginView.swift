@@ -2,8 +2,6 @@
 import SwiftUI
 import MalfunctionDZCore
 
-private let kLoginApiBaseUrlKey = "api_base_url"
-
 struct LoginView: View {
     @EnvironmentObject private var auth: AuthManager
     @Environment(\.mdzColors) private var colors
@@ -96,9 +94,6 @@ struct LoginView: View {
                 Task { await auth.login(username: username, password: password) }
             }
             .padding(.top, 4)
-            #if DEBUG && targetEnvironment(simulator)
-            LoginApiUrlSection()
-            #endif
         }
     }
 
@@ -142,55 +137,3 @@ struct LoginView: View {
         }
     }
 }
-
-#if DEBUG
-private struct LoginApiUrlSection: View {
-    @Environment(\.mdzColors) private var colors
-    @State private var urlInput = ""
-    @State private var savedHint: String?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("API URL (Debug)")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(colors.muted)
-                .tracking(0.8)
-            Text("Simulator → localhost:8000 · Device → VPS. Clear field and tap Set to reset.")
-                .font(.system(size: 10))
-                .foregroundColor(colors.muted.opacity(0.85))
-            HStack(spacing: 8) {
-                TextField("https://malfunctiondz.com", text: $urlInput)
-                    .font(.system(size: 13))
-                    .foregroundColor(colors.text)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .keyboardType(.URL)
-                    .padding(10)
-                    .background(colors.navyMid.opacity(0.5))
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                Button("Set") {
-                    let value = urlInput.trimmingCharacters(in: .whitespacesAndNewlines)
-                    UserDefaults.standard.set(value.isEmpty ? nil : value, forKey: kLoginApiBaseUrlKey)
-                    savedHint = value.isEmpty ? "Using build default: \(kServerURL)" : "Using \(kServerURL)"
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) { savedHint = nil }
-                }
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(colors.accent)
-            }
-            Text("Current: \(kServerURL)")
-                .font(.system(size: 10))
-                .foregroundColor(colors.primary.opacity(0.9))
-                .lineLimit(2)
-            if let savedHint {
-                Text(savedHint)
-                    .font(.system(size: 10))
-                    .foregroundColor(colors.green)
-            }
-        }
-        .padding(.top, 6)
-        .onAppear {
-            urlInput = UserDefaults.standard.string(forKey: kLoginApiBaseUrlKey) ?? ""
-        }
-    }
-}
-#endif
