@@ -3,6 +3,24 @@ import Foundation
 import SwiftUI
 import MalfunctionDZCore
 
+private func recordsExtractJsonPrefix(_ data: Data) -> Data {
+    if let first = data.first, first == UInt8(ascii: "{") { return data }
+    if let str = String(data: data, encoding: .utf8),
+       let start = str.firstIndex(of: "{"),
+       let extracted = str[start...].data(using: .utf8) {
+        return extracted
+    }
+    return data
+}
+
+private func recordsApiErrorMessage(_ data: Data) -> String? {
+    let slice = recordsExtractJsonPrefix(data)
+    guard let obj = try? JSONSerialization.jsonObject(with: slice) as? [String: Any] else { return nil }
+    if let e = obj["error"] as? String, !e.isEmpty { return e }
+    if let d = obj["detail"] as? String, !d.isEmpty { return d }
+    return nil
+}
+
 struct LoftRecordStats: Codable {
     let reserveTotal: Int?
     let packJobTotal: Int?
@@ -104,51 +122,82 @@ final class LoftRecordsViewModel: ObservableObject {
     @Published var isSaving = false
     @Published var error: String?
 
+    private static let listPaths = [
+        "/api/hhio/records.php",
+        "/api/hhio/records",
+        "/api/loft/records.php",
+        "/api/loft/records",
+    ]
+
+    private static let rigsPaths = [
+        "/api/hhio/rigs.php",
+        "/api/hhio/rigs",
+        "/api/loft/rigs.php",
+        "/api/loft/rigs",
+    ]
+
     func load() async {
         isLoading = true
         defer { isLoading = false }
-        guard let token = KeychainHelper.readToken(),
-              let url = URL(string: "\(kServerURL)/api/hhio/records.php") else { return }
-        var req = URLRequest(url: url)
-        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        do {
-            let (data, response) = try await URLSession.shared.data(for: req)
-            if let http = response as? HTTPURLResponse, http.statusCode == 401 {
-                AuthManager.shared.logout()
-                error = "Session expired"
-                return
-            }
-            let resp = try JSONDecoder().decode(LoftRecordsListResponse.self, from: data)
-            if resp.ok {
-                records = resp.records ?? []
-                stats = resp.stats
-                canEdit = resp.canEditRecords ?? false
-                if let opts = resp.reserveServiceOptions, !opts.isEmpty {
-                    reserveServiceOptions = opts
+        guard let token = KeychainHelper.readToken() else { return }
+
+        var lastMessage = "Pack Records API not found on server"
+        for path in Self.listPaths {
+            guard let url = URL(string: "\(kServerURL)\(path)") else { continue }
+            var req = URLRequest(url: url)
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            do {
+                let (data, response) = try await URLSession.shared.data(for: req)
+                let slice = recordsExtractJsonPrefix(data)
+                guard let http = response as? HTTPURLResponse else { continue }
+                if http.statusCode == 401 {
+                    AuthManager.shared.logout()
+                    error = "Session expired"
+                    return
                 }
-                if let days = resp.reserveRepackDays { reserveRepackDays = days }
-            } else {
-                error = resp.error ?? "Failed to load records"
+                if http.statusCode == 404 {
+                    lastMessage = recordsApiErrorMessage(slice) ?? "Pack Records API not deployed (404)"
+                    continue
+                }
+                let resp = try JSONDecoder().decode(LoftRecordsListResponse.self, from: slice)
+                if resp.ok {
+                    records = resp.records ?? []
+                    stats = resp.stats
+                    canEdit = resp.canEditRecords ?? false
+                    if let opts = resp.reserveServiceOptions, !opts.isEmpty {
+                        reserveServiceOptions = opts
+                    }
+                    if let days = resp.reserveRepackDays { reserveRepackDays = days }
+                    error = nil
+                    return
+                }
+                lastMessage = resp.error ?? "Failed to load records"
+            } catch let err {
+                lastMessage = err.localizedDescription
             }
-        } catch {
-            self.error = error.localizedDescription
         }
+        error = lastMessage
     }
 
     func loadRigsForPicker() async {
-        guard let token = KeychainHelper.readToken(),
-              let url = URL(string: "\(kServerURL)/api/hhio/rigs.php") else { return }
-        var req = URLRequest(url: url)
-        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        do {
-            let (data, _) = try await URLSession.shared.data(for: req)
-            let resp = try JSONDecoder().decode(LoftRigsPickerResponse.self, from: data)
-            if resp.ok {
-                rigs = resp.rigs ?? []
-                riggers = resp.riggers ?? []
+        guard let token = KeychainHelper.readToken() else { return }
+        for path in Self.rigsPaths {
+            guard let url = URL(string: "\(kServerURL)\(path)") else { continue }
+            var req = URLRequest(url: url)
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            do {
+                let (data, response) = try await URLSession.shared.data(for: req)
+                let slice = recordsExtractJsonPrefix(data)
+                guard let http = response as? HTTPURLResponse, http.statusCode != 404 else { continue }
+                let resp = try JSONDecoder().decode(LoftRigsPickerResponse.self, from: slice)
+                if resp.ok {
+                    rigs = resp.rigs ?? []
+                    riggers = resp.riggers ?? []
+                    return
+                }
+            } catch {
+                continue
             }
-        } catch {
-            self.error = error.localizedDescription
         }
     }
 
@@ -162,8 +211,7 @@ final class LoftRecordsViewModel: ObservableObject {
     ) async -> Bool {
         isSaving = true
         defer { isSaving = false }
-        guard let token = KeychainHelper.readToken(),
-              let url = URL(string: "\(kServerURL)/api/hhio/records.php") else { return false }
+        guard let token = KeychainHelper.readToken() else { return false }
         let df = DateFormatter()
         df.dateFormat = "yyyy-MM-dd"
         let body: [String: Any] = [
@@ -175,29 +223,38 @@ final class LoftRecordsViewModel: ObservableObject {
             "owner_name": ownerName,
             "owner_phone": ownerPhone,
         ]
-        var req = URLRequest(url: url)
-        req.httpMethod = "POST"
-        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        do {
-            let (data, response) = try await URLSession.shared.data(for: req)
-            if let http = response as? HTTPURLResponse, http.statusCode == 401 {
-                AuthManager.shared.logout()
-                error = "Session expired"
+        let bodyData = try? JSONSerialization.data(withJSONObject: body)
+
+        for path in Self.listPaths {
+            guard let url = URL(string: "\(kServerURL)\(path)") else { continue }
+            var req = URLRequest(url: url)
+            req.httpMethod = "POST"
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            req.httpBody = bodyData
+            do {
+                let (data, response) = try await URLSession.shared.data(for: req)
+                let slice = recordsExtractJsonPrefix(data)
+                guard let http = response as? HTTPURLResponse else { continue }
+                if http.statusCode == 401 {
+                    AuthManager.shared.logout()
+                    error = "Session expired"
+                    return false
+                }
+                if http.statusCode == 404 { continue }
+                let resp = try JSONDecoder().decode(LoftRecordsListResponse.self, from: slice)
+                if resp.ok {
+                    records = resp.records ?? records
+                    stats = resp.stats ?? stats
+                    return true
+                }
+                error = resp.error ?? "Failed to add reserve repack"
                 return false
+            } catch {
+                continue
             }
-            let resp = try JSONDecoder().decode(LoftRecordsListResponse.self, from: data)
-            if resp.ok {
-                records = resp.records ?? records
-                stats = resp.stats ?? stats
-                return true
-            }
-            error = resp.error ?? "Failed to add reserve repack"
-            return false
-        } catch {
-            self.error = error.localizedDescription
-            return false
         }
+        error = "Pack Records API not found on server"
+        return false
     }
 }
