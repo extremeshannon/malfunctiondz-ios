@@ -130,6 +130,7 @@ struct LoftCustomerDetailView: View {
                     contactCard
                     rigsSection
                     historySection
+                    invoicesSection
                 }
                 .padding(16)
             }
@@ -228,6 +229,37 @@ struct LoftCustomerDetailView: View {
                         }
                         if let by = rec.byName, !by.isEmpty {
                             Text("By \(by)").font(.system(size: 12)).foregroundColor(colors.muted)
+                        }
+                    }
+                    .padding(12)
+                    .background(colors.card)
+                    .cornerRadius(10)
+                }
+            }
+        }
+    }
+
+    private var invoicesSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("INVOICES").font(.system(size: 11, weight: .black)).foregroundColor(colors.muted).tracking(1)
+            if vm.detailInvoices.isEmpty {
+                Text("No invoices yet").font(.system(size: 14)).foregroundColor(colors.muted)
+            } else {
+                ForEach(vm.detailInvoices) { inv in
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(inv.invoiceNumber).font(.system(size: 13, weight: .bold)).foregroundColor(colors.text)
+                            Spacer()
+                            Text(inv.statusLabel.uppercased())
+                                .font(.system(size: 9, weight: .black))
+                                .foregroundColor(inv.status == "paid" ? colors.green : colors.amber)
+                        }
+                        Text(inv.amountDisplay).font(.system(size: 15, weight: .semibold)).foregroundColor(colors.loft)
+                        if let desc = inv.description, !desc.isEmpty {
+                            Text(desc).font(.system(size: 12)).foregroundColor(colors.muted)
+                        }
+                        if let due = inv.dueDate, !due.isEmpty, inv.status == "open" {
+                            Text("Due \(due)").font(.system(size: 11)).foregroundColor(colors.amber)
                         }
                     }
                     .padding(12)

@@ -81,11 +81,12 @@ struct LoftCustomerDetailResponse: Codable {
     let customer: LoftCustomer?
     let rigs: [LoftCustomerRig]?
     let records: [LoftRecordRow]?
+    let invoices: [LoftInvoice]?
     let canEdit: Bool?
     let error: String?
 
     enum CodingKeys: String, CodingKey {
-        case ok, customer, rigs, records, error
+        case ok, customer, rigs, records, invoices, error
         case canEdit = "can_edit"
     }
 }
@@ -102,6 +103,7 @@ final class LoftCustomersViewModel: ObservableObject {
     @Published var detailCustomer: LoftCustomer?
     @Published var detailRigs: [LoftCustomerRig] = []
     @Published var detailRecords: [LoftRecordRow] = []
+    @Published var detailInvoices: [LoftInvoice] = []
     @Published var detailLoading = false
     @Published var lastMessage: String?
 
@@ -173,6 +175,7 @@ final class LoftCustomersViewModel: ObservableObject {
                     detailCustomer = resp.customer
                     detailRigs = resp.rigs ?? []
                     detailRecords = resp.records ?? []
+                    detailInvoices = resp.invoices ?? []
                     canEdit = resp.canEdit ?? canEdit
                     return
                 }
