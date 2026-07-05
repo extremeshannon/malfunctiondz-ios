@@ -7,7 +7,7 @@ This guide covers running the Platform PHP backend locally with MAMP so the Malf
 ## 1. Prerequisites
 
 - **MAMP** (or MAMP Pro) installed — provides Apache + PHP + MySQL
-- **Platform repo** cloned (e.g. `git clone git@github.com:extremeshannon/platform.git` into your workspace)
+- **Backend repo** cloned: `git clone git@github.com:extremeshannon/MalfuntionDZ.git` (canonical; not `platform.git`)
 - **MalfunctionDZ** iOS app (expects API at `kServerURL` — change for local: see §5)
 
 ---
