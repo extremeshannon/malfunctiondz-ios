@@ -132,6 +132,8 @@ final class LoftRecordsViewModel: ObservableObject {
     private static let rigsPaths = [
         "/api/hhio/rigs.php",
         "/api/hhio/rigs",
+        "/api/loft/records/rigs.php",
+        "/api/loft/records/rigs",
         "/api/loft/rigs.php",
         "/api/loft/rigs",
     ]
