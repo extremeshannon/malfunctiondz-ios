@@ -760,14 +760,15 @@ struct LoftCustomerAddInvoiceView: View {
                 Section("Pack record (optional)") {
                     if selectedRigId == 0 {
                         Text("Select a rig first").foregroundColor(colors.muted)
-                    } else if packJobRecordsForRig.isEmpty {
-                        Text("No pack job records — you can still invoice from rig type").foregroundColor(colors.muted)
+                    } else if vm.rigRecordsLoading && recordsForSelectedRig.isEmpty {
+                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.loft))
+                    } else if recordsForSelectedRig.isEmpty {
+                        Text("No pack records for this rig — you can still invoice from rig type").foregroundColor(colors.muted)
                     } else {
                         Picker("Record", selection: $selectedRecordId) {
                             Text("None — use rig only").tag(0)
-                            ForEach(packJobRecordsForRig) { rec in
-                                Text("\(rec.packDate) — \(rec.byName ?? "")")
-                                    .tag(rec.id)
+                            ForEach(recordsForSelectedRig) { rec in
+                                Text(recordPickerLabel(rec)).tag(rec.id)
                             }
                         }
                     }
@@ -828,13 +829,16 @@ struct LoftCustomerAddInvoiceView: View {
             await hhioSettings.load()
         }
         .onChange(of: selectedRigId) { _, newId in
-            if lineType == "pack_job" {
-                selectedRecordId = 0
-                applySuggestedPrice(forRigId: newId)
+            selectedRecordId = 0
+            if newId > 0 {
+                Task {
+                    await vm.loadRigDetail(customerId: customer.id, rigId: newId)
+                    applySuggestedPrice(forRigId: newId)
+                }
             }
         }
-        .onChange(of: selectedRecordId) { _, newId in
-            if lineType == "pack_job", newId > 0 {
+        .onChange(of: selectedRecordId) { _, _ in
+            if lineType == "pack_job", selectedRigId > 0 {
                 applySuggestedPrice(forRigId: selectedRigId)
             }
         }
@@ -852,8 +856,23 @@ struct LoftCustomerAddInvoiceView: View {
         return Int((val * 100).rounded())
     }
 
-    private var packJobRecordsForRig: [LoftRecordRow] {
-        vm.detailRecords.filter { $0.recordType == "pack_job" && $0.rigId == selectedRigId }
+    private var recordsForSelectedRig: [LoftRecordRow] {
+        guard selectedRigId > 0 else { return [] }
+        if vm.rigDetail?.id == selectedRigId, !vm.rigRecords.isEmpty {
+            return vm.rigRecords
+        }
+        return vm.detailRecords.filter { ($0.rigId ?? 0) == selectedRigId }
+    }
+
+    private func recordPickerLabel(_ rec: LoftRecordRow) -> String {
+        var parts = [rec.typeLabel, rec.packDate]
+        if let due = rec.dueDate, !due.isEmpty {
+            parts.append("due \(due)")
+        }
+        if let by = rec.byName, !by.isEmpty {
+            parts.append("by \(by)")
+        }
+        return parts.joined(separator: " · ")
     }
 
     private var canAddLine: Bool {
@@ -933,7 +952,7 @@ struct LoftCustomerAddInvoiceView: View {
             line["rig_id"] = selectedRigId
             if selectedRecordId > 0 { line["loft_record_id"] = selectedRecordId }
             if description.isEmpty, let rig = vm.detailRigs.first(where: { $0.id == selectedRigId }) {
-                if selectedRecordId > 0, let rec = vm.detailRecords.first(where: { $0.id == selectedRecordId }) {
+                if selectedRecordId > 0, let rec = recordsForSelectedRig.first(where: { $0.id == selectedRecordId }) {
                     line["description"] = "\(rec.typeLabel) — \(rig.label) — \(rec.packDate)"
                 } else {
                     line["description"] = "Pack job — \(rig.label)"

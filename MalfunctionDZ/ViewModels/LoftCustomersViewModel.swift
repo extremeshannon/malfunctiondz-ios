@@ -154,6 +154,7 @@ final class LoftCustomersViewModel: ObservableObject {
 
     @Published var rigDetail: LoftCustomerRig?
     @Published var rigRecords: [LoftRecordRow] = []
+    @Published var rigRecordsLoading = false
     @Published var rigDetailLoading = false
 
     private static let listPaths = [
@@ -323,7 +324,11 @@ final class LoftCustomersViewModel: ObservableObject {
 
     func loadRigDetail(customerId: Int, rigId: Int) async {
         rigDetailLoading = true
-        defer { rigDetailLoading = false }
+        rigRecordsLoading = true
+        defer {
+            rigDetailLoading = false
+            rigRecordsLoading = false
+        }
         guard let token = KeychainHelper.readToken() else { return }
         let paths = [
             "/api/hhio/customers/\(customerId)/rigs/\(rigId).php",

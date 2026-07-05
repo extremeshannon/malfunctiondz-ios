@@ -78,11 +78,13 @@ struct LoftRecordRow: Codable, Identifiable, Hashable {
 
 struct LoftRigPickerRow: Codable, Identifiable {
     let id: Int
+    let customerId: Int?
     let rigLabel: String?
     let isDzRig: Bool?
 
     enum CodingKeys: String, CodingKey {
         case id
+        case customerId = "customer_id"
         case rigLabel = "rig_label"
         case isDzRig = "is_dz_rig"
     }
@@ -264,6 +266,7 @@ final class LoftRecordsViewModel: ObservableObject {
     @Published var reserveServiceOptions: [String] = ["I&R", "A&P"]
     @Published var reserveRepackDays = 180
     @Published var rigs: [LoftRigPickerRow] = []
+    @Published var customers: [LoftCustomer] = []
     @Published var riggers: [String] = []
     @Published var isLoading = false
     @Published var isSaving = false
@@ -289,6 +292,11 @@ final class LoftRecordsViewModel: ObservableObject {
         "/api/loft/records/rigs",
         "/api/loft/rigs.php",
         "/api/loft/rigs",
+    ]
+
+    private static let customerPaths = [
+        "/api/hhio/customers.php",
+        "/api/hhio/customers",
     ]
 
     func load() async {
@@ -332,6 +340,32 @@ final class LoftRecordsViewModel: ObservableObject {
             }
         }
         error = lastMessage
+    }
+
+    func loadCustomersForPicker() async {
+        guard let token = KeychainHelper.readToken() else { return }
+        for path in Self.customerPaths {
+            guard var components = URLComponents(string: "\(kServerURL)\(path)") else { continue }
+            components.queryItems = [
+                URLQueryItem(name: "page", value: "1"),
+                URLQueryItem(name: "per_page", value: "100"),
+            ]
+            guard let url = components.url else { continue }
+            var req = URLRequest(url: url)
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            do {
+                let (data, response) = try await URLSession.shared.data(for: req)
+                let slice = recordsExtractJsonPrefix(data)
+                guard let http = response as? HTTPURLResponse, http.statusCode != 404 else { continue }
+                let resp = try JSONDecoder().decode(LoftCustomersListResponse.self, from: slice)
+                if resp.ok {
+                    customers = resp.customers ?? []
+                    return
+                }
+            } catch {
+                continue
+            }
+        }
     }
 
     func loadRigsForPicker() async {

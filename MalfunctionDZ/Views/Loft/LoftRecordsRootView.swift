@@ -399,6 +399,8 @@ struct LoftRecordAddView: View {
     @Environment(\.mdzColors) private var colors
 
     @State private var recordType = "reserve"
+    /// -1 = not selected, 0 = DZ rigs (no owner), >0 = loft customer id
+    @State private var selectedCustomerId = -1
     @State private var selectedRigId = 0
     @State private var packDate = Date()
     @State private var servicePerformed = "I&R"
@@ -420,11 +422,38 @@ struct LoftRecordAddView: View {
                         Text("Inspection").tag("inspection")
                     }
                 }
-                Section("Rig") {
-                    Picker("Rig", selection: $selectedRigId) {
-                        Text("Select rig").tag(0)
-                        ForEach(vm.rigs) { rig in
-                            Text(rig.label).tag(rig.id)
+                if recordType == "reserve" {
+                    Section("Owner") {
+                        Picker("Customer", selection: $selectedCustomerId) {
+                            Text("Select owner").tag(-1)
+                            if hasDzRigs {
+                                Text("DZ (no owner)").tag(0)
+                            }
+                            ForEach(vm.customers) { customer in
+                                Text(customerLabel(customer)).tag(customer.id)
+                            }
+                        }
+                        .onChange(of: selectedCustomerId) { _, _ in
+                            selectedRigId = 0
+                            syncOwnerFromCustomer()
+                        }
+                    }
+                    Section("Rig") {
+                        Picker("Rig", selection: $selectedRigId) {
+                            Text(rigPickerPlaceholder).tag(0)
+                            ForEach(rigsForSelectedOwner) { rig in
+                                Text(rig.label).tag(rig.id)
+                            }
+                        }
+                        .disabled(selectedCustomerId < 0 || rigsForSelectedOwner.isEmpty)
+                    }
+                } else {
+                    Section("Rig") {
+                        Picker("Rig", selection: $selectedRigId) {
+                            Text("Select rig").tag(0)
+                            ForEach(vm.rigs) { rig in
+                                Text(rig.label).tag(rig.id)
+                            }
                         }
                     }
                 }
@@ -456,10 +485,12 @@ struct LoftRecordAddView: View {
                         TextField("Inspector", text: $byName)
                     }
                 }
-                Section("Owner (optional)") {
-                    TextField("Owner name", text: $ownerName)
-                    TextField("Owner phone", text: $ownerPhone)
-                        .keyboardType(.phonePad)
+                if recordType != "reserve" {
+                    Section("Owner (optional)") {
+                        TextField("Owner name", text: $ownerName)
+                        TextField("Owner phone", text: $ownerPhone)
+                            .keyboardType(.phonePad)
+                    }
                 }
                 Section("Invoice (optional)") {
                     Toggle("Create invoice", isOn: $createInvoice)
@@ -482,16 +513,64 @@ struct LoftRecordAddView: View {
                     .disabled(!canSave || vm.isSaving)
             }
         }
+        .onChange(of: recordType) { _, newType in
+            if newType == "reserve" {
+                selectedCustomerId = -1
+                selectedRigId = 0
+                ownerName = ""
+                ownerPhone = ""
+            }
+        }
         .task {
             if vm.rigs.isEmpty { await vm.loadRigsForPicker() }
+            if vm.customers.isEmpty { await vm.loadCustomersForPicker() }
             if byName.isEmpty, let first = vm.riggers.first { byName = first }
         }
+    }
+
+    private var hasDzRigs: Bool {
+        vm.rigs.contains { ($0.customerId ?? 0) == 0 || ($0.isDzRig ?? false) }
+    }
+
+    private var rigsForSelectedOwner: [LoftRigPickerRow] {
+        guard selectedCustomerId >= 0 else { return [] }
+        if selectedCustomerId == 0 {
+            return vm.rigs.filter { ($0.customerId ?? 0) == 0 || ($0.isDzRig ?? false) }
+        }
+        return vm.rigs.filter { $0.customerId == selectedCustomerId }
+    }
+
+    private var rigPickerPlaceholder: String {
+        if selectedCustomerId < 0 { return "Select owner first" }
+        if rigsForSelectedOwner.isEmpty { return "No rigs for this owner" }
+        return "Select rig"
+    }
+
+    private func customerLabel(_ customer: LoftCustomer) -> String {
+        let name = customer.displayName.trimmingCharacters(in: .whitespaces)
+        if !name.isEmpty { return name }
+        let parts = [customer.firstName, customer.lastName]
+            .compactMap { $0?.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        if !parts.isEmpty { return parts.joined(separator: " ") }
+        return customer.username
+    }
+
+    private func syncOwnerFromCustomer() {
+        guard selectedCustomerId > 0,
+              let customer = vm.customers.first(where: { $0.id == selectedCustomerId }) else {
+            ownerName = ""
+            ownerPhone = ""
+            return
+        }
+        ownerName = customerLabel(customer)
+        ownerPhone = customer.phone ?? ""
     }
 
     private var canSave: Bool {
         guard selectedRigId > 0 else { return false }
         if recordType == "reserve" {
-            return !byName.isEmpty && !servicePerformed.isEmpty
+            return selectedCustomerId >= 0 && !byName.isEmpty && !servicePerformed.isEmpty
         }
         return true
     }
