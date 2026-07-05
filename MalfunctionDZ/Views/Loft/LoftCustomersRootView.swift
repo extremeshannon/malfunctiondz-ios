@@ -671,6 +671,7 @@ struct LoftCustomerAddInvoiceView: View {
     let customer: LoftCustomer
     @ObservedObject var vm: LoftCustomersViewModel
     var existingInvoiceId: Int? = nil
+    @EnvironmentObject private var hhioSettings: HHIOSettingsStore
     @Environment(\.dismiss) private var dismiss
     @Environment(\.mdzColors) private var colors
 
@@ -716,6 +717,9 @@ struct LoftCustomerAddInvoiceView: View {
             Section("Amount") {
                 TextField("Amount (e.g. 85.00)", text: $amountText)
                     .keyboardType(.decimalPad)
+                if lineType == "pack_job", selectedRecordId > 0, let hint = packJobPriceHint {
+                    Text(hint).font(.system(size: 12)).foregroundColor(colors.muted)
+                }
             }
             if lineType == "pack_job" {
                 Section("Pack record") {
@@ -784,6 +788,15 @@ struct LoftCustomerAddInvoiceView: View {
             if vm.detailRecords.isEmpty || vm.detailRigs.isEmpty {
                 await vm.loadDetail(customerId: customer.id)
             }
+            if hhioSettings.loftName == "HHIO Loft" && !hhioSettings.loading {
+                await hhioSettings.load()
+            }
+        }
+        .onChange(of: selectedRecordId) { _, newId in
+            applySuggestedPrice(forRecordId: newId)
+        }
+        .onChange(of: lineType) { _, newType in
+            if newType == "pack_job" { applySuggestedPrice(forRecordId: selectedRecordId) }
         }
         .alert("Error", isPresented: Binding(get: { vm.lastMessage != nil }, set: { if !$0 { vm.lastMessage = nil } })) {
             Button("OK", role: .cancel) { vm.lastMessage = nil }
@@ -809,7 +822,42 @@ struct LoftCustomerAddInvoiceView: View {
         if existingInvoiceId != nil {
             return canAddLine
         }
-        return !pendingLines.isEmpty
+        return !pendingLines.isEmpty || canAddLine
+    }
+
+    private var packJobPriceHint: String? {
+        guard let rec = vm.detailRecords.first(where: { $0.id == selectedRecordId }),
+              rec.recordType == "pack_job" else { return nil }
+        let (gearType, isTandem) = gearInfo(for: rec)
+        guard let price = hhioSettings.prices.priceText(gearType: gearType, isTandem: isTandem) else {
+            return "No preset price for this rig type — edit in Config tab or enter amount manually."
+        }
+        return "Preset: $\(price)"
+    }
+
+    private func gearInfo(for rec: LoftRecordRow) -> (String?, Bool) {
+        let rig = rec.rigId.flatMap { rid in vm.detailRigs.first(where: { $0.id == rid }) }
+        let gearType = rec.gearType ?? rig?.gearType
+        let isTandem = rec.isTandem ?? rig?.isTandem ?? false
+        return (gearType, isTandem)
+    }
+
+    private func applySuggestedPrice(forRecordId recordId: Int) {
+        guard lineType == "pack_job", recordId > 0,
+              let rec = vm.detailRecords.first(where: { $0.id == recordId }),
+              rec.recordType == "pack_job" else { return }
+        let (gearType, isTandem) = gearInfo(for: rec)
+        if let price = hhioSettings.prices.priceText(gearType: gearType, isTandem: isTandem) {
+            amountText = price
+        }
+    }
+
+    private func linesToSave() -> [[String: Any]] {
+        var lines = pendingLines.map(\.payload)
+        if canAddLine, let line = buildLinePayload() {
+            lines.append(line)
+        }
+        return lines
     }
 
     private func addPendingLine() {
@@ -878,7 +926,8 @@ struct LoftCustomerAddInvoiceView: View {
             return
         }
 
-        let lines = pendingLines.map(\.payload)
+        let lines = linesToSave()
+        guard !lines.isEmpty else { return }
         if await vm.createCustomerInvoice(customerId: customer.id, lines: lines) != nil {
             dismiss()
         }

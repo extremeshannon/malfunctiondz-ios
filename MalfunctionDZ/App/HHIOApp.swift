@@ -13,6 +13,7 @@ struct HHIOApp: App {
     @StateObject private var config = AppConfig()
     @StateObject private var tabSelect = TabSelection.shared
     @StateObject private var pushNav = PushNavigationTarget.shared
+    @StateObject private var hhioSettings = HHIOSettingsStore()
 
     var body: some Scene {
         WindowGroup {
@@ -21,6 +22,7 @@ struct HHIOApp: App {
                 .environmentObject(config)
                 .environmentObject(tabSelect)
                 .environmentObject(pushNav)
+                .environmentObject(hhioSettings)
         }
     }
 }
@@ -93,6 +95,7 @@ struct HHIOAccessDeniedView: View {
 struct HHIOTabView: View {
     @EnvironmentObject private var config: AppConfig
     @EnvironmentObject private var tabSelect: TabSelection
+    @EnvironmentObject private var hhioSettings: HHIOSettingsStore
     @Environment(\.mdzColors) private var colors
 
     init() {
@@ -119,13 +122,22 @@ struct HHIOTabView: View {
             .tabItem { Label("Customers", systemImage: "person.2.fill") }
             .tag(2)
 
+            NavigationStack {
+                HHIOSettingsRootView()
+            }
+            .tabItem { Label("Config", systemImage: "gearshape.fill") }
+            .tag(3)
+
             ProfileView()
                 .tabItem { Label("Profile", systemImage: "person.fill") }
                 .tag(9)
         }
         .accentColor(colors.loft)
         .preferredColorScheme(MDZTheme.colorScheme(for: config.theme))
-        .task { await config.loadConfig() }
+        .task {
+            await config.loadConfig()
+            await hhioSettings.load()
+        }
     }
 }
 

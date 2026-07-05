@@ -49,6 +49,8 @@ struct LoftRecordRow: Codable, Identifiable, Hashable {
     let notes: String?
     let rigLabel: String?
     let ownerName: String?
+    let gearType: String?
+    let isTandem: Bool?
 
     enum CodingKeys: String, CodingKey {
         case id, notes
@@ -61,6 +63,8 @@ struct LoftRecordRow: Codable, Identifiable, Hashable {
         case servicePerformed = "service_performed"
         case rigLabel = "rig_label"
         case ownerName = "owner_name"
+        case gearType = "gear_type"
+        case isTandem = "is_tandem"
     }
 
     var typeLabel: String {

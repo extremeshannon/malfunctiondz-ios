@@ -57,6 +57,8 @@ struct LoftCustomerRig: Codable, Identifiable, Hashable {
     let canopyMain: String?
     let canopyReserve: String?
     let aad: String?
+    let gearType: String?
+    let isTandem: Bool?
 
     enum CodingKeys: String, CodingKey {
         case id, manufacturer, model, notes
@@ -67,6 +69,8 @@ struct LoftCustomerRig: Codable, Identifiable, Hashable {
         case canopyMain = "canopy_main"
         case canopyReserve = "canopy_reserve"
         case aad
+        case gearType = "gear_type"
+        case isTandem = "is_tandem"
     }
 
     var label: String { rigLabel ?? "Rig #\(id)" }
