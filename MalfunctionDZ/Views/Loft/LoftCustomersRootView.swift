@@ -120,6 +120,7 @@ struct LoftCustomerDetailView: View {
     let customer: LoftCustomer
     @ObservedObject var vm: LoftCustomersViewModel
     @State private var showAddRig = false
+    @State private var showAddInvoice = false
     @Environment(\.mdzColors) private var colors
 
     var body: some View {
@@ -137,9 +138,15 @@ struct LoftCustomerDetailView: View {
         }
         .navigationTitle(customer.displayName)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(for: LoftCustomerRig.self) { rig in
+            LoftCustomerRigDetailView(customer: customer, rig: rig, vm: vm)
+        }
         .toolbar {
             if vm.canEdit {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button { showAddInvoice = true } label: {
+                        Image(systemName: "doc.badge.plus").foregroundColor(colors.loft)
+                    }
                     Button { showAddRig = true } label: {
                         Image(systemName: "plus.circle.fill").foregroundColor(colors.loft)
                     }
@@ -151,6 +158,11 @@ struct LoftCustomerDetailView: View {
                 LoftCustomerAddRigView(customer: customer, vm: vm)
             }
         }
+        .sheet(isPresented: $showAddInvoice) {
+            NavigationStack {
+                LoftCustomerAddInvoiceView(customer: customer, vm: vm)
+            }
+        }
         .task { await vm.loadDetail(customerId: customer.id) }
         .refreshable { await vm.loadDetail(customerId: customer.id) }
         .overlay {
@@ -158,6 +170,9 @@ struct LoftCustomerDetailView: View {
                 ProgressView().progressViewStyle(CircularProgressViewStyle(tint: colors.loft))
             }
         }
+        .alert("Notice", isPresented: Binding(get: { vm.lastMessage != nil }, set: { if !$0 { vm.lastMessage = nil } })) {
+            Button("OK", role: .cancel) { vm.lastMessage = nil }
+        } message: { Text(vm.lastMessage ?? "") }
     }
 
     private var contactCard: some View {
@@ -189,23 +204,29 @@ struct LoftCustomerDetailView: View {
                 Text("No rigs yet").font(.system(size: 14)).foregroundColor(colors.muted)
             } else {
                 ForEach(vm.detailRigs) { rig in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(rig.label).font(.system(size: 15, weight: .semibold)).foregroundColor(colors.text)
-                            if let mfr = rig.manufacturer, !mfr.isEmpty {
-                                Text([mfr, rig.model].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " "))
-                                    .font(.system(size: 12))
-                                    .foregroundColor(colors.muted)
+                    NavigationLink(value: rig) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(rig.label).font(.system(size: 15, weight: .semibold)).foregroundColor(colors.text)
+                                if let mfr = rig.manufacturer, !mfr.isEmpty {
+                                    Text([mfr, rig.model].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " "))
+                                        .font(.system(size: 12))
+                                        .foregroundColor(colors.muted)
+                                }
                             }
+                            Spacer()
+                            if rig.isActive == false {
+                                Text("INACTIVE").font(.system(size: 10, weight: .bold)).foregroundColor(colors.danger)
+                            }
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(colors.muted)
                         }
-                        Spacer()
-                        if rig.isActive == false {
-                            Text("INACTIVE").font(.system(size: 10, weight: .bold)).foregroundColor(colors.danger)
-                        }
+                        .padding(12)
+                        .background(colors.card)
+                        .cornerRadius(10)
                     }
-                    .padding(12)
-                    .background(colors.card)
-                    .cornerRadius(10)
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -246,20 +267,201 @@ struct LoftCustomerDetailView: View {
                 Text("No invoices yet").font(.system(size: 14)).foregroundColor(colors.muted)
             } else {
                 ForEach(vm.detailInvoices) { inv in
+                    LoftCustomerInvoiceCard(invoice: inv, customer: customer, vm: vm)
+                }
+            }
+        }
+    }
+}
+
+struct LoftCustomerInvoiceCard: View {
+    let invoice: LoftInvoice
+    let customer: LoftCustomer
+    @ObservedObject var vm: LoftCustomersViewModel
+    @Environment(\.mdzColors) private var colors
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(invoice.invoiceNumber).font(.system(size: 13, weight: .bold)).foregroundColor(colors.text)
+                Spacer()
+                Text(invoice.lineTypeLabel.uppercased())
+                    .font(.system(size: 8, weight: .black))
+                    .foregroundColor(colors.muted)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(colors.border.opacity(0.5))
+                    .cornerRadius(4)
+                Text(invoice.statusLabel.uppercased())
+                    .font(.system(size: 9, weight: .black))
+                    .foregroundColor(invoice.status == "paid" ? colors.green : colors.amber)
+            }
+            Text(invoice.amountDisplay).font(.system(size: 15, weight: .semibold)).foregroundColor(colors.loft)
+            if let desc = invoice.description, !desc.isEmpty {
+                Text(desc).font(.system(size: 12)).foregroundColor(colors.muted)
+            }
+            if let due = invoice.dueDate, !due.isEmpty, invoice.status == "open" {
+                Text("Due \(due)").font(.system(size: 11)).foregroundColor(colors.amber)
+            }
+            if invoice.status == "open", vm.canEdit {
+                HStack(spacing: 10) {
+                    Button {
+                        Task { await vm.markInvoicePaid(customerId: customer.id, invoiceId: invoice.id) }
+                    } label: {
+                        Label("Paid", systemImage: "checkmark.circle.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(colors.green)
+                    Button {
+                        Task { await vm.sendInvoiceReminder(customerId: customer.id, invoiceId: invoice.id) }
+                    } label: {
+                        Label("Email", systemImage: "envelope.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(colors.loft)
+                }
+            }
+        }
+        .padding(12)
+        .background(colors.card)
+        .cornerRadius(10)
+    }
+}
+
+struct LoftCustomerRigDetailView: View {
+    let customer: LoftCustomer
+    let rig: LoftCustomerRig
+    @ObservedObject var vm: LoftCustomersViewModel
+    @Environment(\.mdzColors) private var colors
+
+    @State private var rigLabel = ""
+    @State private var manufacturer = ""
+    @State private var model = ""
+    @State private var serialNumber = ""
+    @State private var notes = ""
+    @State private var canopyMain = ""
+    @State private var canopyReserve = ""
+    @State private var aad = ""
+    @State private var isActive = true
+    @State private var saving = false
+    @State private var editing = false
+
+    var body: some View {
+        ZStack {
+            colors.background.ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    if editing && vm.canEdit {
+                        editForm
+                    } else {
+                        viewCard
+                    }
+                    packHistorySection
+                }
+                .padding(16)
+            }
+        }
+        .navigationTitle(rig.label)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if vm.canEdit {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(editing ? "Done" : "Edit") {
+                        if editing {
+                            Task { await save() }
+                        } else {
+                            loadFields()
+                            editing = true
+                        }
+                    }
+                    .disabled(saving)
+                }
+            }
+        }
+        .task {
+            loadFields()
+            await vm.loadRigDetail(customerId: customer.id, rigId: rig.id)
+        }
+        .refreshable { await vm.loadRigDetail(customerId: customer.id, rigId: rig.id) }
+        .onChange(of: vm.rigDetail?.id) { _, _ in
+            if !editing { loadFields() }
+        }
+        .alert("Notice", isPresented: Binding(get: { vm.lastMessage != nil }, set: { if !$0 { vm.lastMessage = nil } })) {
+            Button("OK", role: .cancel) { vm.lastMessage = nil }
+        } message: { Text(vm.lastMessage ?? "") }
+    }
+
+    private var viewCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("RIG DETAILS").font(.system(size: 11, weight: .black)).foregroundColor(colors.muted).tracking(1)
+            detailRow("Label", rigLabel)
+            detailRow("Manufacturer", manufacturer)
+            detailRow("Model", model)
+            detailRow("Serial", serialNumber)
+            detailRow("Main", canopyMain)
+            detailRow("Reserve", canopyReserve)
+            detailRow("AAD", aad)
+            if !notes.isEmpty {
+                Text(notes).font(.system(size: 13)).foregroundColor(colors.muted)
+            }
+            Text(isActive ? "Active" : "Inactive")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(isActive ? colors.green : colors.danger)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(colors.card)
+        .cornerRadius(12)
+    }
+
+    private var editForm: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("EDIT RIG").font(.system(size: 11, weight: .black)).foregroundColor(colors.muted).tracking(1)
+            TextField("Rig label", text: $rigLabel)
+            TextField("Manufacturer", text: $manufacturer)
+            TextField("Model", text: $model)
+            TextField("Serial number", text: $serialNumber)
+            TextField("Main canopy", text: $canopyMain)
+            TextField("Reserve canopy", text: $canopyReserve)
+            TextField("AAD", text: $aad)
+            TextField("Notes", text: $notes, axis: .vertical)
+            Toggle("Active", isOn: $isActive)
+        }
+        .textFieldStyle(.roundedBorder)
+        .padding(14)
+        .background(colors.card)
+        .cornerRadius(12)
+    }
+
+    private func detailRow(_ label: String, _ value: String) -> some View {
+        Group {
+            if !value.isEmpty {
+                HStack {
+                    Text(label).font(.system(size: 12)).foregroundColor(colors.muted)
+                    Spacer()
+                    Text(value).font(.system(size: 14, weight: .medium)).foregroundColor(colors.text)
+                }
+            }
+        }
+    }
+
+    private var packHistorySection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("PACK HISTORY").font(.system(size: 11, weight: .black)).foregroundColor(colors.muted).tracking(1)
+            if vm.rigRecords.isEmpty {
+                Text("No pack records for this rig").font(.system(size: 14)).foregroundColor(colors.muted)
+            } else {
+                ForEach(vm.rigRecords) { rec in
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
-                            Text(inv.invoiceNumber).font(.system(size: 13, weight: .bold)).foregroundColor(colors.text)
+                            Text(rec.typeLabel).font(.system(size: 13, weight: .bold)).foregroundColor(colors.loft)
                             Spacer()
-                            Text(inv.statusLabel.uppercased())
-                                .font(.system(size: 9, weight: .black))
-                                .foregroundColor(inv.status == "paid" ? colors.green : colors.amber)
+                            Text(rec.packDate).font(.system(size: 12)).foregroundColor(colors.muted)
                         }
-                        Text(inv.amountDisplay).font(.system(size: 15, weight: .semibold)).foregroundColor(colors.loft)
-                        if let desc = inv.description, !desc.isEmpty {
-                            Text(desc).font(.system(size: 12)).foregroundColor(colors.muted)
-                        }
-                        if let due = inv.dueDate, !due.isEmpty, inv.status == "open" {
-                            Text("Due \(due)").font(.system(size: 11)).foregroundColor(colors.amber)
+                        if let by = rec.byName, !by.isEmpty {
+                            Text("By \(by)").font(.system(size: 12)).foregroundColor(colors.muted)
                         }
                     }
                     .padding(12)
@@ -268,6 +470,184 @@ struct LoftCustomerDetailView: View {
                 }
             }
         }
+    }
+
+    private func loadFields() {
+        let r = vm.rigDetail ?? rig
+        rigLabel = r.rigLabel ?? ""
+        manufacturer = r.manufacturer ?? ""
+        model = r.model ?? ""
+        serialNumber = r.serialNumber ?? ""
+        notes = r.notes ?? ""
+        canopyMain = r.canopyMain ?? ""
+        canopyReserve = r.canopyReserve ?? ""
+        aad = r.aad ?? ""
+        isActive = r.isActive ?? true
+    }
+
+    private func save() async {
+        saving = true
+        defer { saving = false }
+        let ok = await vm.updateRig(
+            customerId: customer.id,
+            rigId: rig.id,
+            rigLabel: rigLabel,
+            manufacturer: manufacturer,
+            model: model,
+            serialNumber: serialNumber,
+            notes: notes,
+            isActive: isActive,
+            canopyMain: canopyMain,
+            canopyReserve: canopyReserve,
+            aad: aad
+        )
+        if ok { editing = false }
+    }
+}
+
+struct LoftCustomerAddInvoiceView: View {
+    let customer: LoftCustomer
+    @ObservedObject var vm: LoftCustomersViewModel
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.mdzColors) private var colors
+
+    @State private var lineType = "pack_job"
+    @State private var amountText = ""
+    @State private var description = ""
+    @State private var sendEmail = true
+    @State private var selectedRecordId = 0
+    @State private var selectedRigId = 0
+    @State private var serviceRecordType = "reserve"
+    @State private var serviceDate = Date()
+    @State private var servicePerformed = "I&R"
+    @State private var byName = ""
+    @State private var saving = false
+
+    var body: some View {
+        Form {
+            Section("Invoice type") {
+                Picker("Type", selection: $lineType) {
+                    Text("Existing pack job").tag("pack_job")
+                    Text("New service").tag("service")
+                    Text("Sale").tag("sale")
+                }
+            }
+            Section("Amount") {
+                TextField("Amount (e.g. 85.00)", text: $amountText)
+                    .keyboardType(.decimalPad)
+                Toggle("Email customer", isOn: $sendEmail)
+            }
+            if lineType == "pack_job" {
+                Section("Pack record") {
+                    if vm.detailRecords.isEmpty {
+                        Text("No pack records for this customer").foregroundColor(colors.muted)
+                    } else {
+                        Picker("Record", selection: $selectedRecordId) {
+                            Text("Select record").tag(0)
+                            ForEach(vm.detailRecords) { rec in
+                                Text("\(rec.typeLabel) — \(rec.rigLabel ?? "Rig") — \(rec.packDate)")
+                                    .tag(rec.id)
+                            }
+                        }
+                    }
+                }
+            } else if lineType == "service" {
+                Section("New service") {
+                    Picker("Rig", selection: $selectedRigId) {
+                        Text("Select rig").tag(0)
+                        ForEach(vm.detailRigs) { rig in
+                            Text(rig.label).tag(rig.id)
+                        }
+                    }
+                    Picker("Service type", selection: $serviceRecordType) {
+                        Text("Reserve repack").tag("reserve")
+                        Text("Pack job").tag("pack_job")
+                        Text("Inspection").tag("inspection")
+                    }
+                    DatePicker("Date", selection: $serviceDate, displayedComponents: .date)
+                    if serviceRecordType == "reserve" {
+                        Picker("Service", selection: $servicePerformed) {
+                            Text("I&R").tag("I&R")
+                            Text("A&P").tag("A&P")
+                        }
+                    }
+                    TextField("Performed by", text: $byName)
+                    TextField("Description (optional)", text: $description)
+                }
+            } else {
+                Section("Sale") {
+                    TextField("Item / description", text: $description)
+                }
+            }
+        }
+        .navigationTitle("Add Invoice")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") { Task { await save() } }
+                    .disabled(saving || !canSave)
+            }
+        }
+        .task {
+            if vm.detailRecords.isEmpty || vm.detailRigs.isEmpty {
+                await vm.loadDetail(customerId: customer.id)
+            }
+        }
+        .alert("Error", isPresented: Binding(get: { vm.lastMessage != nil }, set: { if !$0 { vm.lastMessage = nil } })) {
+            Button("OK", role: .cancel) { vm.lastMessage = nil }
+        } message: { Text(vm.lastMessage ?? "") }
+    }
+
+    private var amountCents: Int {
+        let cleaned = amountText.replacingOccurrences(of: "$", with: "").trimmingCharacters(in: .whitespaces)
+        guard let val = Double(cleaned) else { return 0 }
+        return Int((val * 100).rounded())
+    }
+
+    private var canSave: Bool {
+        guard amountCents > 0 else { return false }
+        switch lineType {
+        case "pack_job": return selectedRecordId > 0
+        case "service": return selectedRigId > 0
+        case "sale": return !description.trimmingCharacters(in: .whitespaces).isEmpty
+        default: return false
+        }
+    }
+
+    private func save() async {
+        saving = true
+        defer { saving = false }
+
+        var recordBody: [String: Any]?
+        if lineType == "service" {
+            let df = DateFormatter()
+            df.dateFormat = "yyyy-MM-dd"
+            var rec: [String: Any] = [
+                "record_type": serviceRecordType,
+                "rig_id": selectedRigId,
+                "pack_date": df.string(from: serviceDate),
+                "by_name": byName,
+            ]
+            if serviceRecordType == "reserve" {
+                rec["service_performed"] = servicePerformed
+            }
+            recordBody = rec
+        }
+
+        let ok = await vm.createCustomerInvoice(
+            customerId: customer.id,
+            lineType: lineType,
+            amountCents: amountCents,
+            description: description,
+            loftRecordId: lineType == "pack_job" ? selectedRecordId : nil,
+            rigId: lineType == "service" ? nil : nil,
+            sendEmail: sendEmail,
+            newServiceRecord: recordBody
+        )
+        if ok { dismiss() }
     }
 }
 

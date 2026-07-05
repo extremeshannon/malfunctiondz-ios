@@ -127,6 +127,7 @@ struct LoftInvoice: Codable, Identifiable {
     let reminderCount: Int?
     let sentAt: String?
     let lastReminderAt: String?
+    let lineType: String?
 
     enum CodingKeys: String, CodingKey {
         case id, status, description
@@ -144,6 +145,7 @@ struct LoftInvoice: Codable, Identifiable {
         case reminderCount = "reminder_count"
         case sentAt = "sent_at"
         case lastReminderAt = "last_reminder_at"
+        case lineType = "line_type"
     }
 
     var amountDisplay: String {
@@ -155,6 +157,14 @@ struct LoftInvoice: Codable, Identifiable {
         case "paid": return "Paid"
         case "void": return "Void"
         default: return "Open"
+        }
+    }
+
+    var lineTypeLabel: String {
+        switch lineType {
+        case "pack_job": return "Pack job"
+        case "sale": return "Sale"
+        default: return "Service"
         }
     }
 }
