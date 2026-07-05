@@ -141,6 +141,9 @@ struct LoftCustomerDetailView: View {
         .navigationDestination(for: LoftCustomerRig.self) { rig in
             LoftCustomerRigDetailView(customer: customer, rig: rig, vm: vm)
         }
+        .navigationDestination(for: LoftInvoice.self) { inv in
+            LoftCustomerInvoiceDetailView(customer: customer, invoice: inv, vm: vm)
+        }
         .toolbar {
             if vm.canEdit {
                 ToolbarItemGroup(placement: .topBarTrailing) {
@@ -267,66 +270,225 @@ struct LoftCustomerDetailView: View {
                 Text("No invoices yet").font(.system(size: 14)).foregroundColor(colors.muted)
             } else {
                 ForEach(vm.detailInvoices) { inv in
-                    LoftCustomerInvoiceCard(invoice: inv, customer: customer, vm: vm)
+                    NavigationLink(value: inv) {
+                        LoftCustomerInvoiceRow(invoice: inv)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
     }
 }
 
-struct LoftCustomerInvoiceCard: View {
+struct LoftCustomerInvoiceRow: View {
     let invoice: LoftInvoice
-    let customer: LoftCustomer
-    @ObservedObject var vm: LoftCustomersViewModel
     @Environment(\.mdzColors) private var colors
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(invoice.invoiceNumber).font(.system(size: 13, weight: .bold)).foregroundColor(colors.text)
-                Spacer()
-                Text(invoice.lineTypeLabel.uppercased())
-                    .font(.system(size: 8, weight: .black))
-                    .foregroundColor(colors.muted)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .background(colors.border.opacity(0.5))
-                    .cornerRadius(4)
-                Text(invoice.statusLabel.uppercased())
-                    .font(.system(size: 9, weight: .black))
-                    .foregroundColor(invoice.status == "paid" ? colors.green : colors.amber)
-            }
-            Text(invoice.amountDisplay).font(.system(size: 15, weight: .semibold)).foregroundColor(colors.loft)
-            if let desc = invoice.description, !desc.isEmpty {
-                Text(desc).font(.system(size: 12)).foregroundColor(colors.muted)
-            }
-            if let due = invoice.dueDate, !due.isEmpty, invoice.status == "open" {
-                Text("Due \(due)").font(.system(size: 11)).foregroundColor(colors.amber)
-            }
-            if invoice.status == "open", vm.canEdit {
-                HStack(spacing: 10) {
-                    Button {
-                        Task { await vm.markInvoicePaid(customerId: customer.id, invoiceId: invoice.id) }
-                    } label: {
-                        Label("Paid", systemImage: "checkmark.circle.fill")
-                            .font(.system(size: 12, weight: .semibold))
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(colors.green)
-                    Button {
-                        Task { await vm.sendInvoiceReminder(customerId: customer.id, invoiceId: invoice.id) }
-                    } label: {
-                        Label("Email", systemImage: "envelope.fill")
-                            .font(.system(size: 12, weight: .semibold))
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(colors.loft)
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(invoice.invoiceNumber).font(.system(size: 13, weight: .bold)).foregroundColor(colors.text)
+                    Text(invoice.statusLabel.uppercased())
+                        .font(.system(size: 9, weight: .black))
+                        .foregroundColor(statusColor)
+                }
+                Text(invoice.amountDisplay).font(.system(size: 15, weight: .semibold)).foregroundColor(colors.loft)
+                if let desc = invoice.description, !desc.isEmpty {
+                    Text(desc).font(.system(size: 12)).foregroundColor(colors.muted).lineLimit(2)
                 }
             }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(colors.muted)
         }
         .padding(12)
         .background(colors.card)
         .cornerRadius(10)
+    }
+
+    private var statusColor: Color {
+        switch invoice.status {
+        case "paid": return colors.green
+        case "draft": return colors.muted
+        default: return colors.amber
+        }
+    }
+}
+
+struct LoftCustomerInvoiceDetailView: View {
+    let customer: LoftCustomer
+    let invoice: LoftInvoice
+    @ObservedObject var vm: LoftCustomersViewModel
+    @Environment(\.mdzColors) private var colors
+
+    @State private var detail: LoftInvoiceDetailResponse?
+    @State private var showAddLine = false
+    @State private var sending = false
+
+    private var currentInvoice: LoftInvoice { detail?.invoice ?? invoice }
+    private var lines: [LoftInvoiceLine] { detail?.lines ?? [] }
+    private var canSend: Bool {
+        vm.canEdit && (currentInvoice.sentAt ?? "").isEmpty && currentInvoice.status != "paid"
+    }
+
+    var body: some View {
+        ZStack {
+            colors.background.ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    summaryCard
+                    linesSection
+                    if let events = detail?.events, !events.isEmpty {
+                        eventsSection(events)
+                    }
+                }
+                .padding(16)
+            }
+        }
+        .navigationTitle(currentInvoice.invoiceNumber)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if vm.canEdit && (currentInvoice.sentAt ?? "").isEmpty {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { showAddLine = true } label: {
+                        Image(systemName: "plus.circle.fill").foregroundColor(colors.loft)
+                    }
+                }
+            }
+        }
+        .safeAreaInset(edge: .bottom) {
+            if canSend {
+                Button {
+                    Task { await sendInvoice() }
+                } label: {
+                    Text(sending ? "Sending…" : "Send Invoice")
+                        .font(.system(size: 16, weight: .bold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(colors.loft)
+                .disabled(sending || lines.isEmpty || currentInvoice.amountCents <= 0)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+                .background(colors.background.opacity(0.95))
+            } else if vm.canEdit && currentInvoice.status == "open" && !(currentInvoice.sentAt ?? "").isEmpty {
+                HStack(spacing: 10) {
+                    Button {
+                        Task { await vm.sendInvoiceReminder(customerId: customer.id, invoiceId: invoice.id) }
+                    } label: {
+                        Label("Send reminder", systemImage: "envelope.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(colors.loft)
+                    if currentInvoice.status == "open" {
+                        Button {
+                            Task { await vm.markInvoicePaid(customerId: customer.id, invoiceId: invoice.id) }
+                        } label: {
+                            Label("Mark paid", systemImage: "checkmark.circle.fill")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(colors.green)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+                .background(colors.background.opacity(0.95))
+            }
+        }
+        .sheet(isPresented: $showAddLine, onDismiss: { Task { await reload() } }) {
+            NavigationStack {
+                LoftCustomerAddInvoiceView(customer: customer, vm: vm, existingInvoiceId: invoice.id)
+            }
+        }
+        .task { await reload() }
+        .refreshable { await reload() }
+        .alert("Notice", isPresented: Binding(get: { vm.lastMessage != nil }, set: { if !$0 { vm.lastMessage = nil } })) {
+            Button("OK", role: .cancel) { vm.lastMessage = nil }
+        } message: { Text(vm.lastMessage ?? "") }
+    }
+
+    private var summaryCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("INVOICE").font(.system(size: 11, weight: .black)).foregroundColor(colors.muted).tracking(1)
+            Text(currentInvoice.amountDisplay).font(.system(size: 28, weight: .bold)).foregroundColor(colors.loft)
+            Text(currentInvoice.statusLabel).font(.system(size: 13, weight: .semibold)).foregroundColor(colors.text)
+            if let due = currentInvoice.dueDate, !due.isEmpty {
+                Text("Due \(due)").font(.system(size: 12)).foregroundColor(colors.amber)
+            }
+            if (currentInvoice.sentAt ?? "").isEmpty {
+                Text("Review lines below, then tap Send Invoice when ready.")
+                    .font(.system(size: 12)).foregroundColor(colors.muted)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(colors.card)
+        .cornerRadius(12)
+    }
+
+    private var linesSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("LINE ITEMS").font(.system(size: 11, weight: .black)).foregroundColor(colors.muted).tracking(1)
+            if lines.isEmpty {
+                Text("No items yet — tap + to add pack jobs or services.").font(.system(size: 14)).foregroundColor(colors.muted)
+            } else {
+                ForEach(lines) { line in
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(line.lineTypeLabel).font(.system(size: 12, weight: .bold)).foregroundColor(colors.loft)
+                            Spacer()
+                            Text(line.amountDisplay).font(.system(size: 14, weight: .semibold)).foregroundColor(colors.text)
+                        }
+                        Text(line.description).font(.system(size: 13)).foregroundColor(colors.text)
+                        if let rig = line.rigLabel, !rig.isEmpty {
+                            Text(rig).font(.system(size: 11)).foregroundColor(colors.muted)
+                        }
+                    }
+                    .padding(12)
+                    .background(colors.card)
+                    .cornerRadius(10)
+                }
+            }
+        }
+    }
+
+    private func eventsSection(_ events: [LoftInvoiceEvent]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("HISTORY").font(.system(size: 11, weight: .black)).foregroundColor(colors.muted).tracking(1)
+            ForEach(events) { ev in
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(ev.eventLabel).font(.system(size: 13, weight: .bold)).foregroundColor(colors.loft)
+                        Spacer()
+                        Text(ev.createdAt).font(.system(size: 11)).foregroundColor(colors.muted)
+                    }
+                    if let d = ev.detail, !d.isEmpty {
+                        Text(d).font(.system(size: 12)).foregroundColor(colors.text)
+                    }
+                }
+                .padding(12)
+                .background(colors.card)
+                .cornerRadius(10)
+            }
+        }
+    }
+
+    private func reload() async {
+        detail = await vm.loadInvoiceDetail(invoiceId: invoice.id)
+    }
+
+    private func sendInvoice() async {
+        sending = true
+        defer { sending = false }
+        if await vm.sendInvoice(customerId: customer.id, invoiceId: invoice.id) {
+            await reload()
+            await vm.loadDetail(customerId: customer.id)
+        }
     }
 }
 
@@ -508,13 +670,13 @@ struct LoftCustomerRigDetailView: View {
 struct LoftCustomerAddInvoiceView: View {
     let customer: LoftCustomer
     @ObservedObject var vm: LoftCustomersViewModel
+    var existingInvoiceId: Int? = nil
     @Environment(\.dismiss) private var dismiss
     @Environment(\.mdzColors) private var colors
 
     @State private var lineType = "pack_job"
     @State private var amountText = ""
     @State private var description = ""
-    @State private var sendEmail = true
     @State private var selectedRecordId = 0
     @State private var selectedRigId = 0
     @State private var serviceRecordType = "reserve"
@@ -522,12 +684,31 @@ struct LoftCustomerAddInvoiceView: View {
     @State private var servicePerformed = "I&R"
     @State private var byName = ""
     @State private var saving = false
+    @State private var pendingLines: [PendingInvoiceLine] = []
 
     var body: some View {
         Form {
-            Section("Invoice type") {
+            if existingInvoiceId == nil && !pendingLines.isEmpty {
+                Section("Items on this invoice") {
+                    ForEach(pendingLines) { item in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(item.title).font(.system(size: 14, weight: .semibold))
+                                Spacer()
+                                Text(item.amountDisplay).font(.system(size: 14, weight: .bold))
+                            }
+                            if !item.subtitle.isEmpty {
+                                Text(item.subtitle).font(.system(size: 12)).foregroundColor(colors.muted)
+                            }
+                        }
+                    }
+                    .onDelete { pendingLines.remove(atOffsets: $0) }
+                }
+            }
+
+            Section("Add line") {
                 Picker("Type", selection: $lineType) {
-                    Text("Existing pack job").tag("pack_job")
+                    Text("Pack job").tag("pack_job")
                     Text("New service").tag("service")
                     Text("Sale").tag("sale")
                 }
@@ -535,7 +716,6 @@ struct LoftCustomerAddInvoiceView: View {
             Section("Amount") {
                 TextField("Amount (e.g. 85.00)", text: $amountText)
                     .keyboardType(.decimalPad)
-                Toggle("Email customer", isOn: $sendEmail)
             }
             if lineType == "pack_job" {
                 Section("Pack record") {
@@ -579,16 +759,25 @@ struct LoftCustomerAddInvoiceView: View {
                     TextField("Item / description", text: $description)
                 }
             }
+
+            if existingInvoiceId == nil {
+                Section {
+                    Button("Add line to invoice") { addPendingLine() }
+                        .disabled(!canAddLine)
+                }
+            }
         }
-        .navigationTitle("Add Invoice")
+        .navigationTitle(existingInvoiceId == nil ? "New Invoice" : "Add Line")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") { Task { await save() } }
-                    .disabled(saving || !canSave)
+                Button(existingInvoiceId == nil ? "Save draft" : "Add") {
+                    Task { await save() }
+                }
+                .disabled(saving || !canSave)
             }
         }
         .task {
@@ -607,8 +796,7 @@ struct LoftCustomerAddInvoiceView: View {
         return Int((val * 100).rounded())
     }
 
-    private var canSave: Bool {
-        guard amountCents > 0 else { return false }
+    private var canAddLine: Bool {
         switch lineType {
         case "pack_job": return selectedRecordId > 0
         case "service": return selectedRigId > 0
@@ -617,12 +805,50 @@ struct LoftCustomerAddInvoiceView: View {
         }
     }
 
-    private func save() async {
-        saving = true
-        defer { saving = false }
+    private var canSave: Bool {
+        if existingInvoiceId != nil {
+            return canAddLine
+        }
+        return !pendingLines.isEmpty
+    }
 
-        var recordBody: [String: Any]?
-        if lineType == "service" {
+    private func addPendingLine() {
+        guard let payload = buildLinePayload() else { return }
+        let title: String
+        switch lineType {
+        case "pack_job":
+            let rec = vm.detailRecords.first(where: { $0.id == selectedRecordId })
+            title = rec?.typeLabel ?? "Pack job"
+        case "sale": title = "Sale"
+        default: title = "Service"
+        }
+        pendingLines.append(PendingInvoiceLine(
+            id: UUID(),
+            title: title,
+            subtitle: description,
+            amountCents: amountCents,
+            payload: payload
+        ))
+        amountText = ""
+        description = ""
+        selectedRecordId = 0
+        selectedRigId = 0
+    }
+
+    private func buildLinePayload() -> [String: Any]? {
+        var line: [String: Any] = [
+            "line_type": lineType,
+            "amount_cents": amountCents,
+            "description": description,
+        ]
+        if lineType == "pack_job" {
+            guard selectedRecordId > 0 else { return nil }
+            line["loft_record_id"] = selectedRecordId
+            if description.isEmpty, let rec = vm.detailRecords.first(where: { $0.id == selectedRecordId }) {
+                line["description"] = "\(rec.typeLabel) — \(rec.rigLabel ?? "Rig") — \(rec.packDate)"
+            }
+        } else if lineType == "service" {
+            guard selectedRigId > 0 else { return nil }
             let df = DateFormatter()
             df.dateFormat = "yyyy-MM-dd"
             var rec: [String: Any] = [
@@ -631,23 +857,43 @@ struct LoftCustomerAddInvoiceView: View {
                 "pack_date": df.string(from: serviceDate),
                 "by_name": byName,
             ]
-            if serviceRecordType == "reserve" {
-                rec["service_performed"] = servicePerformed
+            if serviceRecordType == "reserve" { rec["service_performed"] = servicePerformed }
+            line["record"] = rec
+            if description.isEmpty { line["description"] = "Loft \(serviceRecordType.replacingOccurrences(of: "_", with: " "))" }
+        } else if lineType == "sale" {
+            guard !description.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
+        }
+        return line
+    }
+
+    private func save() async {
+        saving = true
+        defer { saving = false }
+
+        if let invoiceId = existingInvoiceId {
+            guard let line = buildLinePayload() else { return }
+            if await vm.addInvoiceLines(invoiceId: invoiceId, customerId: customer.id, lines: [line]) {
+                dismiss()
             }
-            recordBody = rec
+            return
         }
 
-        let ok = await vm.createCustomerInvoice(
-            customerId: customer.id,
-            lineType: lineType,
-            amountCents: amountCents,
-            description: description,
-            loftRecordId: lineType == "pack_job" ? selectedRecordId : nil,
-            rigId: lineType == "service" ? nil : nil,
-            sendEmail: sendEmail,
-            newServiceRecord: recordBody
-        )
-        if ok { dismiss() }
+        let lines = pendingLines.map(\.payload)
+        if await vm.createCustomerInvoice(customerId: customer.id, lines: lines) != nil {
+            dismiss()
+        }
+    }
+}
+
+private struct PendingInvoiceLine: Identifiable {
+    let id: UUID
+    let title: String
+    let subtitle: String
+    let amountCents: Int
+    let payload: [String: Any]
+
+    var amountDisplay: String {
+        String(format: "$%.2f", Double(amountCents) / 100.0)
     }
 }
 

@@ -386,25 +386,11 @@ final class LoftCustomersViewModel: ObservableObject {
 
     func createCustomerInvoice(
         customerId: Int,
-        lineType: String,
-        amountCents: Int,
-        description: String,
-        loftRecordId: Int?,
-        rigId: Int?,
-        sendEmail: Bool,
-        newServiceRecord: [String: Any]? = nil
-    ) async -> Bool {
-        guard let token = KeychainHelper.readToken() else { return false }
-        var body: [String: Any] = [
-            "line_type": lineType,
-            "amount_cents": amountCents,
-            "description": description,
-            "send_email": sendEmail,
-        ]
-        if let loftRecordId { body["loft_record_id"] = loftRecordId }
-        if let rigId { body["rig_id"] = rigId }
-        if let newServiceRecord { body["record"] = newServiceRecord }
-        guard let json = try? JSONSerialization.data(withJSONObject: body) else { return false }
+        lines: [[String: Any]]
+    ) async -> Int? {
+        guard let token = KeychainHelper.readToken() else { return nil }
+        let body: [String: Any] = ["lines": lines]
+        guard let json = try? JSONSerialization.data(withJSONObject: body) else { return nil }
 
         let paths = [
             "/api/hhio/customers/\(customerId)/invoices.php",
@@ -422,11 +408,98 @@ final class LoftCustomersViewModel: ObservableObject {
                 let slice = customersExtractJson(data)
                 guard let http = response as? HTTPURLResponse, http.statusCode != 404 else { continue }
                 if let obj = try? JSONSerialization.jsonObject(with: slice) as? [String: Any],
+                   obj["ok"] as? Bool == true,
+                   let invoiceId = obj["invoice_id"] as? Int {
+                    await loadDetail(customerId: customerId)
+                    return invoiceId
+                }
+                lastMessage = customersApiError(slice) ?? "Failed to create invoice"
+                return nil
+            } catch let err {
+                lastMessage = err.localizedDescription
+            }
+        }
+        return nil
+    }
+
+    func addInvoiceLines(invoiceId: Int, customerId: Int, lines: [[String: Any]]) async -> Bool {
+        guard let token = KeychainHelper.readToken() else { return false }
+        let body: [String: Any] = ["lines": lines]
+        guard let json = try? JSONSerialization.data(withJSONObject: body) else { return false }
+        let paths = [
+            "/api/hhio/invoices/\(invoiceId)/lines.php",
+            "/api/hhio/invoices/\(invoiceId)/lines",
+        ]
+        for path in paths {
+            guard let url = URL(string: "\(kServerURL)\(path)") else { continue }
+            var req = URLRequest(url: url)
+            req.httpMethod = "POST"
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            req.httpBody = json
+            do {
+                let (data, response) = try await URLSession.shared.data(for: req)
+                let slice = customersExtractJson(data)
+                guard let http = response as? HTTPURLResponse, http.statusCode != 404 else { continue }
+                if let obj = try? JSONSerialization.jsonObject(with: slice) as? [String: Any],
                    obj["ok"] as? Bool == true {
                     await loadDetail(customerId: customerId)
                     return true
                 }
-                lastMessage = customersApiError(slice) ?? "Failed to create invoice"
+                lastMessage = customersApiError(slice) ?? "Failed to add line"
+                return false
+            } catch let err {
+                lastMessage = err.localizedDescription
+            }
+        }
+        return false
+    }
+
+    func loadInvoiceDetail(invoiceId: Int) async -> LoftInvoiceDetailResponse? {
+        guard let token = KeychainHelper.readToken() else { return nil }
+        let paths = [
+            "/api/hhio/invoices/\(invoiceId).php",
+            "/api/hhio/invoices/\(invoiceId)",
+        ]
+        for path in paths {
+            guard let url = URL(string: "\(kServerURL)\(path)") else { continue }
+            var req = URLRequest(url: url)
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            do {
+                let (data, response) = try await URLSession.shared.data(for: req)
+                let slice = customersExtractJson(data)
+                guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { continue }
+                let resp = try JSONDecoder().decode(LoftInvoiceDetailResponse.self, from: slice)
+                if resp.ok { return resp }
+                lastMessage = resp.error
+            } catch let err {
+                lastMessage = err.localizedDescription
+            }
+        }
+        return nil
+    }
+
+    func sendInvoice(customerId: Int, invoiceId: Int) async -> Bool {
+        guard let token = KeychainHelper.readToken() else { return false }
+        let paths = [
+            "/api/hhio/invoices/\(invoiceId)/send.php",
+            "/api/hhio/invoices/\(invoiceId)/send",
+        ]
+        for path in paths {
+            guard let url = URL(string: "\(kServerURL)\(path)") else { continue }
+            var req = URLRequest(url: url)
+            req.httpMethod = "POST"
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            do {
+                let (data, response) = try await URLSession.shared.data(for: req)
+                let slice = customersExtractJson(data)
+                guard let http = response as? HTTPURLResponse, http.statusCode != 404 else { continue }
+                if let obj = try? JSONSerialization.jsonObject(with: slice) as? [String: Any],
+                   obj["ok"] as? Bool == true {
+                    await loadDetail(customerId: customerId)
+                    return true
+                }
+                lastMessage = customersApiError(slice) ?? "Failed to send invoice"
                 return false
             } catch let err {
                 lastMessage = err.localizedDescription

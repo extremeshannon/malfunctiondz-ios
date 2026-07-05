@@ -109,7 +109,7 @@ struct LoftRigsPickerResponse: Codable {
     let riggers: [String]?
 }
 
-struct LoftInvoice: Codable, Identifiable {
+struct LoftInvoice: Codable, Identifiable, Hashable {
     let id: Int
     let loftRecordId: Int?
     let customerId: Int?
@@ -156,6 +156,7 @@ struct LoftInvoice: Codable, Identifiable {
         switch status {
         case "paid": return "Paid"
         case "void": return "Void"
+        case "draft": return "Draft"
         default: return "Open"
         }
     }
@@ -207,10 +208,47 @@ struct LoftRecordDetailResponse: Codable {
     }
 }
 
+struct LoftInvoiceLine: Codable, Identifiable {
+    let id: Int
+    let lineType: String
+    let description: String
+    let amountCents: Int
+    let loftRecordId: Int?
+    let rigId: Int?
+    let rigLabel: String?
+    let recordType: String?
+    let packDate: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, description
+        case lineType = "line_type"
+        case amountCents = "amount_cents"
+        case loftRecordId = "loft_record_id"
+        case rigId = "rig_id"
+        case rigLabel = "rig_label"
+        case recordType = "record_type"
+        case packDate = "pack_date"
+    }
+
+    var amountDisplay: String {
+        String(format: "$%.2f", Double(amountCents) / 100.0)
+    }
+
+    var lineTypeLabel: String {
+        switch lineType {
+        case "pack_job": return "Pack job"
+        case "sale": return "Sale"
+        default: return "Service"
+        }
+    }
+}
+
 struct LoftInvoiceDetailResponse: Codable {
     let ok: Bool
     let invoice: LoftInvoice?
+    let lines: [LoftInvoiceLine]?
     let events: [LoftInvoiceEvent]?
+    let canEdit: Bool?
     let error: String?
 }
 
