@@ -113,6 +113,12 @@ struct HHIOTabView: View {
             .tabItem { Label("Pack Records", systemImage: "doc.text.fill") }
             .tag(1)
 
+            NavigationStack {
+                LoftCustomersRootView()
+            }
+            .tabItem { Label("Customers", systemImage: "person.2.fill") }
+            .tag(2)
+
             ProfileView()
                 .tabItem { Label("Profile", systemImage: "person.fill") }
                 .tag(9)

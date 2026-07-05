@@ -182,6 +182,8 @@
 		A5B087C44988AAFDDCBA562E /* AircraftViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CF02F521B3A00227638 /* AircraftViewModel.swift */; };
 		A5E4B2555648B9447772D897 /* ASCPackersApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD722EEBB084606F8238F25A /* ASCPackersApp.swift */; };
 		A61A990B3C8E787217DFBBE3 /* LoftRecordsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D46F6F29BACBF20F5030A382 /* LoftRecordsViewModel.swift */; };
+		A1B2C3D42F60110200022763 /* LoftCustomersViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D42F60110100022763 /* LoftCustomersViewModel.swift */; };
+		A1B2C3D42F60120200022763 /* LoftCustomersRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D42F60120100022763 /* LoftCustomersRootView.swift */; };
 		A64F3E9783F7461BF6087EC2 /* TodosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F132F56000200022763 /* TodosView.swift */; };
 		A73938DB865B871A7BD90F5B /* LoftRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEA2F521AD900227638 /* LoftRootView.swift */; };
 		A829D4DE9A53EB41F03B9F67 /* ShiftsRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063F172F56000200022763 /* ShiftsRootView.swift */; };
@@ -431,6 +433,8 @@
 		FBF4CBA32FEE36F700D692CD /* LoftRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CEA2F521AD900227638 /* LoftRootView.swift */; };
 		FBF4CBA42FEE36F700D692CD /* LoftRecordsRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFCF6D317B933936421DC27 /* LoftRecordsRootView.swift */; };
 		FBF4CBA52FEE36F700D692CD /* LoftRecordsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D46F6F29BACBF20F5030A382 /* LoftRecordsViewModel.swift */; };
+		A1B2C3D42F60110300022763 /* LoftCustomersViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D42F60110100022763 /* LoftCustomersViewModel.swift */; };
+		A1B2C3D42F60120300022763 /* LoftCustomersRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D42F60120100022763 /* LoftCustomersRootView.swift */; };
 		FBF4CBA62FEE36F700D692CD /* Foundation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB367DD02F52032300FBAD05 /* Foundation.swift */; };
 		FBF4CBA72FEE36F700D692CD /* LessonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0F2F52D10B00227638 /* LessonDetailView.swift */; };
 		FBF4CBA82FEE36F700D692CD /* AircraftDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063CED2F521B1A00227638 /* AircraftDetailViewModel.swift */; };
@@ -537,6 +541,8 @@
 		ASC0STAF2F60040100022700 /* ASCStaffHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCStaffHomeView.swift; sourceTree = "<group>"; };
 		CE4CA289BC591040DD92EBD6 /* DocumentScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentScannerView.swift; sourceTree = "<group>"; };
 		D46F6F29BACBF20F5030A382 /* LoftRecordsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoftRecordsViewModel.swift; sourceTree = "<group>"; };
+		A1B2C3D42F60110100022763 /* LoftCustomersViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoftCustomersViewModel.swift; sourceTree = "<group>"; };
+		A1B2C3D42F60120100022763 /* LoftCustomersRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoftCustomersRootView.swift; sourceTree = "<group>"; };
 		DD722EEBB084606F8238F25A /* ASCPackersApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCPackersApp.swift; sourceTree = "<group>"; };
 		E04D415B453665F983311672 /* StaffComplianceCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffComplianceCard.swift; sourceTree = "<group>"; };
 		E220D6F53F728BF24E4C7925 /* HHIO.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HHIO.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -699,6 +705,7 @@
 				FB063D3E2F54BB250227638 /* DzRigDetailView.swift */,
 				681FBD3163B41BF49E8DC0CE /* PackerGearRoomRootView.swift */,
 				2CFCF6D317B933936421DC27 /* LoftRecordsRootView.swift */,
+				A1B2C3D42F60120100022763 /* LoftCustomersRootView.swift */,
 				FB063D422F54BB270227638 /* RigsView.swift */,
 			);
 			path = Loft;
@@ -930,6 +937,7 @@
 				ASC0RSVM2F60080100022700 /* RigSquawksViewModel.swift */,
 				FB063D3B2F54BB280227638 /* JumpCheckViewModel.swift */,
 				D46F6F29BACBF20F5030A382 /* LoftRecordsViewModel.swift */,
+				A1B2C3D42F60110100022763 /* LoftCustomersViewModel.swift */,
 				FB063D012F52AD1E00227638 /* QuizViewModel.swift */,
 				FB063D172F53F6CF00227638 /* PaxViewModel.swift */,
 			);
@@ -1269,6 +1277,8 @@
 				FBF4CBA32FEE36F700D692CD /* LoftRootView.swift in Sources */,
 				FBF4CBA42FEE36F700D692CD /* LoftRecordsRootView.swift in Sources */,
 				FBF4CBA52FEE36F700D692CD /* LoftRecordsViewModel.swift in Sources */,
+				A1B2C3D42F60110300022763 /* LoftCustomersViewModel.swift in Sources */,
+				A1B2C3D42F60120300022763 /* LoftCustomersRootView.swift in Sources */,
 				FBF4CBA62FEE36F700D692CD /* Foundation.swift in Sources */,
 				ASC0HOME2F60020100022702 /* ASCSkydiverHomeView.swift in Sources */,
 				ASC0PILOT2F60030100022702 /* ASCPilotHomeView.swift in Sources */,
@@ -1530,6 +1540,8 @@
 				A2430F4EE1B673465A02C57E /* LoftRootView.swift in Sources */,
 				E5823F8FD41D12A297B1DAB1 /* LoftRecordsRootView.swift in Sources */,
 				A61A990B3C8E787217DFBBE3 /* LoftRecordsViewModel.swift in Sources */,
+				A1B2C3D42F60110200022763 /* LoftCustomersViewModel.swift in Sources */,
+				A1B2C3D42F60120200022763 /* LoftCustomersRootView.swift in Sources */,
 				C7B5AB9273ABF52B6F6A3F07 /* Foundation.swift in Sources */,
 				ASC0HOME2F60020100022705 /* ASCSkydiverHomeView.swift in Sources */,
 				ASC0PILOT2F60030100022705 /* ASCPilotHomeView.swift in Sources */,
