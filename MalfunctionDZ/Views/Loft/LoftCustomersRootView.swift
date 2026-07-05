@@ -119,6 +119,7 @@ struct LoftCustomerRow: View {
 struct LoftCustomerDetailView: View {
     let customer: LoftCustomer
     @ObservedObject var vm: LoftCustomersViewModel
+    @EnvironmentObject private var hhioSettings: HHIOSettingsStore
     @State private var showAddRig = false
     @State private var showAddInvoice = false
     @Environment(\.mdzColors) private var colors
@@ -164,6 +165,7 @@ struct LoftCustomerDetailView: View {
         .sheet(isPresented: $showAddInvoice) {
             NavigationStack {
                 LoftCustomerAddInvoiceView(customer: customer, vm: vm)
+                    .environmentObject(hhioSettings)
             }
         }
         .task { await vm.loadDetail(customerId: customer.id) }
@@ -321,6 +323,7 @@ struct LoftCustomerInvoiceDetailView: View {
     let customer: LoftCustomer
     let invoice: LoftInvoice
     @ObservedObject var vm: LoftCustomersViewModel
+    @EnvironmentObject private var hhioSettings: HHIOSettingsStore
     @Environment(\.mdzColors) private var colors
 
     @State private var detail: LoftInvoiceDetailResponse?
@@ -403,6 +406,7 @@ struct LoftCustomerInvoiceDetailView: View {
         .sheet(isPresented: $showAddLine, onDismiss: { Task { await reload() } }) {
             NavigationStack {
                 LoftCustomerAddInvoiceView(customer: customer, vm: vm, existingInvoiceId: invoice.id)
+                    .environmentObject(hhioSettings)
             }
         }
         .task { await reload() }
@@ -507,6 +511,7 @@ struct LoftCustomerRigDetailView: View {
     @State private var canopyReserve = ""
     @State private var aad = ""
     @State private var isActive = true
+    @State private var gearType = "student"
     @State private var saving = false
     @State private var editing = false
 
@@ -565,6 +570,7 @@ struct LoftCustomerRigDetailView: View {
             detailRow("Main", canopyMain)
             detailRow("Reserve", canopyReserve)
             detailRow("AAD", aad)
+            detailRow("Rig type", gearTypeLabel)
             if !notes.isEmpty {
                 Text(notes).font(.system(size: 13)).foregroundColor(colors.muted)
             }
@@ -588,6 +594,11 @@ struct LoftCustomerRigDetailView: View {
             TextField("Main canopy", text: $canopyMain)
             TextField("Reserve canopy", text: $canopyReserve)
             TextField("AAD", text: $aad)
+            Picker("Rig type (for pricing)", selection: $gearType) {
+                ForEach(LoftGearType.choices, id: \.id) { choice in
+                    Text(choice.label).tag(choice.id)
+                }
+            }
             TextField("Notes", text: $notes, axis: .vertical)
             Toggle("Active", isOn: $isActive)
         }
@@ -645,6 +656,11 @@ struct LoftCustomerRigDetailView: View {
         canopyReserve = r.canopyReserve ?? ""
         aad = r.aad ?? ""
         isActive = r.isActive ?? true
+        gearType = LoftGearType.resolved(gearType: r.gearType, isTandem: r.isTandem ?? false, rigLabel: r.rigLabel) ?? "student"
+    }
+
+    private var gearTypeLabel: String {
+        LoftGearType.choices.first(where: { $0.id == gearType })?.label ?? "Not set"
     }
 
     private func save() async {
@@ -661,7 +677,9 @@ struct LoftCustomerRigDetailView: View {
             isActive: isActive,
             canopyMain: canopyMain,
             canopyReserve: canopyReserve,
-            aad: aad
+            aad: aad,
+            gearType: gearType,
+            isTandem: gearType == "tandem"
         )
         if ok { editing = false }
     }
@@ -717,19 +735,38 @@ struct LoftCustomerAddInvoiceView: View {
             Section("Amount") {
                 TextField("Amount (e.g. 85.00)", text: $amountText)
                     .keyboardType(.decimalPad)
-                if lineType == "pack_job", selectedRecordId > 0, let hint = packJobPriceHint {
+                if lineType == "pack_job", selectedRigId > 0, let hint = packJobPriceHint {
                     Text(hint).font(.system(size: 12)).foregroundColor(colors.muted)
                 }
             }
             if lineType == "pack_job" {
-                Section("Pack record") {
-                    if vm.detailRecords.isEmpty {
-                        Text("No pack records for this customer").foregroundColor(colors.muted)
+                Section("Rig") {
+                    if vm.detailRigs.isEmpty {
+                        Text("No rigs for this customer").foregroundColor(colors.muted)
+                    } else {
+                        Picker("Rig", selection: $selectedRigId) {
+                            Text("Select rig").tag(0)
+                            ForEach(vm.detailRigs) { rig in
+                                Text(rig.label).tag(rig.id)
+                            }
+                        }
+                        if selectedRigId > 0, let rig = vm.detailRigs.first(where: { $0.id == selectedRigId }) {
+                            Text("Type: \(rig.gearTypeLabel)")
+                                .font(.system(size: 12))
+                                .foregroundColor(colors.muted)
+                        }
+                    }
+                }
+                Section("Pack record (optional)") {
+                    if selectedRigId == 0 {
+                        Text("Select a rig first").foregroundColor(colors.muted)
+                    } else if packJobRecordsForRig.isEmpty {
+                        Text("No pack job records — you can still invoice from rig type").foregroundColor(colors.muted)
                     } else {
                         Picker("Record", selection: $selectedRecordId) {
-                            Text("Select record").tag(0)
-                            ForEach(vm.detailRecords) { rec in
-                                Text("\(rec.typeLabel) — \(rec.rigLabel ?? "Rig") — \(rec.packDate)")
+                            Text("None — use rig only").tag(0)
+                            ForEach(packJobRecordsForRig) { rec in
+                                Text("\(rec.packDate) — \(rec.byName ?? "")")
                                     .tag(rec.id)
                             }
                         }
@@ -788,15 +825,21 @@ struct LoftCustomerAddInvoiceView: View {
             if vm.detailRecords.isEmpty || vm.detailRigs.isEmpty {
                 await vm.loadDetail(customerId: customer.id)
             }
-            if hhioSettings.loftName == "HHIO Loft" && !hhioSettings.loading {
-                await hhioSettings.load()
+            await hhioSettings.load()
+        }
+        .onChange(of: selectedRigId) { _, newId in
+            if lineType == "pack_job" {
+                selectedRecordId = 0
+                applySuggestedPrice(forRigId: newId)
             }
         }
         .onChange(of: selectedRecordId) { _, newId in
-            applySuggestedPrice(forRecordId: newId)
+            if lineType == "pack_job", newId > 0 {
+                applySuggestedPrice(forRigId: selectedRigId)
+            }
         }
         .onChange(of: lineType) { _, newType in
-            if newType == "pack_job" { applySuggestedPrice(forRecordId: selectedRecordId) }
+            if newType == "pack_job" { applySuggestedPrice(forRigId: selectedRigId) }
         }
         .alert("Error", isPresented: Binding(get: { vm.lastMessage != nil }, set: { if !$0 { vm.lastMessage = nil } })) {
             Button("OK", role: .cancel) { vm.lastMessage = nil }
@@ -809,9 +852,13 @@ struct LoftCustomerAddInvoiceView: View {
         return Int((val * 100).rounded())
     }
 
+    private var packJobRecordsForRig: [LoftRecordRow] {
+        vm.detailRecords.filter { $0.recordType == "pack_job" && $0.rigId == selectedRigId }
+    }
+
     private var canAddLine: Bool {
         switch lineType {
-        case "pack_job": return selectedRecordId > 0
+        case "pack_job": return selectedRigId > 0
         case "service": return selectedRigId > 0
         case "sale": return !description.trimmingCharacters(in: .whitespaces).isEmpty
         default: return false
@@ -826,28 +873,20 @@ struct LoftCustomerAddInvoiceView: View {
     }
 
     private var packJobPriceHint: String? {
-        guard let rec = vm.detailRecords.first(where: { $0.id == selectedRecordId }),
-              rec.recordType == "pack_job" else { return nil }
-        let (gearType, isTandem) = gearInfo(for: rec)
-        guard let price = hhioSettings.prices.priceText(gearType: gearType, isTandem: isTandem) else {
-            return "No preset price for this rig type — edit in Config tab or enter amount manually."
+        guard lineType == "pack_job", selectedRigId > 0,
+              let rig = vm.detailRigs.first(where: { $0.id == selectedRigId }) else { return nil }
+        let gear = LoftGearType.resolved(gearType: rig.gearType, isTandem: rig.isTandem ?? false, rigLabel: rig.rigLabel)
+        guard let price = hhioSettings.prices.priceText(gearType: gear, isTandem: gear == "tandem") else {
+            return "Set rig type on the rig (Edit rig) or in Config tab."
         }
         return "Preset: $\(price)"
     }
 
-    private func gearInfo(for rec: LoftRecordRow) -> (String?, Bool) {
-        let rig = rec.rigId.flatMap { rid in vm.detailRigs.first(where: { $0.id == rid }) }
-        let gearType = rec.gearType ?? rig?.gearType
-        let isTandem = rec.isTandem ?? rig?.isTandem ?? false
-        return (gearType, isTandem)
-    }
-
-    private func applySuggestedPrice(forRecordId recordId: Int) {
-        guard lineType == "pack_job", recordId > 0,
-              let rec = vm.detailRecords.first(where: { $0.id == recordId }),
-              rec.recordType == "pack_job" else { return }
-        let (gearType, isTandem) = gearInfo(for: rec)
-        if let price = hhioSettings.prices.priceText(gearType: gearType, isTandem: isTandem) {
+    private func applySuggestedPrice(forRigId rigId: Int) {
+        guard lineType == "pack_job", rigId > 0,
+              let rig = vm.detailRigs.first(where: { $0.id == rigId }) else { return }
+        let gear = LoftGearType.resolved(gearType: rig.gearType, isTandem: rig.isTandem ?? false, rigLabel: rig.rigLabel)
+        if let price = hhioSettings.prices.priceText(gearType: gear, isTandem: gear == "tandem") {
             amountText = price
         }
     }
@@ -865,8 +904,8 @@ struct LoftCustomerAddInvoiceView: View {
         let title: String
         switch lineType {
         case "pack_job":
-            let rec = vm.detailRecords.first(where: { $0.id == selectedRecordId })
-            title = rec?.typeLabel ?? "Pack job"
+            let rig = vm.detailRigs.first(where: { $0.id == selectedRigId })
+            title = rig?.label ?? "Pack job"
         case "sale": title = "Sale"
         default: title = "Service"
         }
@@ -890,10 +929,15 @@ struct LoftCustomerAddInvoiceView: View {
             "description": description,
         ]
         if lineType == "pack_job" {
-            guard selectedRecordId > 0 else { return nil }
-            line["loft_record_id"] = selectedRecordId
-            if description.isEmpty, let rec = vm.detailRecords.first(where: { $0.id == selectedRecordId }) {
-                line["description"] = "\(rec.typeLabel) — \(rec.rigLabel ?? "Rig") — \(rec.packDate)"
+            guard selectedRigId > 0 else { return nil }
+            line["rig_id"] = selectedRigId
+            if selectedRecordId > 0 { line["loft_record_id"] = selectedRecordId }
+            if description.isEmpty, let rig = vm.detailRigs.first(where: { $0.id == selectedRigId }) {
+                if selectedRecordId > 0, let rec = vm.detailRecords.first(where: { $0.id == selectedRecordId }) {
+                    line["description"] = "\(rec.typeLabel) — \(rig.label) — \(rec.packDate)"
+                } else {
+                    line["description"] = "Pack job — \(rig.label)"
+                }
             }
         } else if lineType == "service" {
             guard selectedRigId > 0 else { return nil }

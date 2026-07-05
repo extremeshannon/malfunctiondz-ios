@@ -17,6 +17,15 @@ private func customersApiError(_ data: Data) -> String? {
     let slice = customersExtractJson(data)
     guard let obj = try? JSONSerialization.jsonObject(with: slice) as? [String: Any] else { return nil }
     if let e = obj["error"] as? String, !e.isEmpty { return e }
+    if let detail = obj["detail"] as? String, !detail.isEmpty { return detail }
+    return nil
+}
+
+private func customersParseInt(_ value: Any?) -> Int? {
+    if let i = value as? Int { return i }
+    if let n = value as? NSNumber { return n.intValue }
+    if let s = value as? String, let i = Int(s) { return i }
+    if let d = value as? Double { return Int(d) }
     return nil
 }
 
@@ -74,6 +83,16 @@ struct LoftCustomerRig: Codable, Identifiable, Hashable {
     }
 
     var label: String { rigLabel ?? "Rig #\(id)" }
+
+    var gearTypeLabel: String {
+        switch (gearType ?? "").lowercased() {
+        case "tandem": return "Tandem"
+        case "student": return "Sport / Student"
+        case "pilot_rig": return "Pilot rig"
+        case "rental": return "Rental"
+        default: return "Not set"
+        }
+    }
 }
 
 struct LoftCustomerRigDetailResponse: Codable {
@@ -343,10 +362,12 @@ final class LoftCustomersViewModel: ObservableObject {
         isActive: Bool,
         canopyMain: String = "",
         canopyReserve: String = "",
-        aad: String = ""
+        aad: String = "",
+        gearType: String = "",
+        isTandem: Bool = false
     ) async -> Bool {
         guard let token = KeychainHelper.readToken() else { return false }
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "rig_label": rigLabel,
             "manufacturer": manufacturer,
             "model": model,
@@ -356,7 +377,9 @@ final class LoftCustomersViewModel: ObservableObject {
             "canopy_main": canopyMain,
             "canopy_reserve": canopyReserve,
             "aad": aad,
+            "is_tandem": isTandem,
         ]
+        if !gearType.isEmpty { body["gear_type"] = gearType }
         guard let json = try? JSONSerialization.data(withJSONObject: body) else { return false }
         let paths = [
             "/api/hhio/customers/\(customerId)/rigs/\(rigId).php",
@@ -410,14 +433,23 @@ final class LoftCustomersViewModel: ObservableObject {
             do {
                 let (data, response) = try await URLSession.shared.data(for: req)
                 let slice = customersExtractJson(data)
-                guard let http = response as? HTTPURLResponse, http.statusCode != 404 else { continue }
-                if let obj = try? JSONSerialization.jsonObject(with: slice) as? [String: Any],
-                   obj["ok"] as? Bool == true,
-                   let invoiceId = obj["invoice_id"] as? Int {
-                    await loadDetail(customerId: customerId)
-                    return invoiceId
+                guard let http = response as? HTTPURLResponse else { continue }
+                if http.statusCode == 404 { continue }
+                guard let obj = try? JSONSerialization.jsonObject(with: slice) as? [String: Any] else {
+                    lastMessage = "Failed to create invoice"
+                    return nil
                 }
-                lastMessage = customersApiError(slice) ?? "Failed to create invoice"
+                if obj["ok"] as? Bool == true {
+                    let invoiceId = customersParseInt(obj["invoice_id"])
+                        ?? customersParseInt((obj["invoice"] as? [String: Any])?["id"])
+                    if let invoiceId {
+                        await loadDetail(customerId: customerId)
+                        return invoiceId
+                    }
+                    lastMessage = "Invoice created but id missing"
+                    return nil
+                }
+                lastMessage = customersApiError(slice) ?? "Failed to create invoice (HTTP \(http.statusCode))"
                 return nil
             } catch let err {
                 lastMessage = err.localizedDescription
@@ -444,13 +476,17 @@ final class LoftCustomersViewModel: ObservableObject {
             do {
                 let (data, response) = try await URLSession.shared.data(for: req)
                 let slice = customersExtractJson(data)
-                guard let http = response as? HTTPURLResponse, http.statusCode != 404 else { continue }
-                if let obj = try? JSONSerialization.jsonObject(with: slice) as? [String: Any],
-                   obj["ok"] as? Bool == true {
+                guard let http = response as? HTTPURLResponse else { continue }
+                if http.statusCode == 404 { continue }
+                guard let obj = try? JSONSerialization.jsonObject(with: slice) as? [String: Any] else {
+                    lastMessage = "Failed to add line"
+                    return false
+                }
+                if obj["ok"] as? Bool == true {
                     await loadDetail(customerId: customerId)
                     return true
                 }
-                lastMessage = customersApiError(slice) ?? "Failed to add line"
+                lastMessage = customersApiError(slice) ?? "Failed to add line (HTTP \(http.statusCode))"
                 return false
             } catch let err {
                 lastMessage = err.localizedDescription

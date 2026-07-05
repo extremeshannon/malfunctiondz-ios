@@ -137,3 +137,24 @@ private func hhioSettingsExtractJson(_ data: Data) -> Data {
     }
     return data
 }
+
+enum LoftGearType {
+    static let choices: [(id: String, label: String)] = [
+        ("student", "Sport / Student"),
+        ("tandem", "Tandem"),
+        ("pilot_rig", "Pilot rig"),
+        ("rental", "Rental"),
+    ]
+
+    static func resolved(gearType: String?, isTandem: Bool, rigLabel: String?) -> String? {
+        let gt = (gearType ?? "").trimmingCharacters(in: .whitespaces).lowercased()
+        if !gt.isEmpty { return gt }
+        if isTandem { return "tandem" }
+        let lbl = (rigLabel ?? "").lowercased()
+        if lbl.contains("tandem") { return "tandem" }
+        if lbl.contains("pilot") || lbl.contains("butler") || lbl.contains("national") { return "pilot_rig" }
+        if lbl.contains("student") || lbl.contains("sport") { return "student" }
+        if lbl.contains("rental") { return "rental" }
+        return nil
+    }
+}
