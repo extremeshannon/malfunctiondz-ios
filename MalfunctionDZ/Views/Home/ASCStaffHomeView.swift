@@ -106,7 +106,7 @@ struct ASCStaffHomeView: View {
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: ASC.Space.sm) {
                 quickActionTile(icon: "plus", label: "New Load") {
-                    tabSelect.selected = 5
+                    tabSelect.selected = AppModule.manifest.tag
                 }
                 quickActionTile(icon: "pause.fill", label: "Hold DZ") {
                     showDzStatusModal = true
@@ -155,8 +155,8 @@ struct ASCStaffHomeView: View {
                     .tracking(2)
                     .foregroundStyle(ASC.Text.muted)
                 Spacer()
-                Button { tabSelect.selected = 5 } label: {
-                    Text("Calendar →")
+                Button { tabSelect.selected = AppModule.manifest.tag } label: {
+                    Text("Manifest →")
                         .font(ASC.Typography.eyebrow(11))
                         .foregroundStyle(ASC.Text.link)
                 }
@@ -169,7 +169,12 @@ struct ASCStaffHomeView: View {
                     .ascCard()
             } else {
                 ForEach(Array(vm.staffManifestLoads.prefix(4))) { load in
-                    staffLoadCard(load)
+                    Button {
+                        tabSelect.selected = AppModule.manifest.tag
+                    } label: {
+                        staffLoadCard(load)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }

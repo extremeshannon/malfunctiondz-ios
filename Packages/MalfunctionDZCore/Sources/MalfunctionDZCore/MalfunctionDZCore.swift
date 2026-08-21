@@ -5,25 +5,90 @@ import UserNotifications
 import UIKit
 
 
-// MARK: - Server URL
-// Simulator (Debug): http://localhost:8000 · Physical device / Release: https://malfunctiondz.com
-private let mdzProductionServerURL = "https://malfunctiondz.com"
-private let mdzLocalServerURL = "http://localhost:8000"
+// MARK: - Server URL / demo vs live
+// Matches ASC Manifest login: Local (Mac Docker), Demo (`/demo` DB), Production (live DZ).
+// Persisted in UserDefaults so the choice sticks across launches.
 
-private var mdzDebugDefaultServerURL: String {
-    #if targetEnvironment(simulator)
-    return mdzLocalServerURL
-    #else
-    return mdzProductionServerURL
-    #endif
+public enum MDZServerEnvironment: String, CaseIterable, Identifiable, Sendable {
+    case local
+    case demo
+    case production
+
+    public var id: String { rawValue }
+
+    public var baseURLString: String {
+        switch self {
+        case .local:
+            return "http://localhost:8000"
+        case .demo:
+            return "https://malfunctiondz.com/demo"
+        case .production:
+            return "https://malfunctiondz.com"
+        }
+    }
+
+    public var displayName: String {
+        switch self {
+        case .local: return "Local (Mac Docker)"
+        case .demo: return "Demo"
+        case .production: return "Live"
+        }
+    }
+
+    public var loginHint: String {
+        switch self {
+        case .local:
+            return "Uses Docker on this Mac (:8000). admin / Adminpass1! after reset_admin_password."
+        case .demo:
+            return "Separate demo DB on malfunctiondz.com — not your Mac password."
+        case .production:
+            return "Live DZ — use your production staff credentials."
+        }
+    }
+
+    /// Environments shown on the login picker (Local only in DEBUG).
+    public static var loginCases: [MDZServerEnvironment] {
+        #if DEBUG
+        return [.local, .demo, .production]
+        #else
+        return [.demo, .production]
+        #endif
+    }
+
+    private static let defaultsKey = "mdz_server_environment_v1"
+
+    public static var current: MDZServerEnvironment {
+        get {
+            if let raw = UserDefaults.standard.string(forKey: defaultsKey),
+               let env = MDZServerEnvironment(rawValue: raw) {
+                #if !DEBUG
+                if env == .local { return .production }
+                #endif
+                return env
+            }
+            return Self.defaultEnvironment
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: defaultsKey)
+        }
+    }
+
+    public static var defaultEnvironment: MDZServerEnvironment {
+        #if DEBUG
+        #if targetEnvironment(simulator)
+        return .local
+        #else
+        return .production
+        #endif
+        #else
+        return .production
+        #endif
+    }
 }
 
+/// Active API base URL — driven by `MDZServerEnvironment.current` (demo / live / local).
 public var kServerURL: String {
-    #if DEBUG
-    return mdzDebugDefaultServerURL
-    #else
-    return mdzProductionServerURL
-    #endif
+    MDZServerEnvironment.current.baseURLString
 }
 
 // MARK: - Keychain
@@ -943,7 +1008,9 @@ private func mdzNonJSONResponseMessage(data: Data, response: URLResponse?, serve
     public static let shared = AuthManager()
 
     public init() {
+        // Drop legacy override key; environment is now MDZServerEnvironment (UserDefaults).
         UserDefaults.standard.removeObject(forKey: "api_base_url")
+        serverEnvironment = MDZServerEnvironment.current
         if let token = KeychainHelper.readToken(), !token.isEmpty {
             print("🚀 APP START: found existing token, restoring session")
             isAuthenticated = true
@@ -964,10 +1031,23 @@ private func mdzNonJSONResponseMessage(data: Data, response: URLResponse?, serve
     @Published public private(set) var sessionID: String = UUID().uuidString
     /// When MFA is required, backend returns `mfa_token`; user must enter TOTP and call `completeMfaLogin`.
     @Published public var pendingMfaToken: String?
+    /// Demo / Live / Local — persisted; drives `kServerURL` for login and all API calls.
+    @Published public var serverEnvironment: MDZServerEnvironment = MDZServerEnvironment.current {
+        didSet {
+            if serverEnvironment != MDZServerEnvironment.current {
+                MDZServerEnvironment.current = serverEnvironment
+            }
+            // Host-specific tokens — switching Local↔Live must not keep the old session.
+            if oldValue != serverEnvironment, isAuthenticated {
+                logout()
+            }
+        }
+    }
 
     public var isLoggedIn: Bool { isAuthenticated }
 
     public func login(username: String, password: String) async {
+        MDZServerEnvironment.current = serverEnvironment
         isLoading = true; errorMessage = nil; pendingMfaToken = nil
         defer { isLoading = false }
         let body = try? JSONEncoder().encode(LoginRequest(username: username, password: password))
@@ -1048,6 +1128,7 @@ private func mdzNonJSONResponseMessage(data: Data, response: URLResponse?, serve
             errorMessage = "Enter the 6-digit code from your authenticator app."
             return
         }
+        MDZServerEnvironment.current = serverEnvironment
         isLoading = true; errorMessage = nil
         defer { isLoading = false }
         guard let url = URL(string: "\(kServerURL)/api/login/mfa.php") else { return }

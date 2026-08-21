@@ -318,7 +318,7 @@ class HomeViewModel: ObservableObject {
     @Published var loftBadges:          [DashBadge] = []
     @Published var groundSchoolSummary  = "Coming soon"
     @Published var groundSchoolBadges:  [DashBadge] = []
-    @Published var manifestSummary      = "Coming soon"
+    @Published var manifestSummary      = "Load Manager"
     @Published var manifestBadges:      [DashBadge] = []
     @Published var alerts:              [DashAlert] = []
 

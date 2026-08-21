@@ -72,6 +72,22 @@ struct LoginView: View {
     @ViewBuilder
     private var credentialPanel: some View {
         VStack(spacing: 14) {
+            // Demo / Live (and Local in DEBUG) — same segmented picker pattern as ASC Manifest login.
+            VStack(spacing: 8) {
+                Picker("Environment", selection: $auth.serverEnvironment) {
+                    ForEach(MDZServerEnvironment.loginCases) { env in
+                        Text(env.displayName).tag(env)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                Text(auth.serverEnvironment.loginHint)
+                    .font(.caption)
+                    .foregroundColor(colors.muted)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
+
             MDZGlassField(label: "USERNAME") {
                 Image(systemName: "person.fill")
                     .foregroundColor(colors.primary.opacity(0.8))

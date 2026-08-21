@@ -335,7 +335,7 @@ struct HomeView: View {
                                     accentColor: colors.accent,
                                     badges: vm.manifestBadges,
                                     wide: isWide
-                                ) { /* manifest TBD */ }
+                                ) { tabSelect.selected = AppModule.manifest.tag }
                             }
                             if auth.currentUser?.canManageUsers == true && !isMemberShell && !isPilotShell && !isPackerShell {
                                 ModuleTile(

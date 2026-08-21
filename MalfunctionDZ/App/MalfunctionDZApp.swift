@@ -7,7 +7,7 @@ import UIKit
 import UserNotifications
 import MalfunctionDZCore
 
-#if !ASC_STAFF && !ASC_PILOTS && !ASC_PACKERS && !ASC_HHIO
+#if !ASC_STAFF && !ASC_PILOTS && !ASC_PACKERS && !ASC_HHIO && !ASC_MANIFEST
 @main
 #endif
 struct MalfunctionDZApp: App {
@@ -73,7 +73,12 @@ struct MDZRootView: View {
 
     var body: some View {
         Group {
-            if hSizeClass == .regular {
+            // Full-screen ASC Manifest (Night Ops MainShell) — not nested in MDZ sidebar.
+            if tabSelect.selected == AppModule.manifest.tag {
+                ManifestHostView {
+                    tabSelect.selected = 0
+                }
+            } else if hSizeClass == .regular {
                 MDZSplitView()
             } else {
                 MDZTabView()
@@ -147,6 +152,11 @@ struct MDZSplitView: View {
                     if auth.currentUser?.canAccessLogbook == true {
                         SidebarButton(icon: "book.closed.fill", title: "Logbook", selected: selectedModule == .logbook) { selectedModule = .logbook }
                     }
+                    if auth.currentUser?.canAccessManifest == true {
+                        SidebarButton(icon: "list.clipboard.fill", title: config.moduleManifest, selected: selectedModule == .manifest) {
+                            tabSelect.selected = AppModule.manifest.tag
+                        }
+                    }
                     if auth.currentUser?.canAccessCalendar == true {
                         SidebarButton(icon: "calendar", title: "Calendar", selected: selectedModule == .calendar) { selectedModule = .calendar }
                         SidebarButton(icon: "square.grid.3x3.fill", title: "Shifts", selected: selectedModule == .shifts) { selectedModule = .shifts }
@@ -206,6 +216,7 @@ struct MDZSplitView: View {
                 case .users:        UsersView()
                 case .manageLMS:    LMSEditRootView()
                 case .profile:      ProfileView()
+                case .manifest:     EmptyView() // opened full-screen via MDZRootView
                 }
             }
             // Sync tab selection from home-screen tile taps
@@ -253,7 +264,7 @@ struct SidebarButton: View {
 
 // MARK: - AppModule enum (maps tab tags)
 enum AppModule: Hashable {
-    case home, aviation, loft, rigs, myRigs, dzRigs, groundSchool, logbook, jumpCheck, calendar, shifts, users, manageLMS, staffCard, profile
+    case home, aviation, loft, rigs, myRigs, dzRigs, groundSchool, logbook, jumpCheck, calendar, shifts, users, manageLMS, staffCard, profile, manifest
 
     /// Map fixed tab tags → module
     init?(tag: Int) {
@@ -272,6 +283,7 @@ enum AppModule: Hashable {
         case 10: self = .manageLMS
         case 13: self = .staffCard
         case 9:  self = .profile
+        case 15: self = .manifest
         default: return nil
         }
     }
@@ -293,6 +305,7 @@ enum AppModule: Hashable {
         case .manageLMS:    return 10
         case .staffCard:    return 13
         case .profile:      return 9
+        case .manifest:     return 15
         }
     }
 }
@@ -363,6 +376,13 @@ struct MDZTabView: View {
                 LogbookRootView()
                     .tabItem { Label("Logbook", systemImage: "book.closed.fill") }
                     .tag(4)
+            }
+
+            if auth.currentUser?.canAccessManifest == true {
+                // Compact-width: open full-screen via MDZRootView when tag 15 selected.
+                Color.clear
+                    .tabItem { Label(config.moduleManifest, systemImage: "list.clipboard.fill") }
+                    .tag(15)
             }
 
             if auth.currentUser?.canAccessCalendar == true {

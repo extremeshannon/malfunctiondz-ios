@@ -17,7 +17,7 @@
 		<string>_mdz-logsign._udp</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>Used to scan and photograph pilot documents, logbook pages, and aircraft records.</string>
+	<string>Used to scan driver's licenses and state IDs at Manifest check-in, and to photograph pilot documents, logbook pages, and aircraft records.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Used to attach existing photos or scans of logbook pages and STC/337 documents.</string>
 	<key>UIAppFonts</key>
