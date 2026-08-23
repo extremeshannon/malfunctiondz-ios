@@ -13,12 +13,21 @@ final class ManifestStore: ObservableObject {
     @Published var usingDisplayFallback = false
     @Published var checkedIn: [CheckedInUser] = []
     @Published var checkedInTandem: [CheckedInTandemStudent] = []
+    @Published var checkInPools: CheckInPools?
     @Published var eligibleUsers: [EligibleUser] = []
     @Published var lastOverrideUsed = false
     @Published var tandemCheckInOverrideAllowed = false
     /// Soft-failure payload from the last tandem check-in attempt (blocked modal).
     @Published var lastTandemCheckInResponse: GenericOKResponse?
     @Published var pendingStudentAdd: PendingStudentAdd?
+    @Published var pilots: [ManifestPilotCard] = []
+    @Published var pilotCounts: ManifestPilotCounts?
+    @Published var pilotsCanManage = false
+    @Published var isLoadingPilots = false
+    @Published var pilotsErrorMessage: String?
+
+    /// When true, silent board refresh also reloads pilot cards.
+    var pilotsBoardActive = false
 
     /// Light poll so web and iPad stay aligned without websockets (web reloads; iPad pulls).
     private static let pollIntervalNanoseconds: UInt64 = 45_000_000_000
@@ -33,6 +42,30 @@ final class ManifestStore: ObservableObject {
     var filteredLoads: [ManifestLoad] {
         guard let statusFilter else { return loads }
         return loads.filter { $0.statusKey == statusFilter }
+    }
+
+    /// Active jump planes from `/api/manifest/aircraft.php` (`platform_aircraft.is_jumpable`).
+    var jumpPlanes: [ManifestAircraft] {
+        aircraft.filter { $0.isJumpPlane && $0.isActiveForManifest }
+    }
+
+    func daySummary(forAircraftID aircraftID: Int) -> ManifestAircraftDaySummary {
+        let planeLoads = loads.filter { $0.aircraft_id == aircraftID }
+        let filled = planeLoads.reduce(0) { partial, load in
+            partial + (load.filled ?? load.slots?.count ?? 0)
+        }
+        let total = planeLoads.reduce(0) { partial, load in
+            partial + (load.total ?? load.max_pax_per_load ?? 0)
+        }
+        return ManifestAircraftDaySummary(
+            loadCount: planeLoads.count,
+            filledSeats: filled,
+            totalSeats: total
+        )
+    }
+
+    func loads(forAircraftID aircraftID: Int) -> [ManifestLoad] {
+        loads.filter { $0.aircraft_id == aircraftID }
     }
 
     func startLivePolling() {
@@ -56,6 +89,7 @@ final class ManifestStore: ObservableObject {
         loads = []
         checkedIn = []
         checkedInTandem = []
+        checkInPools = nil
         eligibleUsers = []
         aircraft = []
         dayListUnavailable = false
@@ -65,6 +99,11 @@ final class ManifestStore: ObservableObject {
         tandemCheckInOverrideAllowed = false
         lastTandemCheckInResponse = nil
         pendingStudentAdd = nil
+        pilots = []
+        pilotCounts = nil
+        pilotsCanManage = false
+        pilotsErrorMessage = nil
+        pilotsBoardActive = false
     }
 
     func refresh(silent: Bool = false) async {
@@ -77,6 +116,9 @@ final class ManifestStore: ObservableObject {
             if !silent { isLoading = false }
         }
         await refreshCheckIns()
+        if pilotsBoardActive {
+            await loadPilots(silent: silent)
+        }
         do {
             let response = try await session.apiClient.fetchDayManifest(date: selectedDate)
             if response.error == "day_list_unavailable" || Self.isMissingDayRoute(response.error) {
@@ -118,27 +160,65 @@ final class ManifestStore: ObservableObject {
     func refreshCheckIns() async {
         guard let session else { return }
         do {
-            async let listTask = session.apiClient.fetchCheckInList(date: selectedDate)
-            async let tandemTask = session.apiClient.fetchCheckedInTandemStudents(date: selectedDate)
-            async let eligibleTask = session.apiClient.fetchEligibleUsers()
-            let (list, tandem, elig) = try await (listTask, tandemTask, eligibleTask)
-            if list.ok {
-                checkedIn = list.users ?? []
+            let poolsResponse = try await session.apiClient.fetchCheckInPools(date: selectedDate)
+            if poolsResponse.ok, let pools = poolsResponse.pools {
+                checkInPools = pools
+                checkedIn = (pools.staffList + pools.jumpersList + pools.studentsList).map { person in
+                    CheckedInUser(
+                        user_id: person.resolvedUserID ?? person.user_id ?? person.record_id ?? 0,
+                        display_name: person.display_name,
+                        name: person.resolvedName,
+                        username: person.username,
+                        checked_in_at: person.checked_in_at,
+                        first_name: person.first_name,
+                        last_name: person.last_name,
+                        weight_lb: person.weight_lb,
+                        roles: person.roles,
+                        pay_state: person.pay_state,
+                        pay_label: person.pay_label,
+                        next_jump_label: person.next_jump_label
+                    )
+                }
+                checkedInTandem = pools.tandemList.map { person in
+                    CheckedInTandemStudent(
+                        id: person.resolvedTandemID ?? person.record_id ?? 0,
+                        tandem_student_id: person.resolvedTandemID,
+                        user_id: person.user_id,
+                        display_name: person.display_name,
+                        first_name: person.first_name,
+                        last_name: person.last_name,
+                        email: person.email,
+                        checked_in_at: person.checked_in_at,
+                        kind: person.kind,
+                        weight_lb: person.weight_lb,
+                        pay_state: person.pay_state,
+                        pay_label: person.pay_label,
+                        pay_tone: person.pay_tone,
+                        due_cents: person.due_cents
+                    )
+                }
             } else {
-                checkedIn = []
+                checkInPools = nil
+                async let listTask = session.apiClient.fetchCheckInList(date: selectedDate)
+                async let tandemTask = session.apiClient.fetchCheckedInTandemStudents(date: selectedDate)
+                let (list, tandem) = try await (listTask, tandemTask)
+                checkedIn = list.ok ? (list.users ?? []) : []
+                checkedInTandem = tandem.ok ? (tandem.students ?? []) : []
             }
-            if tandem.ok {
-                checkedInTandem = tandem.students ?? []
-            } else {
+        } catch {
+            // Keep last good pools on transient network errors during silent refresh.
+            if checkInPools == nil {
+                checkedIn = []
                 checkedInTandem = []
             }
+        }
+        do {
+            let elig = try await session.apiClient.fetchEligibleUsers()
             if elig.ok {
                 eligibleUsers = elig.users ?? []
             }
         } catch {
-            // Don't keep another environment's roster when the current host fails.
-            checkedIn = []
-            checkedInTandem = []
+            // Non-fatal — desk can still show checked-in pools.
         }
     }
 
@@ -311,10 +391,40 @@ final class ManifestStore: ObservableObject {
         return false
     }
 
+    func loadPilots(silent: Bool = false) async {
+        guard let session else { return }
+        if !silent {
+            isLoadingPilots = true
+            pilotsErrorMessage = nil
+        }
+        defer {
+            if !silent { isLoadingPilots = false }
+        }
+        do {
+            let response = try await session.apiClient.fetchManifestPilots(date: selectedDate)
+            if response.ok {
+                pilots = response.pilots ?? []
+                pilotCounts = response.counts
+                pilotsCanManage = response.can_manage ?? false
+            } else {
+                pilots = []
+                if !silent {
+                    pilotsErrorMessage = response.error ?? "Could not load pilots."
+                }
+            }
+        } catch {
+            if !silent {
+                pilots = []
+                pilotsErrorMessage = error.localizedDescription
+            }
+        }
+    }
+
     func assignPilot(
         loadID: Int,
         userID: Int,
         displayName: String,
+        role: String = "pic",
         override: Bool = false,
         overrideNote: String = ""
     ) async -> Bool {
@@ -327,6 +437,7 @@ final class ManifestStore: ObservableObject {
             var response = try await session.apiClient.setLoadPilot(
                 loadID: loadID,
                 userID: userID,
+                role: role,
                 acknowledgeOverride: override,
                 overrideNote: overrideNote
             )
@@ -334,14 +445,20 @@ final class ManifestStore: ObservableObject {
                 response = try await session.apiClient.setLoadPilot(
                     loadID: loadID,
                     userID: userID,
+                    role: role,
                     acknowledgeOverride: true,
                     overrideNote: overrideNote.isEmpty ? "iPad Load Manager" : overrideNote
                 )
             }
             if response.ok {
                 errorMessage = nil
-                replaceLoad(loadID) { $0.updating(pilotUserId: userID) }
+                if role == "pic" {
+                    replaceLoad(loadID) { $0.updating(pilotUserId: userID) }
+                }
                 await refresh()
+                if pilotsBoardActive {
+                    await loadPilots(silent: true)
+                }
                 return true
             }
             errorMessage = response.error ?? "Could not assign \(displayName) as PIC."
@@ -349,6 +466,25 @@ final class ManifestStore: ObservableObject {
             errorMessage = msg
         } catch ManifestAPIError.serverError(let msg) {
             errorMessage = msg
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        return false
+    }
+
+    func removePilotFromLoad(loadID: Int, role: String = "pic") async -> Bool {
+        guard let session else { return false }
+        if loadID <= 0 { return false }
+        do {
+            let response = try await session.apiClient.setLoadPilot(loadID: loadID, userID: nil, role: role)
+            if response.ok {
+                await refresh()
+                if pilotsBoardActive {
+                    await loadPilots(silent: true)
+                }
+                return true
+            }
+            errorMessage = response.error ?? "Could not remove pilot."
         } catch {
             errorMessage = error.localizedDescription
         }

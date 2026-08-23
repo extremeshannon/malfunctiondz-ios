@@ -16,6 +16,8 @@ struct CheckInUserSheet: View {
     @State private var isCheckedIn = false
     @State private var blockedCheckIn: CheckInBlockedContext?
 
+    @State private var showIDScan = false
+
     var body: some View {
         NavigationStack {
             Form {
@@ -32,6 +34,9 @@ struct CheckInUserSheet: View {
                     Toggle("ID checked", isOn: $idChecked)
                     Toggle("Affidavit signed", isOn: $affidavitSigned)
                     Toggle("DZ briefing complete", isOn: $dzBriefing)
+                    Button("Scan ID (PDF417)") {
+                        showIDScan = true
+                    }
                     Button("Save prep") {
                         Task { await savePrep() }
                     }
@@ -69,6 +74,12 @@ struct CheckInUserSheet: View {
                     isCheckedIn = true
                     statusMessage = "Checked in successfully."
                     onChanged()
+                }
+            }
+            .sheet(isPresented: $showIDScan) {
+                IDScanView(userID: user.id) { _, idChecked in
+                    if idChecked { self.idChecked = true }
+                    Task { await savePrep() }
                 }
             }
         }

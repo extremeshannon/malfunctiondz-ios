@@ -7,42 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		ASC0MANF2F60S000000022700 /* AccountDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A437BA2E9E6451DE40D4190 /* AccountDetailView.swift */; };
-		ASC0MANF2F60S001000022700 /* AddLoadSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64B1A703E26E60DD9350E8CC /* AddLoadSheet.swift */; };
-		ASC0MANF2F60S002000022700 /* AddSlotSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C62E39157EBFFDF5C7270DF /* AddSlotSheet.swift */; };
-		ASC0MANF2F60S003000022700 /* AssignInstructorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452E417893E2F0D8B1157817 /* AssignInstructorSheet.swift */; };
-		ASC0MANF2F60S004000022700 /* AssignPilotSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E30A817C1FFD9FA22F79A96B /* AssignPilotSheet.swift */; };
-		ASC0MANF2F60S005000022700 /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DEC3F1AA935F96EA76E327 /* BarcodeScannerView.swift */; };
-		ASC0MANF2F60S006000022700 /* CheckInBlockedSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = CHKINBLK2F6A820000022701 /* CheckInBlockedSheet.swift */; };
-		ASC0MANF2F60S007000022700 /* CheckInPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E38F917DB009A2522441E2 /* CheckInPickerSheet.swift */; };
-		ASC0MANF2F60S008000022700 /* CheckInUserSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6694DE14E1F09FBA46334DCE /* CheckInUserSheet.swift */; };
-		ASC0MANF2F60S009000022700 /* CheckInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371962EBDA61D9BD7F4CC04F /* CheckInView.swift */; };
-		ASC0MANF2F60S010000022700 /* CheckedInDragPool.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6892A09F47A742858599C03 /* CheckedInDragPool.swift */; };
-		ASC0MANF2F60S011000022700 /* IDScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B7658EF0D561A72132845DF /* IDScanView.swift */; };
-		ASC0MANF2F60S012000022700 /* InstructorPairing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 361E74FB0B6AD0BD79D42EA8 /* InstructorPairing.swift */; };
-		ASC0MANF2F60S013000022700 /* JumperProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09CB46511F8AE35BAC5381E4 /* JumperProfileView.swift */; };
-		ASC0MANF2F60S014000022700 /* JumperSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E68C640E398BDED61C75CB78 /* JumperSearchView.swift */; };
-		ASC0MANF2F60S015000022700 /* LoadCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8607E1090D17A4C8057EFB /* LoadCardView.swift */; };
-		ASC0MANF2F60S016000022700 /* LoadDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F58C2925937AF0F4F6DBDD43 /* LoadDetailView.swift */; };
-		ASC0MANF2F60S017000022700 /* LoadsBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51563E1AED61C2868ACE2549 /* LoadsBoardView.swift */; };
-		ASC0MANF2F60S018000022700 /* ManifestAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60452000DB34BC77F21F9120 /* ManifestAPIClient.swift */; };
-		ASC0MANF2F60S019000022700 /* ManifestConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4074C5E6738C75968473E5B2 /* ManifestConfig.swift */; };
-		ASC0MANF2F60S020000022700 /* ManifestHostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 746A239FA79E2C560851F986 /* ManifestHostView.swift */; };
-		ASC0MANF2F60S021000022700 /* ManifestKeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CFAD464E100201DA22EB68A /* ManifestKeychainHelper.swift */; };
-		ASC0MANF2F60S022000022700 /* ManifestLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670D4F745226B4177FCF45FC /* ManifestLoginView.swift */; };
-		ASC0MANF2F60S023000022700 /* ManifestMFAView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2748476429B330409CA18685 /* ManifestMFAView.swift */; };
-		ASC0MANF2F60S024000022700 /* ManifestMainShellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCA1DF2411C6A001FEE7B61 /* ManifestMainShellView.swift */; };
-		ASC0MANF2F60S025000022700 /* ManifestModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74DB79E703B875B8F9E58C0 /* ManifestModels.swift */; };
-		ASC0MANF2F60S026000022700 /* ManifestRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DA2C45B8E127A3800B978CF /* ManifestRootView.swift */; };
-		ASC0MANF2F60S027000022700 /* ManifestSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98D3A13821CDAADD88BF9DBB /* ManifestSessionStore.swift */; };
-		ASC0MANF2F60S028000022700 /* ManifestStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B9916C758D02037BDBA751 /* ManifestStore.swift */; };
-		ASC0MANF2F60S029000022700 /* NightOpsTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7716006AA8F751DA095A19AD /* NightOpsTheme.swift */; };
-		ASC0MANF2F60S030000022700 /* SidebarSearchBoxes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C530AC43F86131A2C20E6B /* SidebarSearchBoxes.swift */; };
-		ASC0MANF2F60S031000022700 /* SlotDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C12F6691C790F1E28EA6907 /* SlotDisplay.swift */; };
-		ASC0MANF2F60060100022717 /* ASCManifestApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0MANF2F60060100022701 /* ASCManifestApp.swift */; };
-		ASC0MANF2F60060100022714 /* MalfunctionDZCore in Frameworks */ = {isa = PBXBuildFile; productRef = FB063FAB2F60000100022763 /* MalfunctionDZCore */; };
-		ASC0MANF2F60060100022715 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
-		ASC0MANF2F60060100022716 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */; };
 		00FD5396639D8971D4D7E774 /* DzRigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D332F54BB210227638 /* DzRigsView.swift */; };
 		0277D6EAB987CF43A48519A6 /* JumpCheckViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D3B2F54BB280227638 /* JumpCheckViewModel.swift */; };
 		049455A89F90F5AB499D7DE8 /* MyRigsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D352F54BB220227638 /* MyRigsViewModel.swift */; };
@@ -278,12 +242,53 @@
 		AE41C41D003F022018F23812 /* LogbookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D232F54BB020227638 /* LogbookViewModel.swift */; };
 		AEAEACA5866C6C87065E9A90 /* LessonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063D0F2F52D10B00227638 /* LessonDetailView.swift */; };
 		AF454A8E96A420D8E53B9E77 /* LMSEditRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB063E052F56000100022763 /* LMSEditRootView.swift */; };
+		ASC0AIRC2F60S001000022700 /* AircraftBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0AIRC2F60GR001000022700 /* AircraftBoardView.swift */; };
+		ASC0GEAR2F60S001000022700 /* GearModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0GEAR2F60GR001000022700 /* GearModels.swift */; };
+		ASC0GEAR2F60S002000022700 /* GearRoomStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0GEAR2F60GR002000022700 /* GearRoomStore.swift */; };
+		ASC0GEAR2F60S003000022700 /* GearRoomBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0GEAR2F60GR003000022700 /* GearRoomBoardView.swift */; };
 		ASC0HOME2F60020100022701 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
 		ASC0HOME2F60020100022702 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
 		ASC0HOME2F60020100022703 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
 		ASC0HOME2F60020100022704 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
 		ASC0HOME2F60020100022705 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
 		ASC0HOME2F60020100022706 /* ASCSkydiverHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */; };
+		ASC0MANF2F60060100022714 /* MalfunctionDZCore in Frameworks */ = {isa = PBXBuildFile; productRef = FB063FAB2F60000100022763 /* MalfunctionDZCore */; };
+		ASC0MANF2F60060100022715 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C532F510E6100FBAD05 /* Assets.xcassets */; };
+		ASC0MANF2F60060100022716 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB367C562F510E6100FBAD05 /* Preview Assets.xcassets */; };
+		ASC0MANF2F60060100022717 /* ASCManifestApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0MANF2F60060100022701 /* ASCManifestApp.swift */; };
+		ASC0MANF2F60S000000022700 /* AccountDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A437BA2E9E6451DE40D4190 /* AccountDetailView.swift */; };
+		ASC0MANF2F60S001000022700 /* AddLoadSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64B1A703E26E60DD9350E8CC /* AddLoadSheet.swift */; };
+		ASC0MANF2F60S002000022700 /* AddSlotSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C62E39157EBFFDF5C7270DF /* AddSlotSheet.swift */; };
+		ASC0MANF2F60S003000022700 /* AssignInstructorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452E417893E2F0D8B1157817 /* AssignInstructorSheet.swift */; };
+		ASC0MANF2F60S004000022700 /* AssignPilotSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E30A817C1FFD9FA22F79A96B /* AssignPilotSheet.swift */; };
+		ASC0MANF2F60S005000022700 /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DEC3F1AA935F96EA76E327 /* BarcodeScannerView.swift */; };
+		ASC0MANF2F60S006000022700 /* CheckInBlockedSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = CHKINBLK2F6A820000022701 /* CheckInBlockedSheet.swift */; };
+		ASC0MANF2F60S007000022700 /* CheckInPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E38F917DB009A2522441E2 /* CheckInPickerSheet.swift */; };
+		ASC0MANF2F60S008000022700 /* CheckInUserSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6694DE14E1F09FBA46334DCE /* CheckInUserSheet.swift */; };
+		ASC0MANF2F60S009000022700 /* CheckInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371962EBDA61D9BD7F4CC04F /* CheckInView.swift */; };
+		ASC0MANF2F60S010000022700 /* CheckedInDragPool.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6892A09F47A742858599C03 /* CheckedInDragPool.swift */; };
+		ASC0MANF2F60S011000022700 /* IDScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B7658EF0D561A72132845DF /* IDScanView.swift */; };
+		ASC0MANF2F60S012000022700 /* InstructorPairing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 361E74FB0B6AD0BD79D42EA8 /* InstructorPairing.swift */; };
+		ASC0MANF2F60S013000022700 /* JumperProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09CB46511F8AE35BAC5381E4 /* JumperProfileView.swift */; };
+		ASC0MANF2F60S014000022700 /* JumperSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E68C640E398BDED61C75CB78 /* JumperSearchView.swift */; };
+		ASC0MANF2F60S015000022700 /* LoadCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8607E1090D17A4C8057EFB /* LoadCardView.swift */; };
+		ASC0MANF2F60S016000022700 /* LoadDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F58C2925937AF0F4F6DBDD43 /* LoadDetailView.swift */; };
+		ASC0MANF2F60S017000022700 /* LoadsBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51563E1AED61C2868ACE2549 /* LoadsBoardView.swift */; };
+		ASC0MANF2F60S018000022700 /* ManifestAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60452000DB34BC77F21F9120 /* ManifestAPIClient.swift */; };
+		ASC0MANF2F60S019000022700 /* ManifestConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4074C5E6738C75968473E5B2 /* ManifestConfig.swift */; };
+		ASC0MANF2F60S020000022700 /* ManifestHostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 746A239FA79E2C560851F986 /* ManifestHostView.swift */; };
+		ASC0MANF2F60S021000022700 /* ManifestKeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CFAD464E100201DA22EB68A /* ManifestKeychainHelper.swift */; };
+		ASC0MANF2F60S022000022700 /* ManifestLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670D4F745226B4177FCF45FC /* ManifestLoginView.swift */; };
+		ASC0MANF2F60S023000022700 /* ManifestMFAView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2748476429B330409CA18685 /* ManifestMFAView.swift */; };
+		ASC0MANF2F60S024000022700 /* ManifestMainShellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCA1DF2411C6A001FEE7B61 /* ManifestMainShellView.swift */; };
+		ASC0MANF2F60S025000022700 /* ManifestModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74DB79E703B875B8F9E58C0 /* ManifestModels.swift */; };
+		ASC0MANF2F60S026000022700 /* ManifestRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DA2C45B8E127A3800B978CF /* ManifestRootView.swift */; };
+		ASC0MANF2F60S027000022700 /* ManifestSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98D3A13821CDAADD88BF9DBB /* ManifestSessionStore.swift */; };
+		ASC0MANF2F60S028000022700 /* ManifestStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B9916C758D02037BDBA751 /* ManifestStore.swift */; };
+		ASC0MANF2F60S029000022700 /* NightOpsTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7716006AA8F751DA095A19AD /* NightOpsTheme.swift */; };
+		ASC0MANF2F60S030000022700 /* SidebarSearchBoxes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C530AC43F86131A2C20E6B /* SidebarSearchBoxes.swift */; };
+		ASC0MANF2F60S031000022700 /* SlotDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C12F6691C790F1E28EA6907 /* SlotDisplay.swift */; };
+		ASC0MANF2F60S032000022700 /* CheckInPersonRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CHKINROW2F6A820000022702 /* CheckInPersonRow.swift */; };
 		ASC0PACK2F60050100022701 /* ASCPackersHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PACK2F60050100022700 /* ASCPackersHomeView.swift */; };
 		ASC0PACK2F60050100022702 /* ASCPackersHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PACK2F60050100022700 /* ASCPackersHomeView.swift */; };
 		ASC0PACK2F60050100022703 /* ASCPackersHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PACK2F60050100022700 /* ASCPackersHomeView.swift */; };
@@ -302,12 +307,19 @@
 		ASC0PILOT2F60030100022704 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
 		ASC0PILOT2F60030100022705 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
 		ASC0PILOT2F60030100022706 /* ASCPilotHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */; };
+		ASC0PILT2F60S001000022700 /* PilotsBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILT2F60GR001000022700 /* PilotsBoardView.swift */; };
+		ASC0PILT2F60S002000022700 /* PilotCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILT2F60GR002000022700 /* PilotCardView.swift */; };
+		ASC0PILT2F60S003000022700 /* AssignPilotToLoadSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PILT2F60GR003000022700 /* AssignPilotToLoadSheet.swift */; };
 		ASC0PSQK2F60070100022701 /* PackerSquawksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */; };
 		ASC0PSQK2F60070100022702 /* PackerSquawksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */; };
 		ASC0PSQK2F60070100022703 /* PackerSquawksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */; };
 		ASC0PSQK2F60070100022704 /* PackerSquawksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */; };
 		ASC0PSQK2F60070100022705 /* PackerSquawksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */; };
 		ASC0PSQK2F60070100022706 /* PackerSquawksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */; };
+		ASC0REPT2F60S001000022700 /* ReportModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0REPT2F60GR001000022700 /* ReportModels.swift */; };
+		ASC0REPT2F60S002000022700 /* ReportsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0REPT2F60GR002000022700 /* ReportsStore.swift */; };
+		ASC0REPT2F60S003000022700 /* ReportWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0REPT2F60GR003000022700 /* ReportWebView.swift */; };
+		ASC0REPT2F60S004000022700 /* ReportsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0REPT2F60GR004000022700 /* ReportsListView.swift */; };
 		ASC0RSVM2F60080100022701 /* RigSquawksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0RSVM2F60080100022700 /* RigSquawksViewModel.swift */; };
 		ASC0RSVM2F60080100022702 /* RigSquawksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0RSVM2F60080100022700 /* RigSquawksViewModel.swift */; };
 		ASC0RSVM2F60080100022703 /* RigSquawksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ASC0RSVM2F60080100022700 /* RigSquawksViewModel.swift */; };
@@ -616,9 +628,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		ASC0MANF2F60060100022700 /* ASCManifest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ASCManifest.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		ASC0MANF2F60060100022701 /* ASCManifestApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCManifestApp.swift; sourceTree = "<group>"; };
-		ASC0MANF2F60060100022702 /* ASCManifest.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ASCManifest.entitlements; sourceTree = "<group>"; };
 		02B54E918A707B49D210D4D8 /* ASCStaff.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ASCStaff.entitlements; sourceTree = "<group>"; };
 		082E7E54562843BAEE626099 /* AppShellKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellKind.swift; sourceTree = "<group>"; };
 		09CB46511F8AE35BAC5381E4 /* JumperProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JumperProfileView.swift; sourceTree = "<group>"; };
@@ -666,16 +675,31 @@
 		A1B2C3D42F60200200022763 /* HHIOSettingsRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HHIOSettingsRootView.swift; sourceTree = "<group>"; };
 		A6892A09F47A742858599C03 /* CheckedInDragPool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckedInDragPool.swift; sourceTree = "<group>"; };
 		A6E38F917DB009A2522441E2 /* CheckInPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckInPickerSheet.swift; sourceTree = "<group>"; };
+		ASC0AIRC2F60GR001000022700 /* AircraftBoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AircraftBoardView.swift; sourceTree = "<group>"; };
+		ASC0GEAR2F60GR001000022700 /* GearModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GearModels.swift; sourceTree = "<group>"; };
+		ASC0GEAR2F60GR002000022700 /* GearRoomStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GearRoomStore.swift; sourceTree = "<group>"; };
+		ASC0GEAR2F60GR003000022700 /* GearRoomBoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GearRoomBoardView.swift; sourceTree = "<group>"; };
 		ASC0HOME2F60020100022700 /* ASCSkydiverHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCSkydiverHomeView.swift; sourceTree = "<group>"; };
+		ASC0MANF2F60060100022700 /* ASCManifest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ASCManifest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		ASC0MANF2F60060100022701 /* ASCManifestApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCManifestApp.swift; sourceTree = "<group>"; };
+		ASC0MANF2F60060100022702 /* ASCManifest.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ASCManifest.entitlements; sourceTree = "<group>"; };
 		ASC0PACK2F60050100022700 /* ASCPackersHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCPackersHomeView.swift; sourceTree = "<group>"; };
 		ASC0PGRM2F60060100022700 /* PackerGearRoomBrowseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackerGearRoomBrowseView.swift; sourceTree = "<group>"; };
 		ASC0PILOT2F60030100022700 /* ASCPilotHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCPilotHomeView.swift; sourceTree = "<group>"; };
+		ASC0PILT2F60GR001000022700 /* PilotsBoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotsBoardView.swift; sourceTree = "<group>"; };
+		ASC0PILT2F60GR002000022700 /* PilotCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotCardView.swift; sourceTree = "<group>"; };
+		ASC0PILT2F60GR003000022700 /* AssignPilotToLoadSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssignPilotToLoadSheet.swift; sourceTree = "<group>"; };
 		ASC0PSQK2F60070100022700 /* PackerSquawksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackerSquawksView.swift; sourceTree = "<group>"; };
+		ASC0REPT2F60GR001000022700 /* ReportModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportModels.swift; sourceTree = "<group>"; };
+		ASC0REPT2F60GR002000022700 /* ReportsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportsStore.swift; sourceTree = "<group>"; };
+		ASC0REPT2F60GR003000022700 /* ReportWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportWebView.swift; sourceTree = "<group>"; };
+		ASC0REPT2F60GR004000022700 /* ReportsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportsListView.swift; sourceTree = "<group>"; };
 		ASC0RSVM2F60080100022700 /* RigSquawksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigSquawksViewModel.swift; sourceTree = "<group>"; };
 		ASC0STAF2F60040100022700 /* ASCStaffHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCStaffHomeView.swift; sourceTree = "<group>"; };
 		BBCA1DF2411C6A001FEE7B61 /* ManifestMainShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManifestMainShellView.swift; sourceTree = "<group>"; };
 		CE4CA289BC591040DD92EBD6 /* DocumentScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentScannerView.swift; sourceTree = "<group>"; };
 		CHKINBLK2F6A820000022701 /* CheckInBlockedSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckInBlockedSheet.swift; sourceTree = "<group>"; };
+		CHKINROW2F6A820000022702 /* CheckInPersonRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckInPersonRow.swift; sourceTree = "<group>"; };
 		D46F6F29BACBF20F5030A382 /* LoftRecordsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoftRecordsViewModel.swift; sourceTree = "<group>"; };
 		D74DB79E703B875B8F9E58C0 /* ManifestModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManifestModels.swift; sourceTree = "<group>"; };
 		DD722EEBB084606F8238F25A /* ASCPackersApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCPackersApp.swift; sourceTree = "<group>"; };
@@ -801,19 +825,19 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FB367C492F510E6000FBAD05 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				FB063FAA2F60000100022763 /* MalfunctionDZCore in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		ASC0MANF2F60060100022712 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				ASC0MANF2F60060100022714 /* MalfunctionDZCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FB367C492F510E6000FBAD05 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FB063FAA2F60000100022763 /* MalfunctionDZCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -851,6 +875,10 @@
 				7DA2C45B8E127A3800B978CF /* ManifestRootView.swift */,
 				9D373E0EC1A5B252FF305AA6 /* CheckIn */,
 				BBCA1DF2411C6A001FEE7B61 /* ManifestMainShellView.swift */,
+				ASC0GEAR2F60GR004000022700 /* GearRoom */,
+				ASC0REPT2F60GR005000022700 /* Reports */,
+				ASC0PILT2F60GR004000022700 /* Pilots */,
+				ASC0AIRC2F60GR002000022700 /* Aircraft */,
 				EE2F6FDF7CBD5E9B66A8D1ED /* Loads */,
 			);
 			path = Views;
@@ -863,6 +891,7 @@
 				6694DE14E1F09FBA46334DCE /* CheckInUserSheet.swift */,
 				CHKINBLK2F6A820000022701 /* CheckInBlockedSheet.swift */,
 				A6892A09F47A742858599C03 /* CheckedInDragPool.swift */,
+				CHKINROW2F6A820000022702 /* CheckInPersonRow.swift */,
 				A6E38F917DB009A2522441E2 /* CheckInPickerSheet.swift */,
 			);
 			path = CheckIn;
@@ -876,8 +905,45 @@
 				5CFAD464E100201DA22EB68A /* ManifestKeychainHelper.swift */,
 				60452000DB34BC77F21F9120 /* ManifestAPIClient.swift */,
 				98D3A13821CDAADD88BF9DBB /* ManifestSessionStore.swift */,
+				ASC0GEAR2F60GR002000022700 /* GearRoomStore.swift */,
+				ASC0REPT2F60GR002000022700 /* ReportsStore.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		ASC0AIRC2F60GR002000022700 /* Aircraft */ = {
+			isa = PBXGroup;
+			children = (
+				ASC0AIRC2F60GR001000022700 /* AircraftBoardView.swift */,
+			);
+			path = Aircraft;
+			sourceTree = "<group>";
+		};
+		ASC0GEAR2F60GR004000022700 /* GearRoom */ = {
+			isa = PBXGroup;
+			children = (
+				ASC0GEAR2F60GR003000022700 /* GearRoomBoardView.swift */,
+			);
+			path = GearRoom;
+			sourceTree = "<group>";
+		};
+		ASC0PILT2F60GR004000022700 /* Pilots */ = {
+			isa = PBXGroup;
+			children = (
+				ASC0PILT2F60GR001000022700 /* PilotsBoardView.swift */,
+				ASC0PILT2F60GR002000022700 /* PilotCardView.swift */,
+				ASC0PILT2F60GR003000022700 /* AssignPilotToLoadSheet.swift */,
+			);
+			path = Pilots;
+			sourceTree = "<group>";
+		};
+		ASC0REPT2F60GR005000022700 /* Reports */ = {
+			isa = PBXGroup;
+			children = (
+				ASC0REPT2F60GR003000022700 /* ReportWebView.swift */,
+				ASC0REPT2F60GR004000022700 /* ReportsListView.swift */,
+			);
+			path = Reports;
 			sourceTree = "<group>";
 		};
 		B379E9D466E71CBF5D8FB870 /* Theme */ = {
@@ -892,6 +958,8 @@
 			isa = PBXGroup;
 			children = (
 				D74DB79E703B875B8F9E58C0 /* ManifestModels.swift */,
+				ASC0GEAR2F60GR001000022700 /* GearModels.swift */,
+				ASC0REPT2F60GR001000022700 /* ReportModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -1283,6 +1351,26 @@
 			productReference = 450E32E73B9723DB390B67D8 /* ASCPackers.app */;
 			productType = "com.apple.product-type.application";
 		};
+		ASC0MANF2F60060100022710 /* ASCManifest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = ASC0MANF2F60060100022722 /* Build configuration list for PBXNativeTarget "ASCManifest" */;
+			buildPhases = (
+				ASC0MANF2F60060100022711 /* Sources */,
+				ASC0MANF2F60060100022712 /* Frameworks */,
+				ASC0MANF2F60060100022713 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ASCManifest;
+			packageProductDependencies = (
+				FB063FAB2F60000100022763 /* MalfunctionDZCore */,
+			);
+			productName = ASCManifest;
+			productReference = ASC0MANF2F60060100022700 /* ASCManifest.app */;
+			productType = "com.apple.product-type.application";
+		};
 		D2C4D853457DBF13A549ACBA /* AlaskaSkydiveCenter */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 10E962069D788C384B342258 /* Build configuration list for PBXNativeTarget "AlaskaSkydiveCenter" */;
@@ -1321,26 +1409,6 @@
 			);
 			productName = MalfunctionDZ;
 			productReference = FB367C4C2F510E6000FBAD05 /* MalfunctionDZ.app */;
-			productType = "com.apple.product-type.application";
-		};
-		ASC0MANF2F60060100022710 /* ASCManifest */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = ASC0MANF2F60060100022722 /* Build configuration list for PBXNativeTarget "ASCManifest" */;
-			buildPhases = (
-				ASC0MANF2F60060100022711 /* Sources */,
-				ASC0MANF2F60060100022712 /* Frameworks */,
-				ASC0MANF2F60060100022713 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = ASCManifest;
-			packageProductDependencies = (
-				FB063FAB2F60000100022763 /* MalfunctionDZCore */,
-			);
-			productName = ASCManifest;
-			productReference = ASC0MANF2F60060100022700 /* ASCManifest.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -1426,6 +1494,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		ASC0MANF2F60060100022713 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ASC0MANF2F60060100022716 /* Preview Assets.xcassets in Resources */,
+				ASC0MANF2F60060100022715 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		ED1A9EB7F44CC223B0D8DA19 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1441,15 +1518,6 @@
 			files = (
 				FB367C572F510E6100FBAD05 /* Preview Assets.xcassets in Resources */,
 				FB367C542F510E6100FBAD05 /* Assets.xcassets in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		ASC0MANF2F60060100022713 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				ASC0MANF2F60060100022716 /* Preview Assets.xcassets in Resources */,
-				ASC0MANF2F60060100022715 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1841,6 +1909,58 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		ASC0MANF2F60060100022711 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ASC0MANF2F60S000000022700 /* AccountDetailView.swift in Sources */,
+				ASC0MANF2F60S001000022700 /* AddLoadSheet.swift in Sources */,
+				ASC0MANF2F60S002000022700 /* AddSlotSheet.swift in Sources */,
+				ASC0MANF2F60S003000022700 /* AssignInstructorSheet.swift in Sources */,
+				ASC0MANF2F60S004000022700 /* AssignPilotSheet.swift in Sources */,
+				ASC0MANF2F60S005000022700 /* BarcodeScannerView.swift in Sources */,
+				ASC0MANF2F60S006000022700 /* CheckInBlockedSheet.swift in Sources */,
+				ASC0MANF2F60S007000022700 /* CheckInPickerSheet.swift in Sources */,
+				ASC0MANF2F60S008000022700 /* CheckInUserSheet.swift in Sources */,
+				ASC0MANF2F60S009000022700 /* CheckInView.swift in Sources */,
+				ASC0MANF2F60S010000022700 /* CheckedInDragPool.swift in Sources */,
+				ASC0MANF2F60S032000022700 /* CheckInPersonRow.swift in Sources */,
+				ASC0MANF2F60S011000022700 /* IDScanView.swift in Sources */,
+				ASC0MANF2F60S012000022700 /* InstructorPairing.swift in Sources */,
+				ASC0MANF2F60S013000022700 /* JumperProfileView.swift in Sources */,
+				ASC0MANF2F60S014000022700 /* JumperSearchView.swift in Sources */,
+				ASC0MANF2F60S015000022700 /* LoadCardView.swift in Sources */,
+				ASC0MANF2F60S016000022700 /* LoadDetailView.swift in Sources */,
+				ASC0MANF2F60S017000022700 /* LoadsBoardView.swift in Sources */,
+				ASC0MANF2F60S018000022700 /* ManifestAPIClient.swift in Sources */,
+				ASC0MANF2F60S019000022700 /* ManifestConfig.swift in Sources */,
+				ASC0MANF2F60S020000022700 /* ManifestHostView.swift in Sources */,
+				ASC0MANF2F60S021000022700 /* ManifestKeychainHelper.swift in Sources */,
+				ASC0MANF2F60S022000022700 /* ManifestLoginView.swift in Sources */,
+				ASC0MANF2F60S023000022700 /* ManifestMFAView.swift in Sources */,
+				ASC0MANF2F60S024000022700 /* ManifestMainShellView.swift in Sources */,
+				ASC0MANF2F60S025000022700 /* ManifestModels.swift in Sources */,
+				ASC0MANF2F60S026000022700 /* ManifestRootView.swift in Sources */,
+				ASC0MANF2F60S027000022700 /* ManifestSessionStore.swift in Sources */,
+				ASC0MANF2F60S028000022700 /* ManifestStore.swift in Sources */,
+				ASC0MANF2F60S029000022700 /* NightOpsTheme.swift in Sources */,
+				ASC0MANF2F60S030000022700 /* SidebarSearchBoxes.swift in Sources */,
+				ASC0MANF2F60S031000022700 /* SlotDisplay.swift in Sources */,
+				ASC0GEAR2F60S001000022700 /* GearModels.swift in Sources */,
+				ASC0GEAR2F60S002000022700 /* GearRoomStore.swift in Sources */,
+				ASC0GEAR2F60S003000022700 /* GearRoomBoardView.swift in Sources */,
+				ASC0REPT2F60S001000022700 /* ReportModels.swift in Sources */,
+				ASC0REPT2F60S002000022700 /* ReportsStore.swift in Sources */,
+				ASC0REPT2F60S003000022700 /* ReportWebView.swift in Sources */,
+				ASC0REPT2F60S004000022700 /* ReportsListView.swift in Sources */,
+				ASC0PILT2F60S001000022700 /* PilotsBoardView.swift in Sources */,
+				ASC0PILT2F60S002000022700 /* PilotCardView.swift in Sources */,
+				ASC0PILT2F60S003000022700 /* AssignPilotToLoadSheet.swift in Sources */,
+				ASC0AIRC2F60S001000022700 /* AircraftBoardView.swift in Sources */,
+				ASC0MANF2F60060100022717 /* ASCManifestApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BBE22AE7CE0E6145FFC082FD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -2047,46 +2167,6 @@
 				FB063F162F56000200022763 /* ShiftsRootView.swift in Sources */,
 				FB063F0C2F56000200022764 /* DZStatusUpdateView.swift in Sources */,
 				FB063F0E2F56000200022765 /* NotificationsView.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		ASC0MANF2F60060100022711 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				ASC0MANF2F60S000000022700 /* AccountDetailView.swift in Sources */,
-				ASC0MANF2F60S001000022700 /* AddLoadSheet.swift in Sources */,
-				ASC0MANF2F60S002000022700 /* AddSlotSheet.swift in Sources */,
-				ASC0MANF2F60S003000022700 /* AssignInstructorSheet.swift in Sources */,
-				ASC0MANF2F60S004000022700 /* AssignPilotSheet.swift in Sources */,
-				ASC0MANF2F60S005000022700 /* BarcodeScannerView.swift in Sources */,
-				ASC0MANF2F60S006000022700 /* CheckInBlockedSheet.swift in Sources */,
-				ASC0MANF2F60S007000022700 /* CheckInPickerSheet.swift in Sources */,
-				ASC0MANF2F60S008000022700 /* CheckInUserSheet.swift in Sources */,
-				ASC0MANF2F60S009000022700 /* CheckInView.swift in Sources */,
-				ASC0MANF2F60S010000022700 /* CheckedInDragPool.swift in Sources */,
-				ASC0MANF2F60S011000022700 /* IDScanView.swift in Sources */,
-				ASC0MANF2F60S012000022700 /* InstructorPairing.swift in Sources */,
-				ASC0MANF2F60S013000022700 /* JumperProfileView.swift in Sources */,
-				ASC0MANF2F60S014000022700 /* JumperSearchView.swift in Sources */,
-				ASC0MANF2F60S015000022700 /* LoadCardView.swift in Sources */,
-				ASC0MANF2F60S016000022700 /* LoadDetailView.swift in Sources */,
-				ASC0MANF2F60S017000022700 /* LoadsBoardView.swift in Sources */,
-				ASC0MANF2F60S018000022700 /* ManifestAPIClient.swift in Sources */,
-				ASC0MANF2F60S019000022700 /* ManifestConfig.swift in Sources */,
-				ASC0MANF2F60S020000022700 /* ManifestHostView.swift in Sources */,
-				ASC0MANF2F60S021000022700 /* ManifestKeychainHelper.swift in Sources */,
-				ASC0MANF2F60S022000022700 /* ManifestLoginView.swift in Sources */,
-				ASC0MANF2F60S023000022700 /* ManifestMFAView.swift in Sources */,
-				ASC0MANF2F60S024000022700 /* ManifestMainShellView.swift in Sources */,
-				ASC0MANF2F60S025000022700 /* ManifestModels.swift in Sources */,
-				ASC0MANF2F60S026000022700 /* ManifestRootView.swift in Sources */,
-				ASC0MANF2F60S027000022700 /* ManifestSessionStore.swift in Sources */,
-				ASC0MANF2F60S028000022700 /* ManifestStore.swift in Sources */,
-				ASC0MANF2F60S029000022700 /* NightOpsTheme.swift in Sources */,
-				ASC0MANF2F60S030000022700 /* SidebarSearchBoxes.swift in Sources */,
-				ASC0MANF2F60S031000022700 /* SlotDisplay.swift in Sources */,
-				ASC0MANF2F60060100022717 /* ASCManifestApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2311,6 +2391,87 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.malfunctiondz.app.ASC;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "ASC_STUDENTS $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		ASC0MANF2F60060100022720 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = ASCManifest;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASCManifest.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
+				DEVELOPMENT_TEAM = 8D9BFVLLPF;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "ASC Manifest";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "ASC Manifest uses the camera to scan driver's license and state ID barcodes (PDF417) at check-in.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "ASC Manifest may attach a photo of a scanned ID for the jumper record.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.alaskaskydivecenter.manifest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "ASC_MANIFEST $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		ASC0MANF2F60060100022721 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = ASCManifest;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASCManifest.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
+				DEVELOPMENT_TEAM = 8D9BFVLLPF;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "ASC Manifest";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "ASC Manifest uses the camera to scan driver's license and state ID barcodes (PDF417) at check-in.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "ASC Manifest may attach a photo of a scanned ID for the jumper record.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.alaskaskydivecenter.manifest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "ASC_MANIFEST $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -2660,87 +2821,6 @@
 			};
 			name = Release;
 		};
-		ASC0MANF2F60060100022720 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = ASCManifest;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASCManifest.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
-				DEVELOPMENT_TEAM = 8D9BFVLLPF;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "ASC Manifest";
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
-				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "ASC Manifest uses the camera to scan driver's license and state ID barcodes (PDF417) at check-in.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "ASC Manifest may attach a photo of a scanned ID for the jumper record.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UIRequiresFullScreen = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.alaskaskydivecenter.manifest;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "ASC_MANIFEST $(inherited)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		ASC0MANF2F60060100022721 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = ASCManifest;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = MalfunctionDZ/ASCManifest.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"MalfunctionDZ/Preview Content\"";
-				DEVELOPMENT_TEAM = 8D9BFVLLPF;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = MalfunctionDZ/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "ASC Manifest";
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
-				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "ASC Manifest uses the camera to scan driver's license and state ID barcodes (PDF417) at check-in.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "ASC Manifest may attach a photo of a scanned ID for the jumper record.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UIRequiresFullScreen = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.alaskaskydivecenter.manifest;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "ASC_MANIFEST $(inherited)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -2780,6 +2860,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		ASC0MANF2F60060100022722 /* Build configuration list for PBXNativeTarget "ASCManifest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				ASC0MANF2F60060100022720 /* Debug */,
+				ASC0MANF2F60060100022721 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		C4DB9E480F002FFC91A1165F /* Build configuration list for PBXNativeTarget "ASCPackers" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -2803,15 +2892,6 @@
 			buildConfigurations = (
 				FB367C5B2F510E6100FBAD05 /* Debug */,
 				FB367C5C2F510E6100FBAD05 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		ASC0MANF2F60060100022722 /* Build configuration list for PBXNativeTarget "ASCManifest" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				ASC0MANF2F60060100022720 /* Debug */,
-				ASC0MANF2F60060100022721 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

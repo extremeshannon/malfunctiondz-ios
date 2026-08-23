@@ -4,8 +4,48 @@ struct CheckedInDragPool: View {
     @EnvironmentObject private var store: ManifestStore
     var compact: Bool = false
 
-    private var hasAnyone: Bool {
-        !store.checkedIn.isEmpty || !store.checkedInTandem.isEmpty
+    private var poolPeople: [CheckInPoolPerson] {
+        if let pools = store.checkInPools {
+            return pools.staffList + pools.jumpersList + pools.studentsList + pools.tandemList
+        }
+        return fallbackPeople
+    }
+
+    private var fallbackPeople: [CheckInPoolPerson] {
+        let users = store.checkedIn.map { user in
+            CheckInPoolPerson(
+                record_id: user.user_id,
+                user_id: user.user_id,
+                display_name: user.resolvedName,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                username: user.username,
+                roles: user.roles,
+                weight_lb: user.weight_lb,
+                pay_state: user.pay_state,
+                pay_label: user.pay_label,
+                next_jump_label: user.next_jump_label,
+                checked_in_at: user.checked_in_at
+            )
+        }
+        let tandem = store.checkedInTandem.map { student in
+            CheckInPoolPerson(
+                record_id: student.tandemID,
+                tandem_student_id: student.tandemID,
+                display_name: student.resolvedName,
+                first_name: student.first_name,
+                last_name: student.last_name,
+                email: student.email,
+                kind: "tandem",
+                weight_lb: student.weight_lb,
+                pay_state: student.pay_state,
+                pay_label: student.pay_label,
+                pay_tone: student.pay_tone,
+                due_cents: student.due_cents,
+                checked_in_at: student.checked_in_at
+            )
+        }
+        return users + tandem
     }
 
     var body: some View {
@@ -13,46 +53,16 @@ struct CheckedInDragPool: View {
             Text(compact ? "Checked in — hold, then drop on a load" : "Hold a name, then drop it on a load card")
                 .font(.caption)
                 .foregroundStyle(NightOps.textMuted)
-            if !hasAnyone {
+            if poolPeople.isEmpty {
                 Text("Nobody checked in yet.")
                     .font(.caption)
                     .foregroundStyle(NightOps.textMuted)
             } else {
-                ForEach(store.checkedIn) { user in
-                    dragRow(BoardPerson.user(id: user.user_id, name: user.resolvedName))
-                }
-                ForEach(store.checkedInTandem) { student in
-                    dragRow(BoardPerson.tandem(id: student.tandemID, name: student.resolvedName))
+                ForEach(poolPeople) { person in
+                    CheckInPersonRow(person: person, compact: compact)
+                        .draggable(person.boardPerson)
                 }
             }
         }
-    }
-
-    @ViewBuilder
-    private func dragRow(_ person: BoardPerson) -> some View {
-        HStack {
-            Image(systemName: "line.3.horizontal")
-                .font(.caption)
-                .foregroundStyle(NightOps.textMuted)
-            Text(person.name)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.white)
-            if person.isTandem {
-                Text("Tandem")
-                    .font(.caption2.weight(.bold))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color.green.opacity(0.25))
-                    .foregroundStyle(.green)
-                    .clipShape(Capsule())
-            }
-            Spacer()
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(Color.white.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .contentShape(Rectangle())
-        .draggable(person)
     }
 }

@@ -100,6 +100,25 @@ final class ManifestAPIClient {
         try await get(path: "/api/manifest/aircraft.php")
     }
 
+    /// DZ rigs for Gear Room (all active DZ rigs, not packable-only filter).
+    func fetchDzRigs() async throws -> DzRigsAPIResponse {
+        let query = "packable_only=0"
+        do {
+            return try await get(path: "/api/loft/dz_rigs.php?\(query)")
+        } catch ManifestAPIError.serverError(let message) where isMissingRoute(message) {
+            return try await get(path: "/api/loft/dz_rigs?\(query)")
+        }
+    }
+
+    /// Report catalog for Manifest desk — same list as web Reports hub.
+    func fetchReportsCatalog() async throws -> ManifestReportsResponse {
+        do {
+            return try await get(path: "/api/manifest/reports.php")
+        } catch ManifestAPIError.serverError(let message) where isMissingRoute(message) {
+            return try await get(path: "/api/manifest/reports")
+        }
+    }
+
     func createLoad(date: Date = Date(), aircraftID: Int? = nil) async throws -> CreateLoadResponse {
         let path = "/api/manifest/loads?date_str=\(Self.isoDate(date))"
         var body: [String: Any] = [:]
@@ -148,15 +167,25 @@ final class ManifestAPIClient {
         try await postJSONResult(path: "/api/manifest/loads/\(loadID)/status", body: ["status": status])
     }
 
+    func fetchManifestPilots(date: Date = Date()) async throws -> ManifestPilotsResponse {
+        let dateStr = Self.isoDate(date)
+        do {
+            return try await get(path: "/api/manifest/pilots.php?date_str=\(dateStr)")
+        } catch ManifestAPIError.serverError(let message) where isMissingRoute(message) {
+            return try await get(path: "/api/manifest/pilots?date_str=\(dateStr)")
+        }
+    }
+
     func setLoadPilot(
         loadID: Int,
-        userID: Int,
+        userID: Int?,
+        role: String = "pic",
         acknowledgeOverride: Bool = false,
         overrideNote: String = ""
     ) async throws -> GenericOKResponse {
         var body: [String: Any] = [
-            "pilot_user_id": userID,
-            "role": "pic",
+            "role": role,
+            "pilot_user_id": userID ?? NSNull(),
         ]
         if acknowledgeOverride {
             body["acknowledge_override"] = true
@@ -248,6 +277,19 @@ final class ManifestAPIClient {
     }
 
     // MARK: - Check-in
+
+    func fetchCheckInPools(date: Date = Date()) async throws -> CheckInPoolsResponse {
+        let dateStr = Self.isoDate(date)
+        do {
+            let response: CheckInPoolsResponse = try await get(path: "/api/checkin/pools.php?date_str=\(dateStr)")
+            if response.ok == false, let err = response.error, isMissingRoute(err) {
+                return try await get(path: "/api/checkin/pools?date_str=\(dateStr)")
+            }
+            return response
+        } catch ManifestAPIError.serverError(let message) where isMissingRoute(message) {
+            return try await get(path: "/api/checkin/pools?date_str=\(dateStr)")
+        }
+    }
 
     func fetchCheckInList(date: Date = Date()) async throws -> CheckInListResponse {
         try await get(path: "/api/checkin/list?date_str=\(Self.isoDate(date))")

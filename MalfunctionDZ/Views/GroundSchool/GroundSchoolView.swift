@@ -642,7 +642,7 @@ struct CourseDetailView: View {
                                 ModuleSection(
                                     module: reading,
                                     courseId: liveCourse.id,
-                                    isExpanded: expandedModules.contains(reading.id) || !reading.isComplete,
+                                    isExpanded: expandedModules.contains(reading.id),
                                     pinsOpen: false,
                                     moduleQuizzes: [],
                                     vm: vm,

@@ -248,13 +248,72 @@ struct ManifestAircraft: Decodable, Identifiable {
     let tail_number: String?
     let make: String?
     let model: String?
+    let min_pax_per_load: Int?
+    let default_pax_per_load: Int?
     let max_pax_per_load: Int?
+    let is_jumpable: Bool?
+    let status: String?
+    let default_altitude_ft_agl: Int?
+    let required_pilots: Int?
 
     var label: String {
         let tailText = (tail_number ?? "").trimmingCharacters(in: .whitespaces)
-        let typeText = [make, model].compactMap { $0?.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }.joined(separator: " ")
+        let typeText = typeLabel
         if !tailText.isEmpty && !typeText.isEmpty { return "\(tailText) · \(typeText)" }
         return tailText.isEmpty ? typeText : tailText
+    }
+
+    var typeLabel: String {
+        [make, model]
+            .compactMap { $0?.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+    }
+
+    var isJumpPlane: Bool { is_jumpable ?? true }
+
+    var isActiveForManifest: Bool {
+        (status ?? "active").lowercased() == "active"
+    }
+
+    var statusLabel: String {
+        let raw = (status ?? "active").trimmingCharacters(in: .whitespaces)
+        return raw.isEmpty ? "Active" : raw.capitalized
+    }
+
+    var paxCapacityLabel: String {
+        let minSeats = min_pax_per_load ?? 1
+        let maxSeats = max_pax_per_load ?? 4
+        let defaultSeats = default_pax_per_load ?? maxSeats
+        if minSeats == maxSeats { return "\(maxSeats) jumpers/load" }
+        return "\(minSeats)–\(maxSeats) jumpers (default \(defaultSeats))"
+    }
+
+    var altitudeLabel: String? {
+        guard let default_altitude_ft_agl, default_altitude_ft_agl > 0 else { return nil }
+        return "\(default_altitude_ft_agl.formatted()) ft AGL"
+    }
+
+    var pilotsRequiredLabel: String? {
+        guard let required_pilots, required_pilots >= 2 else { return nil }
+        return "\(required_pilots) pilots required"
+    }
+}
+
+struct ManifestAircraftDaySummary {
+    let loadCount: Int
+    let filledSeats: Int
+    let totalSeats: Int
+
+    var loadsLabel: String {
+        loadCount == 1 ? "1 load today" : "\(loadCount) loads today"
+    }
+
+    var occupancyLabel: String {
+        guard totalSeats > 0 else {
+            return loadCount == 0 ? "No loads today" : loadsLabel
+        }
+        return "\(loadsLabel) · \(filledSeats)/\(totalSeats) seats"
     }
 }
 
@@ -624,6 +683,42 @@ struct CheckedInTandemStudent: Decodable, Identifiable {
     let checked_in_at: String?
     let kind: String?
     let weight_lb: Int?
+    let pay_state: String?
+    let pay_label: String?
+    let pay_tone: String?
+    let due_cents: Int?
+
+    init(
+        id: Int,
+        tandem_student_id: Int? = nil,
+        user_id: Int? = nil,
+        display_name: String? = nil,
+        first_name: String? = nil,
+        last_name: String? = nil,
+        email: String? = nil,
+        checked_in_at: String? = nil,
+        kind: String? = nil,
+        weight_lb: Int? = nil,
+        pay_state: String? = nil,
+        pay_label: String? = nil,
+        pay_tone: String? = nil,
+        due_cents: Int? = nil
+    ) {
+        self.id = id
+        self.tandem_student_id = tandem_student_id
+        self.user_id = user_id
+        self.display_name = display_name
+        self.first_name = first_name
+        self.last_name = last_name
+        self.email = email
+        self.checked_in_at = checked_in_at
+        self.kind = kind
+        self.weight_lb = weight_lb
+        self.pay_state = pay_state
+        self.pay_label = pay_label
+        self.pay_tone = pay_tone
+        self.due_cents = due_cents
+    }
 
     var tandemID: Int { tandem_student_id ?? id }
 
@@ -639,21 +734,292 @@ struct CheckedInTandemStudent: Decodable, Identifiable {
     }
 }
 
+struct CheckInPoolsResponse: Decodable {
+    let ok: Bool
+    let error: String?
+    let date: String?
+    let pools: CheckInPools?
+}
+
+struct CheckInPools: Decodable {
+    let staff: [CheckInPoolPerson]?
+    let jumpers: [CheckInPoolPerson]?
+    let students: [CheckInPoolPerson]?
+    let tandem: [CheckInPoolPerson]?
+
+    var staffList: [CheckInPoolPerson] { staff ?? [] }
+    var jumpersList: [CheckInPoolPerson] { jumpers ?? [] }
+    var studentsList: [CheckInPoolPerson] { students ?? [] }
+    var tandemList: [CheckInPoolPerson] { tandem ?? [] }
+}
+
+/// Checked-in row from v5 Load Manager pools API (staff / jumpers / students / tandem).
+struct CheckInPoolPerson: Decodable, Identifiable, Hashable {
+    let record_id: Int?
+    let user_id: Int?
+    let tandem_student_id: Int?
+    let display_name: String?
+    let first_name: String?
+    let last_name: String?
+    let username: String?
+    let email: String?
+    let roles: [String]?
+    let kind: String?
+    let weight_lb: Int?
+    let pay_state: String?
+    let pay_label: String?
+    let pay_tone: String?
+    let due_cents: Int?
+    let next_jump_type: String?
+    let next_jump_label: String?
+    let needs_enrollment: Bool?
+    let checked_in_at: String?
+
+    enum CodingKeys: String, CodingKey {
+        case record_id = "id"
+        case user_id, tandem_student_id, display_name, first_name, last_name, username, email
+        case roles, kind, weight_lb, pay_state, pay_label, pay_tone, due_cents
+        case next_jump_type, next_jump_label, needs_enrollment, checked_in_at
+    }
+
+    var rowID: String {
+        if let tid = tandem_student_id ?? (isTandem ? record_id : nil) {
+            return "t-\(tid)"
+        }
+        let uid = user_id ?? record_id ?? 0
+        return "u-\(uid)"
+    }
+
+    var id: String { rowID }
+
+    var isTandem: Bool {
+        (kind ?? "").lowercased() == "tandem" || tandem_student_id != nil
+    }
+
+    var resolvedUserID: Int? {
+        user_id ?? (isTandem ? nil : record_id)
+    }
+
+    var resolvedTandemID: Int? {
+        tandem_student_id ?? (isTandem ? record_id : nil)
+    }
+
+    var resolvedName: String {
+        let joined = [first_name, last_name]
+            .compactMap { $0?.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        if !joined.isEmpty { return joined }
+        let named = (display_name ?? username ?? "").trimmingCharacters(in: .whitespaces)
+        if !named.isEmpty { return named }
+        if let uid = resolvedUserID { return "User \(uid)" }
+        if let tid = resolvedTandemID { return "Tandem \(tid)" }
+        return "—"
+    }
+
+    var lineTitle: String {
+        let label = (next_jump_label ?? "").trimmingCharacters(in: .whitespaces)
+        if !label.isEmpty { return "\(resolvedName) · \(label)" }
+        return resolvedName
+    }
+
+    var weightLabel: String {
+        guard let weight_lb, weight_lb > 0 else { return "— lb" }
+        return "\(weight_lb) lb"
+    }
+
+    var weightMissing: Bool {
+        weight_lb == nil || weight_lb ?? 0 <= 0
+    }
+
+    var payIsDue: Bool {
+        (pay_state ?? "").lowercased() == "due"
+    }
+
+    var boardPerson: BoardPerson {
+        if isTandem, let tid = resolvedTandemID {
+            return .tandem(id: tid, name: resolvedName)
+        }
+        return .user(id: resolvedUserID ?? user_id ?? record_id ?? 0, name: resolvedName)
+    }
+
+    func eligibleUser() -> EligibleUser {
+        EligibleUser(
+            id: resolvedUserID ?? user_id ?? record_id ?? 0,
+            name: resolvedName,
+            display_name: display_name,
+            username: username,
+            roles: roles,
+            weight_lb: weight_lb
+        )
+    }
+
+    init(
+        record_id: Int? = nil,
+        user_id: Int? = nil,
+        tandem_student_id: Int? = nil,
+        display_name: String? = nil,
+        first_name: String? = nil,
+        last_name: String? = nil,
+        username: String? = nil,
+        email: String? = nil,
+        roles: [String]? = nil,
+        kind: String? = nil,
+        weight_lb: Int? = nil,
+        pay_state: String? = nil,
+        pay_label: String? = nil,
+        pay_tone: String? = nil,
+        due_cents: Int? = nil,
+        next_jump_type: String? = nil,
+        next_jump_label: String? = nil,
+        needs_enrollment: Bool? = nil,
+        checked_in_at: String? = nil
+    ) {
+        self.record_id = record_id
+        self.user_id = user_id
+        self.tandem_student_id = tandem_student_id
+        self.display_name = display_name
+        self.first_name = first_name
+        self.last_name = last_name
+        self.username = username
+        self.email = email
+        self.roles = roles
+        self.kind = kind
+        self.weight_lb = weight_lb
+        self.pay_state = pay_state
+        self.pay_label = pay_label
+        self.pay_tone = pay_tone
+        self.due_cents = due_cents
+        self.next_jump_type = next_jump_type
+        self.next_jump_label = next_jump_label
+        self.needs_enrollment = needs_enrollment
+        self.checked_in_at = checked_in_at
+    }
+}
+
+enum CheckInTab: String, CaseIterable, Identifiable {
+    case staff, jumpers, tandem, students
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .staff: "Staff"
+        case .jumpers: "Jumpers"
+        case .tandem: "Tandem"
+        case .students: "Students"
+        }
+    }
+}
+
+enum CheckInRoleBuckets {
+    private static let staffRoles: Set<String> = [
+        "pilot", "chief_pilot", "tandem_instructor", "aff_instructor", "coach",
+        "packer", "rigger", "instructor", "iad_instructor", "sl_instructor",
+    ]
+
+    static func normRole(_ role: String) -> String {
+        role.lowercased().replacingOccurrences(of: " ", with: "_")
+    }
+
+    static func isStaff(_ roles: [String]) -> Bool {
+        roles.contains { staffRoles.contains(normRole($0)) }
+    }
+
+    static func isStudent(_ roles: [String]) -> Bool {
+        roles.contains {
+            let n = normRole($0)
+            return n == "student" || n == "lms_student"
+        }
+    }
+
+    static func matchesTab(_ user: EligibleUser, tab: CheckInTab) -> Bool {
+        tabForUser(user) == tab
+    }
+
+    static func tabForRoles(_ roles: [String]) -> CheckInTab {
+        if isStaff(roles) { return .staff }
+        if isStudent(roles) && !isStaff(roles) { return .students }
+        return .jumpers
+    }
+
+    static func tabForUser(_ user: EligibleUser) -> CheckInTab {
+        tabForRoles(user.roles ?? [])
+    }
+
+    static func tabForPoolPerson(_ person: CheckInPoolPerson) -> CheckInTab {
+        if person.isTandem { return .tandem }
+        return tabForRoles(person.roles ?? [])
+    }
+
+    static func alreadyCheckedUserID(_ userID: Int, pools: CheckInPools?) -> Bool {
+        guard let pools else { return false }
+        let buckets = pools.staffList + pools.jumpersList + pools.studentsList
+        return buckets.contains { ($0.resolvedUserID ?? 0) == userID }
+    }
+
+    static func alreadyCheckedTandemID(_ tandemID: Int, pools: CheckInPools?) -> Bool {
+        guard let pools else { return false }
+        return pools.tandemList.contains { ($0.resolvedTandemID ?? 0) == tandemID }
+    }
+}
+
 struct CheckedInUser: Decodable, Identifiable {
     let user_id: Int
     let display_name: String?
     let name: String?
     let username: String?
     let checked_in_at: String?
+    let first_name: String?
+    let last_name: String?
+    let weight_lb: Int?
+    let roles: [String]?
+    let pay_state: String?
+    let pay_label: String?
+    let next_jump_label: String?
+
+    init(
+        user_id: Int,
+        display_name: String? = nil,
+        name: String? = nil,
+        username: String? = nil,
+        checked_in_at: String? = nil,
+        first_name: String? = nil,
+        last_name: String? = nil,
+        weight_lb: Int? = nil,
+        roles: [String]? = nil,
+        pay_state: String? = nil,
+        pay_label: String? = nil,
+        next_jump_label: String? = nil
+    ) {
+        self.user_id = user_id
+        self.display_name = display_name
+        self.name = name
+        self.username = username
+        self.checked_in_at = checked_in_at
+        self.first_name = first_name
+        self.last_name = last_name
+        self.weight_lb = weight_lb
+        self.roles = roles
+        self.pay_state = pay_state
+        self.pay_label = pay_label
+        self.next_jump_label = next_jump_label
+    }
 
     var id: Int { user_id }
 
     var resolvedName: String {
-        display_name ?? name ?? username ?? "User \(user_id)"
+        let joined = [first_name, last_name]
+            .compactMap { $0?.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        if !joined.isEmpty { return joined }
+        return display_name ?? name ?? username ?? "User \(user_id)"
     }
 
     enum CodingKeys: String, CodingKey {
         case user_id, id, display_name, name, username, checked_in_at
+        case first_name, last_name, weight_lb, roles, pay_state, pay_label, next_jump_label
     }
 
     init(from decoder: Decoder) throws {
@@ -665,6 +1031,13 @@ struct CheckedInUser: Decodable, Identifiable {
         name = try c.decodeIfPresent(String.self, forKey: .name)
         username = try c.decodeIfPresent(String.self, forKey: .username)
         checked_in_at = try c.decodeIfPresent(String.self, forKey: .checked_in_at)
+        first_name = try c.decodeIfPresent(String.self, forKey: .first_name)
+        last_name = try c.decodeIfPresent(String.self, forKey: .last_name)
+        weight_lb = try c.decodeIfPresent(Int.self, forKey: .weight_lb)
+        roles = try c.decodeIfPresent([String].self, forKey: .roles)
+        pay_state = try c.decodeIfPresent(String.self, forKey: .pay_state)
+        pay_label = try c.decodeIfPresent(String.self, forKey: .pay_label)
+        next_jump_label = try c.decodeIfPresent(String.self, forKey: .next_jump_label)
     }
 }
 
@@ -677,6 +1050,70 @@ struct EligibleUsersResponse: Decodable {
 struct EligibleUser: Decodable, Identifiable {
     let id: Int
     let name: String?
+    let display_name: String?
+    let username: String?
+    let roles: [String]?
+    let weight_lb: Int?
+
+    init(
+        id: Int,
+        name: String? = nil,
+        display_name: String? = nil,
+        username: String? = nil,
+        roles: [String]? = nil,
+        weight_lb: Int? = nil
+    ) {
+        self.id = id
+        self.name = name
+        self.display_name = display_name
+        self.username = username
+        self.roles = roles
+        self.weight_lb = weight_lb
+    }
+
+    var resolvedName: String {
+        let named = (name ?? display_name ?? username ?? "").trimmingCharacters(in: .whitespaces)
+        if !named.isEmpty { return named }
+        return "User \(id)"
+    }
+
+    var suggestLabel: String {
+        var parts = [resolvedName, weightLabel]
+        if let pay = payHint { parts.append(pay) }
+        return parts.joined(separator: " · ")
+    }
+
+    /// Lowercased haystack for desk search (name, username, display).
+    var searchHaystack: String {
+        [resolvedName, display_name, name, username]
+            .compactMap { $0?.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+            .lowercased()
+    }
+
+    private var weightLabel: String {
+        guard let weight_lb, weight_lb > 0 else { return "— lb" }
+        return "\(weight_lb) lb"
+    }
+
+    private var payHint: String? { nil }
+
+    enum CodingKeys: String, CodingKey {
+        case id, user_id, name, display_name, username, roles, weight_lb
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(Int.self, forKey: .id)
+            ?? c.decodeIfPresent(Int.self, forKey: .user_id)
+            ?? 0
+        name = try c.decodeIfPresent(String.self, forKey: .name)
+        display_name = try c.decodeIfPresent(String.self, forKey: .display_name)
+        username = try c.decodeIfPresent(String.self, forKey: .username)
+        roles = try c.decodeIfPresent([String].self, forKey: .roles)
+        weight_lb = try c.decodeIfPresent(Int.self, forKey: .weight_lb)
+    }
 }
 
 struct IDScanResponse: Decodable {
@@ -697,6 +1134,77 @@ struct IDScanParsed: Decodable {
     let address_line1: String?
     let city: String?
     let state: String?
+}
+
+struct ManifestPilotAssignment: Decodable, Identifiable, Hashable {
+    let load_id: Int
+    let load_num: Int?
+    let role: String
+    let aircraft_label: String?
+    let status: String?
+
+    var id: String { "\(load_id)-\(role)" }
+
+    var roleLabel: String {
+        switch role.lowercased() {
+        case "second": "Second PIC"
+        case "training": "Training"
+        default: "PIC"
+        }
+    }
+}
+
+struct ManifestPilotDocRow: Decodable, Identifiable {
+    let doc_key: String?
+    let label: String?
+    let tone: String?
+    let status_text: String?
+    let icon: String?
+    let date_text: String?
+    let expires_text: String?
+    let is_waiver: Bool?
+
+    var id: String { doc_key ?? label ?? UUID().uuidString }
+}
+
+struct ManifestPilotCard: Decodable, Identifiable {
+    let user_id: Int
+    let display_name: String?
+    let username: String?
+    let is_active: Bool?
+    let ready_tone: String?
+    let ready_label: String?
+    let airworthy: Bool?
+    let ready_to_fly: Bool?
+    let cleared_to_solo: Bool?
+    let checked_in: Bool?
+    let assignments: [ManifestPilotAssignment]?
+    let doc_rows: [ManifestPilotDocRow]?
+
+    var id: Int { user_id }
+
+    var resolvedName: String {
+        let name = (display_name ?? "").trimmingCharacters(in: .whitespaces)
+        if !name.isEmpty { return name }
+        let un = (username ?? "").trimmingCharacters(in: .whitespaces)
+        return un.isEmpty ? "Pilot #\(user_id)" : un
+    }
+}
+
+struct ManifestPilotCounts: Decodable {
+    let total: Int?
+    let ok: Int?
+    let warn: Int?
+    let bad: Int?
+}
+
+struct ManifestPilotsResponse: Decodable {
+    let ok: Bool
+    let error: String?
+    let pilots: [ManifestPilotCard]?
+    let counts: ManifestPilotCounts?
+    let can_manage: Bool?
+    let date: String?
 }
 
 enum ManifestLoadStatus: String, CaseIterable, Identifiable {
